@@ -29,7 +29,7 @@ fetch(url)
         document.getElementById("qr").src =
           "https://quickchart.io/qr?size=150&text=" +
           encodeURIComponent(
-            "https://saulohenry29.github.io/sistemaBDR/etiqueta.html?id=" + id
+            "https://saulohenry29.github.io/sistemaBDR/etiqueta_impressao.html?id=" + id
           );
       }
     });
