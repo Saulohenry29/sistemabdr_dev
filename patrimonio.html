@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Patrimônio</title>
+<link rel="stylesheet" href="./CSS/estilo.css">
+</head>
+<body>
+<header class="topo">
+  <div class="logo">
+    <img src="./imagens/logo.png" alt="BDR Construarl">
+  </div>
+</header>
+
+<aside class="menu-lateral">
+  <button onclick="window.location.href='index.html'">🏠 Menu</button>
+  <button onclick="window.location.href='estoque.html'">📦 Estoque</button>
+  <button onclick="window.location.href='patrimonio.html'">🏛 Patrimônio</button>
+</aside>
+
+<div class="container">
+  <h1>Controle de Patrimônio</h1>
+  <table id="tabelaPatrimonio">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Produto</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Local</th>
+        <th>Status</th>
+        <th>Etiqueta</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script src="./js/patrimonio.js"></script>
+</body>
+</html>

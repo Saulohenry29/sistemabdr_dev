@@ -1,169 +1,72 @@
-:root {
-  --vermelho-bdr: #a4161a;
-  --cinza-bdr: #2c3e50;
-  --fundo-claro: #f4f6f9;
-  --texto-escuro: #333333;
-  --branco: #ffffff;
-}
-
-/* ======== GERAL ======== */
-body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--fundo-claro);
+* {
   margin: 0;
   padding: 0;
-  color: var(--texto-escuro);
+  box-sizing: border-box;
+}
+
+/* FUNDO */
+body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+
   height: 100vh;
 }
 
-/* ======== CABEÇALHO ======== */
-.topo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--branco);
-  padding: 10px 20px;
-  border-bottom: 2px solid var(--vermelho-bdr);
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+/* CARD */
+.card {
+  background: #ffffff;
+  width: 90%;
+  max-width: 380px;
+
+  padding: 20px;
+  border-radius: 15px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* LOGO */
+.logo {
+  text-align: center;
+  margin-bottom: 10px;
 }
 
 .logo img {
-  height: 40px; /* menor para caber melhor */
+  width: 120px;
 }
 
-/* ======== CARD ETIQUETA ======== */
-.card {
-  background: var(--branco);
-  border: 1px solid #000;
-  border-radius: 6px;
-  padding: 12px;
-  box-sizing: border-box;
-  width: 10cm;
-  height: 14cm;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.card h1 {
-  font-size: 18px; /* título menor */
-  margin: 8px 0;
-}
-
-.card h2 {
-  font-size: 14px;
-  margin: 4px 0;
-}
-
-.card p {
-  font-size: 11px; /* texto reduzido */
-  margin: 2px 0;
-}
-
-/* ======== FORMULÁRIO DE LOGIN ======== */
-form {
-  background: var(--branco);
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  max-width: 400px;
-  width: 100%;
-  margin-top: 100px;
+/* EMPRESA */
+.empresa {
   text-align: center;
-}
-
-form input {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-form button {
-  width: 100%;
-  padding: 10px;
-  background: var(--vermelho-bdr);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-form button:hover {
-  background: #7a1014;
-  transform: scale(1.02);
-}
-
-#mensagem {
-  margin-top: 12px;
-  color: red;
+  color: #a4161a;
+  font-size: 18px;
   font-weight: bold;
+}
+
+/* SUBTITULO */
+.subtitulo {
+  text-align: center;
   font-size: 12px;
+  margin-bottom: 15px;
+  color: #555;
 }
 
-/* ======== LINK "ESQUECI A SENHA" ======== */
-.esqueci-senha {
-  display: block;
-  margin-top: 12px;
-  font-size: 12px;
-  color: var(--cinza-bdr);
-  text-decoration: none;
+/* PRODUTO */
+h1 {
+  text-align: center;
+  margin-bottom: 15px;
 }
 
-.esqueci-senha:hover {
-  color: var(--vermelho-bdr);
-  text-decoration: underline;
+/* TEXTO */
+p {
+  margin: 6px 0;
+  font-size: 14px;
 }
 
-/* ======== RESPONSIVIDADE ======== */
-@media (max-width: 480px) {
-  form {
-    padding: 20px;
-    margin-top: 80px;
-  }
-
-  form input, form button {
-    font-size: 12px;
-  }
-
-  .topo {
-    padding: 8px 15px;
-  }
-
-  .logo img {
-    height: 35px;
-  }
-}
-
-/* ======== IMPRESSÃO ======== */
-@media print {
-  header, aside, nav, footer, .menu-lateral, .topo {
-    display: none !important;
-  }
-
-  body {
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-  }
-
-  .card {
-    border: 1px solid #000;
-    background: #fff;
-    page-break-inside: avoid;
-  }
+#status {
+  font-weight: bold;
+  color: #0077b6;
 }
