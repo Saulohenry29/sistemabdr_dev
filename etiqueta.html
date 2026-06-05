@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Etiqueta - Sistema BDR</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #111; /* fundo escuro na tela */
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px 40px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 380px; /* mais largo */
+    }
+
+    .logo img {
+      height: 1.5cm; /* logo maior */
+      margin-bottom: 8px;
+    }
+
+    .empresa {
+      color: #a4161a;
+      font-weight: bold;
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .subtitulo {
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 22px; /* título maior */
+      margin: 12px 0;
+    }
+
+    p {
+      font-size: 14px; /* texto maior */
+      margin: 4px 0;
+      text-align: left;
+    }
+
+    b {
+      color: #000;
+    }
+
+    #status {
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        border: 1px solid #000;
+        background: #fff;
+        page-break-inside: avoid;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">
+      <img src="./imagens/logo.png" alt="Logo BDR">
+    </div>
+
+    <h2 class="empresa">BDR CONSTRUART</h2>
+    <p class="subtitulo">Controle de Patrimônio</p>
+
+    <h1 id="produto">Carregando...</h1>
+
+    <p><b>ID:</b> <span id="codigo"></span></p>
+    <p><b>NFe:</b> <span id="nfe"></span></p>
+    <p><b>Marca:</b> <span id="marca"></span></p>
+    <p><b>Modelo:</b> <span id="modelo"></span></p>
+    <p><b>Série:</b> <span id="serie"></span></p>
+    <p><b>Local:</b> <span id="local"></span></p>
+    <p><b>Data:</b> <span id="data"></span></p>
+    <p><b>Status:</b> <span id="status"></span></p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    const url = "https://docs.google.com/spreadsheets/d/1r1K8A6RwkGXBrHWLKc3otE5G3SWHBmFSXCWfNLDs7rQ/gviz/tq?tqx=out:json";
+
+    fetch(url)
+      .then(res => res.text())
+      .then(data => {
+        const json = JSON.parse(data.substring(47).slice(0, -2));
+        const rows = json.table.rows;
+
+        let encontrado = false;
+
+        rows.forEach(r => {
+          if (r.c[0] && r.c[0].v == id) {
+            encontrado = true;
+
+            document.getElementById("produto").innerText = r.c[3]?.v || "";
+            document.getElementById("codigo").innerText = r.c[0]?.v || "";
+            document.getElementById("nfe").innerText = r.c[2]?.v || "";
+            document.getElementById("marca").innerText = r.c[4]?.v || "";
+            document.getElementById("modelo").innerText = r.c[5]?.v || "";
+            document.getElementById("serie").innerText = r.c[6]?.v || "";
+            document.getElementById("local").innerText = r.c[9]?.v || "";
+            document.getElementById("status").innerText = r.c[12]?.v || "";
+
+            // Corrige data
+            if (r.c[1] && r.c[1].v) {
+              let valorData = r.c[1].f || r.c[1].v;
+              let dataGoogle = new Date(valorData);
+              if (!isNaN(dataGoogle)) {
+                const dia = String(dataGoogle.getDate()).padStart(2, '0');
+                const mes = String(dataGoogle.getMonth() + 1).padStart(2, '0');
+                const ano = dataGoogle.getFullYear();
+                document.getElementById("data").innerText = `${dia}/${mes}/${ano}`;
+              } else {
+                document.getElementById("data").innerText = valorData;
+              }
+            }
+          }
+        });
+
+        if (!encontrado) {
+          document.getElementById("produto").innerText = "Item não encontrado";
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        document.getElementById("produto").innerText = "Erro ao carregar dados";
+      });
+  </script>
+</body>
+</html>
