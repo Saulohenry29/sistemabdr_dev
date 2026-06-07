@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Localizações - Sistema BDR</title>
+
+<link rel="stylesheet" href="./CSS/estilo.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="./JS/supabaseClient.js"></script>
+
+<style>
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  margin-bottom:15px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+}
+
+th{
+  background:#f5f5f5;
+}
+
+.codigo{
+  font-weight:bold;
+  color:#0b5ed7;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="topo">
+
+<div class="logo">
+<img src="./imagens/logo.png" alt="Logo BDR">
+</div>
+
+<h2 style="margin-left:20px;">
+🗺 Sistema BDR - Localizações
+</h2>
+
+</header>
+
+<nav class="menu-lateral">
+
+<button onclick="location.href='entrada.html'">
+📥 Entrada
+</button>
+
+<button onclick="location.href='triagem.html'">
+📋 Triagem
+</button>
+
+<button onclick="location.href='estoque.html'">
+📦 Estoque
+</button>
+
+<button onclick="location.href='patrimonio.html'">
+🏷 Patrimônio
+</button>
+
+<button onclick="location.href='localizacoes.html'">
+🗺 Localizações
+</button>
+
+</nav>
+
+<div class="container">
+
+<div class="card">
+
+<h2>➕ Gerar Localizações</h2>
+
+<div class="form-grid">
+
+<input
+type="number"
+id="empresa_id"
+placeholder="ID Empresa"
+required
+
+>
+
+<input
+type="text"
+id="rua"
+placeholder="Rua (Ex: A)"
+required
+
+>
+
+<input
+type="number"
+id="prateleiras"
+placeholder="Qtd Prateleiras"
+required
+
+>
+
+<input
+type="number"
+id="colunas"
+placeholder="Qtd Colunas"
+required
+
+>
+
+<input
+type="number"
+id="niveis"
+placeholder="Qtd Níveis"
+required
+
+>
+
+</div>
+
+<button onclick="gerarLocalizacoes()">
+⚙️ Gerar Localizações
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>📍 Localizações Cadastradas</h2>
+
+<table id="tabelaLocalizacoes">
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Código</th>
+<th>Rua</th>
+<th>Prateleira</th>
+<th>Coluna</th>
+<th>Nível</th>
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const client = window.client;
+
+async function gerarLocalizacoes(){
+
+const empresa_id =
+Number(document.getElementById("empresa_id").value);
+
+const rua =
+document.getElementById("rua").value.trim().toUpperCase();
+
+const prateleiras =
+Number(document.getElementById("prateleiras").value);
+
+const colunas =
+Number(document.getElementById("colunas").value);
+
+const niveis =
+Number(document.getElementById("niveis").value);
+
+if(
+!empresa_id ||
+!rua ||
+!prateleiras ||
+!colunas ||
+!niveis
+){
+alert("Preencha todos os campos.");
+return;
+}
+
+let registros = [];
+
+for(let p=1;p<=prateleiras;p++){
+
+for(let c=1;c<=colunas;c++){
+
+for(let n=1;n<=niveis;n++){
+
+const codigo =
+`${rua}-${String(p).padStart(2,"0")}-${c}-${n}`;
+
+registros.push({
+
+empresa_id,
+rua,
+
+prateleira:
+String(p).padStart(2,"0"),
+
+coluna:
+String(c),
+
+nivel:
+String(n),
+
+codigo
+
+});
+
+}
+
+}
+
+}
+
+const { error } = await client
+.from("localizacoes")
+.insert(registros);
+
+if(error){
+
+alert("Erro: " + error.message);
+return;
+
+}
+
+alert(
+`${registros.length} localizações criadas com sucesso!`
+);
+
+carregar();
+
+}
+
+async function carregar(){
+
+const { data, error } = await client
+.from("localizacoes")
+.select("*")
+.order("codigo");
+
+if(error){
+
+console.error(error);
+return;
+
+}
+
+const tbody =
+document.querySelector("#tabelaLocalizacoes tbody");
+
+tbody.innerHTML = "";
+
+(data || []).forEach(item=>{
+
+const tr = document.createElement("tr");
+
+tr.innerHTML = `
+<td>${item.id}</td>
+<td class="codigo">${item.codigo}</td>
+<td>${item.rua}</td>
+<td>${item.prateleira}</td>
+<td>${item.coluna}</td>
+<td>${item.nivel}</td>
+`;
+
+tbody.appendChild(tr);
+
+});
+
+}
+
+carregar();
+
+</script>
+
+</body>
+</html>

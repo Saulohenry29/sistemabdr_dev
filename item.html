@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Consulta Patrimônio - BDR</title>
+
+<style>
+:root {
+  --vermelho-bdr: #a4161a;
+  --cinza: #2c3e50;
+  --fundo: #f4f6f9;
+}
+
+body {
+  font-family: Arial;
+  background: var(--fundo);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 700px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+  color: var(--vermelho-bdr);
+  margin-bottom: 10px;
+}
+
+.info {
+  margin: 5px 0;
+  font-size: 15px;
+}
+
+.label {
+  font-weight: bold;
+}
+
+.status {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.local {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+/* BOTÕES */
+.botoes {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+}
+
+.estoque { background: #27ae60; }
+.manutencao { background: #f39c12; }
+.mover { background: #2980b9; }
+.cancelar { background: #7f8c8d; }
+
+button:hover {
+  opacity: 0.85;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .container {
+    margin: 10px;
+  }
+
+  .botoes {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1 id="produto">Carregando...</h1>
+
+  <div class="info"><span class="label">Código:</span> <span id="codigo"></span></div>
+  <div class="info"><span class="label">Marca:</span> <span id="marca"></span></div>
+  <div class="info"><span class="label">Modelo:</span> <span id="modelo"></span></div>
+  <div class="info"><span class="label">Série:</span> <span id="serie"></span></div>
+  <div class="info"><span class="label">Status:</span> <span id="status" class="status"></span></div>
+  <div class="info"><span class="label">Localização:</span> <span id="local" class="local"></span></div>
+
+  <div class="botoes">
+    <button class="estoque" onclick="mover('ESTOQUE','CD')">📦 Estoque</button>
+    <button class="manutencao" onclick="mover('MANUTENCAO','OFICINA')">🔧 Manutenção</button>
+    <button class="mover" onclick="mover('MOVIMENTO','OBRA')">🚚 Mover</button>
+    <button class="cancelar" onclick="location.reload()">🔄 Atualizar</button>
+  </div>
+
+</div>
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/movimentacao.js"></script>
+
+<script>
+
+const id = new URLSearchParams(window.location.search).get("id");
+
+async function carregar() {
+
+  if (!id) {
+    document.getElementById("produto").innerText = "QR inválido";
+    return;
+  }
+
+  const { data, error } = await client
+    .from("patrimonio")
+    .select("*")
+    .eq("codigo_qr", id)
+    .maybeSingle();
+
+  if (!data || error) {
+    document.getElementById("produto").innerText = "Item não encontrado";
+    return;
+  }
+
+  document.getElementById("produto").innerText = data.nome_bem || "-";
+  document.getElementById("codigo").innerText = data.codigo_qr || "-";
+  document.getElementById("marca").innerText = data.marca || "-";
+  document.getElementById("modelo").innerText = data.modelo || "-";
+  document.getElementById("serie").innerText = data.numero_serie || "-";
+  document.getElementById("status").innerText = data.status || "-";
+  document.getElementById("local").innerText = data.localizacao || "-";
+}
+
+carregar();
+
+/* FUNÇÃO DE MOVIMENTAÇÃO */
+async function mover(status, local) {
+  await moverPatrimonio(id, status, local);
+  carregar(); // atualiza tela depois da mudança
+}
+
+</script>
+
+</body>
+</html>

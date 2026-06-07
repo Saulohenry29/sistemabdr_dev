@@ -2,40 +2,264 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Patrimônio</title>
-<link rel="stylesheet" href="./CSS/estilo.css">
+<title>BDR ERP Patrimônio</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0b1220;
+  color: white;
+}
+
+/* HEADER FIXO */
+header {
+  background: linear-gradient(90deg,#a4161a,#2c3e50);
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* LAYOUT */
+.layout {
+  display: flex;
+}
+
+/* MENU */
+.sidebar {
+  width: 220px;
+  background: #111b2e;
+  min-height: 100vh;
+  padding: 15px;
+}
+
+.sidebar h3 {
+  color: #8ecae6;
+}
+
+.menu-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #1c2b3a;
+  color: white;
+  text-align: left;
+}
+
+.menu-btn:hover {
+  background: #2c3e50;
+}
+
+/* CONTEÚDO */
+.content {
+  flex: 1;
+}
+
+/* FILTROS */
+.filtros {
+  display: flex;
+  gap: 10px;
+}
+
+input, select {
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* ESPAÇO DO CONTEÚDO */
+.container {
+  padding: 20px;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 15px;
+}
+
+/* CARD */
+.card {
+  background: #111b2e;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+/* BADGE */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.ok { background: #2a9d8f; }
+.warn { background: #ffb703; color: black; }
+.crit { background: #ff4d4d; }
+
+/* BOTÕES */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.status-select {
+  width: 130px;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+}
+
+.print {
+  background: #8ecae6;
+  color: black;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+</style>
 </head>
+
 <body>
-<header class="topo">
-  <div class="logo">
-    <img src="./imagens/logo.png" alt="BDR Construarl">
-  </div>
+
+<header>
+📦 BDR ERP - Patrimônio Inteligente
+
+<div class="filtros">
+  <input id="busca" placeholder="Buscar..." oninput="render()">
+
+  <select id="status" onchange="render()">
+    <option value="">Todos</option>
+    <option value="ESTOQUE">ESTOQUE</option>
+    <option value="OBRA">OBRA</option>
+    <option value="MANUTENCAO">MANUTENCAO</option>
+    <option value="EM_USO">EM_USO</option>
+    <option value="BAIXADO">BAIXADO</option>
+  </select>
+</div>
 </header>
 
-<aside class="menu-lateral">
-  <button onclick="window.location.href='index.html'">🏠 Menu</button>
-  <button onclick="window.location.href='estoque.html'">📦 Estoque</button>
-  <button onclick="window.location.href='patrimonio.html'">🏛 Patrimônio</button>
-</aside>
+<div class="layout">
 
-<div class="container">
-  <h1>Controle de Patrimônio</h1>
-  <table id="tabelaPatrimonio">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Produto</th>
-        <th>Marca</th>
-        <th>Modelo</th>
-        <th>Local</th>
-        <th>Status</th>
-        <th>Etiqueta</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <!-- MENU -->
+  <div class="sidebar">
+    <h3>MENU</h3>
+
+    <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+    <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+    <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+    <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+
+    <div class="container">
+
+      <div class="grid" id="lista"></div>
+
+    </div>
+
+  </div>
+
 </div>
 
-<script src="./js/patrimonio.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/bdrCore.js"></script>
+
+<script>
+
+let dados = [];
+
+async function carregar() {
+  const { data } = await client.from("patrimonio").select("*");
+  dados = data || [];
+  render();
+}
+
+/* NAVEGAÇÃO MENU */
+function ir(pagina) {
+  window.location.href = pagina;
+}
+
+function render() {
+
+  const busca = (document.getElementById("busca").value || "").toLowerCase();
+  const status = document.getElementById("status").value;
+
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  dados
+    .filter(d => !status || d.status === status)
+    .filter(d => (d.nome_bem || "").toLowerCase().includes(busca))
+    .forEach(d => {
+
+      let cor = "ok";
+      if (d.status === "MANUTENCAO") cor = "crit";
+      if (d.status === "OBRA") cor = "warn";
+
+      lista.innerHTML += `
+        <div class="card">
+
+          <h3>${d.nome_bem || "-"}</h3>
+
+          <span class="badge ${cor}">${d.status || "-"}</span>
+
+          <p>ID: ${d.codigo_qr || "-"}</p>
+          <p>Local: ${d.localizacao || "-"}</p>
+
+          <div class="actions">
+
+            <select class="status-select"
+              onchange="registrarMovimentacao({
+                codigo_qr: '${d.codigo_qr}',
+                novoStatus: this.value,
+                novaLocalizacao: '${d.localizacao || "CD"}',
+                tipoEvento: 'MOVIMENTACAO'
+              })">
+
+              <option value="">Status</option>
+              <option value="ESTOQUE">ESTOQUE</option>
+              <option value="OBRA">OBRA</option>
+              <option value="MANUTENCAO">MANUTENCAO</option>
+              <option value="EM_USO">EM_USO</option>
+              <option value="BAIXADO">BAIXADO</option>
+
+            </select>
+
+            <button class="print"
+              onclick="abrirEtiqueta('${d.codigo_qr}')">
+              🖨 Etiqueta
+            </button>
+
+          </div>
+
+        </div>
+      `;
+    });
+}
+
+function abrirEtiqueta(codigo) {
+  window.open(`./etiqueta-impressao.html?id=${codigo}`, "_blank");
+}
+
+carregar();
+
+</script>
+
 </body>
 </html>

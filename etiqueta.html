@@ -2,114 +2,164 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Etiqueta</title>
+<title>Etiqueta Patrimônio</title>
 
 <style>
-body {
-margin: 0;
-font-family: Arial;
-display: flex;
-justify-content: center;
-align-items: center;
-height: 100vh;
+body{
+  font-family: Arial;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
 }
 
-/* ETIQUETA */
-.etiqueta {
-width: 250px;
-height: 120px;
-border: 1px solid #000;
-border-radius: 10px;
-padding: 8px;
-box-sizing: border-box;
-text-align: center;
+/* 🔥 CENTRALIZAÇÃO FORTE */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
-/* LOGO */
-.logo img {
-width: 100px;
+/* CARD DA ETIQUETA */
+.card{
+  background:#fff;
+  width:380px;
+  padding:25px;
+  border-radius:10px;
+  text-align:center;
 }
 
-/* TITULO */
-.titulo {
-font-size: 10px;
-font-weight: bold;
-margin-top: 2px;
+/* LOGO CENTRALIZADA */
+.logo {
+  display:flex;
+  justify-content:center;
+  margin-bottom:5px;
 }
 
-/* CONTAINER */
-.conteudo {
-display: flex;
-align-items: center;
-justify-content: space-between;
+.logo img{
+  height:45px;
 }
 
-/* QR */
-.qr img {
-width: 60px;
+/* TÍTULO */
+.titulo{
+  text-align:center;
+  color:#a4161a;
+  font-weight:bold;
+  margin:5px 0;
 }
 
-/* CODIGO */
-.codigo {
-font-size: 14px;
-font-weight: bold;
-margin-top: 5px;
+.subtitulo{
+  text-align:center;
+  font-size:13px;
+  margin-bottom:15px;
 }
 
-/* ESCONDER BOTÃO NA IMPRESSÃO */
-@media print {
-button {
-display: none;
+/* TEXTO */
+h1{
+  font-size:20px;
+  margin:10px 0;
 }
+
+p{
+  font-size:14px;
+  margin:4px 0;
+  text-align:left;
+}
+
+/* STATUS */
+#status{
+  font-weight:bold;
+  color:#007bff;
+}
+
+/* LOCALIZAÇÃO */
+#localizacao{
+  font-weight:bold;
+  color:#2c3e50;
+}
+
+/* IMPRESSÃO */
+@media print{
+  body{
+    background:#fff;
+  }
+
+  .card{
+    box-shadow:none;
+    border:none;
+  }
 }
 </style>
-
 </head>
 
 <body>
 
-<div>
+<div class="wrapper">
 
-<div class="etiqueta">
+  <div class="card">
 
-<div class="logo">
-<img src="./imagens/logo.png">
+    <div class="logo">
+      <img src="./imagens/logo.png">
+    </div>
+
+    <h2 class="titulo">BDR CONSTRUART</h2>
+    <p class="subtitulo">Controle de Patrimônio</p>
+
+    <h1 id="produto">Carregando...</h1>
+
+    <p><b>ID:</b> <span id="codigo"></span></p>
+    <p><b>NFE:</b> <span id="nfe"></span></p>
+    <p><b>Marca:</b> <span id="marca"></span></p>
+    <p><b>Modelo:</b> <span id="modelo"></span></p>
+    <p><b>Série:</b> <span id="serie"></span></p>
+    <p><b>Data:</b> <span id="data"></span></p>
+
+    <p><b>Status:</b> <span id="status"></span></p>
+    <p><b>Localização:</b> <span id="localizacao"></span></p>
+
+  </div>
+
 </div>
 
-<div class="titulo">PATRIMÔNIO</div>
-
-<div class="conteudo">
-<div class="qr">
-<img id="qr">
-</div>
-</div>
-
-<div class="codigo" id="codigo"></div>
-
-</div>
-
-<div style="text-align:center;margin-top:10px;">
-<button onclick="window.print()">Imprimir</button>
-</div>
-
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
 
 <script>
+const id = new URLSearchParams(window.location.search).get("id");
 
-// PEGAR ID
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+async function carregar() {
 
-// LINK DO SISTEMA
-const link = "https://saulohenry29.github.io/sistema_web_BDR/consulta.html?id=" + id;
+  if (!id) {
+    document.getElementById("produto").innerText = "ID não informado";
+    return;
+  }
 
-// GERAR QR
-document.getElementById("qr").src =
-"https://quickchart.io/qr?text=" + link;
+  const { data, error } = await client
+    .from("patrimonio")
+    .select("*")
+    .eq("codigo_qr", id)
+    .maybeSingle();
 
-// MOSTRAR CODIGO
-document.getElementById("codigo").innerText = id;
+  if (!data || error) {
+    document.getElementById("produto").innerText = "Item não encontrado";
+    return;
+  }
 
+  document.getElementById("produto").innerText = data.nome_bem || "-";
+  document.getElementById("codigo").innerText = data.codigo_qr || "-";
+  document.getElementById("marca").innerText = data.marca || "-";
+  document.getElementById("modelo").innerText = data.modelo || "-";
+  document.getElementById("serie").innerText = data.numero_serie || "-";
+  document.getElementById("data").innerText = data.data_compra || "-";
+  document.getElementById("status").innerText = data.status || "-";
+  document.getElementById("nfe").innerText = data.numero_nf || "-";
+  document.getElementById("localizacao").innerText = data.localizacao || "-";
+}
+
+carregar();
 </script>
 
 </body>

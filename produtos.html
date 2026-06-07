@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Produtos - Sistema BDR</title>
+
+<link rel="stylesheet" href="./CSS/estilo.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./JS/supabaseClient.js"></script>
+</head>
+
+<body>
+
+<header class="topo">
+  <h2>📦 Cadastro de Produtos</h2>
+</header>
+
+<div class="container">
+
+  <div class="card">
+
+    <h2>Novo Produto</h2>
+
+    <form id="formProduto">
+
+      <input type="text" id="codigo_barras" placeholder="Código de Barras">
+
+      <input type="text" id="descricao" placeholder="Descrição" required>
+
+      <input type="text" id="marca" placeholder="Marca">
+
+      <input type="text" id="modelo" placeholder="Modelo">
+
+      <input type="text" id="ncm" placeholder="NCM">
+
+      <input type="text" id="unidade" placeholder="Unidade">
+
+      <input type="text" id="categoria" placeholder="Categoria">
+
+      <input type="number"
+             step="0.01"
+             id="valor_referencia"
+             placeholder="Valor Referência">
+
+      <label>
+        <input type="checkbox" id="exige_patrimonio">
+        Exige Patrimônio Automático
+      </label>
+
+      <textarea
+        id="observacoes"
+        placeholder="Observações"></textarea>
+
+      <button type="submit">
+        💾 Salvar Produto
+      </button>
+
+    </form>
+
+  </div>
+
+  <div class="card">
+
+    <h2>Produtos Cadastrados</h2>
+
+    <table id="tabelaProdutos">
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Marca</th>
+          <th>Categoria</th>
+          <th>Valor</th>
+          <th>Patrimônio</th>
+        </tr>
+      </thead>
+
+      <tbody></tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+const client = window.client;
+
+const form = document.getElementById("formProduto");
+
+form.addEventListener("submit", async (e) => {
+
+  e.preventDefault();
+
+  const produto = {
+
+    codigo_barras:
+      document.getElementById("codigo_barras").value,
+
+    descricao:
+      document.getElementById("descricao").value,
+
+    marca:
+      document.getElementById("marca").value,
+
+    modelo:
+      document.getElementById("modelo").value,
+
+    ncm:
+      document.getElementById("ncm").value,
+
+    unidade:
+      document.getElementById("unidade").value,
+
+    categoria:
+      document.getElementById("categoria").value,
+
+    valor_referencia:
+      document.getElementById("valor_referencia").value || 0,
+
+    exige_patrimonio:
+      document.getElementById("exige_patrimonio").checked,
+
+    observacoes:
+      document.getElementById("observacoes").value
+
+  };
+
+  const { error } = await client
+    .from("produtos")
+    .insert([produto]);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  alert("Produto cadastrado!");
+
+  form.reset();
+
+  carregarProdutos();
+
+});
+
+async function carregarProdutos(){
+
+  const { data, error } = await client
+    .from("produtos")
+    .select("*")
+    .order("id",{ascending:false});
+
+  if(error){
+    console.log(error);
+    return;
+  }
+
+  const tbody =
+    document.querySelector("#tabelaProdutos tbody");
+
+  tbody.innerHTML = "";
+
+  data.forEach(produto => {
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${produto.id}</td>
+      <td>${produto.codigo_barras || ""}</td>
+      <td>${produto.descricao || ""}</td>
+      <td>${produto.marca || ""}</td>
+      <td>${produto.categoria || ""}</td>
+      <td>R$ ${produto.valor_referencia || 0}</td>
+      <td>
+        ${produto.exige_patrimonio ? "SIM" : "NÃO"}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+
+  });
+
+}
+
+carregarProdutos();
+
+});
+</script>
+
+</body>
+</html>

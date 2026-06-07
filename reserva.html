@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Reservas - Sistema BDR</title>
+  <link rel="stylesheet" href="./CSS/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="logo"><img src="./imagens/logo.png" alt="Logo BDR"></div>
+    <h2 style="margin-left:20px; color:var(--vermelho-bdr);">Sistema BDR</h2>
+  </header>
+
+  <nav class="menu-lateral">
+    <button onclick="window.location.href='consulta.html'">🔍 Consulta</button>
+    <button onclick="window.location.href='estoque.html'">📦 Estoque</button>
+    <button onclick="window.location.href='triagem.html'">📋 Triagem</button>
+    <button onclick="window.location.href='reservas.html'">🛒 Reservas</button>
+  </nav>
+
+  <div class="container">
+    <h1>🛒 Carrinho de Reservas</h1>
+    <div class="card">
+      <table id="tabelaReservas">
+        <thead>
+          <tr>
+            <th>ID</th><th>Produto</th><th>Qtd</th><th>Empresa</th><th>Usuário</th><th>Data</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://ytalegphxrntlomkitlbc.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
+
+    async function carregarReservas() {
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/reservas?select=*`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      });
+      const dados = await resp.json();
+      const tbody = document.querySelector("#tabelaReservas tbody");
+      tbody.innerHTML = "";
+      dados.forEach(reserva => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${reserva.id}</td><td>${reserva.produto || "-"}</td><td>${reserva.qtd}</td>
+          <td>${reserva.empresa_id}</td><td>${reserva.usuario}</td><td>${reserva.data_reserva}</td><td>${reserva.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    carregarReservas();
+  </script>
+</body>
+</html>

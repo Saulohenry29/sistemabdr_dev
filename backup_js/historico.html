@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Movimentação - BDR</title>
+<link rel="stylesheet" href="./CSS/estilo.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="logo">
+    <img src="./imagens/logo.png" alt="BDR Construarl">
+  </div>
+</header>
+
+<aside class="menu-lateral">
+  <button onclick="window.location.href='index.html'">🏠 Menu</button>
+  <button onclick="window.location.href='consulta.html'">🔍 Consulta</button>
+  <button onclick="window.location.href='estoque.html'">📦 Estoque</button>
+  <button onclick="window.location.href='triagem.html'">📋 Triagem</button>
+  <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+  <button onclick="window.location.href='historico.html'">📜 Histórico</button>
+</aside>
+
+<div class="container">
+  <h1>Histórico de Movimentação</h1>
+  <table id="tabelaHistorico">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Produto</th>
+        <th>Movimentação</th>
+        <th>Destino</th>
+        <th>Status</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script src="./js/historico.js"></script>
+
+</body>
+</html>

@@ -1,107 +1,97 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BDR Construart - Patrimônio</title>
+window.onload = async function () {
 
-<link rel="stylesheet" href="./css/estilo.css">
+    const resultado = document.getElementById("resultado");
 
-</head>
+    const id = new URLSearchParams(window.location.search).get("id");
 
-<body>
+    console.log("ID recebido:", id);
 
-<div class="card">
+    // =========================
+    // MODO TESTE (SEM ID)
+    // =========================
+    if (!id) {
 
-<div class="logo">
-<img src="./imagens/logo.png" alt="Logo">
-</div>
+        resultado.innerHTML = `
+            <h3>🧪 MODO TESTE (SEM QR)</h3>
 
-<h2 class="empresa">BDR CONSTRUART</h2>
-<p class="subtitulo">Controle de Patrimônio</p>
+            <hr>
 
-<h1 id="produto">Carregando...</h1>
+            <h4>📦 ESTOQUE FICTÍCIO</h4>
+            <p><b>Produto:</b> Capacete MSA</p>
+            <p><b>Quantidade:</b> 100</p>
+            <p><b>Lote:</b> LOT-2026-00001</p>
+            <p><b>Código:</b> EST-TESTE-001</p>
 
-<p><b>ID:</b> <span id="codigo"></span></p>
-<p><b>Marca:</b> <span id="marca"></span></p>
-<p><b>Modelo:</b> <span id="modelo"></span></p>
-<p><b>Série:</b> <span id="serie"></span></p>
+            <hr>
 
-<p><b>Local:</b> <span id="local"></span></p>
-<p><b>Data:</b> <span id="data"></span></p>
-<p><b>Valor:</b> <span id="valor"></span></p>
-<p><b>Status:</b> <span id="status"></span></p>
+            <h4>🏷️ PATRIMÔNIO FICTÍCIO</h4>
+            <p><b>Produto:</b> Notebook Dell</p>
+            <p><b>Marca:</b> Dell</p>
+            <p><b>Código:</b> PAT-TESTE-001</p>
 
-</div>
+            <br>
 
-<script>
+            <button onclick="alert('Modo teste - sem impressão real')">
+                🖨 Simular Impressão
+            </button>
+        `;
 
-// ✅ pegar ID
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+        return;
+    }
 
-// ✅ URL da planilha
-const url = "https://docs.google.com/spreadsheets/d/1r1K8A6RwkGXBrHWLKc3otE5G3SWHBmFSXCWfNLDs7rQ/gviz/tq?tqx=out:json";
+    // =========================
+    // SE TEM ID → BUSCA REAL
+    // =========================
 
-fetch(url)
-.then(res => res.text())
-.then(data => {
+    try {
 
-const json = JSON.parse(data.substring(47).slice(0, -2));
-const rows = json.table.rows;
+        const { data: estoque } = await client
+            .from("estoque")
+            .select("*, produtos(descricao)")
+            .eq("codigo_qr", id)
+            .maybeSingle();
 
-let encontrado = false;
+        if (estoque) {
 
-rows.forEach(r => {
+            resultado.innerHTML = `
+                <h3>📦 ESTOQUE</h3>
+                <p><b>Produto:</b> ${estoque.produtos?.descricao || "-"}</p>
+                <p><b>Quantidade:</b> ${estoque.quantidade}</p>
+                <p><b>Lote:</b> ${estoque.lote || "-"}</p>
+                <p><b>Código:</b> ${estoque.codigo_qr}</p>
+            `;
 
-if(r.c[0] && r.c[0].v == id) {
+            return;
+        }
 
-encontrado = true;
+        const { data: pat } = await client
+            .from("patrimonio")
+            .select("*")
+            .eq("codigo_qr", id)
+            .maybeSingle();
 
-document.getElementById("produto").innerText = r.c[3]?.v || "";
-document.getElementById("codigo").innerText = r.c[0]?.v || "";
-document.getElementById("marca").innerText = r.c[4]?.v || "";
-document.getElementById("modelo").innerText = r.c[5]?.v || "";
-document.getElementById("serie").innerText = r.c[6]?.v || "";
-document.getElementById("local").innerText = r.c[9]?.v || "";
-document.getElementById("valor").innerText = r.c[11]?.v || "";
-document.getElementById("status").innerText = r.c[12]?.v || "";
+        if (pat) {
 
-// ✅ DATA CORRIGIDA
-if (r.c[1] && r.c[1].v) {
+            resultado.innerHTML = `
+                <h3>🏷️ PATRIMÔNIO</h3>
+                <p><b>Produto:</b> ${pat.nome_bem}</p>
+                <p><b>Marca:</b> ${pat.marca || "-"}</p>
+                <p><b>Código:</b> ${pat.codigo_qr}</p>
+            `;
 
-let dataFormatada = "";
+            return;
+        }
 
-if (typeof r.c[1].v === "string" && r.c[1].v.includes("Date")) {
-const partes = r.c[1].v.replace("Date(", "").replace(")", "").split(",");
-const dia = partes[2].padStart(2,'0');
-const mes = (parseInt(partes[1]) + 1).toString().padStart(2,'0');
-const ano = partes[0];
+        resultado.innerHTML = `
+            ❌ QR não encontrado<br>
+            <small>${id}</small>
+        `;
 
-dataFormatada = dia + "/" + mes + "/" + ano;
-} else {
-dataFormatada = r.c[1].v;
-}
+    } catch (err) {
 
-document.getElementById("data").innerText = dataFormatada;
-}
+        console.error(err);
 
-}
+        resultado.innerHTML = "❌ Erro na consulta";
 
-});
-
-// ✅ se não encontrar
-if (!encontrado) {
-document.getElementById("produto").innerText = "Item não encontrado";
-}
-
-})
-.catch(error => {
-console.error(error);
-document.getElementById("produto").innerText = "Erro ao carregar dados";
-});
-
-</script>
-
-</body>
-</html>
+    }
+};

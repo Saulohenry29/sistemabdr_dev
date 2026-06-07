@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Sistema BDR</title>
+  <link rel="stylesheet" href="CSS/estilo.css">
+</head>
+<body>
+  <!-- Cabeçalho -->
+  <header class="topo">
+    <div class="logo">
+      <img src="imagens/logo.png" alt="Logo BDR">
+    </div>
+    <h2 style="margin-left:20px; color:var(--vermelho-bdr);">Sistema BDR</h2>
+  </header>
+
+  <!-- Formulário central -->
+  <div class="login-container">
+    <form id="formLogin">
+      <h1>Acesso ao Sistema</h1>
+      <input type="text" id="username" placeholder="Usuário" required>
+      <input type="password" id="senha" placeholder="Senha" required>
+      <button type="submit">Entrar</button>
+      <p id="mensagem"></p>
+      <a href="#" class="esqueci-senha" 
+         onclick="alert('Solicitação enviada ao administrador. Aguarde a redefinição da senha.')">
+         Esqueci a senha
+      </a>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("formLogin").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const senha = document.getElementById("senha").value;
+
+      try {
+        const resp = await fetch("http://localhost:3000/login", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ username, senha })
+        });
+
+        const data = await resp.json();
+
+        if (data.success) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("role", data.role);
+
+          if (data.role === "admin") {
+            window.location.href = "patrimonio.html";
+          } else {
+            window.location.href = "dashboard.html";
+          }
+        } else {
+          document.getElementById("mensagem").textContent = data.message;
+        }
+      } catch (error) {
+        document.getElementById("mensagem").textContent = "Erro de conexão com servidor!";
+      }
+    });
+  </script>
+</body>
+</html>

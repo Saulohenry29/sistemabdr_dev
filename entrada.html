@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Entrada 2.0</title>
+
+<link rel="stylesheet" href="CSS/estilo.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="JS/supabaseClient.js"></script>
+<script defer src="JS/entrada.js"></script>
+</head>
+
+<body>
+
+<header class="topo">
+    <div class="logo">
+        <h2>BDR - Entrada de Materiais</h2>
+    </div>
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Nova Entrada</h2>
+
+<label>Empresa</label>
+<select id="empresa"></select>
+
+<label>Número NF</label>
+<input type="text" id="numero_nf">
+
+<label>Fornecedor</label>
+<input type="text" id="fornecedor">
+
+<label>Responsável</label>
+<input type="text" id="responsavel">
+
+<label>Chave NFe</label>
+<input type="text" id="chave_nfe">
+
+<label>Observação</label>
+<textarea id="observacao"></textarea>
+
+<hr>
+
+<h3>Itens da Nota</h3>
+
+<table width="100%">
+<thead>
+<tr>
+    <th>Produto</th>
+    <th>Qtd</th>
+    <th>Valor Unit.</th>
+    <th>Estado</th>
+    <th>Lote</th>
+    <th>Validade</th>
+    <th>Total</th>
+    <th>Ação</th>
+</tr>
+</thead>
+
+<tbody id="itensBody"></tbody>
+</table>
+
+<br>
+
+<button onclick="adicionarLinha()">➕ Adicionar Item</button>
+
+<h3 id="totalGeral">Total NF: R$ 0,00</h3>
+
+<br>
+
+<button onclick="salvarEntrada()">💾 Salvar Entrada</button>
+
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>TRIAGEM IA 9.1 - BDR ERP</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0b1220;
+  color: white;
+}
+
+.layout { display: flex; }
+
+.sidebar {
+  width: 220px;
+  background: #111b2e;
+  min-height: 100vh;
+  padding: 15px;
+}
+
+.menu-btn {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: #1c2b3a;
+  color: white;
+  cursor: pointer;
+}
+
+.menu-btn:hover { background: #2c3e50; }
+
+.content {
+  flex: 1;
+  padding: 20px;
+}
+
+.card {
+  background: #111b2e;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 700px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #a4161a;
+  color: white;
+  width: 100%;
+}
+
+button:hover { background: #7a1014; }
+
+.hidden { display:none; }
+
+header {
+  background: linear-gradient(90deg,#a4161a,#2c3e50);
+  padding: 15px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>🧠 TRIAGEM IA 9.1 - ERP INTELIGENTE</header>
+
+<div class="layout">
+
+<div class="sidebar">
+  <button class="menu-btn" onclick="location.href='dashboard.html'">📊 Dashboard</button>
+  <button class="menu-btn" onclick="location.href='patrimonio.html'">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="location.href='triagem.html'">🧠 Triagem</button>
+</div>
+
+<div class="content">
+
+<div class="card">
+
+<h3>Cadastro Inteligente ERP</h3>
+
+<label>Nome do item</label>
+<input id="nome">
+
+<label>Tipo de ativo</label>
+<select id="tipo" onchange="verificarTipo(); atualizarHistorico(this.value)">
+  <option value="">Selecione</option>
+  <option value="VEICULO">Veículo</option>
+  <option value="MAQUINA">Máquina</option>
+  <option value="FERRAMENTA">Ferramenta</option>
+  <option value="ELETRONICO">Eletrônico</option>
+  <option value="TI">TI</option>
+  <option value="OUTRO">Outro</option>
+</select>
+
+<select id="tipoHistorico" onchange="preencherTipo()"></select>
+
+<div id="campoPlaca" class="hidden">
+  <label>Placa</label>
+  <input id="placa">
+</div>
+
+<label>Marca</label>
+<input id="marca">
+
+<label>Modelo</label>
+<input id="modelo">
+
+<label>Número de série</label>
+<input id="serial">
+
+<label>Localização</label>
+<input id="local" value="CD">
+
+<label>Observação</label>
+<textarea id="obs"></textarea>
+
+<button onclick="salvar()">💾 SALVAR TRIAGEM</button>
+
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./JS/supabaseClient.js"></script>
+
+<script>
+
+let tiposUsados = JSON.parse(localStorage.getItem("tipos_usados") || "[]");
+
+window.onload = carregarHistorico;
+
+function verificarTipo() {
+  const tipo = document.getElementById("tipo").value;
+  document.getElementById("campoPlaca").classList.toggle("hidden", tipo !== "VEICULO");
+}
+
+function atualizarHistorico(tipo) {
+  if (!tipo) return;
+
+  if (!tiposUsados.includes(tipo)) {
+    tiposUsados.push(tipo);
+    localStorage.setItem("tipos_usados", JSON.stringify(tiposUsados));
+  }
+
+  carregarHistorico();
+}
+
+function carregarHistorico() {
+  const select = document.getElementById("tipoHistorico");
+  select.innerHTML = `<option value="">Histórico</option>`;
+  tiposUsados.forEach(t => {
+    select.innerHTML += `<option value="${t}">${t}</option>`;
+  });
+}
+
+function preencherTipo() {
+  const val = document.getElementById("tipoHistorico").value;
+  if (val) document.getElementById("tipo").value = val;
+  verificarTipo();
+}
+
+function gerarCodigo() {
+  return "BDR-" + Math.floor(Math.random() * 999999);
+}
+
+async function salvar() {
+
+  const nome = nome.value;
+  const tipo = tipo.value;
+
+  if (!nome || !tipo) {
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
+  const payload = {
+    nome_bem: nome,
+    tipo_item: tipo,
+    placa: tipo === "VEICULO" ? placa.value : null,
+    marca: marca.value || null,
+    modelo: modelo.value || null,
+    numero_serie: serial.value || null,
+    localizacao: local.value || "CD",
+    observacao: obs.value || null,
+    codigo_qr: gerarCodigo(),
+    status: "ESTOQUE",
+    created_at: new Date().toISOString()
+  };
+
+  const { error } = await client.from("patrimonio").insert([payload]);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar triagem");
+    return;
+  }
+
+  alert("Triagem salva!");
+  location.href = "patrimonio.html";
+}
+
+</script>
+
+</body>
+</html>

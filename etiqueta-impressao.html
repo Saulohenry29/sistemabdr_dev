@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Etiqueta Patrimônio BDR</title>
+
+<style>
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
+}
+
+/* ETIQUETA */
+.etiqueta {
+  width: 5.5cm;
+  height: 3.5cm;
+  border: 1px solid #000;
+  border-radius: 6px;
+  padding: 5px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* TOPO */
+.linha-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.logo img {
+  height: 1.2cm;
+}
+
+.qr img {
+  height: 1.2cm;
+  width: 1.2cm;
+  margin-top: 2mm;
+}
+
+/* CONTEÚDO NOVO (SIMPLIFICADO) */
+.conteudo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+/* LADO ESQUERDO */
+.info-esquerda {
+  font-size: 11px;
+  text-align: left;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* LADO DIREITO */
+.info-direita {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: right;
+}
+
+/* IMPRESSÃO */
+@media print {
+  body {
+    margin: 0;
+    background: #fff;
+  }
+
+  .etiqueta {
+    border: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="etiqueta">
+
+  <!-- TOPO -->
+  <div class="linha-topo">
+    <div class="logo">
+      <img src="./imagens/logo.png" alt="Logo BDR">
+    </div>
+
+    <div class="qr">
+      <img id="qr" src="">
+    </div>
+  </div>
+
+  <!-- CONTEÚDO LIMPO -->
+  <div class="conteudo">
+
+    <div class="info-esquerda">
+      <div id="empresa">ID: ---</div>
+    </div>
+
+    <div class="info-direita">
+      <div id="patrimonio">PAT-00000</div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+async function carregar() {
+
+  if (!id) return;
+
+  const { data, error } = await client
+    .from("patrimonio")
+    .select("*")
+    .eq("codigo_qr", id)
+    .single();
+
+  if (error || !data) return;
+
+  // 🔥 EMPRESA (ID ou código)
+  document.getElementById("empresa").innerText =
+    "EMPRESA: " + (data.codigo_empresa || data.empresa_id || "000");
+
+  // 🔥 PATRIMÔNIO LIMPO
+  document.getElementById("patrimonio").innerText =
+    "PAT-" + formatarCodigo(data.codigo_qr);
+
+  // 🔥 QR CODE
+  const baseURL = window.location.href.split("?")[0];
+
+  document.getElementById("qr").src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${baseURL}?id=${id}`;
+}
+
+/* limpa código grande tipo timestamp */
+function formatarCodigo(codigo) {
+  if (!codigo) return "00000";
+  let numeros = codigo.toString().replace(/\D/g, "");
+  return numeros.slice(-5).padStart(5, "0");
+}
+
+carregar();
+</script>
+
+</body>
+</html>
