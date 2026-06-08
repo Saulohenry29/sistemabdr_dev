@@ -141,10 +141,19 @@ async function carregar() {
     "PAT-" + formatarCodigo(data.codigo_qr);
 
   // 🔥 QR CODE
-  const baseURL = window.location.href.split("?")[0];
+  // 🔥 QR CODE APONTANDO PARA etiqueta.html
 
-  document.getElementById("qr").src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${baseURL}?id=${id}`;
+const urlEtiqueta =
+  window.location.origin +
+  window.location.pathname.replace(
+    "etiqueta-impressao.html",
+    "etiqueta.html"
+  ) +
+  "?id=" + id;
+
+document.getElementById("qr").src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+  encodeURIComponent(urlEtiqueta);
 }
 
 /* limpa código grande tipo timestamp */
