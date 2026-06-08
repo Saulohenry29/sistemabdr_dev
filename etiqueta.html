@@ -5,10 +5,11 @@
 <title>Consulta Patrimônio BDR</title>
 
 <style>
+
 body{
   margin:0;
   font-family:Arial,sans-serif;
-  background:#111;
+  background:#111827;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -17,93 +18,101 @@ body{
   box-sizing:border-box;
 }
 
+/* CARD */
 .card{
-  background:#fff;
   width:100%;
   max-width:520px;
+  background:#fff;
+  border-radius:16px;
   padding:28px;
-  border-radius:14px;
-  text-align:center;
-  box-shadow:0 8px 25px rgba(0,0,0,.35);
+  box-sizing:border-box;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
+/* LOGO */
 .logo{
   display:flex;
   justify-content:center;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
 
 .logo img{
   height:60px;
 }
 
+/* TITULO */
 .titulo{
+  text-align:center;
   color:#a4161a;
-  font-weight:bold;
-  margin:5px 0;
+  margin:0;
   font-size:28px;
 }
 
 .subtitulo{
-  font-size:14px;
-  margin-bottom:20px;
-  color:#555;
+  text-align:center;
+  color:#666;
+  margin-top:5px;
+  margin-bottom:25px;
 }
 
-h1{
-  font-size:26px;
-  margin:14px 0 22px;
-  color:#111;
+/* NOME PRODUTO */
+#produto{
+  text-align:center;
+  font-size:28px;
+  margin-bottom:25px;
+  color:#111827;
 }
 
+/* LINHAS */
 .linha{
   display:flex;
-  justify-content:space-between;
-  gap:12px;
-  padding:9px 0;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:15px;
+  gap:10px;
+  padding:12px 0;
+  border-bottom:1px solid #ececec;
 }
 
 .label{
+  width:130px;
   font-weight:bold;
-  color:#333;
-  min-width:120px;
+  color:#374151;
 }
 
 .valor{
   flex:1;
-  text-align:right;
-  color:#111;
+  color:#111827;
   word-break:break-word;
 }
 
+/* STATUS */
 #status{
   font-weight:bold;
-  color:#007bff;
+  color:#2563eb;
 }
 
+/* LOCALIZAÇÃO */
 #localizacao{
   font-weight:bold;
-  color:#2c3e50;
+  color:#059669;
 }
 
+/* RESPONSIVO */
 @media(max-width:600px){
+
   .card{
-    max-width:100%;
-    padding:22px;
+    padding:18px;
   }
 
   .linha{
     flex-direction:column;
-    gap:3px;
+    gap:4px;
   }
 
-  .valor{
-    text-align:left;
+  .label{
+    width:100%;
   }
+
 }
+
 </style>
 </head>
 
@@ -115,10 +124,13 @@ h1{
     <img src="./imagens/logo.png" alt="Logo BDR">
   </div>
 
-  <h2 class="titulo">BDR CONSTRUART</h2>
-  <p class="subtitulo">Consulta de Patrimônio</p>
+  <h1 class="titulo">BDR CONSTRUART</h1>
 
-  <h1 id="produto">Carregando...</h1>
+  <p class="subtitulo">
+    Consulta de Patrimônio
+  </p>
+
+  <h2 id="produto">Carregando...</h2>
 
   <div class="linha">
     <div class="label">Patrimônio:</div>
@@ -157,46 +169,107 @@ h1{
 
 </div>
 
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="./JS/supabaseClient.js"></script>
 
 <script>
+
+// ======================================
+// CONEXÃO SUPABASE
+// ======================================
+
+const SUPABASE_URL =
+  "https://ytalegphxrntlomkltbc.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
+
+const client = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+// ======================================
+// PEGAR ID URL
+// ======================================
+
 const params = new URLSearchParams(window.location.search);
 
 const id =
   params.get("id") ||
   params.get("codigo");
 
-async function carregar() {
-  if (!id) {
-    document.getElementById("produto").innerText = "ID não informado";
+console.log("ID RECEBIDO:", id);
+
+// ======================================
+// CARREGAR DADOS
+// ======================================
+
+async function carregar(){
+
+  // SEM ID
+  if(!id){
+
+    document.getElementById("produto").innerText =
+      "ID não informado";
+
     return;
   }
 
+  // BUSCAR NO SUPABASE
   const { data, error } = await client
     .from("patrimonio")
     .select("*")
     .eq("codigo_qr", id)
     .maybeSingle();
 
-  if (error || !data) {
-    console.error(error);
-    document.getElementById("produto").innerText = "Item não encontrado";
-    document.getElementById("codigo").innerText = id;
+  console.log("DADOS:", data);
+  console.log("ERRO:", error);
+
+  // NÃO ENCONTRADO
+  if(error || !data){
+
+    document.getElementById("produto").innerText =
+      "Patrimônio não encontrado";
+
+    document.getElementById("codigo").innerText =
+      id;
+
     return;
   }
 
-  document.getElementById("produto").innerText = data.nome_bem || "-";
-  document.getElementById("codigo").innerText = data.codigo_qr || "-";
-  document.getElementById("tipo").innerText = data.tipo_item || "-";
-  document.getElementById("marca").innerText = data.marca || "-";
-  document.getElementById("modelo").innerText = data.modelo || "-";
-  document.getElementById("serie").innerText = data.numero_serie || "-";
-  document.getElementById("status").innerText = data.status || "-";
-  document.getElementById("localizacao").innerText = data.localizacao || "-";
+  // PREENCHER TELA
+  document.getElementById("produto").innerText =
+    data.nome_bem || "-";
+
+  document.getElementById("codigo").innerText =
+    data.codigo_qr || "-";
+
+  document.getElementById("tipo").innerText =
+    data.tipo_item || "-";
+
+  document.getElementById("marca").innerText =
+    data.marca || "-";
+
+  document.getElementById("modelo").innerText =
+    data.modelo || "-";
+
+  document.getElementById("serie").innerText =
+    data.numero_serie || "-";
+
+  document.getElementById("status").innerText =
+    data.status || "-";
+
+  document.getElementById("localizacao").innerText =
+    data.localizacao || "-";
 }
 
+// ======================================
+// INICIAR
+// ======================================
+
 carregar();
+
 </script>
 
 </body>
