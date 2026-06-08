@@ -1,19 +1,36 @@
-// ===============================
-// BDR CORE - CONEXÃO SUPABASE
-// ===============================
+function ativarObra(){
 
-const SUPABASE_URL = "https://ytalegphxrntlomkltbc.supabase.co";
-const SUPABASE_KEY = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
+  const obra_id =
+    document.getElementById("obraSelect").value;
 
-// validação do SDK
-if (!window.supabase) {
-  console.error("❌ Supabase SDK não carregado");
+  const check =
+    document.getElementById("checkObra").checked;
+
+  if(!obra_id){
+    alert("Selecione a obra");
+    return;
+  }
+
+  if(!check){
+    alert("Marque a confirmação da obra");
+    return;
+  }
+
+  const obraSelecionada =
+    obras.find(o => String(o.id) === String(obra_id));
+
+  if(!obraSelecionada){
+    alert("Obra não encontrada");
+    return;
+  }
+
+  window.obraAtiva = obraSelecionada;
+
+  document.getElementById("obraAtivaTexto").innerText =
+    "OBRA ATIVA: " +
+    obraSelecionada.nome +
+    " | Código: " +
+    obraSelecionada.codigo_obra;
+
+  alert("Obra ativada com sucesso");
 }
-
-// cliente global único (ERP SAFE)
-window.client = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-console.log("✔ Supabase conectado (BDR CORE 9.0)");

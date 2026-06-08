@@ -200,39 +200,44 @@ textarea{
 
     <h2>Cadastro de Empresas</h2>
 
-    <div class="grid">
+<div class="grid">
 
-      <div>
-        <label>Nome da Empresa</label>
-        <input id="nome">
-      </div>
+  <div>
+    <label>Nome da Empresa</label>
+    <input id="nome">
+  </div>
 
-      <div>
-        <label>Código da Empresa</label>
-        <input id="codigo_empresa">
-      </div>
+  <div>
+    <label>Código da Empresa</label>
+    <input id="codigo_empresa" placeholder="Ex: 10013">
+  </div>
 
-      <div>
-        <label>CNPJ</label>
-        <input id="cnpj">
-      </div>
+  <div>
+    <label>Setor / Obra</label>
+    <input id="setor_obra" placeholder="Ex: Oficina">
+  </div>
 
-      <div>
-        <label>Cidade</label>
-        <input id="cidade">
-      </div>
+  <div>
+    <label>CNPJ</label>
+    <input id="cnpj">
+  </div>
 
-      <div>
-        <label>Estado</label>
-        <input id="estado">
-      </div>
+  <div>
+    <label>Cidade</label>
+    <input id="cidade">
+  </div>
 
-      <div>
-        <label>Endereço</label>
-        <input id="endereco">
-      </div>
+  <div>
+    <label>Estado</label>
+    <input id="estado">
+  </div>
 
-    </div>
+  <div>
+    <label>Endereço</label>
+    <input id="endereco">
+  </div>
+
+</div>
 
     <br>
 
@@ -269,6 +274,7 @@ async function salvarEmpresa(){
   const empresa = {
     nome: document.getElementById("nome").value,
     codigo_empresa: document.getElementById("codigo_empresa").value,
+    setor_obra: document.getElementById("setor_obra").value,
     cnpj: document.getElementById("cnpj").value,
     cidade: document.getElementById("cidade").value,
     estado: document.getElementById("estado").value,

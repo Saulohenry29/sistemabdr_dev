@@ -1,10 +1,26 @@
 // ===============================
-// BDR CORE 9.0 - ERP MOVIMENTAÇÃO
+// BDR CORE 9.0 - ERP COMPLETO
 // ===============================
 
 
 // ===============================
-// FORMATADOR DE STATUS (UI)
+// SUPABASE SAFE (já existente)
+// ===============================
+const SUPABASE_URL = "https://ytalegphxrntlomkltbc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
+
+if (!window.client) {
+  window.client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+}
+
+console.log("✔ BDR CORE 9.0 carregado");
+
+
+// ===============================
+// FORMATA STATUS
 // ===============================
 function formatarStatus(status) {
 
@@ -21,7 +37,79 @@ function formatarStatus(status) {
 
 
 // ===============================
-// MOVIMENTAÇÃO PRINCIPAL
+// 🔥 GERAR PATRIMÔNIO AUTOMÁTICO
+// ===============================
+async function gerarCodigoPatrimonio(empresa_id) {
+
+  const { data: empresa } = await client
+    .from("empresas")
+    .select("codigo_empresa")
+    .eq("id", empresa_id)
+    .single();
+
+  if (!empresa) {
+    throw new Error("Empresa não encontrada");
+  }
+
+  const codigoEmpresa = empresa.codigo_empresa;
+
+  const { data: ultimo } = await client
+    .from("patrimonio")
+    .select("codigo_qr")
+    .eq("empresa_id", empresa_id)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let sequencial = 1;
+
+  if (ultimo?.codigo_qr) {
+    const numero = ultimo.codigo_qr.replace(/\D/g, ""); 
+    const ultimoSeq = parseInt(numero.slice(-4)) || 0;
+    sequencial = ultimoSeq + 1;
+  }
+
+  return `PAT${codigoEmpresa}${String(sequencial).padStart(4, "0")}`;
+}
+
+
+// ===============================
+// SALVAR PATRIMÔNIO (NOVO)
+// ===============================
+async function salvarPatrimonio(dados) {
+
+  try {
+
+    const codigo = await gerarCodigoPatrimonio(dados.empresa_id);
+
+    const { error } = await client
+      .from("patrimonio")
+      .insert([{
+        nome_bem: dados.nome_bem,
+        empresa_id: dados.empresa_id,
+        setor_obra: dados.setor_obra,
+        codigo_qr: codigo,
+        status: "ESTOQUE",
+        created_at: new Date().toISOString()
+      }]);
+
+    if (error) {
+      console.error(error);
+      alert("Erro ao salvar patrimônio");
+      return;
+    }
+
+    alert("✔ Patrimônio criado: " + codigo);
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro inesperado ao gerar patrimônio");
+  }
+}
+
+
+// ===============================
+// MOVIMENTAÇÃO (SEU SISTEMA ATUAL)
 // ===============================
 async function registrarMovimentacao({
   codigo_qr,
@@ -33,15 +121,11 @@ async function registrarMovimentacao({
 
   try {
 
-    // validação inicial
     if (!codigo_qr) {
       alert("Código QR inválido");
       return;
     }
 
-    // ===============================
-    // BUSCAR PATRIMÔNIO
-    // ===============================
     const { data: atual, error } = await window.client
       .from("patrimonio")
       .select("*")
@@ -49,64 +133,32 @@ async function registrarMovimentacao({
       .single();
 
     if (error || !atual) {
-      console.error(error);
       alert("Patrimônio não encontrado");
       return;
     }
 
-    // ===============================
-    // CRITICIDADE AUTOMÁTICA
-    // ===============================
     let criticidade = 1;
 
     if (novoStatus === "MANUTENCAO") criticidade = 3;
     if (novoStatus === "OBRA") criticidade = 2;
     if (novoStatus === "BAIXADO") criticidade = 3;
 
-    // histórico (regra ERP)
-    const { data: historico } = await window.client
-      .from("analytics_patrimonio")
-      .select("id")
-      .eq("patrimonio_id", atual.id);
-
-    if (historico && historico.length > 10) {
-      criticidade = 3;
-    }
-
-    // ===============================
-    // SALVAR HISTÓRICO (ANALYTICS)
-    // ===============================
-    const { error: errInsert } = await window.client
+    await window.client
       .from("analytics_patrimonio")
       .insert([{
         patrimonio_id: atual.id,
-        empresa_id: atual.empresa_id || null,
-        localizacao_id: atual.localizacao_id || null,
-
+        empresa_id: atual.empresa_id,
         tipo_evento: tipoEvento,
-
         status_anterior: atual.status,
         status_novo: novoStatus,
-
         local_anterior: atual.localizacao,
         local_novo: novaLocalizacao,
-
         criticidade: criticidade,
         observacao: observacao,
-
         created_at: new Date().toISOString()
       }]);
 
-    if (errInsert) {
-      console.error(errInsert);
-      alert("Erro ao salvar histórico");
-      return;
-    }
-
-    // ===============================
-    // ATUALIZAR PATRIMÔNIO
-    // ===============================
-    const { error: errUpdate } = await window.client
+    await window.client
       .from("patrimonio")
       .update({
         status: novoStatus,
@@ -114,19 +166,12 @@ async function registrarMovimentacao({
       })
       .eq("codigo_qr", codigo_qr);
 
-    if (errUpdate) {
-      console.error(errUpdate);
-      alert("Erro ao atualizar patrimônio");
-      return;
-    }
+    alert("✔ Movimentação registrada");
 
-    alert("✔ Movimentação registrada com sucesso");
-
-    // reload seguro (opcional)
     setTimeout(() => location.reload(), 400);
 
   } catch (err) {
-    console.error("Erro geral:", err);
-    alert("Erro inesperado na movimentação");
+    console.error(err);
+    alert("Erro inesperado");
   }
 }

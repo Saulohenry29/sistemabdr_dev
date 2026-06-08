@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Entrada de Patrimônio</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0b1220;
+  color:white;
+}
+
+/* CONTAINER PADRÃO BDR */
+.container{
+  max-width:600px;
+  margin:40px auto;
+  background:#111b2e;
+  padding:20px;
+  border-radius:12px;
+}
+
+/* LABEL PADRÃO */
+label{
+  display:block;
+  margin-top:10px;
+  margin-bottom:5px;
+  font-size:14px;
+  color:#8ecae6;
+}
+
+/* INPUT PADRÃO */
+input, select{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  margin-bottom:10px;
+  background:#1c2b3a;
+  color:white;
+}
+
+/* BOTÃO PADRÃO */
+button{
+  width:100%;
+  padding:12px;
+  background:#2a9d8f;
+  border:none;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+/* ALERTA VISUAL */
+.info{
+  font-size:13px;
+  color:#ccc;
+  margin-bottom:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Entrada de Patrimônio</h2>
+
+<div class="info">
+Sistema automático de geração: PAT + código empresa + sequência
+</div>
+
+<label>Nome do bem</label>
+<input id="nome_bem" placeholder="Ex: TV Samsung">
+
+<label>Empresa</label>
+<select id="empresa"></select>
+
+<label>Setor / Obra</label>
+<select id="obra"></select>
+
+<button onclick="gerar()">GERAR PATRIMÔNIO</button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+
+<script>
+
+// ================= EMPRESAS =================
+async function loadEmpresas(){
+  const { data } = await client.from("empresas").select("*");
+
+  const el = document.getElementById("empresa");
+
+  (data || []).forEach(e=>{
+    el.innerHTML += `
+      <option value="${e.id}" data-cod="${e.codigo_empresa}">
+        ${e.nome} (${e.codigo_empresa})
+      </option>`;
+  });
+}
+loadEmpresas();
+
+
+// ================= OBRAS =================
+async function loadObras(){
+  const { data } = await client.from("obras").select("*");
+
+  const el = document.getElementById("obra");
+
+  (data || []).forEach(o=>{
+    el.innerHTML += `
+      <option value="${o.id}">
+        ${o.nome}
+      </option>`;
+  });
+}
+loadObras();
+
+
+// ================= GERAR PATRIMÔNIO =================
+async function gerar(){
+
+  const nome = document.getElementById("nome_bem").value;
+
+  const empresaEl = document.getElementById("empresa");
+  const empresa_id = empresaEl.value;
+  const codigo_empresa = empresaEl.options[empresaEl.selectedIndex].dataset.cod;
+
+  const obra_id = document.getElementById("obra").value;
+
+  if(!nome || !empresa_id){
+    alert("Preencha todos os campos");
+    return;
+  }
+
+  // pega último patrimônio da empresa
+  const { data } = await client
+    .from("patrimonio")
+    .select("codigo_qr")
+    .eq("empresa_id", empresa_id)
+    .order("id", { ascending:false })
+    .limit(1);
+
+  let seq = 1;
+
+  if(data && data.length > 0){
+    seq = parseInt(data[0].codigo_qr.slice(-4)) + 1;
+  }
+
+  const seqFormatada = String(seq).padStart(4,"0");
+
+  const codigo_final = `PAT${codigo_empresa}${seqFormatada}`;
+
+  const { error } = await client.from("patrimonio").insert([{
+    nome_bem: nome,
+    empresa_id,
+    obra_id,
+    codigo_qr: codigo_final,
+    status: "ESTOQUE"
+  }]);
+
+  if(error){
+    console.log(error);
+    alert("Erro ao salvar");
+    return;
+  }
+
+  alert("Patrimônio criado: " + codigo_final);
+}
+
+</script>
+
+</body>
+</html>

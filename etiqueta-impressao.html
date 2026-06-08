@@ -1,162 +1,132 @@
 <!DOCTYPE html>
-
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>Etiqueta Patrimônio BDR</title>
 
 <style>
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background: #fff;
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+  background:#fff;
+  font-family:Arial,sans-serif;
 }
 
-.etiqueta {
-  width: 5.5cm;
-  height: 3.5cm;
-  border: 1px solid #000;
-  border-radius: 6px;
-  padding: 5px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.etiqueta{
+  width:5.5cm;
+  height:3.5cm;
+  border:2px solid #000;
+  border-radius:6px;
+  padding:5px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  background:#fff;
 }
 
-.linha-topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.topo{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
 }
 
-.logo img {
-  height: 1.2cm;
+.logo img{
+  height:1.2cm;
 }
 
-.qr img {
-  height: 1.2cm;
-  width: 1.2cm;
-  margin-top: 2mm;
+.qr img{
+  width:1.2cm;
+  height:1.2cm;
 }
 
-.conteudo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
+.baixo{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
 }
 
-.info-esquerda {
-  font-size: 11px;
-  text-align: left;
-  font-weight: bold;
-  line-height: 1.4;
+.setor{
+  font-size:9px;
+  font-weight:bold;
+  width:60%;
+  line-height:1.2;
 }
 
-.info-direita {
-  font-size: 12px;
-  font-weight: bold;
-  text-align: right;
+.codigo{
+  font-size:10px;
+  font-weight:bold;
+  text-align:right;
 }
 
-@media print {
-  body {
-    margin: 0;
-    background: #fff;
+@media print{
+  body{
+    margin:0;
+    background:#fff;
   }
 
-  .etiqueta {
-    border: none;
+  .etiqueta{
+    border:2px solid #000 !important;
   }
 }
 </style>
-
 </head>
 
 <body>
 
 <div class="etiqueta">
 
-  <div class="linha-topo">
+  <div class="topo">
 
-<div class="logo">
-  <img src="./imagens/logo.png" alt="Logo BDR">
-</div>
+    <div class="logo">
+      <img src="./imagens/logo.png" alt="Logo BDR">
+    </div>
 
-<div class="qr">
-  <img id="qr" src="">
-</div>
+    <div class="qr">
+      <img id="qr" src="">
+    </div>
 
   </div>
 
-  <div class="conteudo">
+<div class="baixo">
 
-<div class="info-esquerda">
-  <div id="empresa">EMPRESA: ---</div>
-</div>
+  <div></div>
 
-<div class="info-direita">
-  <div id="patrimonio">PAT-00000</div>
-</div>
-
+  <div class="codigo" id="codigo">
+    PAT-000000000
   </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<script src="./JS/supabaseClient.js"></script>
+</div>
 
 <script>
-
 const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
 
-async function carregar() {
+const codigo =
+  params.get("codigo") ||
+  params.get("id") ||
+  "PAT-000000000";
 
-  if (!id) return;
+const setor =
+  decodeURIComponent(
+    params.get("setor") || "SEM SETOR"
+  );
 
-  const { data, error } = await client
-    .from("patrimonio")
-    .select("*")
-    .eq("codigo_qr", id)
-    .single();
 
-  if (error || !data) {
-    console.error(error);
-    return;
-  }
+document.getElementById("codigo").innerText =
+  codigo;
 
-  document.getElementById("empresa").innerText =
-    "EMPRESA: " + (data.codigo_empresa || data.empresa_id || "000");
+const linkQr =
+  "https://saulohenry29.github.io/sistemaBDR/etiqueta.html?id=" +
+  encodeURIComponent(codigo);
 
-  document.getElementById("patrimonio").innerText =
-    "PAT-" + formatarCodigo(data.codigo_qr);
-
-  const urlEtiqueta =
-    "https://saulohenry29.github.io/sistemaBDR/etiqueta.html?id=" + data.codigo_qr;
-
-  document.getElementById("qr").src =
-    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
-    encodeURIComponent(urlEtiqueta);
-}
-
-function formatarCodigo(codigo) {
-
-  if (!codigo) return "00000";
-
-  let numeros = codigo.toString().replace(/\D/g, "");
-
-  return numeros.slice(-5).padStart(5, "0");
-}
-
-carregar();
-
+document.getElementById("qr").src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+  encodeURIComponent(linkQr);
 </script>
 
 </body>
