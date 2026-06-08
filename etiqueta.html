@@ -2,94 +2,106 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Etiqueta Patrimônio</title>
+<title>Consulta Patrimônio BDR</title>
 
 <style>
 body{
-  font-family: Arial;
+  margin:0;
+  font-family:Arial,sans-serif;
   background:#111;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
-  margin:0;
+  min-height:100vh;
+  padding:20px;
+  box-sizing:border-box;
 }
 
-/* 🔥 CENTRALIZAÇÃO FORTE */
-.wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-/* CARD DA ETIQUETA */
 .card{
   background:#fff;
-  width:380px;
-  padding:25px;
-  border-radius:10px;
+  width:100%;
+  max-width:520px;
+  padding:28px;
+  border-radius:14px;
   text-align:center;
+  box-shadow:0 8px 25px rgba(0,0,0,.35);
 }
 
-/* LOGO CENTRALIZADA */
-.logo {
+.logo{
   display:flex;
   justify-content:center;
-  margin-bottom:5px;
+  margin-bottom:8px;
 }
 
 .logo img{
-  height:45px;
+  height:60px;
 }
 
-/* TÍTULO */
 .titulo{
-  text-align:center;
   color:#a4161a;
   font-weight:bold;
   margin:5px 0;
+  font-size:28px;
 }
 
 .subtitulo{
-  text-align:center;
-  font-size:13px;
-  margin-bottom:15px;
-}
-
-/* TEXTO */
-h1{
-  font-size:20px;
-  margin:10px 0;
-}
-
-p{
   font-size:14px;
-  margin:4px 0;
-  text-align:left;
+  margin-bottom:20px;
+  color:#555;
 }
 
-/* STATUS */
+h1{
+  font-size:26px;
+  margin:14px 0 22px;
+  color:#111;
+}
+
+.linha{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 0;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  font-size:15px;
+}
+
+.label{
+  font-weight:bold;
+  color:#333;
+  min-width:120px;
+}
+
+.valor{
+  flex:1;
+  text-align:right;
+  color:#111;
+  word-break:break-word;
+}
+
 #status{
   font-weight:bold;
   color:#007bff;
 }
 
-/* LOCALIZAÇÃO */
 #localizacao{
   font-weight:bold;
   color:#2c3e50;
 }
 
-/* IMPRESSÃO */
-@media print{
-  body{
-    background:#fff;
+@media(max-width:600px){
+  .card{
+    max-width:100%;
+    padding:22px;
   }
 
-  .card{
-    box-shadow:none;
-    border:none;
+  .linha{
+    flex-direction:column;
+    gap:3px;
+  }
+
+  .valor{
+    text-align:left;
   }
 }
 </style>
@@ -97,29 +109,50 @@ p{
 
 <body>
 
-<div class="wrapper">
+<div class="card">
 
-  <div class="card">
+  <div class="logo">
+    <img src="./imagens/logo.png" alt="Logo BDR">
+  </div>
 
-    <div class="logo">
-      <img src="./imagens/logo.png">
-    </div>
+  <h2 class="titulo">BDR CONSTRUART</h2>
+  <p class="subtitulo">Consulta de Patrimônio</p>
 
-    <h2 class="titulo">BDR CONSTRUART</h2>
-    <p class="subtitulo">Controle de Patrimônio</p>
+  <h1 id="produto">Carregando...</h1>
 
-    <h1 id="produto">Carregando...</h1>
+  <div class="linha">
+    <div class="label">Patrimônio:</div>
+    <div class="valor" id="codigo">-</div>
+  </div>
 
-    <p><b>ID:</b> <span id="codigo"></span></p>
-    <p><b>NFE:</b> <span id="nfe"></span></p>
-    <p><b>Marca:</b> <span id="marca"></span></p>
-    <p><b>Modelo:</b> <span id="modelo"></span></p>
-    <p><b>Série:</b> <span id="serie"></span></p>
-    <p><b>Data:</b> <span id="data"></span></p>
+  <div class="linha">
+    <div class="label">Tipo:</div>
+    <div class="valor" id="tipo">-</div>
+  </div>
 
-    <p><b>Status:</b> <span id="status"></span></p>
-    <p><b>Localização:</b> <span id="localizacao"></span></p>
+  <div class="linha">
+    <div class="label">Marca:</div>
+    <div class="valor" id="marca">-</div>
+  </div>
 
+  <div class="linha">
+    <div class="label">Modelo:</div>
+    <div class="valor" id="modelo">-</div>
+  </div>
+
+  <div class="linha">
+    <div class="label">Série:</div>
+    <div class="valor" id="serie">-</div>
+  </div>
+
+  <div class="linha">
+    <div class="label">Status:</div>
+    <div class="valor" id="status">-</div>
+  </div>
+
+  <div class="linha">
+    <div class="label">Localização:</div>
+    <div class="valor" id="localizacao">-</div>
   </div>
 
 </div>
@@ -128,10 +161,13 @@ p{
 <script src="./JS/supabaseClient.js"></script>
 
 <script>
-const id = new URLSearchParams(window.location.search).get("id");
+const params = new URLSearchParams(window.location.search);
+
+const id =
+  params.get("id") ||
+  params.get("codigo");
 
 async function carregar() {
-
   if (!id) {
     document.getElementById("produto").innerText = "ID não informado";
     return;
@@ -143,19 +179,20 @@ async function carregar() {
     .eq("codigo_qr", id)
     .maybeSingle();
 
-  if (!data || error) {
+  if (error || !data) {
+    console.error(error);
     document.getElementById("produto").innerText = "Item não encontrado";
+    document.getElementById("codigo").innerText = id;
     return;
   }
 
   document.getElementById("produto").innerText = data.nome_bem || "-";
   document.getElementById("codigo").innerText = data.codigo_qr || "-";
+  document.getElementById("tipo").innerText = data.tipo_item || "-";
   document.getElementById("marca").innerText = data.marca || "-";
   document.getElementById("modelo").innerText = data.modelo || "-";
   document.getElementById("serie").innerText = data.numero_serie || "-";
-  document.getElementById("data").innerText = data.data_compra || "-";
   document.getElementById("status").innerText = data.status || "-";
-  document.getElementById("nfe").innerText = data.numero_nf || "-";
   document.getElementById("localizacao").innerText = data.localizacao || "-";
 }
 
