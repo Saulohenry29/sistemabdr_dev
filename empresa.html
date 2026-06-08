@@ -104,7 +104,16 @@ textarea{height:80px}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="./JS/supabaseClient.js"></script>
+
+<script>
+const supabaseUrl = "https://ytalegphxrntlomkltbc.supabase.co";
+const supabaseKey = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
+
+window.client = supabase.createClient(supabaseUrl, supabaseKey);
+window.supabaseClient = window.client;
+
+console.log("SUPABASE EMPRESA OK", window.client);
+</script>
 
 <script>
 function ir(pagina){
