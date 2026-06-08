@@ -1,36 +1,13 @@
-function ativarObra(){
+const supabaseUrl = "https://ytalegphxrntlomkltbc.supabase.co";
 
-  const obra_id =
-    document.getElementById("obraSelect").value;
+const supabaseKey = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
 
-  const check =
-    document.getElementById("checkObra").checked;
+const client = supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
-  if(!obra_id){
-    alert("Selecione a obra");
-    return;
-  }
+window.client = client;
+window.supabaseClient = client;
 
-  if(!check){
-    alert("Marque a confirmação da obra");
-    return;
-  }
-
-  const obraSelecionada =
-    obras.find(o => String(o.id) === String(obra_id));
-
-  if(!obraSelecionada){
-    alert("Obra não encontrada");
-    return;
-  }
-
-  window.obraAtiva = obraSelecionada;
-
-  document.getElementById("obraAtivaTexto").innerText =
-    "OBRA ATIVA: " +
-    obraSelecionada.nome +
-    " | Código: " +
-    obraSelecionada.codigo_obra;
-
-  alert("Obra ativada com sucesso");
-}
+console.log("SUPABASE OK");

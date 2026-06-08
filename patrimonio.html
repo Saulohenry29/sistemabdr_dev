@@ -110,6 +110,7 @@ function valor(id){
 }
 
 async function carregarObras(){
+
   const { data, error } = await client
     .from("obras")
     .select("*")
@@ -118,6 +119,7 @@ async function carregarObras(){
 
   if(error){
     console.error(error);
+    alert(error.message);
     return;
   }
 
@@ -129,13 +131,14 @@ async function carregarObras(){
   obras.forEach(o => {
     select.innerHTML += `
       <option value="${o.id}">
-        ${o.codigo_obra} - ${o.nome}
+        ${o.codigo_obra || "-"} - ${o.nome || "-"}
       </option>
     `;
   });
 }
 
 function ativarObra(){
+
   const obra_id = document.getElementById("obraSelect").value;
   const check = document.getElementById("checkObra").checked;
 
@@ -149,7 +152,9 @@ function ativarObra(){
     return;
   }
 
-  const obraSelecionada = obras.find(o => String(o.id) === String(obra_id));
+  const obraSelecionada = obras.find(
+    o => String(o.id) === String(obra_id)
+  );
 
   if(!obraSelecionada){
     alert("Obra não encontrada");
@@ -157,15 +162,23 @@ function ativarObra(){
   }
 
   window.obraAtiva = obraSelecionada;
+
   localStorage.setItem("obraAtivaId", obraSelecionada.id);
+  localStorage.setItem("obraAtivaNome", obraSelecionada.nome || "");
+  localStorage.setItem("obraAtivaCodigo", obraSelecionada.codigo_obra || "");
+  localStorage.setItem("empresaAtivaId", obraSelecionada.empresa_id || "");
 
   document.getElementById("obraAtivaTexto").innerText =
-    "OBRA ATIVA: " + obraSelecionada.nome + " | Código: " + obraSelecionada.codigo_obra;
+    "OBRA ATIVA: " +
+    (obraSelecionada.nome || "-") +
+    " | Código: " +
+    (obraSelecionada.codigo_obra || "-");
 
   alert("Obra ativada com sucesso");
 }
 
 function mostrarCampos(){
+
   const tipo = valor("tipo_item");
   const div = document.getElementById("camposExtras");
   div.innerHTML = "";
@@ -210,21 +223,31 @@ function mostrarCampos(){
 }
 
 function obterObraAtiva(){
-  if(window.obraAtiva) return window.obraAtiva;
 
-  const obra_id = document.getElementById("obraSelect").value;
-  if(!obra_id) return null;
+  if(window.obraAtiva){
+    return window.obraAtiva;
+  }
 
-  const obraSelecionada = obras.find(o => String(o.id) === String(obra_id));
+  const obra_id = localStorage.getItem("obraAtivaId") || document.getElementById("obraSelect").value;
+
+  if(!obra_id){
+    return null;
+  }
+
+  const obraSelecionada = obras.find(
+    o => String(o.id) === String(obra_id)
+  );
 
   if(obraSelecionada){
     window.obraAtiva = obraSelecionada;
+    return obraSelecionada;
   }
 
-  return obraSelecionada || null;
+  return null;
 }
 
 async function gerarPatrimonio(){
+
   const obra = obterObraAtiva();
 
   if(!obra){
@@ -260,9 +283,11 @@ async function gerarPatrimonio(){
   }
 
   const codigo_qr =
-    "PAT-" + obra.codigo_obra + String(sequencial).padStart(4, "0");
+    "PAT-" +
+    (obra.codigo_obra || "") +
+    String(sequencial).padStart(4, "0");
 
-  const { error } = await client.from("patrimonio").insert([{
+  const patrimonio = {
     nome_bem,
     tipo_item,
     empresa_id: obra.empresa_id,
@@ -282,7 +307,11 @@ async function gerarPatrimonio(){
     potencia: valor("potencia"),
     horimetro: valor("horimetro"),
     ano_fabricacao: valor("ano_fabricacao")
-  }]);
+  };
+
+  const { error } = await client
+    .from("patrimonio")
+    .insert([patrimonio]);
 
   if(error){
     console.error(error);
@@ -300,6 +329,7 @@ async function gerarPatrimonio(){
 }
 
 async function carregarPatrimonios(){
+
   const { data, error } = await client
     .from("patrimonio")
     .select("*")
@@ -307,13 +337,20 @@ async function carregarPatrimonios(){
 
   if(error){
     console.error(error);
+    alert(error.message);
     return;
   }
 
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  (data || []).forEach(d => {
+  if(!data || data.length === 0){
+    lista.innerHTML = "<p>Nenhum patrimônio cadastrado ainda.</p>";
+    return;
+  }
+
+  data.forEach(d => {
+
     const codigoSeguro = encodeURIComponent(d.codigo_qr || "");
 
     lista.innerHTML += `
@@ -332,20 +369,26 @@ async function carregarPatrimonios(){
 }
 
 async function iniciar(){
+
   await carregarObras();
 
-  const salva = localStorage.getItem("obraAtivaId");
+  const obraSalva = localStorage.getItem("obraAtivaId");
 
-  if(salva){
-    const existe = obras.find(o => String(o.id) === String(salva));
+  if(obraSalva){
+    const existe = obras.find(
+      o => String(o.id) === String(obraSalva)
+    );
 
     if(existe){
-      document.getElementById("obraSelect").value = salva;
+      document.getElementById("obraSelect").value = obraSalva;
       document.getElementById("checkObra").checked = true;
       window.obraAtiva = existe;
 
       document.getElementById("obraAtivaTexto").innerText =
-        "OBRA ATIVA: " + existe.nome + " | Código: " + existe.codigo_obra;
+        "OBRA ATIVA: " +
+        (existe.nome || "-") +
+        " | Código: " +
+        (existe.codigo_obra || "-");
     }
   }
 

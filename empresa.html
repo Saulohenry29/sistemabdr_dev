@@ -1,204 +1,53 @@
 <!DOCTYPE html>
-
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>BDR ERP - Empresas</title>
 
 <style>
-
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#0b1220;
-  color:white;
-}
-
-/* HEADER */
-header{
-  background:linear-gradient(90deg,#a4161a,#2c3e50);
-  padding:15px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:1000;
-}
-
-/* LAYOUT */
-.layout{
-  display:flex;
-}
-
-/* MENU */
-.sidebar{
-  width:220px;
-  background:#111b2e;
-  min-height:100vh;
-  padding:15px;
-}
-
-.sidebar h3{
-  color:#8ecae6;
-}
-
-.menu-btn{
-  display:block;
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#1c2b3a;
-  color:white;
-  text-align:left;
-}
-
-.menu-btn:hover{
-  background:#2c3e50;
-}
-
-/* CONTEÚDO */
-.content{
-  flex:1;
-}
-
-.container{
-  padding:20px;
-}
-
-/* CARD */
-.card{
-  background:#111b2e;
-  padding:20px;
-  border-radius:12px;
-}
-
-/* FORM */
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-label{
-  display:block;
-  margin-bottom:5px;
-}
-
-input,
-textarea{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:6px;
-  box-sizing:border-box;
-}
-
-textarea{
-  height:80px;
-}
-
-.btn{
-  background:#2a9d8f;
-  color:white;
-  border:none;
-  padding:12px;
-  border-radius:8px;
-  cursor:pointer;
-  margin-top:15px;
-}
-
-.btn:hover{
-  opacity:.9;
-}
-
-/* LISTA */
-.lista{
-  margin-top:25px;
-}
-
-.item{
-  background:#1b2940;
-  padding:12px;
-  border-radius:8px;
-  margin-bottom:10px;
-}
-
-@media(max-width:768px){
-
-  .layout{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-    min-height:auto;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-}
-
+body{margin:0;font-family:Arial,sans-serif;background:#0b1220;color:white}
+header{background:linear-gradient(90deg,#a4161a,#2c3e50);padding:15px 20px;position:sticky;top:0;z-index:1000}
+.layout{display:flex}
+.sidebar{width:220px;background:#111b2e;min-height:100vh;padding:15px}
+.sidebar h3{color:#8ecae6}
+.menu-btn{display:block;width:100%;padding:10px;margin:8px 0;border:none;border-radius:6px;cursor:pointer;background:#1c2b3a;color:white;text-align:left}
+.menu-btn:hover{background:#2c3e50}
+.content{flex:1}
+.container{padding:20px}
+.card{background:#111b2e;padding:20px;border-radius:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;margin-bottom:5px}
+input,textarea{width:100%;padding:10px;border:none;border-radius:6px;box-sizing:border-box}
+textarea{height:80px}
+.btn{background:#2a9d8f;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;margin-top:15px}
+.lista{margin-top:25px}
+.item{background:#1b2940;padding:12px;border-radius:8px;margin-bottom:10px}
+@media(max-width:768px){.layout{flex-direction:column}.sidebar{width:100%;min-height:auto}.grid{grid-template-columns:1fr}}
 </style>
-
 </head>
+
 <body>
 
-<header>
-🏢 BDR ERP - Empresas
-</header>
+<header>🏢 BDR ERP - Empresas</header>
 
 <div class="layout">
 
-  <div class="sidebar">
+<div class="sidebar">
+  <h3>MENU</h3>
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn">🚜 Veículos e Máquinas</button>
+  <button class="menu-btn">👥 Usuários</button>
+</div>
 
-
-<h3>MENU</h3>
-
-<button class="menu-btn" onclick="ir('dashboard.html')">
-  📊 Dashboard
-</button>
-
-<button class="menu-btn" onclick="ir('patrimonio.html')">
-  📦 Patrimônio
-</button>
-
-<button class="menu-btn" onclick="ir('empresa.html')">
-  🏢 Empresas
-</button>
-
-<button class="menu-btn" onclick="ir('movimentacoes.html')">
-  🔁 Movimentações
-</button>
-
-<button class="menu-btn" onclick="ir('relatorios.html')">
-  📄 Relatórios
-</button>
-
-<button class="menu-btn">
-  🚜 Veículos e Máquinas
-</button>
-
-<button class="menu-btn">
-  👥 Usuários
-</button>
-
-
-  </div>
-
-  <div class="content">
-
-
+<div class="content">
 <div class="container">
 
-  <div class="card">
-
-    <h2>Cadastro de Empresas</h2>
+<div class="card">
+<h2>Cadastro de Empresas</h2>
 
 <div class="grid">
 
@@ -239,53 +88,76 @@ textarea{
 
 </div>
 
-    <br>
+<br>
 
-    <label>Observação</label>
-    <textarea id="observacao"></textarea>
+<label>Observação</label>
+<textarea id="observacao"></textarea>
 
-    <button class="btn" onclick="salvarEmpresa()">
-      💾 Salvar Empresa
-    </button>
-
-  </div>
-
-  <div id="listaEmpresas" class="lista"></div>
-
+<button class="btn" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
 </div>
 
+<div id="listaEmpresas" class="lista"></div>
 
-  </div>
+</div>
+</div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
 <script src="./JS/supabaseClient.js"></script>
 
 <script>
-
 function ir(pagina){
   window.location.href = pagina;
 }
 
+function db(){
+  return window.client || window.supabaseClient;
+}
+
+function campo(id){
+  return document.getElementById(id).value.trim();
+}
+
 async function salvarEmpresa(){
 
+  if(!db()){
+    alert("Supabase não carregado. Verifique o arquivo JS/supabaseClient.js");
+    return;
+  }
+
   const empresa = {
-    nome: document.getElementById("nome").value,
-    codigo_empresa: document.getElementById("codigo_empresa").value,
-    setor_obra: document.getElementById("setor_obra").value,
-    cnpj: document.getElementById("cnpj").value,
-    cidade: document.getElementById("cidade").value,
-    estado: document.getElementById("estado").value,
-    endereco: document.getElementById("endereco").value,
-    observacao: document.getElementById("observacao").value,
+    nome: campo("nome"),
+    codigo_empresa: campo("codigo_empresa"),
+    setor_obra: campo("setor_obra"),
+    cnpj: campo("cnpj"),
+    cidade: campo("cidade"),
+    estado: campo("estado"),
+    endereco: campo("endereco"),
+    observacao: campo("observacao"),
     ativa: true
   };
 
-  const { error } = await client
+  if(!empresa.nome){
+    alert("Informe o nome da empresa");
+    return;
+  }
+
+  if(!empresa.codigo_empresa){
+    alert("Informe o código da empresa");
+    return;
+  }
+
+  if(!empresa.setor_obra){
+    alert("Informe o setor / obra");
+    return;
+  }
+
+  const { data: empresaCriada, error } = await db()
     .from("empresas")
-    .insert([empresa]);
+    .insert([empresa])
+    .select()
+    .single();
 
   if(error){
     console.error(error);
@@ -293,42 +165,78 @@ async function salvarEmpresa(){
     return;
   }
 
-  alert("Empresa cadastrada com sucesso");
-  location.reload();
+  const obra = {
+    empresa_id: empresaCriada.id,
+    nome: empresa.setor_obra,
+    codigo_obra: empresa.codigo_empresa,
+    ativa: true
+  };
+
+  const { error: erroObra } = await db()
+    .from("obras")
+    .insert([obra]);
+
+  if(erroObra){
+    console.error(erroObra);
+    alert("Empresa cadastrada, mas erro ao criar obra: " + erroObra.message);
+    return;
+  }
+
+  alert("Empresa e obra/setor cadastrados com sucesso!");
+
+  limparFormulario();
+  carregarEmpresas();
 }
 
 async function carregarEmpresas(){
 
-  const { data } = await client
+  if(!db()){
+    console.error("Supabase não carregado");
+    return;
+  }
+
+  const { data, error } = await db()
     .from("empresas")
     .select("*")
     .order("nome");
 
-  const lista = document.getElementById("listaEmpresas");
+  if(error){
+    console.error(error);
+    alert(error.message);
+    return;
+  }
 
+  const lista = document.getElementById("listaEmpresas");
   lista.innerHTML = "";
 
-  (data || []).forEach(e => {
+  if(!data || data.length === 0){
+    lista.innerHTML = "<div class='item'>Nenhuma empresa cadastrada.</div>";
+    return;
+  }
 
+  data.forEach(e => {
     lista.innerHTML += `
       <div class="item">
-
-        <strong>${e.codigo_empresa || "-"}</strong>
-        - ${e.nome || "-"}
-
-        <br>
-
+        <strong>${e.codigo_empresa || "-"}</strong> - ${e.nome || "-"}<br>
+        <strong>Setor/Obra:</strong> ${e.setor_obra || "-"}<br>
         ${e.cidade || "-"} / ${e.estado || "-"}
-
       </div>
     `;
-
   });
-
 }
 
-carregarEmpresas();
+function limparFormulario(){
+  document.getElementById("nome").value = "";
+  document.getElementById("codigo_empresa").value = "";
+  document.getElementById("setor_obra").value = "";
+  document.getElementById("cnpj").value = "";
+  document.getElementById("cidade").value = "";
+  document.getElementById("estado").value = "";
+  document.getElementById("endereco").value = "";
+  document.getElementById("observacao").value = "";
+}
 
+window.addEventListener("load", carregarEmpresas);
 </script>
 
 </body>
