@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>BDR ERP 9.0 - Relatórios</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#222}
+header{background:#fff;border-bottom:3px solid #a4161a;padding:12px 15px;display:flex;justify-content:space-between;align-items:center}
+.layout{display:flex}
+.sidebar{width:200px;background:#2c3e50;min-height:100vh;padding:10px}
+.menu-btn{width:100%;margin:5px 0;padding:9px;background:#1f2d3a;color:white;border:none;border-radius:5px;cursor:pointer;text-align:left}
+.content{flex:1;padding:12px}
+.card{background:white;border-radius:8px;padding:14px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.card h3{margin:0 0 8px;color:#a4161a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+input,select{width:100%;padding:9px;border:1px solid #ccc;border-radius:5px}
+button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a4161a;color:white}
+.btn-ok{background:#2a9d8f}
+.btn-blue{background:#2563eb}
+.btn-dark{background:#111827}
+.tabela{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.tabela th{background:#a4161a;color:white;padding:8px;text-align:left}
+.tabela td{border-bottom:1px solid #ddd;padding:8px}
+.status{padding:4px 7px;border-radius:20px;color:white;font-size:12px;background:#2c3e50}
+.ESTOQUE{background:#2a9d8f}
+.EM_USO{background:#2563eb}
+.MANUTENCAO{background:#f97316}
+.BAIXADO{background:#dc2626}
+
+@media print{
+  .sidebar,.filtros,.botoes,header{display:none}
+  body{background:white}
+  .content{padding:0}
+  .card{box-shadow:none}
+}
+
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;min-height:auto}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>📄 BDR ERP 9.0 - Relatórios</b>
+  <span id="dataAtual"></span>
+</header>
+
+<div class="layout">
+
+<div class="sidebar">
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+</div>
+
+<div class="content">
+
+<div class="card filtros">
+  <h3>🔎 Filtros do Relatório</h3>
+
+  <div class="grid">
+    <input id="busca" placeholder="Buscar por nome, código, obra..." oninput="renderizarRelatorio()">
+
+    <select id="filtroStatus" onchange="renderizarRelatorio()">
+      <option value="">Todos os status</option>
+      <option value="ESTOQUE">Estoque</option>
+      <option value="EM_USO">Em uso</option>
+      <option value="MANUTENCAO">Manutenção</option>
+      <option value="BAIXADO">Baixado</option>
+    </select>
+
+    <select id="filtroTipo" onchange="renderizarRelatorio()">
+      <option value="">Todos os tipos</option>
+      <option value="ELETRONICO">Eletrônico</option>
+      <option value="VEICULO">Veículo</option>
+      <option value="FERRAMENTA">Ferramenta</option>
+      <option value="MAQUINA">Máquina agrícola</option>
+      <option value="OUTRO">Outro</option>
+    </select>
+
+    <select id="filtroObra" onchange="renderizarRelatorio()">
+      <option value="">Todas as obras/setores</option>
+    </select>
+  </div>
+
+  <br>
+
+  <div class="botoes">
+    <button class="btn-ok" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+    <button class="btn-blue" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn-dark" onclick="limparFiltros()">🧹 Limpar Filtros</button>
+  </div>
+</div>
+
+<div class="card">
+  <h3>📦 Relatório de Patrimônios</h3>
+  <p id="resumo"></p>
+
+  <div style="overflow:auto">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Patrimônio</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>Obra/Setor</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Série/Placa</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>🔁 Últimas Movimentações</h3>
+
+  <div style="overflow:auto">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Patrimônio</th>
+          <th>Status Anterior</th>
+          <th>Status Novo</th>
+          <th>Justificativa</th>
+        </tr>
+      </thead>
+      <tbody id="corpoMovimentacoes"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/bdrCore.js"></script>
+
+<script>
+let patrimonios = [];
+let obras = [];
+let movimentacoes = [];
+let filtradosAtuais = [];
+
+function ir(pagina){
+  window.location.href = pagina;
+}
+
+function db(){
+  return window.client || window.supabaseClient;
+}
+
+function valor(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function formatarData(data){
+  if(!data) return "-";
+  return new Date(data).toLocaleString("pt-BR");
+}
+
+function nomePatrimonio(id){
+  const p = patrimonios.find(x => Number(x.id) === Number(id));
+  return p ? `${p.nome_bem || "-"} | ${p.codigo_qr || "-"}` : "ID " + id;
+}
+
+async function carregarDados(){
+
+  document.getElementById("dataAtual").innerText =
+    new Date().toLocaleDateString("pt-BR");
+
+  if(!db()){
+    alert("Supabase não carregado.");
+    return;
+  }
+
+  const patResp = await db()
+    .from("patrimonio")
+    .select("*")
+    .order("id", { ascending:false });
+
+  const obrasResp = await db()
+    .from("obras")
+    .select("*")
+    .order("nome");
+
+  const movResp = await db()
+    .from("movimentacoes")
+    .select("*")
+    .order("id", { ascending:false })
+    .limit(50);
+
+  if(patResp.error){
+    console.error(patResp.error);
+    alert(patResp.error.message);
+    return;
+  }
+
+  if(obrasResp.error){
+    console.error(obrasResp.error);
+  }
+
+  if(movResp.error){
+    console.error(movResp.error);
+  }
+
+  patrimonios = patResp.data || [];
+  obras = obrasResp.data || [];
+  movimentacoes = movResp.data || [];
+
+  carregarFiltroObras();
+  renderizarRelatorio();
+  renderizarMovimentacoes();
+}
+
+function carregarFiltroObras(){
+
+  const select = document.getElementById("filtroObra");
+  select.innerHTML = `<option value="">Todas as obras/setores</option>`;
+
+  obras.forEach(o => {
+    select.innerHTML += `
+      <option value="${o.id}">
+        ${o.codigo_obra || "-"} - ${o.nome || "-"}
+      </option>
+    `;
+  });
+}
+
+function renderizarRelatorio(){
+
+  const busca = valor("busca").toLowerCase();
+  const status = valor("filtroStatus");
+  const tipo = valor("filtroTipo");
+  const obra = valor("filtroObra");
+
+  filtradosAtuais = patrimonios.filter(p => {
+
+    const texto = `
+      ${p.codigo_qr || ""}
+      ${p.nome_bem || ""}
+      ${p.tipo_item || ""}
+      ${p.status || ""}
+      ${p.localizacao || ""}
+      ${p.marca || ""}
+      ${p.modelo || ""}
+      ${p.numero_serie || ""}
+      ${p.placa || ""}
+    `.toLowerCase();
+
+    const passaBusca = texto.includes(busca);
+    const passaStatus = !status || p.status === status;
+    const passaTipo = !tipo || p.tipo_item === tipo;
+    const passaObra = !obra || String(p.obra_id) === String(obra);
+
+    return passaBusca && passaStatus && passaTipo && passaObra;
+  });
+
+  document.getElementById("resumo").innerText =
+    `Total encontrado: ${filtradosAtuais.length} patrimônio(s)`;
+
+  const corpo = document.getElementById("corpoTabela");
+  corpo.innerHTML = "";
+
+  if(filtradosAtuais.length === 0){
+    corpo.innerHTML = `
+      <tr>
+        <td colspan="8">Nenhum patrimônio encontrado.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  filtradosAtuais.forEach(p => {
+    corpo.innerHTML += `
+      <tr>
+        <td>${p.codigo_qr || "-"}</td>
+        <td>${p.nome_bem || "-"}</td>
+        <td>${p.tipo_item || "-"}</td>
+        <td><span class="status ${p.status}">${p.status || "-"}</span></td>
+        <td>${p.localizacao || "-"}</td>
+        <td>${p.marca || "-"}</td>
+        <td>${p.modelo || "-"}</td>
+        <td>${p.numero_serie || p.placa || "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+function renderizarMovimentacoes(){
+
+  const corpo = document.getElementById("corpoMovimentacoes");
+  corpo.innerHTML = "";
+
+  if(movimentacoes.length === 0){
+    corpo.innerHTML = `
+      <tr>
+        <td colspan="6">Nenhuma movimentação encontrada.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  movimentacoes.forEach(m => {
+    corpo.innerHTML += `
+      <tr>
+        <td>${formatarData(m.data_movimentacao)}</td>
+        <td>${m.tipo || "-"}</td>
+        <td>${nomePatrimonio(m.patrimonio_id)}</td>
+        <td>${m.status_anterior || "-"}</td>
+        <td>${m.status_novo || "-"}</td>
+        <td>${m.observacao || "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+function limparFiltros(){
+  document.getElementById("busca").value = "";
+  document.getElementById("filtroStatus").value = "";
+  document.getElementById("filtroTipo").value = "";
+  document.getElementById("filtroObra").value = "";
+  renderizarRelatorio();
+}
+
+function exportarCSV(){
+
+  if(filtradosAtuais.length === 0){
+    alert("Nenhum dado para exportar.");
+    return;
+  }
+
+  const linhas = [];
+
+  linhas.push([
+    "Codigo",
+    "Patrimonio",
+    "Tipo",
+    "Status",
+    "Obra_Setor",
+    "Marca",
+    "Modelo",
+    "Serie_Placa"
+  ]);
+
+  filtradosAtuais.forEach(p => {
+    linhas.push([
+      p.codigo_qr || "",
+      p.nome_bem || "",
+      p.tipo_item || "",
+      p.status || "",
+      p.localizacao || "",
+      p.marca || "",
+      p.modelo || "",
+      p.numero_serie || p.placa || ""
+    ]);
+  });
+
+  const csv = linhas
+    .map(linha =>
+      linha.map(campo =>
+        `"${String(campo).replace(/"/g,'""')}"`
+      ).join(";")
+    )
+    .join("\n");
+
+  const blob = new Blob(
+    ["\uFEFF" + csv],
+    { type:"text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "relatorio_patrimonios.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+carregarDados();
+</script>
+
+</body>
+</html>
