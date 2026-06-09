@@ -2,248 +2,758 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>BDR BI 7.1 - Sistema Empresarial</title>
+<title>BDR - Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-/* =====================
-   BASE
-===================== */
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0b1220;
-  color: #fff;
+*{
+  box-sizing:border-box;
 }
 
-/* =====================
-   LAYOUT PRINCIPAL
-===================== */
-.layout {
-  display: flex;
-  height: 100vh;
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+  color:#222;
 }
 
-/* =====================
-   MENU LATERAL
-===================== */
-.sidebar {
-  width: 220px;
-  background: #111b2e;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* HEADER */
+header{
+  background:#fff;
+  border-bottom:4px solid #a4161a;
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
 
-.sidebar h2 {
-  color: #ffd166;
-  font-size: 16px;
-  margin-bottom: 10px;
+header h1{
+  margin:0;
+  font-size:22px;
+  color:#a4161a;
 }
 
-.sidebar a {
-  color: white;
-  text-decoration: none;
-  padding: 10px;
-  border-radius: 8px;
-  background: #1e2a44;
-  transition: 0.2s;
+/* LAYOUT */
+.layout{
+  display:flex;
 }
 
-.sidebar a:hover {
-  background: #a4161a;
+/* SIDEBAR */
+.sidebar{
+  width:210px;
+  background:#1f2937;
+  min-height:100vh;
+  padding:12px;
 }
 
-/* =====================
-   CONTEÚDO
-===================== */
-.content {
-  flex: 1;
-  padding: 20px;
+.menu-btn{
+  width:100%;
+  margin:6px 0;
+  padding:10px;
+  background:#111827;
+  color:white;
+  border:none;
+  border-radius:7px;
+  cursor:pointer;
+  text-align:left;
+  transition:.2s;
 }
 
-/* =====================
-   HEADER
-===================== */
-header {
-  background: linear-gradient(90deg, #a4161a, #2c3e50);
-  padding: 15px;
-  font-weight: bold;
-  border-radius: 10px;
-  margin-bottom: 15px;
+.menu-btn:hover{
+  background:#a4161a;
 }
 
-/* =====================
-   KPIs
-===================== */
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 15px;
+/* CONTEUDO */
+.content{
+  flex:1;
+  padding:14px;
 }
 
-.kpi {
-  background: #111b2e;
-  padding: 15px;
-  border-radius: 10px;
-  text-align: center;
+/* GRID */
+.grid{
+  display:grid;
+  gap:12px;
 }
 
-.kpi strong {
-  font-size: 22px;
-  color: #ffd166;
+.grid-kpi{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px;
 }
 
-/* =====================
-   GRID
-===================== */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+/* KPI */
+.kpi{
+  color:white;
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 3px 10px rgba(0,0,0,.18);
+  position:relative;
+  overflow:hidden;
 }
+
+.kpi::after{
+  content:"";
+  position:absolute;
+  right:-25px;
+  top:-25px;
+  width:90px;
+  height:90px;
+  background:rgba(255,255,255,.12);
+  border-radius:50%;
+}
+
+.kpi h2{
+  margin:0;
+  font-size:34px;
+}
+
+.kpi span{
+  font-size:14px;
+}
+
+.total{background:#1f2937}
+.uso{background:#2563eb}
+.estoque{background:#2a9d8f}
+.manutencao{background:#f97316}
+.baixado{background:#dc2626}
+.obras{background:#7c3aed}
+.mov{background:#a4161a}
 
 /* CARD */
-.card {
-  background: #111b2e;
-  padding: 15px;
-  border-radius: 12px;
-  min-height: 220px;
+.card{
+  background:white;
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
 }
 
-/* ALERTA */
-.alerta {
-  background: #2a1b1b;
-  border-left: 5px solid red;
-  padding: 8px;
-  margin-bottom: 6px;
-  border-radius: 6px;
+.card h3{
+  margin-top:0;
+  color:#a4161a;
+}
+
+/* FILTROS */
+input,
+select{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
+/* LISTAS */
+.lista{
+  display:grid;
+  gap:10px;
+}
+
+.item{
+  background:#fff;
+  border-left:5px solid #a4161a;
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(0,0,0,.12);
+}
+
+.item strong{
+  color:#a4161a;
+}
+
+.status{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:20px;
+  color:white;
+  font-size:12px;
+  margin-top:5px;
+}
+
+.ESTOQUE{background:#2a9d8f}
+.EM_USO{background:#2563eb}
+.MANUTENCAO{background:#f97316}
+.BAIXADO{background:#dc2626}
+
+/* ALERTAS */
+.alerta{
+  background:#fff7ed;
+  border-left:5px solid #f97316;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+/* CHARTS */
+.chart-box{
+  height:320px;
 }
 
 /* RESPONSIVO */
-@media (max-width: 900px) {
-  .layout { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
-  .grid { grid-template-columns: 1fr; }
+@media(max-width:768px){
+
+  .layout{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+    min-height:auto;
+  }
+
 }
-
 </style>
-
 </head>
 
 <body>
 
+<header>
+  <h1>📊 BDR - Dashboard</h1>
+  <div id="dataAtual"></div>
+</header>
+
 <div class="layout">
 
-  <!-- =====================
-       MENU
-  ===================== -->
-  <div class="sidebar">
-    <h2>📦 BDR ERP</h2>
+<!-- MENU -->
+<div class="sidebar">
 
-    <a href="dashboard.html">📊 Dashboard</a>
-    <a href="patrimonio.html">📦 Patrimônio</a>
-    <a href="triagem.html">📥 Triagem</a>
-    <a href="bi.html">🧠 BI IA</a>
-  </div>
+  <button class="menu-btn" onclick="ir('dashboard.html')">
+    📊 Dashboard
+  </button>
 
-  <!-- =====================
-       CONTEÚDO
-  ===================== -->
-  <div class="content">
+  <button class="menu-btn" onclick="ir('patrimonio.html')">
+    📦 Patrimônio
+  </button>
 
-    <header>
-      📊 DASHBOARD BDR BI EMPRESARIAL 7.1
-    </header>
+  <button class="menu-btn" onclick="ir('empresa.html')">
+    🏢 Empresas
+  </button>
 
-    <!-- KPIs -->
-    <div class="kpis">
-      <div class="kpi">Total <br><strong id="total">0</strong></div>
-      <div class="kpi">Críticos <br><strong id="criticos">0</strong></div>
-      <div class="kpi">Manutenção <br><strong id="manutencao">0</strong></div>
-    </div>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">
+    🔁 Movimentações
+  </button>
 
-    <!-- GRID -->
-    <div class="grid">
+  <button class="menu-btn" onclick="ir('relatorios.html')">
+    📄 Relatórios
+  </button>
 
-      <div class="card">
-        <h3>🚨 Alertas</h3>
-        <div id="alertas"></div>
-      </div>
-
-      <div class="card">
-        <h3>📊 Status Geral</h3>
-        <canvas id="graf1"></canvas>
-      </div>
-
-    </div>
-
-  </div>
 </div>
 
+<!-- CONTEÚDO -->
+<div class="content">
+
+<!-- KPIS -->
+<div class="grid-kpi">
+
+  <div class="kpi total">
+    <h2 id="kpiTotal">0</h2>
+    <span>📦 Total Patrimônios</span>
+  </div>
+
+  <div class="kpi uso">
+    <h2 id="kpiUso">0</h2>
+    <span>✅ Em Uso</span>
+  </div>
+
+  <div class="kpi estoque">
+    <h2 id="kpiEstoque">0</h2>
+    <span>📦 Em Estoque</span>
+  </div>
+
+  <div class="kpi manutencao">
+    <h2 id="kpiManutencao">0</h2>
+    <span>🛠 Manutenção</span>
+  </div>
+
+  <div class="kpi baixado">
+    <h2 id="kpiBaixado">0</h2>
+    <span>⬇️ Baixados</span>
+  </div>
+
+  <div class="kpi obras">
+    <h2 id="kpiObras">0</h2>
+    <span>🏗 Obras Ativas</span>
+  </div>
+
+  <div class="kpi mov">
+    <h2 id="kpiMovHoje">0</h2>
+    <span>🔁 Movimentações Hoje</span>
+  </div>
+
+</div>
+
+<br>
+
+<!-- FILTROS -->
+<div class="card">
+
+  <h3>🔎 Buscar Patrimônios</h3>
+
+  <div class="grid-kpi">
+
+    <input
+      id="busca"
+      placeholder="Buscar patrimônio..."
+      oninput="renderizarPatrimonios()"
+    >
+
+    <select id="filtroStatus" onchange="renderizarPatrimonios()">
+      <option value="">Todos os status</option>
+      <option value="ESTOQUE">Estoque</option>
+      <option value="EM_USO">Em uso</option>
+      <option value="MANUTENCAO">Manutenção</option>
+      <option value="BAIXADO">Baixado</option>
+    </select>
+
+    <select id="filtroObra" onchange="renderizarPatrimonios()">
+      <option value="">Todas as obras</option>
+    </select>
+
+  </div>
+
+</div>
+
+<br>
+
+<!-- GRAFICOS -->
+<div class="grid-kpi">
+
+  <div class="card">
+    <h3>📊 Patrimônios por Status</h3>
+
+    <div class="chart-box">
+      <canvas id="graficoStatus"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🏗 Patrimônios por Obra</h3>
+
+    <div class="chart-box">
+      <canvas id="graficoObras"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<br>
+
+<!-- ALERTAS -->
+<div class="grid-kpi">
+
+  <div class="card">
+
+    <h3>⚠️ Atenção Necessária</h3>
+
+    <div id="listaAlertas"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h3>🔁 Últimas Movimentações</h3>
+
+    <div id="listaMovimentacoes" class="lista"></div>
+
+  </div>
+
+</div>
+
+<br>
+
+<!-- PATRIMONIOS -->
+<div class="card">
+
+  <h3>📦 Patrimônios Filtrados</h3>
+
+  <div id="listaPatrimonios" class="lista"></div>
+
+</div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
+<script src="./JS/bdrCore.js"></script>
 
 <script>
 
-let dados = [];
+let patrimonios = [];
+let movimentacoes = [];
+let obras = [];
 
-async function carregar() {
-
-  const { data } = await client.from("patrimonio").select("*");
-  dados = data || [];
-
-  montar();
+function ir(pagina){
+  window.location.href = pagina;
 }
 
-function montar() {
-
-  document.getElementById("total").innerText = dados.length;
-
-  let crit = dados.filter(d => d.status === "MANUTENCAO").length;
-  document.getElementById("criticos").innerText = crit;
-
-  let est = dados.filter(d => d.status === "ESTOQUE").length;
-  let man = crit;
-
-  document.getElementById("manutencao").innerText = man;
-
-  montarAlertas();
-  montarGrafico(est, man);
+function db(){
+  return window.client || window.supabaseClient;
 }
 
-/* ALERTAS */
-function montarAlertas() {
-
-  const div = document.getElementById("alertas");
-  div.innerHTML = "";
-
-  dados.filter(d => d.status === "MANUTENCAO")
-    .slice(0,5)
-    .forEach(d => {
-      div.innerHTML += `<div class="alerta">🔴 ${d.nome_bem}</div>`;
-    });
+function valor(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
 }
 
-/* GRAFICO */
-function montarGrafico(est, man) {
+function formatarData(data){
 
-  new Chart(document.getElementById("graf1"), {
-    type: "pie",
-    data: {
-      labels: ["Estoque","Manutenção"],
-      datasets: [{
-        data: [est, man]
-      }]
-    }
+  if(!data) return "-";
+
+  return new Date(data)
+    .toLocaleString("pt-BR");
+}
+
+function hojeISO(){
+  return new Date()
+    .toISOString()
+    .slice(0,10);
+}
+
+async function carregarDashboard(){
+
+  document.getElementById("dataAtual").innerText =
+    new Date().toLocaleDateString("pt-BR");
+
+  const patResp = await db()
+    .from("patrimonio")
+    .select("*");
+
+  const movResp = await db()
+    .from("movimentacoes")
+    .select("*")
+    .order("id",{ascending:false})
+    .limit(10);
+
+  const obrasResp = await db()
+    .from("obras")
+    .select("*")
+    .eq("ativa", true);
+
+  patrimonios = patResp.data || [];
+  movimentacoes = movResp.data || [];
+  obras = obrasResp.data || [];
+
+  carregarFiltroObras();
+  atualizarKPIs();
+  renderizarPatrimonios();
+  renderizarMovimentacoes();
+  renderizarAlertas();
+  gerarGraficos();
+}
+
+function carregarFiltroObras(){
+
+  const select =
+    document.getElementById("filtroObra");
+
+  select.innerHTML =
+    `<option value="">Todas as obras</option>`;
+
+  obras.forEach(o => {
+
+    select.innerHTML += `
+      <option value="${o.id}">
+        ${o.codigo_obra || "-"} - ${o.nome || "-"}
+      </option>
+    `;
+
   });
 
 }
 
-carregar();
+function atualizarKPIs(){
+
+  document.getElementById("kpiTotal").innerText =
+    patrimonios.length;
+
+  document.getElementById("kpiUso").innerText =
+    patrimonios.filter(
+      p => p.status === "EM_USO"
+    ).length;
+
+  document.getElementById("kpiEstoque").innerText =
+    patrimonios.filter(
+      p => p.status === "ESTOQUE"
+    ).length;
+
+  document.getElementById("kpiManutencao").innerText =
+    patrimonios.filter(
+      p => p.status === "MANUTENCAO"
+    ).length;
+
+  document.getElementById("kpiBaixado").innerText =
+    patrimonios.filter(
+      p => p.status === "BAIXADO"
+    ).length;
+
+  document.getElementById("kpiObras").innerText =
+    obras.length;
+
+  document.getElementById("kpiMovHoje").innerText =
+    movimentacoes.filter(m =>
+      String(m.data_movimentacao || "")
+      .slice(0,10) === hojeISO()
+    ).length;
+
+}
+
+function renderizarPatrimonios(){
+
+  const busca =
+    valor("busca").toLowerCase();
+
+  const status =
+    valor("filtroStatus");
+
+  const obra =
+    valor("filtroObra");
+
+  const lista =
+    document.getElementById("listaPatrimonios");
+
+  lista.innerHTML = "";
+
+  const filtrados = patrimonios.filter(p => {
+
+    const texto = `
+      ${p.nome_bem || ""}
+      ${p.codigo_qr || ""}
+      ${p.localizacao || ""}
+      ${p.tipo_item || ""}
+    `.toLowerCase();
+
+    const passaBusca =
+      texto.includes(busca);
+
+    const passaStatus =
+      !status || p.status === status;
+
+    const passaObra =
+      !obra || String(p.obra_id) === String(obra);
+
+    return (
+      passaBusca &&
+      passaStatus &&
+      passaObra
+    );
+
+  });
+
+  if(filtrados.length === 0){
+
+    lista.innerHTML =
+      "<p>Nenhum patrimônio encontrado.</p>";
+
+    return;
+  }
+
+  filtrados.forEach(p => {
+
+    lista.innerHTML += `
+      <div class="item">
+
+        <strong>
+          ${p.nome_bem || "-"}
+        </strong>
+
+        <br><br>
+
+        Código:
+        ${p.codigo_qr || "-"}
+
+        <br>
+
+        Obra:
+        ${p.localizacao || "-"}
+
+        <br>
+
+        Tipo:
+        ${p.tipo_item || "-"}
+
+        <br>
+
+        <span class="status ${p.status}">
+          ${p.status || "-"}
+        </span>
+
+      </div>
+    `;
+
+  });
+
+}
+
+function renderizarMovimentacoes(){
+
+  const lista =
+    document.getElementById("listaMovimentacoes");
+
+  lista.innerHTML = "";
+
+  if(movimentacoes.length === 0){
+
+    lista.innerHTML =
+      "<p>Nenhuma movimentação.</p>";
+
+    return;
+  }
+
+  movimentacoes.forEach(m => {
+
+    lista.innerHTML += `
+      <div class="item">
+
+        <strong>
+          ${m.tipo || "-"}
+        </strong>
+
+        <br><br>
+
+        Status:
+        ${m.status_anterior || "-"}
+        →
+        ${m.status_novo || "-"}
+
+        <br><br>
+
+        ${m.observacao || "-"}
+
+        <br><br>
+
+        ${formatarData(m.data_movimentacao)}
+
+      </div>
+    `;
+
+  });
+
+}
+
+function renderizarAlertas(){
+
+  const lista =
+    document.getElementById("listaAlertas");
+
+  lista.innerHTML = "";
+
+  const manutencao =
+    patrimonios.filter(
+      p => p.status === "MANUTENCAO"
+    );
+
+  const baixados =
+    patrimonios.filter(
+      p => p.status === "BAIXADO"
+    );
+
+  if(
+    manutencao.length === 0 &&
+    baixados.length === 0
+  ){
+
+    lista.innerHTML =
+      "<p>Nenhum alerta no momento.</p>";
+
+    return;
+  }
+
+  manutencao.forEach(p => {
+
+    lista.innerHTML += `
+      <div class="alerta">
+        🛠
+        ${p.nome_bem}
+        está em manutenção
+      </div>
+    `;
+
+  });
+
+  baixados.forEach(p => {
+
+    lista.innerHTML += `
+      <div class="alerta">
+        ⬇️
+        ${p.nome_bem}
+        está baixado
+      </div>
+    `;
+
+  });
+
+}
+
+function gerarGraficos(){
+
+  const statusMap = {
+    ESTOQUE:0,
+    EM_USO:0,
+    MANUTENCAO:0,
+    BAIXADO:0
+  };
+
+  patrimonios.forEach(p => {
+
+    if(statusMap[p.status] !== undefined){
+      statusMap[p.status]++;
+    }
+
+  });
+
+  new Chart(
+    document.getElementById("graficoStatus"),
+    {
+      type:"pie",
+      data:{
+        labels:[
+          "Estoque",
+          "Em Uso",
+          "Manutenção",
+          "Baixado"
+        ],
+        datasets:[{
+          data:[
+            statusMap.ESTOQUE,
+            statusMap.EM_USO,
+            statusMap.MANUTENCAO,
+            statusMap.BAIXADO
+          ]
+        }]
+      }
+    }
+  );
+
+  const obrasMap = {};
+
+  patrimonios.forEach(p => {
+
+    const nome =
+      p.localizacao || "Sem obra";
+
+    obrasMap[nome] =
+      (obrasMap[nome] || 0) + 1;
+
+  });
+
+  new Chart(
+    document.getElementById("graficoObras"),
+    {
+      type:"bar",
+      data:{
+        labels:Object.keys(obrasMap),
+        datasets:[{
+          label:"Patrimônios",
+          data:Object.values(obrasMap)
+        }]
+      }
+    }
+  );
+
+}
+
+carregarDashboard();
 
 </script>
 
