@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>BDR ERP 9.0 - Movimentações</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f4f6f9;
+  color:#222;
+}
+
+header{
+  background:#fff;
+  border-bottom:3px solid #a4161a;
+  padding:12px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.layout{
+  display:flex;
+}
+
+.sidebar{
+  width:200px;
+  background:#2c3e50;
+  min-height:100vh;
+  padding:10px;
+}
+
+.menu-btn{
+  width:100%;
+  margin:5px 0;
+  padding:9px;
+  background:#1f2d3a;
+  color:white;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  text-align:left;
+}
+
+.content{
+  flex:1;
+  padding:12px;
+}
+
+.card{
+  background:white;
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
+}
+
+.card h3{
+  margin:0 0 8px;
+  color:#a4161a;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:8px;
+}
+
+input,select{
+  width:100%;
+  padding:8px;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+
+.item{
+  background:#fff;
+  border-left:5px solid #a4161a;
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(0,0,0,.15);
+  font-size:14px;
+}
+
+.tipo{
+  font-weight:bold;
+  color:#a4161a;
+}
+
+.obs{
+  background:#f4f6f9;
+  padding:8px;
+  border-radius:6px;
+  margin-top:8px;
+}
+
+.status{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:20px;
+  background:#2c3e50;
+  color:white;
+  font-size:12px;
+}
+
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;min-height:auto}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>🔁 BDR Movimentações</b>
+</header>
+
+<div class="layout">
+
+<div class="sidebar">
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+</div>
+
+<div class="content">
+
+<div class="card">
+  <h3>🔎 Buscar movimentações</h3>
+
+  <div class="grid">
+    <input id="busca" placeholder="Buscar por patrimônio, código, observação..." oninput="renderizarMovimentacoes()">
+
+    <select id="filtroTipo" onchange="renderizarMovimentacoes()">
+      <option value="">Todos os tipos</option>
+      <option value="ALTERACAO_STATUS">Alteração de status</option>
+      <option value="TROCA_SETOR">Troca de setor</option>
+    </select>
+
+    <select id="filtroStatus" onchange="renderizarMovimentacoes()">
+      <option value="">Todos os status</option>
+      <option value="ESTOQUE">Estoque</option>
+      <option value="EM_USO">Em uso</option>
+      <option value="MANUTENCAO">Manutenção</option>
+      <option value="BAIXADO">Baixado</option>
+    </select>
+  </div>
+</div>
+
+<div class="card">
+  <h3>📋 Histórico de movimentações</h3>
+  <div id="listaMovimentacoes" class="grid"></div>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/bdrCore.js"></script>
+
+<script>
+let movimentacoes = [];
+let patrimonios = [];
+let obras = [];
+
+function ir(pagina){
+  window.location.href = pagina;
+}
+
+function db(){
+  return window.client || window.supabaseClient;
+}
+
+function valor(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function formatarData(data){
+  if(!data) return "-";
+
+  const d = new Date(data);
+
+  return d.toLocaleString("pt-BR");
+}
+
+function nomePatrimonio(id){
+  const p = patrimonios.find(x => Number(x.id) === Number(id));
+
+  if(!p){
+    return "Patrimônio ID " + id;
+  }
+
+  return `${p.nome_bem || "-"} | ${p.codigo_qr || "-"}`;
+}
+
+function nomeObra(id){
+  if(!id) return "-";
+
+  const o = obras.find(x => Number(x.id) === Number(id));
+
+  if(!o){
+    return "Obra ID " + id;
+  }
+
+  return `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
+}
+
+async function carregarDados(){
+
+  if(!db()){
+    alert("Supabase não carregado. Verifique o arquivo JS/supabaseClient.js");
+    return;
+  }
+
+  const movResp = await db()
+    .from("movimentacoes")
+    .select("*")
+    .order("id", { ascending:false });
+
+  if(movResp.error){
+    console.error(movResp.error);
+    alert(movResp.error.message);
+    return;
+  }
+
+  const patResp = await db()
+    .from("patrimonio")
+    .select("*");
+
+  if(patResp.error){
+    console.error(patResp.error);
+  }
+
+  const obrasResp = await db()
+    .from("obras")
+    .select("*");
+
+  if(obrasResp.error){
+    console.error(obrasResp.error);
+  }
+
+  movimentacoes = movResp.data || [];
+  patrimonios = patResp.data || [];
+  obras = obrasResp.data || [];
+
+  renderizarMovimentacoes();
+}
+
+function renderizarMovimentacoes(){
+
+  const busca = valor("busca").toLowerCase();
+  const filtroTipo = valor("filtroTipo");
+  const filtroStatus = valor("filtroStatus");
+
+  const lista = document.getElementById("listaMovimentacoes");
+  lista.innerHTML = "";
+
+  const filtradas = movimentacoes.filter(m => {
+
+    const patrimonioTexto = nomePatrimonio(m.patrimonio_id);
+    const origemTexto = nomeObra(m.obra_origem_id);
+    const destinoTexto = nomeObra(m.obra_destino_id);
+
+    const texto = `
+      ${patrimonioTexto}
+      ${origemTexto}
+      ${destinoTexto}
+      ${m.tipo || ""}
+      ${m.status_anterior || ""}
+      ${m.status_novo || ""}
+      ${m.observacao || ""}
+    `.toLowerCase();
+
+    const passaBusca = texto.includes(busca);
+    const passaTipo = !filtroTipo || m.tipo === filtroTipo;
+    const passaStatus = !filtroStatus || m.status_novo === filtroStatus;
+
+    return passaBusca && passaTipo && passaStatus;
+  });
+
+  if(filtradas.length === 0){
+    lista.innerHTML = "<p>Nenhuma movimentação encontrada.</p>";
+    return;
+  }
+
+  filtradas.forEach(m => {
+
+    lista.innerHTML += `
+      <div class="item">
+        <div class="tipo">${m.tipo || "-"}</div>
+
+        <br>
+
+        <strong>Patrimônio:</strong><br>
+        ${nomePatrimonio(m.patrimonio_id)}
+
+        <br><br>
+
+        <strong>Status:</strong><br>
+        <span class="status">${m.status_anterior || "-"}</span>
+        →
+        <span class="status">${m.status_novo || "-"}</span>
+
+        <br><br>
+
+        <strong>Origem:</strong><br>
+        ${nomeObra(m.obra_origem_id)}
+
+        <br><br>
+
+        <strong>Destino:</strong><br>
+        ${nomeObra(m.obra_destino_id)}
+
+        <br><br>
+
+        <strong>Data:</strong><br>
+        ${formatarData(m.data_movimentacao)}
+
+        <div class="obs">
+          <strong>Justificativa:</strong><br>
+          ${m.observacao || "-"}
+        </div>
+      </div>
+    `;
+  });
+}
+
+carregarDados();
+</script>
+
+</body>
+</html>
