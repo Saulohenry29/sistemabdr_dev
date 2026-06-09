@@ -33,57 +33,13 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 .obra-ativa{font-weight:bold;color:#a4161a}
 .check-line{display:flex;align-items:center;gap:6px;font-size:13px}
 .check-line input{width:auto}
-
-/* MODAL */
-.modal-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  z-index:9999;
-  align-items:center;
-  justify-content:center;
-}
-
-.modal{
-  background:white;
-  width:95%;
-  max-width:650px;
-  border-radius:12px;
-  padding:18px;
-  box-shadow:0 5px 20px rgba(0,0,0,.3);
-}
-
-.modal h2{
-  margin-top:0;
-  color:#a4161a;
-}
-
-.modal-info{
-  background:#f4f6f9;
-  padding:10px;
-  border-radius:8px;
-  margin-bottom:10px;
-  font-size:14px;
-  line-height:1.6;
-}
-
-.acoes{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:8px;
-  margin-top:10px;
-}
-
-.fechar{
-  float:right;
-  background:#dc2626;
-}
-
-@media(max-width:768px){
-  .layout{flex-direction:column}
-  .sidebar{width:100%;min-height:auto}
-}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
+.modal{background:white;width:95%;max-width:650px;border-radius:12px;padding:18px;box-shadow:0 5px 20px rgba(0,0,0,.3)}
+.modal h2{margin-top:0;color:#a4161a}
+.modal-info{background:#f4f6f9;padding:10px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.6}
+.acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.fechar{float:right;background:#dc2626}
+@media(max-width:768px){.layout{flex-direction:column}.sidebar{width:100%;min-height:auto}}
 </style>
 </head>
 
@@ -140,9 +96,39 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
     </select>
   </div>
 
+  <br>
+
+  <label class="check-line">
+    <input type="checkbox" id="checkLegado" onchange="mostrarCamposLegado()">
+    Patrimônio já existente / legado
+  </label>
+
+  <div id="camposLegado" class="grid" style="display:none;margin-top:10px;">
+    <input id="codigo_antigo" placeholder="Código antigo patrimônio">
+
+    <select id="estado_conservacao">
+      <option value="">Estado conservação</option>
+      <option value="NOVO">Novo</option>
+      <option value="BOM">Bom</option>
+      <option value="REGULAR">Regular</option>
+      <option value="RUIM">Ruim</option>
+    </select>
+  </div>
+
+  <br>
+
+  <div class="grid">
+    <input id="valor_bem" type="number" step="0.01" placeholder="Valor do bem Ex: 3500.00">
+  </div>
+
+  <br>
+
+  <textarea id="observacao" placeholder="Observações do patrimônio..."></textarea>
+
   <div id="camposExtras" class="grid" style="margin-top:8px;"></div>
 
   <br>
+
   <button class="btn-ok" onclick="gerarPatrimonio()">Gerar Patrimônio</button>
 </div>
 
@@ -179,7 +165,6 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <button class="fechar" onclick="fecharModal()">X</button>
@@ -212,7 +197,6 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
-
 <script>
 let obras = [];
 let patrimonios = [];
@@ -233,7 +217,6 @@ function valor(id){
 }
 
 async function carregarObras(){
-
   const { data, error } = await db()
     .from("obras")
     .select("*")
@@ -256,14 +239,12 @@ async function carregarObras(){
 
   obras.forEach(o => {
     const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
-
     select.innerHTML += `<option value="${o.id}">${texto}</option>`;
     novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
   });
 }
 
 function ativarObra(){
-
   const obra_id = document.getElementById("obraSelect").value;
   const check = document.getElementById("checkObra").checked;
 
@@ -285,11 +266,7 @@ function ativarObra(){
   }
 
   window.obraAtiva = obraSelecionada;
-
   localStorage.setItem("obraAtivaId", obraSelecionada.id);
-  localStorage.setItem("obraAtivaNome", obraSelecionada.nome || "");
-  localStorage.setItem("obraAtivaCodigo", obraSelecionada.codigo_obra || "");
-  localStorage.setItem("empresaAtivaId", obraSelecionada.empresa_id || "");
 
   document.getElementById("obraAtivaTexto").innerText =
     "OBRA ATIVA: " + (obraSelecionada.nome || "-") +
@@ -298,10 +275,19 @@ function ativarObra(){
   alert("Obra ativada com sucesso");
 }
 
-function mostrarCampos(){
+function mostrarCamposLegado(){
+  const check = document.getElementById("checkLegado");
+  const campos = document.getElementById("camposLegado");
 
+  if(!check || !campos) return;
+
+  campos.style.display = check.checked ? "grid" : "none";
+}
+
+function mostrarCampos(){
   const tipo = valor("tipo_item");
   const div = document.getElementById("camposExtras");
+
   div.innerHTML = "";
 
   if(tipo === "ELETRONICO" || tipo === "FERRAMENTA"){
@@ -336,7 +322,6 @@ function mostrarCampos(){
 }
 
 function obterObraAtiva(){
-
   if(window.obraAtiva) return window.obraAtiva;
 
   const obra_id = localStorage.getItem("obraAtivaId") || document.getElementById("obraSelect").value;
@@ -354,7 +339,6 @@ function obterObraAtiva(){
 }
 
 async function gerarPatrimonio(){
-
   const obra = obterObraAtiva();
 
   if(!obra){
@@ -374,7 +358,7 @@ async function gerarPatrimonio(){
     .from("patrimonio")
     .select("sequencial")
     .eq("obra_id", obra.id)
-    .order("sequencial", { ascending: false })
+    .order("sequencial", { ascending:false })
     .limit(1);
 
   if(erroUltimo){
@@ -402,7 +386,7 @@ async function gerarPatrimonio(){
     localizacao: obra.nome,
     sequencial,
     codigo_qr,
-    status: "ESTOQUE",
+    status:"ESTOQUE",
 
     marca: valor("marca"),
     modelo: valor("modelo"),
@@ -413,7 +397,13 @@ async function gerarPatrimonio(){
     combustivel: valor("combustivel"),
     potencia: valor("potencia"),
     horimetro: valor("horimetro"),
-    ano_fabricacao: valor("ano_fabricacao")
+    ano_fabricacao: valor("ano_fabricacao"),
+
+    valor_bem: valor("valor_bem"),
+    codigo_antigo: valor("codigo_antigo"),
+    estado_conservacao: valor("estado_conservacao"),
+    observacao: valor("observacao"),
+    origem_cadastro: document.getElementById("checkLegado").checked ? "LEGADO" : "NOVO"
   };
 
   const { error } = await db()
@@ -430,17 +420,22 @@ async function gerarPatrimonio(){
 
   document.getElementById("nome_bem").value = "";
   document.getElementById("tipo_item").value = "";
+  document.getElementById("valor_bem").value = "";
+  document.getElementById("observacao").value = "";
+  document.getElementById("codigo_antigo").value = "";
+  document.getElementById("estado_conservacao").value = "";
+  document.getElementById("checkLegado").checked = false;
+  document.getElementById("camposLegado").style.display = "none";
   document.getElementById("camposExtras").innerHTML = "";
 
   carregarPatrimonios();
 }
 
 async function carregarPatrimonios(){
-
   const { data, error } = await db()
     .from("patrimonio")
     .select("*")
-    .order("id", { ascending: false });
+    .order("id", { ascending:false });
 
   if(error){
     console.error(error);
@@ -453,7 +448,6 @@ async function carregarPatrimonios(){
 }
 
 function renderizarPatrimonios(){
-
   const busca = valor("busca")?.toLowerCase() || "";
   const filtroStatus = valor("filtroStatus");
   const filtroTipo = valor("filtroTipo");
@@ -461,11 +455,11 @@ function renderizarPatrimonios(){
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  let filtrados = patrimonios.filter(p => {
-
+  const filtrados = patrimonios.filter(p => {
     const texto = `
       ${p.nome_bem || ""}
       ${p.codigo_qr || ""}
+      ${p.codigo_antigo || ""}
       ${p.localizacao || ""}
       ${p.marca || ""}
       ${p.modelo || ""}
@@ -473,11 +467,9 @@ function renderizarPatrimonios(){
       ${p.status || ""}
     `.toLowerCase();
 
-    const passaBusca = texto.includes(busca);
-    const passaStatus = !filtroStatus || p.status === filtroStatus;
-    const passaTipo = !filtroTipo || p.tipo_item === filtroTipo;
-
-    return passaBusca && passaStatus && passaTipo;
+    return texto.includes(busca) &&
+      (!filtroStatus || p.status === filtroStatus) &&
+      (!filtroTipo || p.tipo_item === filtroTipo);
   });
 
   if(filtrados.length === 0){
@@ -486,7 +478,6 @@ function renderizarPatrimonios(){
   }
 
   filtrados.forEach(p => {
-
     const statusClasse = String(p.status || "")
       .replace(" ", "-")
       .replace("Ç", "C")
@@ -498,6 +489,8 @@ function renderizarPatrimonios(){
         <span>${p.localizacao || "SEM OBRA"}</span><br>
         <span>${p.tipo_item || "-"}</span><br>
         <div class="codigo">${p.codigo_qr || "-"}</div>
+        <small>Antigo: ${p.codigo_antigo || "-"}</small><br>
+        <small>Valor: R$ ${p.valor_bem || "0"}</small><br>
         <span class="status status-${statusClasse}">${p.status || "SEM STATUS"}</span>
       </div>
     `;
@@ -505,7 +498,6 @@ function renderizarPatrimonios(){
 }
 
 function abrirModal(id){
-
   const p = patrimonios.find(x => Number(x.id) === Number(id));
 
   if(!p){
@@ -520,18 +512,22 @@ function abrirModal(id){
 
   document.getElementById("modalInfo").innerHTML = `
     <strong>Código:</strong> ${p.codigo_qr || "-"}<br>
+    <strong>Código Antigo:</strong> ${p.codigo_antigo || "-"}<br>
+    <strong>Origem:</strong> ${p.origem_cadastro || "-"}<br>
     <strong>Status:</strong> ${p.status || "-"}<br>
-    <strong>Obra/Setor:</strong> ${p.localizacao || "-"}<br>
+    <strong>Obra:</strong> ${p.localizacao || "-"}<br>
     <strong>Tipo:</strong> ${p.tipo_item || "-"}<br>
     <strong>Marca:</strong> ${p.marca || "-"}<br>
     <strong>Modelo:</strong> ${p.modelo || "-"}<br>
     <strong>Nº Série:</strong> ${p.numero_serie || "-"}<br>
-    <strong>Placa:</strong> ${p.placa || "-"}
+    <strong>Placa:</strong> ${p.placa || "-"}<br>
+    <strong>Valor:</strong> R$ ${p.valor_bem || "0"}<br>
+    <strong>Estado:</strong> ${p.estado_conservacao || "-"}<br>
+    <strong>Observação:</strong> ${p.observacao || "-"}
   `;
 
   document.getElementById("observacaoMov").value = "";
   document.getElementById("novaObraSelect").value = "";
-
   document.getElementById("modalBg").style.display = "flex";
 }
 
@@ -541,10 +537,7 @@ function fecharModal(){
 }
 
 async function gravarMovimentacao(dados){
-
-  console.log("DADOS RECEBIDOS PARA MOVIMENTAÇÃO:", dados);
-
-  const { data, error } = await db()
+  const { error } = await db()
     .from("movimentacoes")
     .insert([{
       patrimonio_id: dados.patrimonio_id,
@@ -555,21 +548,18 @@ async function gravarMovimentacao(dados){
       status_anterior: dados.status_anterior,
       status_novo: dados.status_novo,
       observacao: dados.observacao
-    }])
-    .select();
+    }]);
 
   if(error){
-    console.error("ERRO AO GRAVAR MOVIMENTAÇÃO:", error);
+    console.error(error);
     alert("Erro ao gravar movimentação: " + error.message);
     return false;
   }
 
-  console.log("MOVIMENTAÇÃO GRAVADA:", data);
   return true;
 }
 
 async function alterarStatus(novoStatus){
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio");
     return;
@@ -582,25 +572,11 @@ async function alterarStatus(novoStatus){
     return;
   }
 
-  const statusPermitidos = [
-    "ESTOQUE",
-    "EM_USO",
-    "MANUTENCAO",
-    "BAIXADO"
-  ];
-
-  if(!statusPermitidos.includes(novoStatus)){
-    alert("Status inválido");
-    return;
-  }
-
   const statusAnterior = patrimonioSelecionado.status || null;
 
   const { error } = await db()
     .from("patrimonio")
-    .update({
-      status: novoStatus
-    })
+    .update({ status: novoStatus })
     .eq("id", patrimonioSelecionado.id);
 
   if(error){
@@ -608,16 +584,7 @@ async function alterarStatus(novoStatus){
     alert(error.message);
     return;
   }
-console.log("VAI GRAVAR MOVIMENTAÇÃO", {
-  patrimonio_id: patrimonioSelecionado.id,
-  empresa_id: patrimonioSelecionado.empresa_id,
-  obra_origem_id: patrimonioSelecionado.obra_id,
-  obra_destino_id: patrimonioSelecionado.obra_id,
-  tipo: "ALTERACAO_STATUS",
-  status_anterior: statusAnterior,
-  status_novo: novoStatus,
-  observacao: obs
-});
+
   await gravarMovimentacao({
     patrimonio_id: patrimonioSelecionado.id,
     empresa_id: patrimonioSelecionado.empresa_id,
@@ -636,7 +603,6 @@ console.log("VAI GRAVAR MOVIMENTAÇÃO", {
 }
 
 async function trocarObra(){
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio");
     return;
@@ -656,17 +622,15 @@ async function trocarObra(){
     return;
   }
 
-  const novaObra = obras.find(
-    o => String(o.id) === String(novaObraId)
-  );
+  const novaObra = obras.find(o => String(o.id) === String(novaObraId));
 
   if(!novaObra){
     alert("Obra não encontrada");
     return;
   }
 
-  const obraOrigemId = patrimonioSelecionado.obra_id || null;
   const statusAnterior = patrimonioSelecionado.status || null;
+  const obraOrigemId = patrimonioSelecionado.obra_id || null;
 
   const { error } = await db()
     .from("patrimonio")
@@ -702,21 +666,24 @@ async function trocarObra(){
 }
 
 function imprimirEtiqueta(){
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio");
     return;
   }
 
-  const codigoSeguro = encodeURIComponent(patrimonioSelecionado.codigo_qr || "");
+  const codigoSeguro = encodeURIComponent(
+    patrimonioSelecionado.codigo_qr || ""
+  );
 
-  window.open("./etiqueta-impressao.html?id=" + codigoSeguro, "_blank");
+  window.open(
+    "./etiqueta-impressao.html?id=" + codigoSeguro,
+    "_blank"
+  );
 }
 
 async function iniciar(){
-
   if(!db()){
-    alert("Supabase não carregado. Verifique o arquivo JS/supabaseClient.js");
+    alert("Supabase não carregado.");
     return;
   }
 
@@ -745,6 +712,3 @@ async function iniciar(){
 
 iniciar();
 </script>
-
-</body>
-</html>
