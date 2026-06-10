@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>BDR Patrimônio</title>
+<title>BDR Patrimônio </title>
 
 <style>
 *{box-sizing:border-box}
@@ -17,24 +17,40 @@ header{background:#fff;border-bottom:3px solid #a4161a;padding:12px 15px;display
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
 input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px}
 button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a4161a;color:white}
-.btn-ok{background:#2a9d8f}
-.btn-blue{background:#2563eb}
-.btn-orange{background:#f97316}
-.btn-gray{background:#6b7280}
-.btn-dark{background:#111827}
+.btn-ok{background:#2a9d8f}.btn-blue{background:#2563eb}.btn-orange{background:#f97316}.btn-gray{background:#6b7280}.btn-dark{background:#111827}
 .item{background:white;border-left:5px solid #a4161a;padding:10px;border-radius:7px;box-shadow:0 2px 5px rgba(0,0,0,.15);font-size:13px;cursor:pointer}
 .item:hover{transform:scale(1.01)}
 .codigo{font-weight:bold;color:#a4161a;font-size:15px;margin-top:4px}
 .status{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:20px;color:white;font-size:12px;background:#6b7280}
-.status-ESTOQUE{background:#2a9d8f}
-.status-EM-USO{background:#2563eb}
-.status-MANUTENCAO{background:#f97316}
-.status-BAIXADO{background:#dc2626}
+.status-ESTOQUE{background:#2a9d8f}.status-EM-USO{background:#2563eb}.status-MANUTENCAO{background:#f97316}.status-BAIXADO{background:#dc2626}
 .obra-ativa{font-weight:bold;color:#a4161a}
-.check-line{display:flex;align-items:center;gap:6px;font-size:13px}
-.check-line input{width:auto}
+.check-line{display:flex;align-items:center;gap:6px;font-size:13px}.check-line input{width:auto}
+.lock-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  max-width:650px;
+}
+
+.lock-row select{
+  flex:1;
+}
+
+.lock-btn{
+  font-weight:bold;
+  min-width:180px;
+  white-space:nowrap;
+}
+
+.lock-off{
+  background:#6b7280;
+}
+
+.lock-on{
+  background:#2a9d8f;
+}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
-.modal{background:white;width:95%;max-width:650px;border-radius:12px;padding:18px;box-shadow:0 5px 20px rgba(0,0,0,.3)}
+.modal{background:white;width:95%;max-width:680px;border-radius:12px;padding:18px;box-shadow:0 5px 20px rgba(0,0,0,.3)}
 .modal h2{margin-top:0;color:#a4161a}
 .modal-info{background:#f4f6f9;padding:10px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.6}
 .acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
@@ -46,8 +62,8 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <body>
 
 <header>
-  <b>📦 BDR Patrimônio</b>
-  <div class="obra-ativa" id="obraAtivaTexto">Nenhuma obra ativa</div>
+  <b>📦 BDR Patrimônio </b>
+  <div class="obra-ativa" id="obraAtivaTexto">🔓 Lançamento livre</div>
 </header>
 
 <div class="layout">
@@ -63,21 +79,17 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <div class="content">
 
 <div class="card">
-  <h3>🏗 Obra / Setor Ativo</h3>
+  <h3>🏗 Obra / Setor de Lançamento</h3>
 
-  <div class="grid">
+  <div class="lock-row">
     <select id="obraSelect">
       <option value="">Selecione a obra/setor</option>
     </select>
 
-    <label class="check-line">
-      <input type="checkbox" id="checkObra">
-      Estou lançando nesta obra
-    </label>
+    <button id="btnTravarObra" class="lock-btn lock-off" onclick="alternarTravaObra()">
+      🔓 Livre
+    </button>
   </div>
-
-  <br>
-  <button class="btn-ok" onclick="ativarObra()">Ativar Obra</button>
 </div>
 
 <div class="card">
@@ -89,11 +101,29 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
     <select id="tipo_item" onchange="mostrarCampos()">
       <option value="">Tipo de ativo</option>
       <option value="ELETRONICO">Eletrônico</option>
+      <option value="ELETRODOMESTICO">Eletrodoméstico</option>
       <option value="VEICULO">Veículo</option>
       <option value="FERRAMENTA">Ferramenta</option>
       <option value="MAQUINA">Máquina agrícola</option>
+      <option value="MOBILIARIO">Mobiliário</option>
+      <option value="INFORMATICA">Informática</option>
+      <option value="EQUIPAMENTO">Equipamento</option>
+      <option value="MATERIAL_APOIO">Material de apoio</option>
       <option value="OUTRO">Outro</option>
     </select>
+
+    <select id="status_inicial">
+      <option value="ESTOQUE">Status inicial: Estoque</option>
+      <option value="EM_USO">Status inicial: Em uso</option>
+      <option value="MANUTENCAO">Status inicial: Manutenção</option>
+      <option value="BAIXADO">Status inicial: Baixado</option>
+    </select>
+
+    <input id="valor_bem" type="text" placeholder="Valor do bem Ex: 1.350,00" oninput="mascaraMoeda(this)">
+  </div>
+
+  <div id="campoOutroTipo" class="grid" style="display:none;margin-top:8px;">
+    <input id="tipo_outro" placeholder="Descreva o tipo do ativo">
   </div>
 
   <br>
@@ -113,12 +143,6 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
       <option value="REGULAR">Regular</option>
       <option value="RUIM">Ruim</option>
     </select>
-  </div>
-
-  <br>
-
-  <div class="grid">
-    <input id="valor_bem" type="number" step="0.01" placeholder="Valor do bem Ex: 3500.00">
   </div>
 
   <br>
@@ -149,9 +173,14 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
     <select id="filtroTipo" onchange="renderizarPatrimonios()">
       <option value="">Todos os tipos</option>
       <option value="ELETRONICO">Eletrônico</option>
+      <option value="ELETRODOMESTICO">Eletrodoméstico</option>
       <option value="VEICULO">Veículo</option>
       <option value="FERRAMENTA">Ferramenta</option>
       <option value="MAQUINA">Máquina agrícola</option>
+      <option value="MOBILIARIO">Mobiliário</option>
+      <option value="INFORMATICA">Informática</option>
+      <option value="EQUIPAMENTO">Equipamento</option>
+      <option value="MATERIAL_APOIO">Material de apoio</option>
       <option value="OUTRO">Outro</option>
     </select>
   </div>
@@ -170,10 +199,9 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
     <button class="fechar" onclick="fecharModal()">X</button>
 
     <h2 id="modalTitulo">Patrimônio</h2>
-
     <div class="modal-info" id="modalInfo"></div>
 
-    <label>Observação da movimentação</label>
+    <label><strong>Justificativa obrigatória da movimentação</strong></label>
     <textarea id="observacaoMov" placeholder="Ex: item enviado para manutenção, troca de setor, baixa por defeito..."></textarea>
 
     <br><br>
@@ -190,7 +218,37 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
       <button onclick="trocarObra()">🔁 Trocar Setor</button>
       <button class="btn-gray" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
       <button class="btn-dark" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
+      <button onclick="abrirEdicao()">✏️ Editar Dados</button>
     </div>
+  </div>
+</div>
+<div class="modal-bg" id="modalEdicaoBg">
+  <div class="modal">
+    <button class="fechar" onclick="fecharEdicao()">X</button>
+
+    <h2>✏️ Correção Cadastral</h2>
+
+    <div class="grid">
+      <input id="edit_nome_bem" placeholder="Nome do patrimônio">
+      <input id="edit_valor_bem" placeholder="Valor do bem Ex: 1.350,00" oninput="mascaraMoeda(this)">
+      <input id="edit_marca" placeholder="Marca">
+      <input id="edit_modelo" placeholder="Modelo">
+      <input id="edit_codigo_antigo" placeholder="Código antigo">
+    </div>
+
+    <br>
+
+    <textarea id="edit_observacao" placeholder="Observação do patrimônio"></textarea>
+
+    <br><br>
+
+    <textarea id="motivo_correcao" placeholder="Motivo obrigatório da correção cadastral"></textarea>
+
+    <br><br>
+
+    <button class="btn-ok" onclick="salvarEdicaoPatrimonio()">
+      💾 Salvar Correção
+    </button>
   </div>
 </div>
 
@@ -202,6 +260,7 @@ let obras = [];
 let patrimonios = [];
 let patrimonioSelecionado = null;
 window.obraAtiva = null;
+window.obraTravada = false;
 
 function ir(pagina){
   window.location.href = pagina;
@@ -213,10 +272,50 @@ function db(){
 
 function valor(id){
   const el = document.getElementById(id);
-  return el ? el.value.trim() : null;
+  if(!el) return "";
+  return String(el.value || "").trim();
+}
+
+function moedaParaNumero(valorTexto){
+  if(!valorTexto) return null;
+
+  return Number(
+    valorTexto
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace(/[^\d.]/g, "")
+  ) || null;
+}
+
+function formatarMoeda(valor){
+  if(valor === null || valor === undefined || valor === ""){
+    return "R$ 0,00";
+  }
+
+  return Number(valor).toLocaleString("pt-BR", {
+    style:"currency",
+    currency:"BRL"
+  });
+}
+
+function mascaraMoeda(input){
+  let valor = input.value.replace(/\D/g, "");
+
+  if(!valor){
+    input.value = "";
+    return;
+  }
+
+  valor = (Number(valor) / 100).toFixed(2);
+
+  input.value = Number(valor).toLocaleString("pt-BR", {
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
 }
 
 async function carregarObras(){
+
   const { data, error } = await db()
     .from("obras")
     .select("*")
@@ -239,43 +338,105 @@ async function carregarObras(){
 
   obras.forEach(o => {
     const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
+
     select.innerHTML += `<option value="${o.id}">${texto}</option>`;
     novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
   });
 }
 
-function ativarObra(){
+function alternarTravaObra(){
+
+  if(window.obraTravada){
+    destravarObra();
+    return;
+  }
+
   const obra_id = document.getElementById("obraSelect").value;
-  const check = document.getElementById("checkObra").checked;
 
   if(!obra_id){
-    alert("Selecione a obra");
+    alert("Selecione uma obra/setor para travar.");
     return;
   }
 
-  if(!check){
-    alert("Marque a confirmação da obra");
-    return;
-  }
-
-  const obraSelecionada = obras.find(o => String(o.id) === String(obra_id));
+  const obraSelecionada = obras.find(
+    o => String(o.id) === String(obra_id)
+  );
 
   if(!obraSelecionada){
-    alert("Obra não encontrada");
+    alert("Obra não encontrada.");
     return;
   }
 
   window.obraAtiva = obraSelecionada;
+  window.obraTravada = true;
+
   localStorage.setItem("obraAtivaId", obraSelecionada.id);
+  localStorage.setItem("obraTravada", "SIM");
 
-  document.getElementById("obraAtivaTexto").innerText =
-    "OBRA ATIVA: " + (obraSelecionada.nome || "-") +
-    " | Código: " + (obraSelecionada.codigo_obra || "-");
+  atualizarVisualTrava();
+}
 
-  alert("Obra ativada com sucesso");
+function destravarObra(){
+  window.obraTravada = false;
+  window.obraAtiva = null;
+
+  localStorage.removeItem("obraAtivaId");
+  localStorage.removeItem("obraTravada");
+
+  atualizarVisualTrava();
+}
+
+function atualizarVisualTrava(){
+
+  const btn = document.getElementById("btnTravarObra");
+  const textoTopo = document.getElementById("obraAtivaTexto");
+
+  if(window.obraTravada && window.obraAtiva){
+
+    btn.className = "lock-btn lock-on";
+
+    btn.innerText =
+      "🔒 " +
+      (window.obraAtiva.codigo_obra || "-") +
+      " - " +
+      (window.obraAtiva.nome || "-");
+
+    textoTopo.innerText =
+      "🔒 TRAVADO: " +
+      (window.obraAtiva.codigo_obra || "-") +
+      " - " +
+      (window.obraAtiva.nome || "-");
+
+  }else{
+
+    btn.className = "lock-btn lock-off";
+    btn.innerText = "🔓 Livre";
+
+    textoTopo.innerText = "🔓 Lançamento livre";
+  }
+}
+
+function obterObraParaLancamento(){
+
+  if(window.obraTravada && window.obraAtiva){
+    return window.obraAtiva;
+  }
+
+  const obra_id = document.getElementById("obraSelect").value;
+
+  if(!obra_id){
+    return null;
+  }
+
+  const obraSelecionada = obras.find(
+    o => String(o.id) === String(obra_id)
+  );
+
+  return obraSelecionada || null;
 }
 
 function mostrarCamposLegado(){
+
   const check = document.getElementById("checkLegado");
   const campos = document.getElementById("camposLegado");
 
@@ -285,12 +446,23 @@ function mostrarCamposLegado(){
 }
 
 function mostrarCampos(){
+
   const tipo = valor("tipo_item");
   const div = document.getElementById("camposExtras");
+  const campoOutro = document.getElementById("campoOutroTipo");
 
   div.innerHTML = "";
 
-  if(tipo === "ELETRONICO" || tipo === "FERRAMENTA"){
+  campoOutro.style.display =
+    tipo === "OUTRO" ? "grid" : "none";
+
+  if(
+    tipo === "ELETRONICO" ||
+    tipo === "FERRAMENTA" ||
+    tipo === "ELETRODOMESTICO" ||
+    tipo === "INFORMATICA" ||
+    tipo === "EQUIPAMENTO"
+  ){
     div.innerHTML = `
       <input id="marca" placeholder="Marca">
       <input id="modelo" placeholder="Modelo">
@@ -319,38 +491,35 @@ function mostrarCampos(){
       <input id="ano_fabricacao" placeholder="Ano fabricação">
     `;
   }
-}
 
-function obterObraAtiva(){
-  if(window.obraAtiva) return window.obraAtiva;
-
-  const obra_id = localStorage.getItem("obraAtivaId") || document.getElementById("obraSelect").value;
-
-  if(!obra_id) return null;
-
-  const obraSelecionada = obras.find(o => String(o.id) === String(obra_id));
-
-  if(obraSelecionada){
-    window.obraAtiva = obraSelecionada;
-    return obraSelecionada;
+  if(tipo === "MOBILIARIO" || tipo === "MATERIAL_APOIO"){
+    div.innerHTML = `
+      <input id="marca" placeholder="Marca/Fabricante">
+      <input id="modelo" placeholder="Modelo/Descrição">
+    `;
   }
-
-  return null;
 }
 
 async function gerarPatrimonio(){
-  const obra = obterObraAtiva();
+
+  const obra = obterObraParaLancamento();
 
   if(!obra){
-    alert("Selecione uma obra/setor primeiro");
+    alert("Selecione uma obra/setor para lançamento.");
     return;
   }
 
   const nome_bem = valor("nome_bem");
   const tipo_item = valor("tipo_item");
+  const status_inicial = valor("status_inicial") || "ESTOQUE";
 
   if(!nome_bem || !tipo_item){
-    alert("Preencha nome do bem e tipo");
+    alert("Preencha nome do bem e tipo.");
+    return;
+  }
+
+  if(tipo_item === "OUTRO" && !valor("tipo_outro")){
+    alert("Descreva o tipo do ativo.");
     return;
   }
 
@@ -363,7 +532,7 @@ async function gerarPatrimonio(){
 
   if(erroUltimo){
     console.error(erroUltimo);
-    alert("Erro ao buscar sequência");
+    alert("Erro ao buscar sequência.");
     return;
   }
 
@@ -381,29 +550,38 @@ async function gerarPatrimonio(){
   const patrimonio = {
     nome_bem,
     tipo_item,
+    tipo_outro: valor("tipo_outro"),
+
     empresa_id: obra.empresa_id,
     obra_id: obra.id,
     localizacao: obra.nome,
+
     sequencial,
     codigo_qr,
-    status:"ESTOQUE",
+    status: status_inicial,
 
     marca: valor("marca"),
     modelo: valor("modelo"),
     numero_serie: valor("numero_serie"),
+
     placa: valor("placa"),
     cor: valor("cor"),
     ano: valor("ano"),
+
     combustivel: valor("combustivel"),
     potencia: valor("potencia"),
     horimetro: valor("horimetro"),
     ano_fabricacao: valor("ano_fabricacao"),
 
-    valor_bem: valor("valor_bem"),
+    valor_bem: moedaParaNumero(valor("valor_bem")),
     codigo_antigo: valor("codigo_antigo"),
     estado_conservacao: valor("estado_conservacao"),
     observacao: valor("observacao"),
-    origem_cadastro: document.getElementById("checkLegado").checked ? "LEGADO" : "NOVO"
+
+    origem_cadastro:
+      document.getElementById("checkLegado").checked
+        ? "LEGADO"
+        : "NOVO"
   };
 
   const { error } = await db()
@@ -418,20 +596,27 @@ async function gerarPatrimonio(){
 
   alert("Patrimônio criado: " + codigo_qr);
 
+  limparFormularioCadastro();
+  carregarPatrimonios();
+}
+
+function limparFormularioCadastro(){
   document.getElementById("nome_bem").value = "";
   document.getElementById("tipo_item").value = "";
+  document.getElementById("status_inicial").value = "ESTOQUE";
   document.getElementById("valor_bem").value = "";
+  document.getElementById("tipo_outro").value = "";
+  document.getElementById("campoOutroTipo").style.display = "none";
   document.getElementById("observacao").value = "";
   document.getElementById("codigo_antigo").value = "";
   document.getElementById("estado_conservacao").value = "";
   document.getElementById("checkLegado").checked = false;
   document.getElementById("camposLegado").style.display = "none";
   document.getElementById("camposExtras").innerHTML = "";
-
-  carregarPatrimonios();
 }
 
 async function carregarPatrimonios(){
+
   const { data, error } = await db()
     .from("patrimonio")
     .select("*")
@@ -448,7 +633,8 @@ async function carregarPatrimonios(){
 }
 
 function renderizarPatrimonios(){
-  const busca = valor("busca")?.toLowerCase() || "";
+
+  const busca = valor("busca").toLowerCase();
   const filtroStatus = valor("filtroStatus");
   const filtroTipo = valor("filtroTipo");
 
@@ -456,6 +642,7 @@ function renderizarPatrimonios(){
   lista.innerHTML = "";
 
   const filtrados = patrimonios.filter(p => {
+
     const texto = `
       ${p.nome_bem || ""}
       ${p.codigo_qr || ""}
@@ -464,6 +651,7 @@ function renderizarPatrimonios(){
       ${p.marca || ""}
       ${p.modelo || ""}
       ${p.tipo_item || ""}
+      ${p.tipo_outro || ""}
       ${p.status || ""}
     `.toLowerCase();
 
@@ -478,6 +666,7 @@ function renderizarPatrimonios(){
   }
 
   filtrados.forEach(p => {
+
     const statusClasse = String(p.status || "")
       .replace(" ", "-")
       .replace("Ç", "C")
@@ -487,10 +676,10 @@ function renderizarPatrimonios(){
       <div class="item" onclick="abrirModal(${p.id})">
         <b>${p.nome_bem || "-"}</b><br>
         <span>${p.localizacao || "SEM OBRA"}</span><br>
-        <span>${p.tipo_item || "-"}</span><br>
+        <span>${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}</span><br>
         <div class="codigo">${p.codigo_qr || "-"}</div>
         <small>Antigo: ${p.codigo_antigo || "-"}</small><br>
-        <small>Valor: R$ ${p.valor_bem || "0"}</small><br>
+        <small>Valor: ${formatarMoeda(p.valor_bem)}</small><br>
         <span class="status status-${statusClasse}">${p.status || "SEM STATUS"}</span>
       </div>
     `;
@@ -498,10 +687,13 @@ function renderizarPatrimonios(){
 }
 
 function abrirModal(id){
-  const p = patrimonios.find(x => Number(x.id) === Number(id));
+
+  const p = patrimonios.find(
+    x => Number(x.id) === Number(id)
+  );
 
   if(!p){
-    alert("Patrimônio não encontrado");
+    alert("Patrimônio não encontrado.");
     return;
   }
 
@@ -516,12 +708,12 @@ function abrirModal(id){
     <strong>Origem:</strong> ${p.origem_cadastro || "-"}<br>
     <strong>Status:</strong> ${p.status || "-"}<br>
     <strong>Obra:</strong> ${p.localizacao || "-"}<br>
-    <strong>Tipo:</strong> ${p.tipo_item || "-"}<br>
+    <strong>Tipo:</strong> ${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}<br>
     <strong>Marca:</strong> ${p.marca || "-"}<br>
     <strong>Modelo:</strong> ${p.modelo || "-"}<br>
     <strong>Nº Série:</strong> ${p.numero_serie || "-"}<br>
     <strong>Placa:</strong> ${p.placa || "-"}<br>
-    <strong>Valor:</strong> R$ ${p.valor_bem || "0"}<br>
+    <strong>Valor:</strong> ${formatarMoeda(p.valor_bem)}<br>
     <strong>Estado:</strong> ${p.estado_conservacao || "-"}<br>
     <strong>Observação:</strong> ${p.observacao || "-"}
   `;
@@ -537,6 +729,7 @@ function fecharModal(){
 }
 
 async function gravarMovimentacao(dados){
+
   const { error } = await db()
     .from("movimentacoes")
     .insert([{
@@ -560,8 +753,9 @@ async function gravarMovimentacao(dados){
 }
 
 async function alterarStatus(novoStatus){
+
   if(!patrimonioSelecionado){
-    alert("Selecione um patrimônio");
+    alert("Selecione um patrimônio.");
     return;
   }
 
@@ -596,15 +790,16 @@ async function alterarStatus(novoStatus){
     observacao: obs
   });
 
-  alert("Status alterado com sucesso!");
+  alert("Status alterado com sucesso.");
 
   fecharModal();
   carregarPatrimonios();
 }
 
 async function trocarObra(){
+
   if(!patrimonioSelecionado){
-    alert("Selecione um patrimônio");
+    alert("Selecione um patrimônio.");
     return;
   }
 
@@ -618,14 +813,16 @@ async function trocarObra(){
   const novaObraId = document.getElementById("novaObraSelect").value;
 
   if(!novaObraId){
-    alert("Selecione a nova obra/setor");
+    alert("Selecione a nova obra/setor.");
     return;
   }
 
-  const novaObra = obras.find(o => String(o.id) === String(novaObraId));
+  const novaObra = obras.find(
+    o => String(o.id) === String(novaObraId)
+  );
 
   if(!novaObra){
-    alert("Obra não encontrada");
+    alert("Obra não encontrada.");
     return;
   }
 
@@ -659,15 +856,16 @@ async function trocarObra(){
     observacao: obs
   });
 
-  alert("Patrimônio transferido com sucesso!");
+  alert("Patrimônio transferido com sucesso.");
 
   fecharModal();
   carregarPatrimonios();
 }
 
 function imprimirEtiqueta(){
+
   if(!patrimonioSelecionado){
-    alert("Selecione um patrimônio");
+    alert("Selecione um patrimônio.");
     return;
   }
 
@@ -680,8 +878,98 @@ function imprimirEtiqueta(){
     "_blank"
   );
 }
+function abrirEdicao(){
 
+  if(!patrimonioSelecionado){
+    alert("Selecione um patrimônio.");
+    return;
+  }
+
+  document.getElementById("edit_nome_bem").value =
+    patrimonioSelecionado.nome_bem || "";
+
+  document.getElementById("edit_valor_bem").value =
+    patrimonioSelecionado.valor_bem
+      ? Number(patrimonioSelecionado.valor_bem).toLocaleString("pt-BR", {
+          minimumFractionDigits:2,
+          maximumFractionDigits:2
+        })
+      : "";
+
+  document.getElementById("edit_marca").value =
+    patrimonioSelecionado.marca || "";
+
+  document.getElementById("edit_modelo").value =
+    patrimonioSelecionado.modelo || "";
+
+  document.getElementById("edit_codigo_antigo").value =
+    patrimonioSelecionado.codigo_antigo || "";
+
+  document.getElementById("edit_observacao").value =
+    patrimonioSelecionado.observacao || "";
+
+  document.getElementById("motivo_correcao").value = "";
+
+  document.getElementById("modalEdicaoBg").style.display = "flex";
+}
+
+function fecharEdicao(){
+  document.getElementById("modalEdicaoBg").style.display = "none";
+}
+
+async function salvarEdicaoPatrimonio(){
+
+  if(!patrimonioSelecionado){
+    alert("Selecione um patrimônio.");
+    return;
+  }
+
+  const motivo = valor("motivo_correcao");
+
+  if(!motivo || motivo.length < 5){
+    alert("Informe o motivo da correção cadastral.");
+    return;
+  }
+
+  const dadosAtualizados = {
+    nome_bem: valor("edit_nome_bem"),
+    valor_bem: moedaParaNumero(valor("edit_valor_bem")),
+    marca: valor("edit_marca"),
+    modelo: valor("edit_modelo"),
+    codigo_antigo: valor("edit_codigo_antigo"),
+    observacao: valor("edit_observacao")
+  };
+
+  const { error } = await db()
+    .from("patrimonio")
+    .update(dadosAtualizados)
+    .eq("id", patrimonioSelecionado.id);
+
+  if(error){
+    console.error(error);
+    alert(error.message);
+    return;
+  }
+
+  await gravarMovimentacao({
+    patrimonio_id: patrimonioSelecionado.id,
+    empresa_id: patrimonioSelecionado.empresa_id,
+    obra_origem_id: patrimonioSelecionado.obra_id,
+    obra_destino_id: patrimonioSelecionado.obra_id,
+    tipo: "CORRECAO_CADASTRAL",
+    status_anterior: patrimonioSelecionado.status,
+    status_novo: patrimonioSelecionado.status,
+    observacao: motivo
+  });
+
+  alert("Correção cadastral salva com sucesso!");
+
+  fecharEdicao();
+  fecharModal();
+  carregarPatrimonios();
+}
 async function iniciar(){
+
   if(!db()){
     alert("Supabase não carregado.");
     return;
@@ -690,25 +978,27 @@ async function iniciar(){
   await carregarObras();
 
   const obraSalva = localStorage.getItem("obraAtivaId");
+  const travada = localStorage.getItem("obraTravada");
 
-  if(obraSalva){
-    const existe = obras.find(o => String(o.id) === String(obraSalva));
+  if(obraSalva && travada === "SIM"){
+    const existe = obras.find(
+      o => String(o.id) === String(obraSalva)
+    );
 
     if(existe){
-      document.getElementById("obraSelect").value = obraSalva;
-      document.getElementById("checkObra").checked = true;
       window.obraAtiva = existe;
-
-      document.getElementById("obraAtivaTexto").innerText =
-        "OBRA ATIVA: " +
-        (existe.nome || "-") +
-        " | Código: " +
-        (existe.codigo_obra || "-");
+      window.obraTravada = true;
+      document.getElementById("obraSelect").value = obraSalva;
     }
   }
+
+  atualizarVisualTrava();
 
   await carregarPatrimonios();
 }
 
 iniciar();
 </script>
+
+</body>
+</html>
