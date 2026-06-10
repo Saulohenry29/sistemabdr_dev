@@ -523,29 +523,31 @@ async function gerarPatrimonio(){
     return;
   }
 
-  const { data: ultimo, error: erroUltimo } = await db()
-    .from("patrimonio")
-    .select("sequencial")
-    .eq("obra_id", obra.id)
-    .order("sequencial", { ascending:false })
-    .limit(1);
+const prefixoCodigo = "PAT-" + (obra.codigo_obra || "");
 
-  if(erroUltimo){
-    alert("Erro ao buscar sequência.");
-    return;
-  }
+const { data: ultimo, error: erroUltimo } = await db()
+  .from("patrimonio")
+  .select("codigo_qr")
+  .like("codigo_qr", prefixoCodigo + "%")
+  .order("codigo_qr", { ascending:false })
+  .limit(1);
 
-  let sequencial = 1;
+if(erroUltimo){
+  alert("Erro ao buscar último código.");
+  return;
+}
 
-  if(ultimo && ultimo.length > 0 && ultimo[0].sequencial){
-    sequencial = Number(ultimo[0].sequencial) + 1;
-  }
+let sequencial = 1;
 
-  const codigo_qr =
-    "PAT-" +
-    (obra.codigo_obra || "") +
-    String(sequencial).padStart(4, "0");
+if(ultimo && ultimo.length > 0 && ultimo[0].codigo_qr){
+  const ultimoCodigo = ultimo[0].codigo_qr;
+  const numeroFinal = ultimoCodigo.replace(prefixoCodigo, "");
+  sequencial = Number(numeroFinal) + 1;
+}
 
+const codigo_qr =
+  prefixoCodigo +
+  String(sequencial).padStart(4, "0");
   const patrimonio = {
     nome_bem,
     tipo_item,
@@ -999,4 +1001,3 @@ iniciar();
 
 </body>
 </html>
-
