@@ -531,7 +531,6 @@ async function gerarPatrimonio(){
     .limit(1);
 
   if(erroUltimo){
-    console.error(erroUltimo);
     alert("Erro ao buscar sequência.");
     return;
   }
@@ -550,33 +549,33 @@ async function gerarPatrimonio(){
   const patrimonio = {
     nome_bem,
     tipo_item,
-    tipo_outro: valor("tipo_outro"),
+    tipo_outro: valor("tipo_outro") || null,
 
-    empresa_id: obra.empresa_id,
-    obra_id: obra.id,
-    localizacao: obra.nome,
+    empresa_id: obra.empresa_id ? Number(obra.empresa_id) : null,
+    obra_id: obra.id ? Number(obra.id) : null,
+    localizacao: obra.nome || null,
 
-    sequencial,
+    sequencial: Number(sequencial),
     codigo_qr,
     status: status_inicial,
 
-    marca: valor("marca"),
-    modelo: valor("modelo"),
-    numero_serie: valor("numero_serie"),
+    marca: valor("marca") || null,
+    modelo: valor("modelo") || null,
+    numero_serie: valor("numero_serie") || null,
 
-    placa: valor("placa"),
-    cor: valor("cor"),
-    ano: valor("ano"),
+    placa: valor("placa") || null,
+    cor: valor("cor") || null,
+    ano: valor("ano") ? parseInt(valor("ano")) : null,
 
-    combustivel: valor("combustivel"),
-    potencia: valor("potencia"),
-    horimetro: valor("horimetro"),
-    ano_fabricacao: valor("ano_fabricacao"),
+    combustivel: valor("combustivel") || null,
+    potencia: valor("potencia") || null,
+    horimetro: moedaParaNumero(valor("horimetro")),
+    ano_fabricacao: valor("ano_fabricacao") ? parseInt(valor("ano_fabricacao")) : null,
 
     valor_bem: moedaParaNumero(valor("valor_bem")),
-    codigo_antigo: valor("codigo_antigo"),
-    estado_conservacao: valor("estado_conservacao"),
-    observacao: valor("observacao"),
+    codigo_antigo: valor("codigo_antigo") || null,
+    estado_conservacao: valor("estado_conservacao") || null,
+    observacao: valor("observacao") || null,
 
     origem_cadastro:
       document.getElementById("checkLegado").checked
@@ -598,9 +597,7 @@ async function gerarPatrimonio(){
 
   limparFormularioCadastro();
   carregarPatrimonios();
-}
-
-function limparFormularioCadastro(){
+}function limparFormularioCadastro(){
   document.getElementById("nome_bem").value = "";
   document.getElementById("tipo_item").value = "";
   document.getElementById("status_inicial").value = "ESTOQUE";
@@ -1002,3 +999,4 @@ iniciar();
 
 </body>
 </html>
+

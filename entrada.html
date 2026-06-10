@@ -4,80 +4,432 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Entrada 2.0</title>
+<title>BDR ERP - Entrada</title>
 
 <link rel="stylesheet" href="CSS/estilo.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="JS/supabaseClient.js"></script>
 <script defer src="JS/entrada.js"></script>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef2f7;
+}
+
+/* TOPO */
+.topo{
+  height:70px;
+  background:#fff;
+  border-bottom:4px solid #a4161a;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo img{
+  height:45px;
+}
+
+.logo h2{
+  margin:0;
+  color:#a4161a;
+}
+
+/* LAYOUT */
+.layout{
+  display:flex;
+}
+
+/* MENU */
+.sidebar{
+  width:230px;
+  min-height:calc(100vh - 70px);
+  background:#111b2e;
+  padding:15px;
+}
+
+.sidebar h3{
+  color:#8ecae6;
+  margin-top:0;
+}
+
+.menu-btn{
+  width:100%;
+  border:none;
+  background:#1c2b3a;
+  color:white;
+  padding:12px;
+  margin-bottom:8px;
+  border-radius:8px;
+  cursor:pointer;
+  text-align:left;
+  transition:.2s;
+}
+
+.menu-btn:hover{
+  background:#a4161a;
+}
+
+/* CONTEÚDO */
+.content{
+  flex:1;
+  padding:20px;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  margin-bottom:18px;
+  border-left:5px solid #a4161a;
+}
+
+.card h2,
+.card h3{
+  margin-top:0;
+  color:#a4161a;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;
+}
+
+label{
+  display:block;
+  margin-bottom:5px;
+  font-weight:bold;
+  color:#333;
+  font-size:14px;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  box-sizing:border-box;
+}
+
+textarea{
+  min-height:90px;
+}
+
+/* IMPORTAÇÃO */
+.importacao{
+  background:#fff5f5;
+  border:2px dashed #a4161a;
+  border-radius:12px;
+  padding:18px;
+}
+
+.importacao p{
+  margin:8px 0 0;
+  color:#555;
+}
+
+/* BOTÕES */
+.btn{
+  border:none;
+  padding:11px 15px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:.2s;
+}
+
+.btn-primary{
+  background:#a4161a;
+  color:white;
+}
+
+.btn-primary:hover{
+  background:#7a1014;
+}
+
+.btn-sec{
+  background:#1f2937;
+  color:white;
+}
+
+.btn-sec:hover{
+  background:#374151;
+}
+
+.btn-danger{
+  background:#dc2626;
+  color:white;
+}
+
+/* TABELA */
+.table-wrap{
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1000px;
+}
+
+th{
+  background:#111b2e;
+  color:white;
+  padding:12px;
+  text-align:left;
+  font-size:13px;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  font-size:13px;
+}
+
+td input,
+td select{
+  font-size:13px;
+  padding:7px;
+}
+
+/* TOTAL */
+.total-box{
+  margin-top:15px;
+  font-size:22px;
+  font-weight:bold;
+  color:#a4161a;
+  text-align:right;
+}
+
+/* STATUS */
+.alerta{
+  background:#fff7ed;
+  border-left:5px solid #f97316;
+  padding:12px;
+  border-radius:8px;
+  margin-top:10px;
+  color:#7c2d12;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+  .layout{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+    min-height:auto;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+}
+</style>
 </head>
 
 <body>
 
 <header class="topo">
-    <div class="logo">
-        <h2>BDR - Entrada de Materiais</h2>
-    </div>
+
+  <div class="logo">
+    <img src="./imagens/logo.png" alt="BDR">
+    <h2>Entrada de Materiais</h2>
+  </div>
+
+  <div id="dataAtual"></div>
+
 </header>
 
-<div class="container">
+<div class="layout">
 
-<div class="card">
+<!-- MENU -->
+<div class="sidebar">
 
-<h2>Nova Entrada</h2>
+  <h3>MENU</h3>
 
-<label>Empresa</label>
-<select id="empresa"></select>
+  <button class="menu-btn" onclick="ir('dashboard.html')">
+    📊 Dashboard
+  </button>
 
-<label>Número NF</label>
-<input type="text" id="numero_nf">
+  <button class="menu-btn" onclick="ir('entrada.html')">
+    📥 Entrada
+  </button>
 
-<label>Fornecedor</label>
-<input type="text" id="fornecedor">
+  <button class="menu-btn" onclick="ir('triagem.html')">
+    📋 Triagem
+  </button>
 
-<label>Responsável</label>
-<input type="text" id="responsavel">
+  <button class="menu-btn" onclick="ir('estoque.html')">
+    📦 Estoque
+  </button>
 
-<label>Chave NFe</label>
-<input type="text" id="chave_nfe">
+  <button class="menu-btn" onclick="ir('patrimonio.html')">
+    🏷 Patrimônio
+  </button>
 
-<label>Observação</label>
-<textarea id="observacao"></textarea>
+  <button class="menu-btn">
+    🚚 Movimentações
+  </button>
 
-<hr>
-
-<h3>Itens da Nota</h3>
-
-<table width="100%">
-<thead>
-<tr>
-    <th>Produto</th>
-    <th>Qtd</th>
-    <th>Valor Unit.</th>
-    <th>Estado</th>
-    <th>Lote</th>
-    <th>Validade</th>
-    <th>Total</th>
-    <th>Ação</th>
-</tr>
-</thead>
-
-<tbody id="itensBody"></tbody>
-</table>
-
-<br>
-
-<button onclick="adicionarLinha()">➕ Adicionar Item</button>
-
-<h3 id="totalGeral">Total NF: R$ 0,00</h3>
-
-<br>
-
-<button onclick="salvarEntrada()">💾 Salvar Entrada</button>
+  <button class="menu-btn">
+    📄 Relatórios
+  </button>
 
 </div>
 
+<!-- CONTEÚDO -->
+<div class="content">
+
+<!-- IMPORTAÇÃO -->
+<div class="card importacao">
+
+  <h2>📂 Importação XML da NFe</h2>
+
+  <input
+    type="file"
+    id="xmlNfe"
+    accept=".xml"
+    onchange="lerXMLNFe(event)"
+  >
+
+  <p>
+    A entrada será enviada para triagem após conferência rápida.
+  </p>
+
+  <div class="alerta">
+    ⚠️ A análise de patrimônio, destino e armazenagem será feita na triagem.
+  </div>
+
+</div>
+
+<!-- DADOS -->
+<div class="card">
+
+  <h2>📥 Dados da Entrada</h2>
+
+  <div class="grid">
+
+    <div>
+      <label>Empresa</label>
+      <select id="empresa"></select>
+    </div>
+
+    <div>
+      <label>Número NF</label>
+      <input id="numero_nf">
+    </div>
+
+    <div>
+      <label>Fornecedor</label>
+      <input id="fornecedor">
+    </div>
+
+    <div>
+      <label>Responsável Recebimento</label>
+      <input id="responsavel">
+    </div>
+
+    <div>
+      <label>Chave NFe</label>
+      <input id="chave_nfe">
+    </div>
+
+    <div>
+      <label>Data Recebimento</label>
+      <input type="date" id="data_recebimento">
+    </div>
+
+  </div>
+
+  <br>
+
+  <label>Observação</label>
+
+  <textarea
+    id="observacao"
+    placeholder="Observações da entrada..."
+  ></textarea>
+
+</div>
+
+<!-- ITENS -->
+<div class="card">
+
+  <h3>📦 Itens da Nota</h3>
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Descrição XML</th>
+          <th>Qtd</th>
+          <th>Valor Unit.</th>
+          <th>Estado</th>
+          <th>Lote</th>
+          <th>Validade</th>
+          <th>Total</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+
+      <tbody id="itensBody"></tbody>
+
+    </table>
+
+  </div>
+
+  <br>
+
+  <button
+    class="btn btn-sec"
+    onclick="adicionarLinha()"
+  >
+    ➕ Adicionar item manual
+  </button>
+
+  <div
+    class="total-box"
+    id="totalGeral"
+  >
+    Total NF: R$ 0,00
+  </div>
+
+  <br>
+
+  <button
+    class="btn btn-primary"
+    onclick="salvarEntrada()"
+  >
+    💾 Salvar entrada e enviar para triagem
+  </button>
+
+</div>
+
+</div>
 </div>
 
 </body>

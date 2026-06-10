@@ -20,10 +20,67 @@ label{display:block;margin-bottom:5px}
 input,textarea{width:100%;padding:10px;border:none;border-radius:6px;box-sizing:border-box}
 textarea{height:80px}
 .btn{background:#2a9d8f;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;margin-top:15px}
-.lista{margin-top:25px}
-.item{background:#1b2940;padding:12px;border-radius:8px;margin-bottom:10px}
-@media(max-width:768px){.layout{flex-direction:column}.sidebar{width:100%;min-height:auto}.grid{grid-template-columns:1fr}}
+
+.lista{
+  margin-top:25px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
+  gap:22px;
+  align-items:stretch;
+}
+
+.item{
+  background:#fff;
+  color:#222;
+  border-left:5px solid #a4161a;
+  padding:12px; 
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  font-size:14px;
+  line-height:1.6;
+  min-height:120px;    
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.item strong{color:#a4161a}
+
+.status{
+  display:inline-block;
+  width:max-content;
+  padding:4px 10px;
+  border-radius:20px;
+  color:white;
+  font-size:12px;
+  margin-top:8px;
+}
+
+.ATIVA{background:#2a9d8f}
+.INATIVA{background:#dc2626}
+
+.btn-card{
+  background:#1f2937;
+  color:white;
+  border:none;
+  padding:7px 10px;
+  border-radius:7px;
+  margin-top:10px;
+  margin-right:5px;
+  cursor:pointer;
+}
+
+.btn-card:hover{background:#a4161a}
+
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;min-height:auto}
+  .grid{grid-template-columns:1fr}
+  .lista{grid-template-columns:1fr}
+  .item{min-height:auto}
+}
 </style>
+
 </head>
 
 <body>
@@ -52,13 +109,13 @@ textarea{height:80px}
 <div class="grid">
 
   <div>
-    <label>Nome da Empresa</label>
-    <input id="nome">
-  </div>
-
-  <div>
     <label>Código da Empresa</label>
     <input id="codigo_empresa" placeholder="Ex: 10013">
+  </div>
+  
+  <div>
+    <label>Nome da Empresa</label>
+    <input id="nome">
   </div>
 
   <div>
@@ -86,6 +143,11 @@ textarea{height:80px}
     <input id="endereco">
   </div>
 
+  <div>
+    <label>CEP</label>
+    <input id="cep">
+  </div>
+
 </div>
 
 <br>
@@ -111,8 +173,6 @@ const supabaseKey = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
 
 window.client = supabase.createClient(supabaseUrl, supabaseKey);
 window.supabaseClient = window.client;
-
-console.log("SUPABASE EMPRESA OK", window.client);
 </script>
 
 <script>
@@ -130,11 +190,6 @@ function campo(id){
 
 async function salvarEmpresa(){
 
-  if(!db()){
-    alert("Supabase não carregado. Verifique o arquivo JS/supabaseClient.js");
-    return;
-  }
-
   const empresa = {
     nome: campo("nome"),
     codigo_empresa: campo("codigo_empresa"),
@@ -143,6 +198,7 @@ async function salvarEmpresa(){
     cidade: campo("cidade"),
     estado: campo("estado"),
     endereco: campo("endereco"),
+    cep: campo("cep"),
     observacao: campo("observacao"),
     ativa: true
   };
@@ -169,7 +225,6 @@ async function salvarEmpresa(){
     .single();
 
   if(error){
-    console.error(error);
     alert(error.message);
     return;
   }
@@ -186,7 +241,6 @@ async function salvarEmpresa(){
     .insert([obra]);
 
   if(erroObra){
-    console.error(erroObra);
     alert("Empresa cadastrada, mas erro ao criar obra: " + erroObra.message);
     return;
   }
@@ -199,18 +253,12 @@ async function salvarEmpresa(){
 
 async function carregarEmpresas(){
 
-  if(!db()){
-    console.error("Supabase não carregado");
-    return;
-  }
-
   const { data, error } = await db()
     .from("empresas")
     .select("*")
     .order("nome");
 
   if(error){
-    console.error(error);
     alert(error.message);
     return;
   }
@@ -224,14 +272,71 @@ async function carregarEmpresas(){
   }
 
   data.forEach(e => {
-    lista.innerHTML += `
-      <div class="item">
-        <strong>${e.codigo_empresa || "-"}</strong> - ${e.nome || "-"}<br>
-        <strong>Setor/Obra:</strong> ${e.setor_obra || "-"}<br>
-        ${e.cidade || "-"} / ${e.estado || "-"}
+
+  const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+
+  lista.innerHTML += `
+    <div class="item">
+
+      <div>
+        <strong>${e.nome || "-"}</strong><br><br>
+
+        <b>Código:</b> ${e.codigo_empresa || "-"}<br>
+        <b>Setor/Obra:</b> ${e.setor_obra || "-"}<br>
+        <span class="status ${statusTexto}">
+          ${statusTexto}
+        </span>
+
+        <br><br>
+
+        <button class="btn-card"
+          onclick="toggleDetalhes(${e.id})">
+          📂 Ver detalhes
+        </button>
       </div>
-    `;
-  });
+
+      <div id="detalhes-${e.id}"
+           style="display:none;margin-top:15px;">
+
+        <b>Setor/Obra:</b> ${e.setor_obra || "-"}<br>
+        <b>CNPJ:</b> ${e.cnpj || "-"}<br>
+        <b>Estado:</b> ${e.estado || "-"}<br>
+        <b>Endereço:</b> ${e.endereco || "-"}<br>
+        <b>CEP:</b> ${e.cep || "-"}<br>
+        <b>Observação:</b> ${e.observacao || "-"}<br><br>
+
+        <button class="btn-card"
+          onclick="editarEmpresa(${e.id})">
+          ✏️ Editar
+        </button>
+
+        <button class="btn-card"
+          onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
+          ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
+        </button>
+
+      </div>
+
+    </div>
+  `;
+});}
+
+async function alterarStatusEmpresa(id, status){
+  const { error } = await db()
+    .from("empresas")
+    .update({ ativa: status })
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  carregarEmpresas();
+}
+
+function editarEmpresa(id){
+  alert("Próximo passo: vamos criar a edição da empresa ID: " + id);
 }
 
 function limparFormulario(){
@@ -242,6 +347,7 @@ function limparFormulario(){
   document.getElementById("cidade").value = "";
   document.getElementById("estado").value = "";
   document.getElementById("endereco").value = "";
+  document.getElementById("cep").value = "";
   document.getElementById("observacao").value = "";
 }
 
@@ -250,3 +356,5 @@ window.addEventListener("load", carregarEmpresas);
 
 </body>
 </html>
+
+

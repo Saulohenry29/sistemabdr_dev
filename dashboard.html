@@ -2,14 +2,12 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>BDR - Dashboard</title>
+<title>BDR ERP - Dashboard Premium</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -18,7 +16,6 @@ body{
   color:#222;
 }
 
-/* HEADER */
 header{
   background:#fff;
   border-bottom:4px solid #a4161a;
@@ -26,21 +23,17 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
 }
 
 header h1{
   margin:0;
-  font-size:22px;
   color:#a4161a;
+  font-size:22px;
 }
 
-/* LAYOUT */
-.layout{
-  display:flex;
-}
+.layout{display:flex}
 
-/* SIDEBAR */
 .sidebar{
   width:210px;
   background:#1f2937;
@@ -55,58 +48,56 @@ header h1{
   background:#111827;
   color:white;
   border:none;
-  border-radius:7px;
+  border-radius:8px;
   cursor:pointer;
   text-align:left;
-  transition:.2s;
 }
 
-.menu-btn:hover{
-  background:#a4161a;
-}
+.menu-btn:hover{background:#a4161a}
 
-/* CONTEUDO */
 .content{
   flex:1;
   padding:14px;
 }
 
-/* GRID */
-.grid{
-  display:grid;
-  gap:12px;
-}
-
 .grid-kpi{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:12px;
 }
 
-/* KPI */
+.card{
+  background:white;
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  margin-bottom:12px;
+}
+
+.card h3{
+  margin-top:0;
+  color:#a4161a;
+}
+
 .kpi{
   color:white;
   padding:18px;
-  border-radius:14px;
-  box-shadow:0 3px 10px rgba(0,0,0,.18);
+  border-radius:15px;
+  box-shadow:0 3px 10px rgba(0,0,0,.2);
+  cursor:pointer;
+  transition:.25s;
   position:relative;
   overflow:hidden;
 }
 
-.kpi::after{
-  content:"";
-  position:absolute;
-  right:-25px;
-  top:-25px;
-  width:90px;
-  height:90px;
-  background:rgba(255,255,255,.12);
-  border-radius:50%;
+.kpi:hover{
+  transform:translateY(-5px) scale(1.02);
+  box-shadow:0 8px 20px rgba(0,0,0,.28);
 }
 
 .kpi h2{
   margin:0;
-  font-size:34px;
+  font-size:32px;
 }
 
 .kpi span{
@@ -118,43 +109,30 @@ header h1{
 .estoque{background:#2a9d8f}
 .manutencao{background:#f97316}
 .baixado{background:#dc2626}
-.obras{background:#7c3aed}
+.valor{background:#7c3aed}
+.alerta{background:#b45309}
 .mov{background:#a4161a}
 
-/* CARD */
-.card{
-  background:white;
-  border-radius:12px;
-  padding:14px;
-  box-shadow:0 2px 8px rgba(0,0,0,.12);
-}
-
-.card h3{
-  margin-top:0;
-  color:#a4161a;
-}
-
-/* FILTROS */
-input,
-select{
-  width:100%;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
-
-/* LISTAS */
-.lista{
+.grid{
   display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:10px;
+}
+
+input,select{
+  width:100%;
+  padding:9px;
+  border:1px solid #ccc;
+  border-radius:7px;
 }
 
 .item{
   background:#fff;
   border-left:5px solid #a4161a;
   padding:12px;
-  border-radius:8px;
-  box-shadow:0 2px 5px rgba(0,0,0,.12);
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.14);
+  font-size:14px;
 }
 
 .item strong{
@@ -168,6 +146,7 @@ select{
   color:white;
   font-size:12px;
   margin-top:5px;
+  background:#6b7280;
 }
 
 .ESTOQUE{background:#2a9d8f}
@@ -175,8 +154,11 @@ select{
 .MANUTENCAO{background:#f97316}
 .BAIXADO{background:#dc2626}
 
-/* ALERTAS */
-.alerta{
+.chart-box{
+  height:300px;
+}
+
+.alert-box{
   background:#fff7ed;
   border-left:5px solid #f97316;
   padding:10px;
@@ -184,23 +166,25 @@ select{
   margin-bottom:8px;
 }
 
-/* CHARTS */
-.chart-box{
-  height:320px;
+.titulo-lista{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
 }
 
-/* RESPONSIVO */
+.btn-limpar{
+  background:#6b7280;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+}
+
 @media(max-width:768px){
-
-  .layout{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-    min-height:auto;
-  }
-
+  .layout{flex-direction:column}
+  .sidebar{width:100%;min-height:auto}
 }
 </style>
 </head>
@@ -208,96 +192,75 @@ select{
 <body>
 
 <header>
-  <h1>📊 BDR - Dashboard</h1>
+  <h1>📊 BDR ERP - Dashboard</h1>
   <div id="dataAtual"></div>
 </header>
 
 <div class="layout">
 
-<!-- MENU -->
 <div class="sidebar">
-
-  <button class="menu-btn" onclick="ir('dashboard.html')">
-    📊 Dashboard
-  </button>
-
-  <button class="menu-btn" onclick="ir('patrimonio.html')">
-    📦 Patrimônio
-  </button>
-
-  <button class="menu-btn" onclick="ir('empresa.html')">
-    🏢 Empresas
-  </button>
-
-  <button class="menu-btn" onclick="ir('movimentacoes.html')">
-    🔁 Movimentações
-  </button>
-
-  <button class="menu-btn" onclick="ir('relatorios.html')">
-    📄 Relatórios
-  </button>
-
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
 </div>
 
-<!-- CONTEÚDO -->
 <div class="content">
 
-<!-- KPIS -->
 <div class="grid-kpi">
 
-  <div class="kpi total">
+  <div class="kpi total" onclick="filtrarCard('TODOS')">
     <h2 id="kpiTotal">0</h2>
-    <span>📦 Total Patrimônios</span>
+    <span>📦 Total patrimônios</span>
   </div>
 
-  <div class="kpi uso">
+  <div class="kpi uso" onclick="filtrarCard('EM_USO')">
     <h2 id="kpiUso">0</h2>
-    <span>✅ Em Uso</span>
+    <span>✅ Em uso</span>
   </div>
 
-  <div class="kpi estoque">
+  <div class="kpi estoque" onclick="filtrarCard('ESTOQUE')">
     <h2 id="kpiEstoque">0</h2>
-    <span>📦 Em Estoque</span>
+    <span>📦 Em estoque</span>
   </div>
 
-  <div class="kpi manutencao">
+  <div class="kpi manutencao" onclick="filtrarCard('MANUTENCAO')">
     <h2 id="kpiManutencao">0</h2>
     <span>🛠 Manutenção</span>
   </div>
 
-  <div class="kpi baixado">
+  <div class="kpi baixado" onclick="filtrarCard('BAIXADO')">
     <h2 id="kpiBaixado">0</h2>
     <span>⬇️ Baixados</span>
   </div>
 
-  <div class="kpi obras">
-    <h2 id="kpiObras">0</h2>
-    <span>🏗 Obras Ativas</span>
+  <div class="kpi valor" onclick="filtrarCard('COM_VALOR')">
+    <h2 id="kpiValor">R$ 0,00</h2>
+    <span>💰 Valor total</span>
   </div>
 
-  <div class="kpi mov">
+  <div class="kpi alerta" onclick="filtrarCard('SEM_VALOR')">
+    <h2 id="kpiSemValor">0</h2>
+    <span>⚠️ Sem valor</span>
+  </div>
+
+  <div class="kpi mov" onclick="ir('movimentacoes.html')">
     <h2 id="kpiMovHoje">0</h2>
-    <span>🔁 Movimentações Hoje</span>
+    <span>🔁 Movimentações hoje</span>
   </div>
 
 </div>
 
 <br>
 
-<!-- FILTROS -->
 <div class="card">
+  <h3>🔎 Busca inteligente</h3>
 
-  <h3>🔎 Buscar Patrimônios</h3>
+  <div class="grid">
+    <input id="busca" placeholder="Buscar por nome, código, obra, marca..." oninput="renderizarLista()">
 
-  <div class="grid-kpi">
-
-    <input
-      id="busca"
-      placeholder="Buscar patrimônio..."
-      oninput="renderizarPatrimonios()"
-    >
-
-    <select id="filtroStatus" onchange="renderizarPatrimonios()">
+    <select id="filtroStatus" onchange="renderizarLista()">
       <option value="">Todos os status</option>
       <option value="ESTOQUE">Estoque</option>
       <option value="EM_USO">Em uso</option>
@@ -305,69 +268,62 @@ select{
       <option value="BAIXADO">Baixado</option>
     </select>
 
-    <select id="filtroObra" onchange="renderizarPatrimonios()">
-      <option value="">Todas as obras</option>
+    <select id="filtroTipo" onchange="renderizarLista()">
+      <option value="">Todos os tipos</option>
     </select>
 
+    <select id="filtroObra" onchange="renderizarLista()">
+      <option value="">Todas as obras/setores</option>
+    </select>
   </div>
-
 </div>
 
-<br>
-
-<!-- GRAFICOS -->
-<div class="grid-kpi">
+<div class="grid">
 
   <div class="card">
-    <h3>📊 Patrimônios por Status</h3>
-
+    <h3>📊 Patrimônios por status</h3>
     <div class="chart-box">
       <canvas id="graficoStatus"></canvas>
     </div>
   </div>
 
   <div class="card">
-    <h3>🏗 Patrimônios por Obra</h3>
-
+    <h3>🏗 Patrimônios por obra/setor</h3>
     <div class="chart-box">
       <canvas id="graficoObras"></canvas>
     </div>
   </div>
 
+  <div class="card">
+    <h3>🧩 Tipos de ativos</h3>
+    <div class="chart-box">
+      <canvas id="graficoTipos"></canvas>
+    </div>
+  </div>
+
 </div>
 
-<br>
-
-<!-- ALERTAS -->
-<div class="grid-kpi">
+<div class="grid">
 
   <div class="card">
-
-    <h3>⚠️ Atenção Necessária</h3>
-
+    <h3>🚨 Alertas inteligentes</h3>
     <div id="listaAlertas"></div>
-
   </div>
 
   <div class="card">
-
-    <h3>🔁 Últimas Movimentações</h3>
-
-    <div id="listaMovimentacoes" class="lista"></div>
-
+    <h3>🔁 Últimas movimentações</h3>
+    <div id="listaMovimentacoes"></div>
   </div>
 
 </div>
 
-<br>
-
-<!-- PATRIMONIOS -->
 <div class="card">
+  <div class="titulo-lista">
+    <h3 id="tituloLista">📦 Patrimônios</h3>
+    <button class="btn-limpar" onclick="limparFiltroCard()">Limpar filtro</button>
+  </div>
 
-  <h3>📦 Patrimônios Filtrados</h3>
-
-  <div id="listaPatrimonios" class="lista"></div>
-
+  <div id="listaPatrimonios" class="grid"></div>
 </div>
 
 </div>
@@ -376,12 +332,15 @@ select{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
-
 <script>
-
 let patrimonios = [];
-let movimentacoes = [];
 let obras = [];
+let movimentacoes = [];
+let filtroCardAtual = "TODOS";
+
+let chartStatus = null;
+let chartObras = null;
+let chartTipos = null;
 
 function ir(pagina){
   window.location.href = pagina;
@@ -393,368 +352,412 @@ function db(){
 
 function valor(id){
   const el = document.getElementById(id);
-  return el ? el.value.trim() : "";
+  return el ? String(el.value || "").trim() : "";
+}
+
+function formatarMoeda(valor){
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style:"currency",
+    currency:"BRL"
+  });
 }
 
 function formatarData(data){
-
   if(!data) return "-";
-
-  return new Date(data)
-    .toLocaleString("pt-BR");
+  return new Date(data).toLocaleString("pt-BR");
 }
 
 function hojeISO(){
-  return new Date()
-    .toISOString()
-    .slice(0,10);
+  return new Date().toISOString().slice(0,10);
+}
+
+function nomePatrimonio(id){
+  const p = patrimonios.find(x => Number(x.id) === Number(id));
+  return p ? `${p.nome_bem || "-"} | ${p.codigo_qr || "-"}` : "Patrimônio ID " + id;
 }
 
 async function carregarDashboard(){
+
+  if(!db()){
+    alert("Supabase não carregado.");
+    return;
+  }
 
   document.getElementById("dataAtual").innerText =
     new Date().toLocaleDateString("pt-BR");
 
   const patResp = await db()
     .from("patrimonio")
-    .select("*");
-
-  const movResp = await db()
-    .from("movimentacoes")
     .select("*")
-    .order("id",{ascending:false})
-    .limit(10);
+    .order("id", { ascending:false });
 
   const obrasResp = await db()
     .from("obras")
     .select("*")
-    .eq("ativa", true);
+    .order("nome");
+
+  const movResp = await db()
+    .from("movimentacoes")
+    .select("*")
+    .order("id", { ascending:false })
+    .limit(20);
+
+  if(patResp.error){
+    console.error(patResp.error);
+    alert(patResp.error.message);
+    return;
+  }
+
+  if(obrasResp.error){
+    console.error(obrasResp.error);
+  }
+
+  if(movResp.error){
+    console.error(movResp.error);
+  }
 
   patrimonios = patResp.data || [];
-  movimentacoes = movResp.data || [];
   obras = obrasResp.data || [];
+  movimentacoes = movResp.data || [];
 
-  carregarFiltroObras();
+  carregarFiltros();
   atualizarKPIs();
-  renderizarPatrimonios();
-  renderizarMovimentacoes();
+  renderizarLista();
   renderizarAlertas();
+  renderizarMovimentacoes();
   gerarGraficos();
 }
 
-function carregarFiltroObras(){
+function carregarFiltros(){
 
-  const select =
-    document.getElementById("filtroObra");
+  const tipos = [...new Set(
+    patrimonios
+      .map(p => p.tipo_item)
+      .filter(Boolean)
+  )].sort();
 
-  select.innerHTML =
-    `<option value="">Todas as obras</option>`;
+  const filtroTipo = document.getElementById("filtroTipo");
+  filtroTipo.innerHTML = `<option value="">Todos os tipos</option>`;
+
+  tipos.forEach(t => {
+    filtroTipo.innerHTML += `<option value="${t}">${t}</option>`;
+  });
+
+  const filtroObra = document.getElementById("filtroObra");
+  filtroObra.innerHTML = `<option value="">Todas as obras/setores</option>`;
 
   obras.forEach(o => {
-
-    select.innerHTML += `
+    filtroObra.innerHTML += `
       <option value="${o.id}">
         ${o.codigo_obra || "-"} - ${o.nome || "-"}
       </option>
     `;
-
   });
-
 }
 
 function atualizarKPIs(){
 
-  document.getElementById("kpiTotal").innerText =
-    patrimonios.length;
+  const total = patrimonios.length;
+  const uso = patrimonios.filter(p => p.status === "EM_USO").length;
+  const estoque = patrimonios.filter(p => p.status === "ESTOQUE").length;
+  const manutencao = patrimonios.filter(p => p.status === "MANUTENCAO").length;
+  const baixado = patrimonios.filter(p => p.status === "BAIXADO").length;
 
-  document.getElementById("kpiUso").innerText =
-    patrimonios.filter(
-      p => p.status === "EM_USO"
-    ).length;
+  const valorTotal = patrimonios.reduce((soma, p) => {
+    return soma + Number(p.valor_bem || 0);
+  }, 0);
 
-  document.getElementById("kpiEstoque").innerText =
-    patrimonios.filter(
-      p => p.status === "ESTOQUE"
-    ).length;
+  const semValor = patrimonios.filter(p => !p.valor_bem || Number(p.valor_bem) <= 0).length;
 
-  document.getElementById("kpiManutencao").innerText =
-    patrimonios.filter(
-      p => p.status === "MANUTENCAO"
-    ).length;
+  const movHoje = movimentacoes.filter(m =>
+    String(m.data_movimentacao || "").slice(0,10) === hojeISO()
+  ).length;
 
-  document.getElementById("kpiBaixado").innerText =
-    patrimonios.filter(
-      p => p.status === "BAIXADO"
-    ).length;
-
-  document.getElementById("kpiObras").innerText =
-    obras.length;
-
-  document.getElementById("kpiMovHoje").innerText =
-    movimentacoes.filter(m =>
-      String(m.data_movimentacao || "")
-      .slice(0,10) === hojeISO()
-    ).length;
-
+  document.getElementById("kpiTotal").innerText = total;
+  document.getElementById("kpiUso").innerText = uso;
+  document.getElementById("kpiEstoque").innerText = estoque;
+  document.getElementById("kpiManutencao").innerText = manutencao;
+  document.getElementById("kpiBaixado").innerText = baixado;
+  document.getElementById("kpiValor").innerText = formatarMoeda(valorTotal);
+  document.getElementById("kpiSemValor").innerText = semValor;
+  document.getElementById("kpiMovHoje").innerText = movHoje;
 }
 
-function renderizarPatrimonios(){
+function filtrarCard(tipo){
+  filtroCardAtual = tipo;
 
-  const busca =
-    valor("busca").toLowerCase();
+  document.getElementById("filtroStatus").value = "";
 
-  const status =
-    valor("filtroStatus");
+  const titulos = {
+    TODOS:"📦 Todos os patrimônios",
+    EM_USO:"✅ Patrimônios em uso",
+    ESTOQUE:"📦 Patrimônios em estoque",
+    MANUTENCAO:"🛠 Patrimônios em manutenção",
+    BAIXADO:"⬇️ Patrimônios baixados",
+    COM_VALOR:"💰 Patrimônios com valor informado",
+    SEM_VALOR:"⚠️ Patrimônios sem valor informado"
+  };
 
-  const obra =
-    valor("filtroObra");
+  document.getElementById("tituloLista").innerText =
+    titulos[tipo] || "📦 Patrimônios";
 
-  const lista =
-    document.getElementById("listaPatrimonios");
+  renderizarLista();
 
-  lista.innerHTML = "";
+  document.getElementById("listaPatrimonios").scrollIntoView({
+    behavior:"smooth",
+    block:"start"
+  });
+}
+function limparFiltroCard(){
+  filtroCardAtual = "TODOS";
+  document.getElementById("busca").value = "";
+  document.getElementById("filtroStatus").value = "";
+  document.getElementById("filtroTipo").value = "";
+  document.getElementById("filtroObra").value = "";
+  document.getElementById("tituloLista").innerText = "📦 Patrimônios";
+  renderizarLista();
+}
 
-  const filtrados = patrimonios.filter(p => {
+function obterFiltrados(){
+
+  const busca = valor("busca").toLowerCase();
+  const status = valor("filtroStatus");
+  const tipo = valor("filtroTipo");
+  const obra = valor("filtroObra");
+
+  return patrimonios.filter(p => {
 
     const texto = `
       ${p.nome_bem || ""}
       ${p.codigo_qr || ""}
+      ${p.codigo_antigo || ""}
       ${p.localizacao || ""}
+      ${p.marca || ""}
+      ${p.modelo || ""}
+      ${p.numero_serie || ""}
       ${p.tipo_item || ""}
+      ${p.tipo_outro || ""}
+      ${p.status || ""}
     `.toLowerCase();
 
-    const passaBusca =
-      texto.includes(busca);
+    let passaCard = true;
 
-    const passaStatus =
-      !status || p.status === status;
+    if(filtroCardAtual === "EM_USO") passaCard = p.status === "EM_USO";
+    if(filtroCardAtual === "ESTOQUE") passaCard = p.status === "ESTOQUE";
+    if(filtroCardAtual === "MANUTENCAO") passaCard = p.status === "MANUTENCAO";
+    if(filtroCardAtual === "BAIXADO") passaCard = p.status === "BAIXADO";
+    if(filtroCardAtual === "COM_VALOR") passaCard = Number(p.valor_bem || 0) > 0;
+    if(filtroCardAtual === "SEM_VALOR") passaCard = !p.valor_bem || Number(p.valor_bem) <= 0;
 
-    const passaObra =
-      !obra || String(p.obra_id) === String(obra);
+    const passaBusca = texto.includes(busca);
+    const passaStatus = !status || p.status === status;
+    const passaTipo = !tipo || p.tipo_item === tipo;
+    const passaObra = !obra || String(p.obra_id) === String(obra);
 
-    return (
-      passaBusca &&
-      passaStatus &&
-      passaObra
-    );
-
+    return passaCard && passaBusca && passaStatus && passaTipo && passaObra;
   });
+}
+
+function renderizarLista(){
+
+  const lista = document.getElementById("listaPatrimonios");
+  lista.innerHTML = "";
+
+  const filtrados = obterFiltrados();
 
   if(filtrados.length === 0){
-
-    lista.innerHTML =
-      "<p>Nenhum patrimônio encontrado.</p>";
-
+    lista.innerHTML = "<p>Nenhum patrimônio encontrado.</p>";
     return;
   }
 
   filtrados.forEach(p => {
-
     lista.innerHTML += `
       <div class="item">
+        <strong>${p.nome_bem || "-"}</strong><br><br>
 
-        <strong>
-          ${p.nome_bem || "-"}
-        </strong>
-
-        <br><br>
-
-        Código:
-        ${p.codigo_qr || "-"}
-
-        <br>
-
-        Obra:
-        ${p.localizacao || "-"}
-
-        <br>
-
-        Tipo:
-        ${p.tipo_item || "-"}
-
-        <br>
+        <b>Código:</b> ${p.codigo_qr || "-"}<br>
+        <b>Antigo:</b> ${p.codigo_antigo || "-"}<br>
+        <b>Obra:</b> ${p.localizacao || "-"}<br>
+        <b>Tipo:</b> ${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}<br>
+        <b>Marca:</b> ${p.marca || "-"}<br>
+        <b>Modelo:</b> ${p.modelo || "-"}<br>
+        <b>Valor:</b> ${formatarMoeda(p.valor_bem)}<br>
 
         <span class="status ${p.status}">
-          ${p.status || "-"}
+          ${p.status || "SEM STATUS"}
         </span>
-
       </div>
     `;
-
   });
-
-}
-
-function renderizarMovimentacoes(){
-
-  const lista =
-    document.getElementById("listaMovimentacoes");
-
-  lista.innerHTML = "";
-
-  if(movimentacoes.length === 0){
-
-    lista.innerHTML =
-      "<p>Nenhuma movimentação.</p>";
-
-    return;
-  }
-
-  movimentacoes.forEach(m => {
-
-    lista.innerHTML += `
-      <div class="item">
-
-        <strong>
-          ${m.tipo || "-"}
-        </strong>
-
-        <br><br>
-
-        Status:
-        ${m.status_anterior || "-"}
-        →
-        ${m.status_novo || "-"}
-
-        <br><br>
-
-        ${m.observacao || "-"}
-
-        <br><br>
-
-        ${formatarData(m.data_movimentacao)}
-
-      </div>
-    `;
-
-  });
-
 }
 
 function renderizarAlertas(){
 
-  const lista =
-    document.getElementById("listaAlertas");
-
+  const lista = document.getElementById("listaAlertas");
   lista.innerHTML = "";
 
-  const manutencao =
-    patrimonios.filter(
-      p => p.status === "MANUTENCAO"
-    );
+  const semValor = patrimonios.filter(p => !p.valor_bem || Number(p.valor_bem) <= 0);
+  const semSerie = patrimonios.filter(p => !p.numero_serie && !p.placa);
+  const manutencao = patrimonios.filter(p => p.status === "MANUTENCAO");
 
-  const baixados =
-    patrimonios.filter(
-      p => p.status === "BAIXADO"
-    );
-
-  if(
-    manutencao.length === 0 &&
-    baixados.length === 0
-  ){
-
-    lista.innerHTML =
-      "<p>Nenhum alerta no momento.</p>";
-
+  if(semValor.length === 0 && semSerie.length === 0 && manutencao.length === 0){
+    lista.innerHTML = "<p>Nenhum alerta no momento.</p>";
     return;
   }
 
-  manutencao.forEach(p => {
-
+  if(semValor.length > 0){
     lista.innerHTML += `
-      <div class="alerta">
-        🛠
-        ${p.nome_bem}
-        está em manutenção
+      <div class="alert-box">
+        ⚠️ ${semValor.length} patrimônio(s) sem valor informado.
       </div>
     `;
+  }
 
-  });
-
-  baixados.forEach(p => {
-
+  if(semSerie.length > 0){
     lista.innerHTML += `
-      <div class="alerta">
-        ⬇️
-        ${p.nome_bem}
-        está baixado
+      <div class="alert-box">
+        🔎 ${semSerie.length} patrimônio(s) sem número de série ou placa.
       </div>
     `;
+  }
 
+  if(manutencao.length > 0){
+    lista.innerHTML += `
+      <div class="alert-box">
+        🛠 ${manutencao.length} patrimônio(s) em manutenção.
+      </div>
+    `;
+  }
+}
+
+function renderizarMovimentacoes(){
+
+  const lista = document.getElementById("listaMovimentacoes");
+  lista.innerHTML = "";
+
+  if(movimentacoes.length === 0){
+    lista.innerHTML = "<p>Nenhuma movimentação encontrada.</p>";
+    return;
+  }
+
+  movimentacoes.slice(0,8).forEach(m => {
+    lista.innerHTML += `
+      <div class="item">
+        <strong>${m.tipo || "-"}</strong><br><br>
+
+        ${nomePatrimonio(m.patrimonio_id)}<br><br>
+
+        <b>Status:</b>
+        ${m.status_anterior || "-"} → ${m.status_novo || "-"}<br>
+
+        <b>Data:</b> ${formatarData(m.data_movimentacao)}<br><br>
+
+        <b>Obs:</b> ${m.observacao || "-"}
+      </div>
+    `;
   });
-
 }
 
 function gerarGraficos(){
 
-  const statusMap = {
-    ESTOQUE:0,
-    EM_USO:0,
-    MANUTENCAO:0,
-    BAIXADO:0
+  gerarGraficoStatus();
+  gerarGraficoObras();
+  gerarGraficoTipos();
+}
+
+function gerarGraficoStatus(){
+
+  const dados = {
+    ESTOQUE: patrimonios.filter(p => p.status === "ESTOQUE").length,
+    EM_USO: patrimonios.filter(p => p.status === "EM_USO").length,
+    MANUTENCAO: patrimonios.filter(p => p.status === "MANUTENCAO").length,
+    BAIXADO: patrimonios.filter(p => p.status === "BAIXADO").length
   };
 
-  patrimonios.forEach(p => {
+  if(chartStatus) chartStatus.destroy();
 
-    if(statusMap[p.status] !== undefined){
-      statusMap[p.status]++;
-    }
-
-  });
-
-  new Chart(
+  chartStatus = new Chart(
     document.getElementById("graficoStatus"),
     {
-      type:"pie",
+      type:"doughnut",
       data:{
-        labels:[
-          "Estoque",
-          "Em Uso",
-          "Manutenção",
-          "Baixado"
-        ],
+        labels:["Estoque","Em uso","Manutenção","Baixado"],
         datasets:[{
           data:[
-            statusMap.ESTOQUE,
-            statusMap.EM_USO,
-            statusMap.MANUTENCAO,
-            statusMap.BAIXADO
+            dados.ESTOQUE,
+            dados.EM_USO,
+            dados.MANUTENCAO,
+            dados.BAIXADO
           ]
         }]
       }
     }
   );
+}
 
-  const obrasMap = {};
+function gerarGraficoObras(){
+
+  const mapa = {};
 
   patrimonios.forEach(p => {
-
-    const nome =
-      p.localizacao || "Sem obra";
-
-    obrasMap[nome] =
-      (obrasMap[nome] || 0) + 1;
-
+    const nome = p.localizacao || "Sem obra";
+    mapa[nome] = (mapa[nome] || 0) + 1;
   });
 
-  new Chart(
+  const ordenado = Object.entries(mapa)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,8);
+
+  if(chartObras) chartObras.destroy();
+
+  chartObras = new Chart(
     document.getElementById("graficoObras"),
     {
       type:"bar",
       data:{
-        labels:Object.keys(obrasMap),
+        labels:ordenado.map(x => x[0]),
         datasets:[{
           label:"Patrimônios",
-          data:Object.values(obrasMap)
+          data:ordenado.map(x => x[1])
+        }]
+      },
+      options:{
+        indexAxis:"y"
+      }
+    }
+  );
+}
+
+function gerarGraficoTipos(){
+
+  const mapa = {};
+
+  patrimonios.forEach(p => {
+    const tipo = p.tipo_item || "SEM TIPO";
+    mapa[tipo] = (mapa[tipo] || 0) + 1;
+  });
+
+  const ordenado = Object.entries(mapa)
+    .sort((a,b) => b[1] - a[1]);
+
+  if(chartTipos) chartTipos.destroy();
+
+  chartTipos = new Chart(
+    document.getElementById("graficoTipos"),
+    {
+      type:"bar",
+      data:{
+        labels:ordenado.map(x => x[0]),
+        datasets:[{
+          label:"Quantidade",
+          data:ordenado.map(x => x[1])
         }]
       }
     }
   );
-
 }
 
 carregarDashboard();
-
 </script>
 
 </body>

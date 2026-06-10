@@ -1,231 +1,390 @@
 let produtos = [];
 
 window.onload = async () => {
-    await carregarEmpresas();
-    await carregarProdutos();
-    adicionarLinha();
+  document.getElementById("dataAtual").innerText =
+    new Date().toLocaleDateString("pt-BR");
+
+  document.getElementById("data_recebimento").value =
+    new Date().toISOString().slice(0,10);
+
+  await carregarEmpresas();
+  await carregarProdutos();
+  adicionarLinha();
 };
 
-/* =========================
-   EMPRESAS
-========================= */
-async function carregarEmpresas() {
-
-    const { data, error } = await client
-        .from("empresas")
-        .select("*")
-        .order("nome");
-
-    if (error) return console.error(error);
-
-    const select = document.getElementById("empresa");
-    select.innerHTML = "";
-
-    data.forEach(emp => {
-
-        const option = document.createElement("option");
-        option.value = emp.id;
-        option.textContent = emp.nome;
-
-        select.appendChild(option);
-
-    });
+function ir(pagina){
+  window.location.href = pagina;
 }
 
-/* =========================
-   PRODUTOS
-========================= */
-async function carregarProdutos() {
-
-    const { data, error } = await client
-        .from("produtos")
-        .select("*")
-        .eq("ativo", true)
-        .order("descricao");
-
-    if (error) return console.error(error);
-
-    produtos = data;
+function db(){
+  return window.client || window.supabaseClient || client;
 }
 
-/* =========================
-   ADICIONAR LINHA
-========================= */
-function adicionarLinha() {
+function moeda(valor){
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style:"currency",
+    currency:"BRL"
+  });
+}
 
-    const tbody = document.getElementById("itensBody");
+function campo(id){
+  return document.getElementById(id).value.trim();
+}
 
-    const tr = document.createElement("tr");
+/* EMPRESAS */
+async function carregarEmpresas(){
 
-    let options = "";
+  const { data, error } = await db()
+    .from("empresas")
+    .select("*")
+    .order("nome");
 
-    produtos.forEach(p => {
-        options += `
-        <option value="${p.id}">
-            ${p.codigo_produto} - ${p.descricao}
-        </option>`;
-    });
+  if(error){
+    console.error(error);
+    alert("Erro ao carregar empresas");
+    return;
+  }
 
-    tr.innerHTML = `
-        <td>
-            <select class="produto">
-                ${options}
-            </select>
-        </td>
+  const select = document.getElementById("empresa");
+  select.innerHTML = `<option value="">Selecione</option>`;
 
-        <td>
-            <input type="number" class="quantidade" value="1" min="1" oninput="calcularLinha(this)">
-        </td>
-
-        <td>
-            <input type="number" class="valor" step="0.01" value="0" oninput="calcularLinha(this)">
-        </td>
-
-        <td>
-            <select class="estado">
-                <option>NOVO</option>
-                <option>USADO</option>
-                <option>RETORNO_OBRA</option>
-                <option>AVARIADO</option>
-            </select>
-        </td>
-
-        <td>
-            <input type="text" class="lote" placeholder="LOT-2026-000001">
-        </td>
-
-        <td>
-            <input type="date" class="validade">
-        </td>
-
-        <td>
-            <span class="totalLinha">R$ 0,00</span>
-        </td>
-
-        <td>
-            <button onclick="removerLinha(this)">❌</button>
-        </td>
+  (data || []).forEach(emp => {
+    select.innerHTML += `
+      <option value="${emp.id}">
+        ${emp.codigo_empresa || "-"} - ${emp.nome || "-"}
+      </option>
     `;
-
-    tbody.appendChild(tr);
+  });
 }
 
-/* =========================
-   REMOVER LINHA
-========================= */
-function removerLinha(btn) {
-    btn.closest("tr").remove();
-    calcularTotalGeral();
+/* PRODUTOS */
+async function carregarProdutos(){
+
+  const { data, error } = await db()
+    .from("produtos")
+    .select("*")
+    .eq("ativo", true)
+    .order("descricao");
+
+  if(error){
+    console.error(error);
+    alert("Erro ao carregar produtos");
+    return;
+  }
+
+  produtos = data || [];
 }
 
-/* =========================
-   CALCULAR LINHA
-========================= */
-function calcularLinha(el) {
+/* XML NFE */
+function lerXMLNFe(event){
 
-    const tr = el.closest("tr");
+  const arquivo = event.target.files[0];
 
-    const qtd = Number(tr.querySelector(".quantidade").value);
-    const valor = Number(tr.querySelector(".valor").value);
+  if(!arquivo){
+    return;
+  }
 
-    const total = qtd * valor;
+  const leitor = new FileReader();
 
-    tr.querySelector(".totalLinha").innerText =
-        total.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        });
+  leitor.onload = function(e){
 
-    calcularTotalGeral();
+    const textoXML = e.target.result;
+    const xml = new DOMParser().parseFromString(textoXML, "text/xml");
+
+    const numeroNF = tag(xml, "nNF");
+    const chave = pegarChave(xml);
+    const fornecedor = tagDentro(xml, "emit", "xNome");
+
+    document.getElementById("numero_nf").value = numeroNF;
+    document.getElementById("chave_nfe").value = chave;
+    document.getElementById("fornecedor").value = fornecedor;
+
+    carregarItensXML(xml);
+  };
+
+  leitor.readAsText(arquivo);
 }
 
-/* =========================
-   TOTAL GERAL
-========================= */
-function calcularTotalGeral() {
+function tag(xml, nome){
+  const el = xml.getElementsByTagName(nome)[0];
+  return el ? el.textContent.trim() : "";
+}
 
-    let total = 0;
+function tagDentro(xml, paiTag, filhoTag){
+  const pai = xml.getElementsByTagName(paiTag)[0];
+  if(!pai) return "";
 
-    document.querySelectorAll("#itensBody tr").forEach(tr => {
+  const filho = pai.getElementsByTagName(filhoTag)[0];
+  return filho ? filho.textContent.trim() : "";
+}
 
-        const qtd = Number(tr.querySelector(".quantidade").value);
-        const valor = Number(tr.querySelector(".valor").value);
+function pegarChave(xml){
+  const infNFe = xml.getElementsByTagName("infNFe")[0];
+  if(!infNFe) return "";
 
-        total += qtd * valor;
+  return (infNFe.getAttribute("Id") || "").replace("NFe", "");
+}
 
+function carregarItensXML(xml){
+
+  const tbody = document.getElementById("itensBody");
+  tbody.innerHTML = "";
+
+  const detalhes = xml.getElementsByTagName("det");
+
+  if(detalhes.length === 0){
+    alert("XML carregado, mas nenhum item foi encontrado.");
+    return;
+  }
+
+  for(let i = 0; i < detalhes.length; i++){
+
+    const prod = detalhes[i].getElementsByTagName("prod")[0];
+
+    if(!prod) continue;
+
+    const codigoBarras =
+      textoProduto(prod, "cEAN") ||
+      textoProduto(prod, "cProd");
+
+    const descricao = textoProduto(prod, "xProd");
+    const qtd = Number(textoProduto(prod, "qCom") || 1);
+    const valorUnit = Number(textoProduto(prod, "vUnCom") || 0);
+    const total = Number(textoProduto(prod, "vProd") || (qtd * valorUnit));
+
+    const produtoEncontrado = localizarProduto(codigoBarras, descricao);
+
+    adicionarLinha({
+      produto_id: produtoEncontrado ? produtoEncontrado.id : "",
+      descricao_xml: descricao,
+      quantidade: qtd,
+      valor_unitario: valorUnit,
+      total: total
+    });
+  }
+
+  calcularTotalGeral();
+
+  alert("XML carregado com sucesso! Itens adicionados automaticamente.");
+}
+
+function textoProduto(prod, tagNome){
+  const el = prod.getElementsByTagName(tagNome)[0];
+  return el ? el.textContent.trim() : "";
+}
+
+function textoFilho(pai, tag){
+  const el = pai.querySelector(tag);
+  return el ? el.textContent.trim() : "";
+}
+
+function localizarProduto(codigo, descricao){
+
+  const cod = String(codigo || "").trim().toLowerCase();
+  const desc = String(descricao || "").trim().toLowerCase();
+
+  let produto = produtos.find(p =>
+    String(p.codigo_barras || "").trim().toLowerCase() === cod
+  );
+
+  if(produto) return produto;
+
+  produto = produtos.find(p =>
+    String(p.codigo_produto || "").trim().toLowerCase() === cod
+  );
+
+  if(produto) return produto;
+
+  produto = produtos.find(p =>
+    desc.includes(String(p.descricao || "").trim().toLowerCase()) ||
+    String(p.descricao || "").trim().toLowerCase().includes(desc)
+  );
+
+  return produto || null;
+}
+
+/* LINHAS */
+function montarOptionsProduto(produtoIdSelecionado = ""){
+
+  let options = `<option value="">Não vinculado</option>`;
+
+  produtos.forEach(p => {
+    const selected = String(p.id) === String(produtoIdSelecionado) ? "selected" : "";
+
+    options += `
+      <option value="${p.id}" ${selected}>
+        ${p.codigo_produto || "-"} - ${p.descricao || "-"}
+      </option>
+    `;
+  });
+
+  return options;
+}
+
+function adicionarLinha(dados = {}){
+
+  const tbody = document.getElementById("itensBody");
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td>
+      <select class="produto">
+        ${montarOptionsProduto(dados.produto_id || "")}
+      </select>
+    </td>
+
+    <td>
+      <input class="descricao_xml" value="${dados.descricao_xml || ""}" placeholder="Descrição do XML ou manual">
+    </td>
+
+    <td>
+      <input type="number" class="quantidade" value="${dados.quantidade || 1}" min="0" step="0.01" oninput="calcularLinha(this)">
+    </td>
+
+    <td>
+      <input type="number" class="valor" step="0.01" value="${dados.valor_unitario || 0}" oninput="calcularLinha(this)">
+    </td>
+
+    <td>
+      <select class="estado">
+        <option>NOVO</option>
+        <option>USADO</option>
+        <option>RETORNO_OBRA</option>
+        <option>AVARIADO</option>
+      </select>
+    </td>
+
+    <td>
+      <input class="lote" placeholder="Lote">
+    </td>
+
+    <td>
+      <input type="date" class="validade">
+    </td>
+
+    <td>
+      <span class="totalLinha">${moeda(dados.total || 0)}</span>
+    </td>
+
+    <td>
+      <button class="btn btn-danger" onclick="removerLinha(this)">❌</button>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+  calcularLinha(tr.querySelector(".quantidade"));
+}
+
+function removerLinha(btn){
+  btn.closest("tr").remove();
+  calcularTotalGeral();
+}
+
+function calcularLinha(el){
+
+  const tr = el.closest("tr");
+
+  const qtd = Number(tr.querySelector(".quantidade").value || 0);
+  const valor = Number(tr.querySelector(".valor").value || 0);
+
+  const total = qtd * valor;
+
+  tr.querySelector(".totalLinha").innerText = moeda(total);
+
+  calcularTotalGeral();
+}
+
+function calcularTotalGeral(){
+
+  let total = 0;
+
+  document.querySelectorAll("#itensBody tr").forEach(tr => {
+    const qtd = Number(tr.querySelector(".quantidade").value || 0);
+    const valor = Number(tr.querySelector(".valor").value || 0);
+    total += qtd * valor;
+  });
+
+  document.getElementById("totalGeral").innerText =
+    "Total NF: " + moeda(total);
+}
+
+/* SALVAR */
+async function salvarEntrada(){
+
+  try{
+
+    const empresa_id = campo("empresa");
+    const numero_nf = campo("numero_nf");
+    const fornecedor = campo("fornecedor");
+    const responsavel = campo("responsavel");
+    const chave_nfe = campo("chave_nfe");
+    const observacao = campo("observacao");
+
+    if(!empresa_id){
+      alert("Selecione a empresa.");
+      return;
+    }
+
+    if(!numero_nf){
+      alert("Informe o número da NF.");
+      return;
+    }
+
+    const linhas = document.querySelectorAll("#itensBody tr");
+
+    if(linhas.length === 0){
+      alert("Adicione pelo menos um item.");
+      return;
+    }
+
+    const { data: entrada, error } = await db()
+      .from("entradas")
+      .insert([{
+        empresa_id,
+        numero_nf,
+        fornecedor,
+        responsavel,
+        chave_nfe,
+        observacao,
+        status: "AGUARDANDO_TRIAGEM"
+      }])
+      .select()
+      .single();
+
+    if(error) throw error;
+
+    const itens = [];
+
+    linhas.forEach(tr => {
+
+      const quantidade = Number(tr.querySelector(".quantidade").value || 0);
+      const valor_unitario = Number(tr.querySelector(".valor").value || 0);
+
+      itens.push({
+        entrada_id: entrada.id,
+        produto_id: tr.querySelector(".produto").value || null,
+        descricao_xml: tr.querySelector(".descricao_xml").value || null,
+        quantidade,
+        valor_unitario,
+        valor_total: quantidade * valor_unitario,
+        estado_produto: tr.querySelector(".estado").value,
+        lote: tr.querySelector(".lote").value || null,
+        validade: tr.querySelector(".validade").value || null,
+        status: "AGUARDANDO_TRIAGEM"
+      });
     });
 
-    document.getElementById("totalGeral").innerText =
-        "Total NF: " + total.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        });
-}
+    const { error: erroItens } = await db()
+      .from("entrada_itens")
+      .insert(itens);
 
-/* =========================
-   SALVAR ENTRADA
-========================= */
-async function salvarEntrada() {
+    if(erroItens) throw erroItens;
 
-    try {
+    alert("Entrada salva e enviada para triagem!");
+    location.href = "triagem.html";
 
-        const empresa_id = document.getElementById("empresa").value;
-        const numero_nf = document.getElementById("numero_nf").value;
-        const fornecedor = document.getElementById("fornecedor").value;
-        const responsavel = document.getElementById("responsavel").value;
-        const chave_nfe = document.getElementById("chave_nfe").value;
-        const observacao = document.getElementById("observacao").value;
-
-        const { data: entrada, error } = await client
-            .from("entradas")
-            .insert([{
-                empresa_id,
-                numero_nf,
-                fornecedor,
-                responsavel,
-                chave_nfe,
-                observacao,
-                status: "PENDENTE_TRIAGEM"
-            }])
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        const itens = [];
-
-        document.querySelectorAll("#itensBody tr").forEach(tr => {
-
-            itens.push({
-
-                entrada_id: entrada.id,
-                produto_id: tr.querySelector(".produto").value,
-                quantidade: tr.querySelector(".quantidade").value,
-                valor_unitario: tr.querySelector(".valor").value,
-
-                valor_total:
-                    Number(tr.querySelector(".quantidade").value) *
-                    Number(tr.querySelector(".valor").value),
-
-                estado_produto: tr.querySelector(".estado").value,
-                lote: tr.querySelector(".lote").value,
-                validade: tr.querySelector(".validade").value
-
-            });
-
-        });
-
-        const { error: erroItens } = await client
-            .from("entrada_itens")
-            .insert(itens);
-
-        if (erroItens) throw erroItens;
-
-        alert("Entrada salva com sucesso!");
-        location.reload();
-
-    } catch (err) {
-        console.error(err);
-        alert("Erro ao salvar entrada");
-    }
+  }catch(err){
+    console.error(err);
+    alert("Erro ao salvar entrada: " + err.message);
+  }
 }

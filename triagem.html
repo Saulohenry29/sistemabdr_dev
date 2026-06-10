@@ -2,219 +2,246 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>TRIAGEM IA 9.1 - BDR ERP</title>
+<title>BDR ERP - Triagem</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0b1220;
-  color: white;
-}
-
-.layout { display: flex; }
-
-.sidebar {
-  width: 220px;
-  background: #111b2e;
-  min-height: 100vh;
-  padding: 15px;
-}
-
-.menu-btn {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-  border: none;
-  border-radius: 6px;
-  background: #1c2b3a;
-  color: white;
-  cursor: pointer;
-}
-
-.menu-btn:hover { background: #2c3e50; }
-
-.content {
-  flex: 1;
-  padding: 20px;
-}
-
-.card {
-  background: #111b2e;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 700px;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 6px;
-  border: none;
-}
-
-button {
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #a4161a;
-  color: white;
-  width: 100%;
-}
-
-button:hover { background: #7a1014; }
-
-.hidden { display:none; }
-
-header {
-  background: linear-gradient(90deg,#a4161a,#2c3e50);
-  padding: 15px;
-  font-weight: bold;
-}
+body{margin:0;font-family:Arial,sans-serif;background:#0b1220;color:white}
+header{background:linear-gradient(90deg,#a4161a,#2c3e50);padding:15px 20px;font-weight:bold}
+.layout{display:flex}
+.sidebar{width:220px;background:#111b2e;min-height:100vh;padding:15px}
+.menu-btn{width:100%;padding:10px;margin:6px 0;border:none;border-radius:6px;background:#1c2b3a;color:white;cursor:pointer;text-align:left}
+.menu-btn:hover{background:#2c3e50}
+.content{flex:1;padding:20px}
+.card{background:#111b2e;padding:18px;border-radius:12px;margin-bottom:15px}
+.entrada{background:white;color:#222;border-left:5px solid #a4161a;padding:15px;border-radius:10px;margin-bottom:14px}
+.entrada strong{color:#a4161a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+select,textarea,input{width:100%;padding:10px;border:none;border-radius:6px;box-sizing:border-box}
+.btn{background:#a4161a;color:white;border:none;padding:10px;border-radius:7px;cursor:pointer;margin-top:10px}
+.btn:hover{background:#7a1014}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;color:white;font-size:12px;background:#f97316;margin-top:6px}
+.item{background:#f3f4f6;padding:10px;border-radius:8px;margin-top:8px}
+.alerta-patrimonio{background:#fff7ed;border-left:4px solid #f97316;padding:8px;border-radius:6px;margin-top:8px}
 </style>
 </head>
 
 <body>
 
-<header>🧠 TRIAGEM IA 9.1 - ERP INTELIGENTE</header>
+<header>📋 BDR ERP - Triagem de Entradas</header>
 
 <div class="layout">
 
 <div class="sidebar">
   <button class="menu-btn" onclick="location.href='dashboard.html'">📊 Dashboard</button>
-  <button class="menu-btn" onclick="location.href='patrimonio.html'">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="location.href='triagem.html'">🧠 Triagem</button>
+  <button class="menu-btn" onclick="location.href='entrada.html'">📥 Entrada</button>
+  <button class="menu-btn" onclick="location.href='triagem.html'">📋 Triagem</button>
+  <button class="menu-btn" onclick="location.href='estoque.html'">📦 Estoque</button>
+  <button class="menu-btn" onclick="location.href='patrimonio.html'">🏷 Patrimônio</button>
 </div>
 
 <div class="content">
 
 <div class="card">
-
-<h3>Cadastro Inteligente ERP</h3>
-
-<label>Nome do item</label>
-<input id="nome">
-
-<label>Tipo de ativo</label>
-<select id="tipo" onchange="verificarTipo(); atualizarHistorico(this.value)">
-  <option value="">Selecione</option>
-  <option value="VEICULO">Veículo</option>
-  <option value="MAQUINA">Máquina</option>
-  <option value="FERRAMENTA">Ferramenta</option>
-  <option value="ELETRONICO">Eletrônico</option>
-  <option value="TI">TI</option>
-  <option value="OUTRO">Outro</option>
-</select>
-
-<select id="tipoHistorico" onchange="preencherTipo()"></select>
-
-<div id="campoPlaca" class="hidden">
-  <label>Placa</label>
-  <input id="placa">
+  <h2>Entradas aguardando triagem</h2>
+  <p>Escolha o destino dos materiais recebidos.</p>
 </div>
 
-<label>Marca</label>
-<input id="marca">
-
-<label>Modelo</label>
-<input id="modelo">
-
-<label>Número de série</label>
-<input id="serial">
-
-<label>Localização</label>
-<input id="local" value="CD">
-
-<label>Observação</label>
-<textarea id="obs"></textarea>
-
-<button onclick="salvar()">💾 SALVAR TRIAGEM</button>
+<div id="listaEntradas"></div>
 
 </div>
 </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 
 <script>
+let entradas = [];
+let itens = [];
+let produtos = [];
+let obras = [];
 
-let tiposUsados = JSON.parse(localStorage.getItem("tipos_usados") || "[]");
-
-window.onload = carregarHistorico;
-
-function verificarTipo() {
-  const tipo = document.getElementById("tipo").value;
-  document.getElementById("campoPlaca").classList.toggle("hidden", tipo !== "VEICULO");
+function db(){
+  return window.client || window.supabaseClient || client;
 }
 
-function atualizarHistorico(tipo) {
-  if (!tipo) return;
-
-  if (!tiposUsados.includes(tipo)) {
-    tiposUsados.push(tipo);
-    localStorage.setItem("tipos_usados", JSON.stringify(tiposUsados));
-  }
-
-  carregarHistorico();
-}
-
-function carregarHistorico() {
-  const select = document.getElementById("tipoHistorico");
-  select.innerHTML = `<option value="">Histórico</option>`;
-  tiposUsados.forEach(t => {
-    select.innerHTML += `<option value="${t}">${t}</option>`;
+function moeda(v){
+  return Number(v || 0).toLocaleString("pt-BR", {
+    style:"currency",
+    currency:"BRL"
   });
 }
 
-function preencherTipo() {
-  const val = document.getElementById("tipoHistorico").value;
-  if (val) document.getElementById("tipo").value = val;
-  verificarTipo();
-}
+async function carregarTriagem(){
 
-function gerarCodigo() {
-  return "BDR-" + Math.floor(Math.random() * 999999);
-}
+  const entradaResp = await db()
+    .from("entradas")
+    .select("*")
+    .eq("status", "AGUARDANDO_TRIAGEM")
+    .order("id", { ascending:false });
 
-async function salvar() {
+  const itensResp = await db()
+    .from("entrada_itens")
+    .select("*")
+    .eq("status", "AGUARDANDO_TRIAGEM");
 
-  const nome = nome.value;
-  const tipo = tipo.value;
+  const produtosResp = await db()
+    .from("produtos")
+    .select("*");
 
-  if (!nome || !tipo) {
-    alert("Preencha os campos obrigatórios");
+  const obrasResp = await db()
+    .from("obras")
+    .select("*")
+    .order("nome");
+
+  if(entradaResp.error){
+    alert(entradaResp.error.message);
     return;
   }
 
-  const payload = {
-    nome_bem: nome,
-    tipo_item: tipo,
-    placa: tipo === "VEICULO" ? placa.value : null,
-    marca: marca.value || null,
-    modelo: modelo.value || null,
-    numero_serie: serial.value || null,
-    localizacao: local.value || "CD",
-    observacao: obs.value || null,
-    codigo_qr: gerarCodigo(),
-    status: "ESTOQUE",
-    created_at: new Date().toISOString()
-  };
+  entradas = entradaResp.data || [];
+  itens = itensResp.data || [];
+  produtos = produtosResp.data || [];
+  obras = obrasResp.data || [];
 
-  const { error } = await client.from("patrimonio").insert([payload]);
+  renderizarEntradas();
+}
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao salvar triagem");
+function nomeProduto(id){
+  const p = produtos.find(x => String(x.id) === String(id));
+  return p ? (p.descricao || p.nome || "Produto") : "Produto ID " + id;
+}
+
+function renderizarEntradas(){
+
+  const lista = document.getElementById("listaEntradas");
+  lista.innerHTML = "";
+
+  if(entradas.length === 0){
+    lista.innerHTML = `
+      <div class="entrada">
+        Nenhuma entrada aguardando triagem.
+      </div>
+    `;
     return;
   }
 
-  alert("Triagem salva!");
-  location.href = "patrimonio.html";
+  entradas.forEach(e => {
+
+    const itensEntrada = itens.filter(i => String(i.entrada_id) === String(e.id));
+
+    let optionsObras = `<option value="">CD - Centro de Distribuição / Estoque</option>`;
+
+    obras.forEach(o => {
+      optionsObras += `
+        <option value="${o.id}">
+          ${o.codigo_obra || "-"} - ${o.nome || "-"}
+        </option>
+      `;
+    });
+
+    let htmlItens = "";
+
+    itensEntrada.forEach(i => {
+
+      const sugerePatrimonio = Number(i.valor_unitario || 0) >= 1200;
+
+      htmlItens += `
+        <div class="item">
+          <strong>${nomeProduto(i.produto_id)}</strong><br>
+          <b>Qtd:</b> ${i.quantidade || 0}<br>
+          <b>Valor unitário:</b> ${moeda(i.valor_unitario)}<br>
+          <b>Total:</b> ${moeda(i.valor_total)}<br>
+          <b>Estado:</b> ${i.estado_produto || "-"}<br>
+          <b>Lote:</b> ${i.lote || "-"}<br>
+
+          ${sugerePatrimonio ? `
+            <div class="alerta-patrimonio">
+              ⚠️ Sugestão: item acima de R$ 1.200,00. Avaliar cadastro como patrimônio.
+            </div>
+          ` : ""}
+        </div>
+      `;
+    });
+
+    lista.innerHTML += `
+      <div class="entrada">
+        <strong>Entrada #${e.id}</strong><br><br>
+
+        <b>NF:</b> ${e.numero_nf || "-"}<br>
+        <b>Fornecedor:</b> ${e.fornecedor || "-"}<br>
+        <b>Responsável:</b> ${e.responsavel || "-"}<br>
+        <b>Status:</b> <span class="badge">${e.status}</span><br><br>
+
+        <h4>Itens recebidos</h4>
+        ${htmlItens}
+
+        <br>
+
+        <label><b>Destino da entrada</b></label>
+        <select id="destino-${e.id}">
+          ${optionsObras}
+        </select>
+
+        <label><b>Detalhe da triagem</b></label>
+        <textarea id="detalhe-${e.id}" placeholder="Ex: material destinado para FS LRV retirar no CD"></textarea>
+
+        <button class="btn" onclick="salvarTriagem(${e.id})">
+          ✅ Confirmar triagem
+        </button>
+      </div>
+    `;
+  });
 }
 
+async function salvarTriagem(entradaId){
+
+  const destino = document.getElementById("destino-" + entradaId).value || null;
+  const detalhe = document.getElementById("detalhe-" + entradaId).value || "";
+
+  const { error: erroEntrada } = await db()
+    .from("entradas")
+    .update({
+      status: "TRIADO",
+      destino_obra_id: destino
+    })
+    .eq("id", entradaId);
+
+  if(erroEntrada){
+    alert(erroEntrada.message);
+    return;
+  }
+
+  const { error: erroItens } = await db()
+    .from("entrada_itens")
+    .update({
+      status: "TRIADO",
+      destino_obra_id: destino,
+      detalhe_triagem: detalhe
+    })
+    .eq("entrada_id", entradaId);
+
+  if(erroItens){
+    alert(erroItens.message);
+    return;
+  }
+
+  if(destino){
+    await db()
+      .from("alertas")
+      .insert([{
+        obra_id: destino,
+        entrada_id: entradaId,
+        titulo: "Material disponível para retirada",
+        mensagem: detalhe || "Chegou material destinado para sua obra/setor. Retirar no CD.",
+        lido: false
+      }]);
+  }
+
+  alert("Triagem confirmada com sucesso!");
+  carregarTriagem();
+}
+
+window.addEventListener("load", carregarTriagem);
 </script>
 
 </body>
