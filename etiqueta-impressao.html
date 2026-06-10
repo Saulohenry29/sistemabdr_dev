@@ -34,8 +34,37 @@ body{
   align-items:flex-start;
 }
 
-.logo img{
-  height:1.2cm;
+.logo-texto{
+  line-height:1;
+}
+
+.logo-principal{
+  font-size:45px;
+  font-weight:999;
+  color:#e30613;
+  letter-spacing:-4px;
+}
+
+.engrenagem-img{
+  height:32px;
+  margin-right:-10px;
+}
+
+.bdr-texto{
+  color:#e30613;
+  font-size:47px;
+  font-weight:900;
+  letter-spacing:-2px;
+}
+
+.logo-sub{
+  font-size:10px;
+  font-style:italic;
+  font-weight:600;
+  color:#555;
+  text-align:right;
+  margin-top:-5px;
+  font-family:cursive;
 }
 
 .qr img{
@@ -43,21 +72,29 @@ body{
   height:1.2cm;
 }
 
-.baixo{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-}
-
-.setor{
+.meio{
   font-size:9px;
   font-weight:bold;
-  width:60%;
-  line-height:1.2;
+  line-height:1.25;
+}
+
+.obra{
+  max-width:3.6cm;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.item{
+  max-width:4cm;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .codigo{
-  font-size:10px;
+  font-size:11px;
   font-weight:bold;
   text-align:right;
 }
@@ -81,8 +118,18 @@ body{
 
   <div class="topo">
 
-    <div class="logo">
-      <img src="./imagens/logo.png" alt="Logo BDR">
+    <div class="logo-texto">
+      <div class="logo-principal">
+
+  <img
+    src="./imagens/engrenagem.png"
+    class="engrenagem-img"
+  >
+
+  <span class="bdr-texto">BDR</span>
+
+</div>
+      <div class="logo-sub">Construart</div>
     </div>
 
     <div class="qr">
@@ -91,9 +138,10 @@ body{
 
   </div>
 
-<div class="baixo">
-
-  <div></div>
+  <div class="meio">
+    <div class="obra" id="obra">OBRA / SETOR</div>
+    <div class="item" id="item">ITEM PATRIMÔNIO</div>
+  </div>
 
   <div class="codigo" id="codigo">
     PAT-000000000
@@ -101,7 +149,8 @@ body{
 
 </div>
 
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
 
 <script>
 const params = new URLSearchParams(window.location.search);
@@ -111,22 +160,56 @@ const codigo =
   params.get("id") ||
   "PAT-000000000";
 
-const setor =
-  decodeURIComponent(
-    params.get("setor") || "SEM SETOR"
-  );
+function db(){
+  return window.client || window.supabaseClient;
+}
 
+function cortarTexto(texto, limite){
+  if(!texto) return "-";
+  return texto.length > limite
+    ? texto.substring(0, limite) + "..."
+    : texto;
+}
 
-document.getElementById("codigo").innerText =
-  codigo;
+document.getElementById("codigo").innerText = codigo;
 
 const linkQr =
   "https://saulohenry29.github.io/sistemaBDR/etiqueta.html?id=" +
   encodeURIComponent(codigo);
 
 document.getElementById("qr").src =
-  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+  "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" +
   encodeURIComponent(linkQr);
+
+async function carregarDados(){
+
+  if(!db()){
+    document.getElementById("obra").innerText = "SEM OBRA";
+    document.getElementById("item").innerText = "ITEM";
+    return;
+  }
+
+  const { data, error } = await db()
+    .from("patrimonio")
+    .select("*")
+    .eq("codigo_qr", codigo)
+    .single();
+
+  if(error || !data){
+    console.error(error);
+    document.getElementById("obra").innerText = "SEM OBRA";
+    document.getElementById("item").innerText = "ITEM";
+    return;
+  }
+
+  document.getElementById("obra").innerText =
+    cortarTexto(data.localizacao || "SEM OBRA", 24);
+
+  document.getElementById("item").innerText =
+    cortarTexto(data.nome_bem || "ITEM", 26);
+}
+
+carregarDados();
 </script>
 
 </body>
