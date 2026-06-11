@@ -341,8 +341,13 @@ function renderizarMovimentacoes(){
 
         <br><br>
 
-        <strong>Data:</strong><br>
-        ${formatarData(m.data_movimentacao)}
+       <strong>Usuário:</strong><br>
+${m.usuario || "-"}
+
+<br><br>
+
+<strong>Data:</strong><br>
+${formatarData(m.data_movimentacao)}
 
         <div class="obs">
           <strong>Justificativa:</strong><br>
@@ -358,4 +363,3 @@ carregarDados();
 
 </body>
 </html>
-

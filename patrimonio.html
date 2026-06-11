@@ -744,6 +744,14 @@ function fecharModal(){
 
 async function gravarMovimentacao(dados){
 
+  const agoraLocal = new Date(Date.now() - 4 * 60 * 60 * 1000)
+    .toISOString()
+    .replace("T", " ")
+    .slice(0, 19);
+const usuarioLogado = JSON.parse(
+  localStorage.getItem("usuario_logado")
+);
+
   const { error } = await db()
     .from("movimentacoes")
     .insert([{
@@ -754,8 +762,9 @@ async function gravarMovimentacao(dados){
       tipo: dados.tipo,
       status_anterior: dados.status_anterior,
       status_novo: dados.status_novo,
-      observacao: dados.observacao
-    }]);
+      observacao: dados.observacao,
+usuario: usuarioLogado?.nome || "Usuário não identificado",
+data_movimentacao: agoraLocal    }]);
 
   if(error){
     console.error(error);
@@ -765,7 +774,6 @@ async function gravarMovimentacao(dados){
 
   return true;
 }
-
 async function alterarStatus(novoStatus){
 
   if(!patrimonioSelecionado){
