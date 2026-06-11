@@ -33,7 +33,7 @@ async function fazerLogin(){
   }
 
   const usuario = (data || []).find(u =>
-    String(u.usuario).toLowerCase() === usuarioDigitado.toLowerCase() &&
+String(u.usuario) === usuarioDigitado &&
     String(u.senha) === String(senhaDigitada) &&
     u.ativo === true
   );

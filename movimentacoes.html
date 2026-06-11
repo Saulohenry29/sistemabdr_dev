@@ -119,12 +119,13 @@ input,select{
 <!-- BLOQUEIO DE LOGIN                     -->
 <!-- ===================================== -->
 
-<script src="JS/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
 
 <script>
   verificarLogin();
 </script>
-
 <!-- ===================================== -->
 <!-- FIM BLOQUEIO DE LOGIN                 -->
 <!-- ===================================== -->
@@ -175,8 +176,6 @@ input,select{
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
 
 <script>
@@ -198,11 +197,14 @@ function valor(id){
 }
 
 function formatarData(data){
+
   if(!data) return "-";
 
-  const d = new Date(data);
+  const dataLimpa = String(data).replace(" ", "T");
+  const d = new Date(dataLimpa);
 
   return d.toLocaleString("pt-BR");
+
 }
 
 function nomePatrimonio(id){
@@ -319,10 +321,14 @@ function renderizarMovimentacoes(){
         <br><br>
 
         <strong>Status:</strong><br>
-        <span class="status">${m.status_anterior || "-"}</span>
-        →
-        <span class="status">${m.status_novo || "-"}</span>
-
+        ${m.tipo === "CORRECAO_CADASTRAL"
+  ? `<span class="status">Sem alteração de status</span>`
+  : `
+    <span class="status">${m.status_anterior || "-"}</span>
+    →
+    <span class="status">${m.status_novo || "-"}</span>
+  `
+}
         <br><br>
 
         <strong>Origem:</strong><br>
@@ -352,3 +358,4 @@ carregarDados();
 
 </body>
 </html>
+
