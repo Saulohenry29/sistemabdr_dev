@@ -6,7 +6,6 @@
 <title>BDR ERP - Login</title>
 
 <style>
-
 *{
   margin:0;
   padding:0;
@@ -70,19 +69,33 @@ input{
 }
 
 .campo-senha input{
-  padding-right:80px;
+  padding-right:48px;
 }
 
 .btn-mostrar{
   position:absolute;
-  right:10px;
+  right:12px;
   top:50%;
   transform:translateY(-50%);
   border:none;
   background:none;
-  color:#a4161a;
-  font-weight:bold;
+  color:#555;
   cursor:pointer;
+  width:24px;
+  height:24px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn-mostrar:hover{
+  color:#a4161a;
+}
+
+.btn-mostrar svg{
+  width:22px;
+  height:22px;
 }
 
 .opcoes{
@@ -127,7 +140,6 @@ input{
   color:#777;
   font-size:12px;
 }
-
 </style>
 </head>
 
@@ -165,8 +177,19 @@ input{
       <button
         type="button"
         class="btn-mostrar"
-        onclick="mostrarSenha()">
-        Mostrar
+        id="btnOlho"
+        onclick="mostrarSenha()"
+        title="Mostrar senha">
+        <svg id="iconeOlho" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 3l18 18"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
+        </svg>
       </button>
 
     </div>
@@ -203,29 +226,46 @@ input{
 <script src="JS/auth.js"></script>
 
 <script>
-
 function mostrarSenha(){
 
   const campo = document.getElementById("senha");
+  const icone = document.getElementById("iconeOlho");
 
   if(campo.type === "password"){
-    campo.type = "text";
-  }else{
-    campo.type = "password";
-  }
 
+    campo.type = "text";
+
+    icone.innerHTML = `
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+    `;
+
+  }else{
+
+    campo.type = "password";
+
+    icone.innerHTML = `
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M3 3l18 18"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
+    `;
+
+  }
 }
 
 document
 .getElementById("formLogin")
 .addEventListener("submit", function(e){
-
   e.preventDefault();
-
   fazerLogin();
-
 });
-
 </script>
 
 </body>
