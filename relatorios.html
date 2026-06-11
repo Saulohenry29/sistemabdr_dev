@@ -44,7 +44,19 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
 </head>
 
 <body>
+<!-- ===================================== -->
+<!-- BLOQUEIO DE LOGIN                     -->
+<!-- ===================================== -->
 
+<script src="JS/auth.js"></script>
+
+<script>
+  verificarLogin();
+</script>
+
+<!-- ===================================== -->
+<!-- FIM BLOQUEIO DE LOGIN                 -->
+<!-- ===================================== -->
 <header>
   <b>📄 BDR - Relatórios</b>
   <span id="dataAtual"></span>
@@ -58,6 +70,7 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
   <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
   <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
   <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
 </div>
 
 <div class="content">
@@ -397,4 +410,17 @@ carregarDados();
 </script>
 
 </body>
+<!-- ===================================== -->
+<!-- BLOQUEIO DE LOGIN                     -->
+<!-- ===================================== -->
+
+<script src="JS/auth.js"></script>
+
+<script>
+  verificarLogin();
+</script>
+
+<!-- ===================================== -->
+<!-- FIM BLOQUEIO DE LOGIN                 -->
+<!-- ===================================== -->
 </html>

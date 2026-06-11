@@ -84,7 +84,19 @@ textarea{height:80px}
 </head>
 
 <body>
+<!-- ===================================== -->
+<!-- BLOQUEIO DE LOGIN                     -->
+<!-- ===================================== -->
 
+<script src="JS/auth.js"></script>
+
+<script>
+  verificarLogin();
+</script>
+
+<!-- ===================================== -->
+<!-- FIM BLOQUEIO DE LOGIN                 -->
+<!-- ===================================== -->
 <header>🏢 BDR ERP - Empresas</header>
 
 <div class="layout">
@@ -98,6 +110,7 @@ textarea{height:80px}
   <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
   <button class="menu-btn">🚜 Veículos e Máquinas</button>
   <button class="menu-btn">👥 Usuários</button>
+  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
 </div>
 
 <div class="content">

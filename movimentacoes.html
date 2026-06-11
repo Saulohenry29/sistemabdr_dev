@@ -115,7 +115,19 @@ input,select{
 </head>
 
 <body>
+<!-- ===================================== -->
+<!-- BLOQUEIO DE LOGIN                     -->
+<!-- ===================================== -->
 
+<script src="JS/auth.js"></script>
+
+<script>
+  verificarLogin();
+</script>
+
+<!-- ===================================== -->
+<!-- FIM BLOQUEIO DE LOGIN                 -->
+<!-- ===================================== -->
 <header>
   <b>🔁 BDR Movimentações</b>
 </header>
@@ -128,6 +140,7 @@ input,select{
   <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
   <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
   <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
 </div>
 
 <div class="content">
