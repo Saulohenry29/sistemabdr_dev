@@ -563,7 +563,10 @@ if(ultimo && ultimo.length > 0 && ultimo[0].codigo_qr){
 const codigo_qr =
   prefixoCodigo +
   String(sequencial).padStart(4, "0");
-  const patrimonio = {
+const usuarioLogado = JSON.parse(
+  localStorage.getItem("usuario_logado")
+);  
+const patrimonio = {
     nome_bem,
     tipo_item,
     tipo_outro: valor("tipo_outro") || null,
@@ -597,7 +600,9 @@ const codigo_qr =
     origem_cadastro:
       document.getElementById("checkLegado").checked
         ? "LEGADO"
-        : "NOVO"
+        : "NOVO",
+usuario_cadastro:
+  usuarioLogado?.nome || "Usuário não identificado",
   };
 
   const { error } = await db()
@@ -720,6 +725,7 @@ function abrirModal(id){
     <strong>Código:</strong> ${p.codigo_qr || "-"}<br>
     <strong>Código Antigo:</strong> ${p.codigo_antigo || "-"}<br>
     <strong>Origem:</strong> ${p.origem_cadastro || "-"}<br>
+    <strong>Cadastrado por:</strong> ${p.usuario_cadastro || "-"}<br>
     <strong>Status:</strong> ${p.status || "-"}<br>
     <strong>Obra:</strong> ${p.localizacao || "-"}<br>
     <strong>Tipo:</strong> ${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}<br>
