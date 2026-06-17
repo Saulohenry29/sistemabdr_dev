@@ -97,7 +97,7 @@ button:hover {
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>
@@ -117,10 +117,13 @@ button:hover {
   <div class="info"><span class="label">Localização:</span> <span id="local" class="local"></span></div>
 
   <div class="botoes">
-    <button class="estoque" onclick="mover('ESTOQUE','CD')">📦 Estoque</button>
-    <button class="manutencao" onclick="mover('MANUTENCAO','OFICINA')">🔧 Manutenção</button>
-    <button class="mover" onclick="mover('MOVIMENTO','OBRA')">🚚 Mover</button>
-    <button class="cancelar" onclick="location.reload()">🔄 Atualizar</button>
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Torre de Controle</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn" onclick="ir('usuarios.html')">👥 Usuários</button>
+  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
   </div>
 
 </div>
@@ -170,6 +173,6 @@ async function mover(status, local) {
 }
 
 </script>
-
+<script src="./JS/bdrNotificacoes.js"></script>
 </body>
 </html>

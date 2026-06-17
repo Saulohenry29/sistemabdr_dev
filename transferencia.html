@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Transferência</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+
+<style>
+:root{
+  --bdr-red:#d71920;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --bdr-text:#1f2937;
+  --bdr-muted:#6b7280;
+  --bdr-green:#16a34a;
+  --bdr-blue:#2563eb;
+  --bdr-orange:#f97316;
+  --bdr-purple:#7c3aed;
+  --bdr-dark:#111827;
+}
+
+body{background:var(--bdr-bg)!important;color:var(--bdr-text)}
+
+.bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900}
+.bdr-topbar-sub{color:var(--bdr-muted);font-size:12px;margin-top:3px;font-weight:500}
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+
+/* ===== Topo / Sininho / Usuário padrão BDR ===== */
+.notif-wrap{position:relative}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;box-shadow:none;outline:none!important;-webkit-tap-highlight-color:transparent;padding:0}
+.notif-btn:hover{background:#fff1f2;color:var(--bdr-red);transform:translateY(-1px)}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:white;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.notif-dropdown{position:absolute;top:48px;right:0;width:340px;background:#fff;border:1px solid var(--bdr-border);border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:9999}
+.notif-dropdown.ativo{display:block;animation:dropdownTop .16s ease}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--bdr-red);background:#fff5f5;border-bottom:1px solid #fecaca}
+.notif-list{max-height:300px;overflow:auto}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;cursor:pointer}
+.notif-item:hover{background:#f9fafb}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px}
+
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-tap-highlight-color:transparent}
+.user-menu,.user-menu *,#usuarioNome,#usuarioPerfil{user-select:none!important;caret-color:transparent!important}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02)}
+.user-mini{text-align:right;font-size:13px;pointer-events:none}
+.user-mini b{display:block;outline:none!important}
+.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--bdr-red);font-size:18px;transition:.22s ease;pointer-events:none}
+.user-menu:hover .avatar{transform:scale(1.06)}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid var(--bdr-border);border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:9999}
+.dropdown-user.ativo{display:block;animation:dropdownTop .16s ease}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px}
+.dropdown-user button:hover{background:#fff1f2;color:var(--bdr-red);transform:none;filter:none}
+.dropdown-user .logout-btn{color:#dc2626}
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:focus,.user-menu:active,.notif-btn:focus,.notif-btn:active{outline:none!important;box-shadow:none!important}
+button{-webkit-tap-highlight-color:transparent}
+.notif-btn i,.notif-badge{pointer-events:none}
+
+/* ===== Transferência organizada ===== */
+.transfer-hero{background:radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);border-left:4px solid var(--bdr-red);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 9px rgba(0,0,0,.07)}
+.transfer-hero h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900}
+.transfer-hero p{margin:5px 0 0;color:var(--bdr-muted);font-size:13px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.kpi{background:#fff;border:1px solid #fee2e2;border-left:4px solid var(--bdr-red);border-radius:12px;padding:9px 10px;box-shadow:0 2px 7px rgba(0,0,0,.05)}
+.kpi strong{display:block;font-size:20px;color:#111827;line-height:1}
+.kpi span{display:block;margin-top:5px;font-size:11px;color:var(--bdr-muted);font-weight:900}
+
+.card{background:#fff;border-radius:16px;border:1px solid var(--bdr-border);padding:14px;margin-bottom:12px;box-shadow:0 2px 7px rgba(0,0,0,.06)}
+.card h3{margin:0 0 12px;color:var(--bdr-red)}
+
+.filtro-grid{display:grid;grid-template-columns:2fr 1fr 1fr 120px;gap:8px}
+input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font-family:Arial,sans-serif}
+textarea{min-height:85px}
+
+.btn{border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer;color:#fff;transition:.18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,0,0,.12)}
+.red{background:var(--bdr-red)}.dark{background:var(--bdr-dark)}.green{background:var(--bdr-green)}.blue{background:var(--bdr-blue)}.orange{background:var(--bdr-orange)}.gray{background:#6b7280}
+
+/* Pedido compacto */
+.pedido{background:#fff;border:1px solid var(--bdr-border);border-left:4px solid var(--bdr-red);border-radius:12px;padding:10px 12px;margin-bottom:8px;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.pedido-top{display:grid;grid-template-columns:120px minmax(180px,1fr) 145px 150px;gap:10px;align-items:center}
+.cod{color:var(--bdr-red);font-weight:900;font-size:15px;line-height:1.2;word-break:break-word}
+.sub{font-size:12px;color:var(--bdr-muted);margin-top:2px}
+.status{display:inline-flex;width:max-content;max-width:100%;padding:5px 9px;border-radius:999px;background:#6b7280;color:#fff;font-size:10px;font-weight:900;line-height:1.1}
+.st-AGUARDANDO_RETIRADA{background:var(--bdr-green)}.st-EM_TRANSITO{background:var(--bdr-purple)}.st-AGUARDANDO_CONFERENCIA{background:var(--bdr-orange)}.st-ENTREGUE{background:var(--bdr-green)}.st-RECEBIDO_COM_DIVERGENCIA,.st-EM_ANALISE_DIVERGENCIA{background:#dc2626}
+.det{display:none;border-top:1px solid var(--bdr-border);margin-top:10px;padding-top:10px}
+.pedido.aberto .det{display:block}
+.pedido-top > div:last-child{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.pedido-top > div:last-child .btn{min-width:112px}
+
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 10px}
+.step{background:#f3f4f6;color:var(--bdr-muted);border:1px solid var(--bdr-border);border-radius:10px;padding:7px 6px;font-size:10px;font-weight:900;text-align:center}
+.step.on{background:#fff1f2;color:var(--bdr-red);border-color:#fecaca}
+.step.done{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.step.err{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+
+.rastro{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:7px;margin:8px 0 10px}
+.rastro div{background:#f8fafc;border:1px solid var(--bdr-border);border-left:4px solid var(--bdr-red);border-radius:10px;padding:8px;font-size:12px;line-height:1.35}
+.rastro b{color:#111827}
+
+.itens{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:7px;margin-top:8px}
+.item{background:#f8fafc;border:1px solid var(--bdr-border);border-left:4px solid #d1d5db;border-radius:10px;padding:8px;font-size:12px;line-height:1.35}
+.item strong{color:var(--bdr-red)}
+
+/* Modais */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:9999;align-items:center;justify-content:center;padding:16px}
+.modal-bg.ativo{display:flex}
+.modal{width:min(620px,100%);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.30);overflow:hidden}
+.modal-head{padding:14px 16px;background:#fff5f5;color:var(--bdr-red);font-weight:900;border-bottom:1px solid #fecaca}
+.modal-body{padding:16px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.alerta{background:#fff7ed;border-left:4px solid var(--bdr-orange);border-radius:12px;padding:10px;color:#7c2d12;font-size:13px;margin:8px 0}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checks label{background:#f8fafc;border:1px solid var(--bdr-border);border-radius:10px;padding:9px;font-size:13px;cursor:pointer}
+.checks input{width:auto;margin-right:6px}
+
+/* Tablet/celular */
+@media(max-width:1050px){
+  .pedido-top{grid-template-columns:110px 1fr 135px}
+  .pedido-top > div:last-child{grid-column:1 / -1;justify-content:flex-start;border-top:1px solid #f1f5f9;padding-top:8px;margin-top:2px}
+}
+@media(max-width:900px){
+  .bdr-topbar{flex-direction:column;align-items:flex-start}
+  .bdr-top-actions{width:100%;justify-content:space-between;flex-wrap:wrap}
+  .notif-dropdown{right:-80px;width:300px}
+  .filtro-grid,.formgrid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .timeline{grid-template-columns:1fr 1fr}
+  .pedido-top{grid-template-columns:1fr;gap:7px}
+  .pedido-top > div:last-child{grid-column:auto}
+  .pedido-top > div:last-child .btn{width:100%;min-width:0;padding:12px}
+  .cod{font-size:17px}
+  .modal-bg{padding:0}
+  .modal-bg.ativo{align-items:stretch}
+  .modal{width:100%;min-height:100vh;border-radius:0}
+  .checks{grid-template-columns:1fr}
+  .itens,.rastro{grid-template-columns:1fr}
+}
+
+/* =========================================================
+   TRANSFERÊNCIA - ORGANIZAÇÃO ESTILO PATRIMÔNIO/MOVIMENTAÇÕES
+   Cards compactos, cabeçalho claro e ações separadas
+========================================================= */
+.transfer-hero{
+  border-radius:18px;
+  padding:16px;
+}
+.kpis{
+  grid-template-columns:repeat(4,minmax(120px,1fr));
+}
+.kpi{
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.filtro-grid{
+  grid-template-columns:2fr 1fr 1fr 120px;
+}
+.lista-header-transfer{
+  display:grid;
+  grid-template-columns:130px minmax(220px,1fr) 170px 170px;
+  gap:10px;
+  padding:10px 14px;
+  margin:0 0 8px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.pedido{
+  padding:0;
+  margin-bottom:7px;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 2px 7px rgba(0,0,0,.06);
+}
+.pedido-top{
+  display:grid;
+  grid-template-columns:130px minmax(220px,1fr) 170px 170px;
+  gap:10px;
+  align-items:center;
+  padding:10px 14px;
+  cursor:pointer;
+  min-height:48px;
+}
+.pedido-top:hover{
+  background:#f9fafb;
+}
+.cod{
+  font-size:14px;
+  font-weight:900;
+  color:var(--bdr-red);
+}
+.sub{
+  font-size:11px;
+  color:#6b7280;
+  margin-top:2px;
+}
+.status{
+  padding:5px 9px;
+  font-size:10px;
+}
+.acoes-pedido{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.acoes-pedido .btn{
+  min-width:118px;
+  padding:8px 10px;
+  border-radius:9px;
+  font-size:11px;
+}
+.det{
+  margin:0;
+  padding:10px 14px 12px;
+  background:#f8fafc;
+  border-top:1px solid #e5e7eb;
+}
+.det h4{
+  margin:10px 0 7px;
+  color:var(--bdr-red);
+  font-size:13px;
+}
+.timeline{
+  margin:0 0 10px;
+}
+.step{
+  padding:7px 6px;
+  border-radius:9px;
+}
+.rastro{
+  grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:7px;
+}
+.rastro div{
+  padding:8px;
+  border-radius:10px;
+  background:#fff;
+}
+.itens{
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:7px;
+}
+.item{
+  background:#fff;
+  padding:8px;
+  border-radius:10px;
+}
+@media(max-width:1050px){
+  .lista-header-transfer{display:none;}
+  .pedido-top{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:12px;
+  }
+  .acoes-pedido{
+    grid-column:1 / -1;
+    justify-content:flex-start;
+    border-top:1px solid #f1f5f9;
+    padding-top:8px;
+  }
+}
+@media(max-width:700px){
+  .kpis{grid-template-columns:1fr 1fr;}
+  .pedido-top{grid-template-columns:1fr;}
+  .acoes-pedido .btn{width:100%;min-width:0;padding:12px;}
+  .rastro,.itens{grid-template-columns:1fr;}
+}
+
+
+/* =========================================================
+   AJUSTE FINAL - STATUS/BOTÕES MAIS LEGÍVEIS
+========================================================= */
+.status{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:28px!important;
+  width:auto!important;
+  max-width:100%!important;
+  padding:7px 14px!important;
+  border-radius:999px!important;
+  white-space:normal!important;
+  font-size:11px!important;
+  line-height:1.15!important;
+  text-align:center!important;
+  overflow:visible!important;
+}
+.pedido-top{
+  grid-template-columns:140px minmax(240px,1fr) 190px 185px!important;
+}
+.acoes-pedido{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:6px!important;
+  flex-wrap:wrap!important;
+}
+.acoes-pedido .btn{
+  min-width:125px!important;
+  padding:9px 11px!important;
+  border-radius:9px!important;
+  font-size:11px!important;
+}
+@media(max-width:1050px){
+  .pedido-top{grid-template-columns:1fr 1fr!important;}
+  .acoes-pedido{grid-column:1 / -1!important;justify-content:flex-start!important;border-top:1px solid #f1f5f9!important;padding-top:8px!important;}
+}
+@media(max-width:700px){
+  .pedido-top{grid-template-columns:1fr!important;}
+  .status{width:100%!important;justify-content:center!important;}
+  .acoes-pedido .btn{width:100%!important;min-width:0!important;padding:12px!important;}
+}
+
+</style>
+</head>
+
+<body>
+<script>verificarLogin();</script>
+
+<div class="app-layout">
+<aside class="bdr-sidebar">
+  <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
+  
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn active" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+</aside>
+
+<main class="bdr-main">
+  <div class="bdr-topbar">
+    <div>
+      <div class="bdr-topbar-title">🚚 BDR Transferência</div>
+      <div class="bdr-topbar-sub">Saída do CD, transporte, recebimento na obra e entrada automática no estoque da obra.</div>
+    </div>
+
+    <div class="bdr-top-actions">
+      <div class="notif-wrap">
+        <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+          <i class="fa-regular fa-bell"></i>
+          <span id="notifBadge" class="notif-badge">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown">
+          <div class="notif-head">🔔 Central de notificações</div>
+          <div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div>
+        </div>
+      </div>
+
+      <div class="user-menu" onclick="toggleMenuUsuario(event)">
+        <div class="user-mini"><b id="usuarioNome" tabindex="-1">Olá, -</b><small id="usuarioPerfil" tabindex="-1">-</small></div>
+        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+        <div id="dropdownUser" class="dropdown-user">
+          <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+          <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="transfer-hero">
+    <h2>Transferência CD → Obra</h2>
+    <p>Acompanhe saída do CD, transporte, chegada na obra, conferência e entrada no estoque da obra destino.</p>
+    <div class="kpis">
+      <div class="kpi"><strong id="kpiRet">0</strong><span>Aguardando retirada</span></div>
+      <div class="kpi"><strong id="kpiTrans">0</strong><span>Em trânsito</span></div>
+      <div class="kpi"><strong id="kpiConf">0</strong><span>Conferência</span></div>
+      <div class="kpi"><strong id="kpiDiv">0</strong><span>Divergência</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>🔎 Filtros</h3>
+    <div class="filtro-grid">
+      <input id="busca" placeholder="Buscar pedido, obra, motorista, placa..." oninput="renderizarPedidos()">
+      <select id="filtroStatus" onchange="renderizarPedidos()">
+        <option value="">Todos</option>
+        <option value="AGUARDANDO_RETIRADA">Aguardando retirada</option>
+        <option value="EM_TRANSITO">Em trânsito</option>
+        <option value="AGUARDANDO_CONFERENCIA">Aguardando conferência</option>
+        <option value="ENTREGUE">Recebido</option>
+        <option value="RECEBIDO_COM_DIVERGENCIA">Divergência</option>
+        <option value="EM_ANALISE_DIVERGENCIA">Em análise divergência</option>
+      </select>
+      <select id="filtroObra" onchange="renderizarPedidos()"><option value="">Todas as obras</option></select>
+      <button class="btn red" onclick="carregarDados()">Atualizar</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>📋 Pedidos em transferência</h3>
+    <div class="lista-header-transfer">
+      <div>Pedido</div>
+      <div>Destino / solicitante</div>
+      <div>Status</div>
+      <div>Ações</div>
+    </div>
+    <div id="listaPedidos"></div>
+  </section>
+</main>
+</div>
+
+<div id="modalSaida" class="modal-bg">
+  <div class="modal">
+    <div class="modal-head">🚛 Confirmar saída do CD</div>
+    <div class="modal-body">
+      <input type="hidden" id="pedidoSaidaId">
+      <div class="formgrid">
+        <input id="motorista_nome" placeholder="Motorista / responsável">
+        <input id="veiculo_placa" placeholder="Placa">
+        <input id="transportadora" placeholder="Transportadora">
+        <input type="datetime-local" id="data_saida">
+      </div>
+      <br>
+      <textarea id="observacao_transporte" placeholder="Observação do transporte..."></textarea>
+      <div class="alerta">Ao confirmar, o pedido muda para <b>EM_TRANSITO</b>.</div>
+      <div class="modal-actions">
+        <button class="btn gray" onclick="fecharModal('modalSaida')">Cancelar</button>
+        <button class="btn green" onclick="confirmarSaida()">Confirmar saída</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRecebimento" class="modal-bg">
+  <div class="modal">
+    <div class="modal-head">📍 Receber na obra</div>
+    <div class="modal-body">
+      <input type="hidden" id="pedidoReceberId">
+      <div id="recebimentoInfo" class="alerta"></div>
+      <textarea id="observacao_recebimento" placeholder="Observação do recebimento..."></textarea>
+      <div class="modal-actions">
+        <button class="btn gray" onclick="fecharModal('modalRecebimento')">Cancelar</button>
+        <button class="btn orange" onclick="confirmarRecebimento()">Confirmar chegada</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalConferencia" class="modal-bg">
+  <div class="modal">
+    <div class="modal-head">🔎 Conferência final</div>
+    <div class="modal-body">
+      <input type="hidden" id="pedidoConferenciaId">
+      <textarea id="observacao_conferencia" placeholder="Observação da conferência..."></textarea>
+      <div class="modal-actions">
+        <button class="btn gray" onclick="fecharModal('modalConferencia')">Cancelar</button>
+        <button class="btn green" onclick="conferirOk()">Recebido sem divergência</button>
+        <button class="btn orange" onclick="abrirDivergenciaDireto()">Registrar divergência</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalDivergencia" class="modal-bg">
+  <div class="modal">
+    <div class="modal-head">⚠️ Divergência</div>
+    <div class="modal-body">
+      <input type="hidden" id="pedidoDivergenciaId">
+      <div class="checks">
+        <label><input type="checkbox" class="checkDiv" value="ITEM_FALTANDO">Item faltando</label>
+        <label><input type="checkbox" class="checkDiv" value="ITEM_ERRADO">Item errado</label>
+        <label><input type="checkbox" class="checkDiv" value="ITEM_AVARIADO">Item avariado</label>
+        <label><input type="checkbox" class="checkDiv" value="OUTRO">Outro</label>
+      </div>
+      <br>
+      <textarea id="observacao_divergencia" placeholder="Descreva o ocorrido e o que deve ser feito..."></textarea>
+      <div class="alerta">O CD/Master receberá alerta no sininho para resolver a ocorrência.</div>
+      <div class="modal-actions">
+        <button class="btn gray" onclick="fecharModal('modalDivergencia')">Cancelar</button>
+        <button class="btn red" onclick="salvarDivergencia()">Salvar divergência</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script defer src="./JS/transferencia.js"></script>
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

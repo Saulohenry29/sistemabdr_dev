@@ -2,61 +2,49 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>BDR Patrimônio </title>
+<link rel="icon" href="data:,">
+<title>BDR Patrimônio</title>
+
+<!-- CSS visual padrão do sistema -->
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+
+<!-- Ícones profissionais do menu -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#222}
-header{background:#fff;border-bottom:3px solid #a4161a;padding:12px 15px;display:flex;justify-content:space-between;align-items:center}
-.layout{display:flex}
-.sidebar{width:200px;background:#2c3e50;min-height:100vh;padding:10px}
-.menu-btn{width:100%;margin:5px 0;padding:9px;background:#1f2d3a;color:white;border:none;border-radius:5px;cursor:pointer;text-align:left}
-.content{flex:1;padding:12px}
-.card{background:white;border-radius:8px;padding:12px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
-.card h3{margin:0 0 8px;color:#a4161a}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
-input,select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px}
-button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a4161a;color:white}
-.btn-ok{background:#2a9d8f}.btn-blue{background:#2563eb}.btn-orange{background:#f97316}.btn-gray{background:#6b7280}.btn-dark{background:#111827}
-.item{background:white;border-left:5px solid #a4161a;padding:10px;border-radius:7px;box-shadow:0 2px 5px rgba(0,0,0,.15);font-size:13px;cursor:pointer}
-.item:hover{transform:scale(1.01)}
-.codigo{font-weight:bold;color:#a4161a;font-size:15px;margin-top:4px}
-.status{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:20px;color:white;font-size:12px;background:#6b7280}
-.status-ESTOQUE{background:#2a9d8f}.status-EM-USO{background:#2563eb}.status-MANUTENCAO{background:#f97316}.status-BAIXADO{background:#dc2626}
-.obra-ativa{font-weight:bold;color:#a4161a}
-.check-line{display:flex;align-items:center;gap:6px;font-size:13px}.check-line input{width:auto}
-.lock-row{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  max-width:650px;
-}
-
-.lock-row select{
-  flex:1;
-}
-
-.lock-btn{
-  font-weight:bold;
-  min-width:180px;
-  white-space:nowrap;
-}
-
-.lock-off{
-  background:#6b7280;
-}
-
-.lock-on{
-  background:#2a9d8f;
-}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
-.modal{background:white;width:95%;max-width:680px;border-radius:12px;padding:18px;box-shadow:0 5px 20px rgba(0,0,0,.3)}
-.modal h2{margin-top:0;color:#a4161a}
-.modal-info{background:#f4f6f9;padding:10px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.6}
-.acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
-.fechar{float:right;background:#dc2626}
-@media(max-width:768px){.layout{flex-direction:column}.sidebar{width:100%;min-height:auto}}
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + SININHO REAL
+========================================================= */
+.bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500}
+.bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900}
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.obra-ativa{font-size:12px;color:#374151;font-weight:900;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:8px 10px;white-space:nowrap}
+.notif-wrap{position:relative}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;box-shadow:none;outline:none!important;-webkit-tap-highlight-color:transparent;padding:0}
+.notif-btn:hover{background:#fff1f2;color:var(--bdr-red);transform:translateY(-1px)}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:white;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.notif-dropdown{position:absolute;top:48px;right:0;width:340px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:9999}
+.notif-dropdown.ativo{display:block;animation:dropdownTop .16s ease}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--bdr-red);background:#fff5f5;border-bottom:1px solid #fecaca}
+.notif-list{max-height:300px;overflow:auto}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;cursor:pointer}
+.notif-item:hover{background:#f9fafb}.notif-item strong{display:block;color:#111827;margin-bottom:3px}
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-tap-highlight-color:transparent}
+.user-menu,.user-menu *,#usuarioNome,#usuarioPerfil{user-select:none!important;caret-color:transparent!important}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02)}
+.user-menu:hover .avatar{transform:scale(1.06)}
+.user-mini{text-align:right;font-size:13px;pointer-events:none}.user-mini b{display:block;outline:none!important}.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--bdr-red);font-size:18px;transition:.22s ease;pointer-events:none}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:9999}
+.dropdown-user.ativo{display:block;animation:dropdownTop .16s ease}@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px}
+.dropdown-user button:hover{background:#fff1f2;color:var(--bdr-red);transform:none;filter:none}.dropdown-user .logout-btn{color:#dc2626}
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:focus,.user-menu:active,.notif-btn:focus,.notif-btn:active{outline:none!important;box-shadow:none!important}button{-webkit-tap-highlight-color:transparent}
+.bdr-top-actions,.bdr-top-actions *,.notif-wrap,.notif-wrap *,.notif-btn,.notif-btn *{outline:none!important;box-shadow:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important}
+.notif-btn i,.notif-badge{pointer-events:none}
+@media(max-width:900px){.bdr-top-actions{width:100%;justify-content:space-between;flex-wrap:wrap}.notif-dropdown{right:-80px;width:300px}.obra-ativa{white-space:normal}}
 </style>
+
 </head>
 
 <body>
@@ -65,7 +53,7 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>
@@ -73,27 +61,154 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <!-- ===================================== -->
 <!-- FIM BLOQUEIO DE LOGIN                 -->
 <!-- ===================================== -->
-<header>
-  <b>📦 BDR Patrimônio </b>
-  <div class="obra-ativa" id="obraAtivaTexto">🔓 Lançamento livre</div>
-</header>
+<div class="app-layout">
 
-<div class="layout">
+<aside class="bdr-sidebar">
 
-<div class="sidebar">
-  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
-  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
-  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
-  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
-  <button class="menu-btn" onclick="logout()">
-  🚪 Sair
-</button>
+  <!-- LOGO / ÍCONE PRINCIPAL DO SISTEMA -->
+  <div class="bdr-brand">
+    <div class="bdr-brand-icon">
+      <i class="fa-solid fa-cube"></i>
+    </div>
+  </div>
+
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn active" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+
+  </nav>
+</aside>
+
+<main class="bdr-main">
+
+<div class="bdr-topbar">
+  <div>
+    <div class="bdr-topbar-title">📦 BDR Patrimônio</div>
+    <div class="bdr-topbar-sub">
+      Cadastro, controle, edição e movimentação de patrimônios.
+    </div>
+  </div>
+
+  <div class="bdr-top-actions">
+    <div class="obra-ativa" id="obraAtivaTexto">🔓 Lançamento livre</div>
+
+    <div class="notif-wrap">
+      <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+        <i class="fa-regular fa-bell"></i>
+        <span id="notifBadge" class="notif-badge">0</span>
+      </button>
+
+      <div id="notifDropdown" class="notif-dropdown">
+        <div class="notif-head">🔔 Central de notificações</div>
+        <div id="notifLista" class="notif-list">
+          <div class="notif-item">Nenhuma notificação no momento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-menu" onclick="toggleMenuUsuario(event)">
+      <div class="user-mini">
+        <b id="usuarioNome" tabindex="-1">Olá, -</b>
+        <small id="usuarioPerfil" tabindex="-1">-</small>
+      </div>
+      <div class="avatar"><i class="fa-solid fa-user"></i></div>
+
+      <div id="dropdownUser" class="dropdown-user">
+        <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+          <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+        </button>
+        <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
+          <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
-
-<div class="content">
-
-<div class="card">
+<div class="card" id="cardObraLancamento">
   <h3>🏗 Obra / Setor de Lançamento</h3>
 
   <div class="lock-row">
@@ -107,7 +222,7 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
   </div>
 </div>
 
-<div class="card">
+<div class="card" id="cardEntradaPatrimonio">
   <h3>📥 Entrada de Patrimônio</h3>
 
   <div class="grid">
@@ -203,10 +318,10 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
 
 <div class="card">
   <h3>🏷 Patrimônios cadastrados</h3>
-  <div id="lista" class="grid"></div>
+  <div id="lista"></div>
 </div>
 
-</div>
+</main>
 </div>
 
 <div class="modal-bg" id="modalBg">
@@ -227,13 +342,13 @@ button{padding:8px;border:none;border-radius:5px;cursor:pointer;background:#a416
     </select>
 
     <div class="acoes">
-      <button class="btn-ok" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
-      <button class="btn-blue" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
-      <button class="btn-orange" onclick="alterarStatus('MANUTENCAO')">🛠 Manutenção</button>
-      <button onclick="trocarObra()">🔁 Trocar Setor</button>
-      <button class="btn-gray" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
+      <button class="btn-ok acao-movimentar" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
+      <button class="btn-blue acao-movimentar" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
+      <button class="btn-orange acao-movimentar" onclick="alterarStatus('MANUTENCAO')">🛠 Manutenção</button>
+      <button class="acao-movimentar" onclick="trocarObra()">🔁 Trocar Setor</button>
+      <button class="btn-gray acao-movimentar" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
       <button class="btn-dark" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
-      <button onclick="abrirEdicao()">✏️ Editar Dados</button>
+      <button class="acao-editar" onclick="abrirEdicao()">✏️ Editar Dados</button>
     </div>
   </div>
 </div>
@@ -283,6 +398,100 @@ function ir(pagina){
 
 function db(){
   return window.client || window.supabaseClient;
+}
+
+function usuarioAtual(){
+  const u = localStorage.getItem("usuario_logado");
+  return u ? JSON.parse(u) : null;
+}
+
+function carregarUsuarioTopo(){
+  const usuario = usuarioAtual();
+  const nome = document.getElementById("usuarioNome");
+  const perfil = document.getElementById("usuarioPerfil");
+  if(nome) nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
+  if(perfil) perfil.innerText = usuario ? (usuario.perfil || "-") : "-";
+}
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+document.addEventListener("click", fecharMenusTopo);
+
+function atualizarNotificacoes(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+  if(!badge || !box) return;
+  const total = lista.length;
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+  if(total === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+  box.innerHTML = lista.map(n => `
+    <div class="notif-item" onclick="${n.acao || ''}">
+      <strong>${n.titulo}</strong>
+      <span>${n.texto}</span>
+    </div>
+  `).join("");
+}
+
+async function gerarNotificacoesPadrao(){
+  const banco = db();
+  if(!banco){ atualizarNotificacoes([]); return; }
+  const lista = [];
+  try{
+    const usuario = usuarioAtual();
+    const perfil = String(usuario?.perfil || "").toUpperCase();
+    const isGestao = perfil === "MASTER" || perfil === "ADMIN" || perfil === "ALMOXARIFE";
+    const pedResp = await banco.from("pedidos_retirada").select("id,codigo,status,obra_nome,solicitante,criado_em").order("id",{ascending:false}).limit(20);
+    const pedidos = pedResp.data || [];
+    const abertos = pedidos.filter(p => ["AGUARDANDO_AUTORIZACAO","EM_SEPARACAO","AGUARDANDO_RETIRADA","EM_TRANSITO","AGUARDANDO_CONFERENCIA"].includes(p.status));
+    const aguardando = pedidos.filter(p => p.status === "AGUARDANDO_AUTORIZACAO");
+    if(isGestao && aguardando.length > 0){
+      lista.push({titulo:"📝 Pedido aguardando autorização", texto:`${aguardando.length} pedido(s) precisam de autorização.`, acao:"ir('retirada.html')"});
+    }
+    if(abertos.length > 0){
+      const p = abertos[0];
+      lista.push({titulo:"📦 Pedido em andamento", texto:`${p.codigo || 'PED-' + p.id} - ${p.status} - ${p.obra_nome || '-'}`, acao:"ir('pedidos.html')"});
+    }
+    atualizarNotificacoes(lista);
+  }catch(e){
+    console.warn("Erro ao gerar notificações:", e);
+    atualizarNotificacoes([]);
+  }
+}
+
+function usuarioEhGestao(){
+  const u = usuarioAtual();
+  return u && (u.perfil === "MASTER" || u.perfil === "ADMIN");
+}
+
+function usuarioTemPermissao(permissao){
+  const u = usuarioAtual();
+
+  if(!u) return false;
+  if(u.perfil === "MASTER") return true;
+
+  const permissoes = String(u.permissoes || "")
+    .split(",")
+    .map(p => p.trim());
+
+  return permissoes.includes(permissao);
 }
 
 function valor(id){
@@ -357,6 +566,24 @@ async function carregarObras(){
     select.innerHTML += `<option value="${o.id}">${texto}</option>`;
     novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
   });
+
+  const usuario = usuarioAtual();
+
+  if(usuario && !usuarioEhGestao()){
+    if(usuario.obra_id){
+      select.value = usuario.obra_id;
+      select.disabled = true;
+
+      const obraUsuario = obras.find(o =>
+        String(o.id) === String(usuario.obra_id)
+      );
+
+      if(obraUsuario){
+        window.obraAtiva = obraUsuario;
+        window.obraTravada = true;
+      }
+    }
+  }
 }
 
 function alternarTravaObra(){
@@ -647,7 +874,20 @@ async function carregarPatrimonios(){
     return;
   }
 
-  patrimonios = data || [];
+  let dados = data || [];
+  const usuario = usuarioAtual();
+
+  if(usuario && !usuarioEhGestao()){
+    if(usuario.obra_id){
+      dados = dados.filter(p =>
+        String(p.obra_id) === String(usuario.obra_id)
+      );
+    }else{
+      dados = [];
+    }
+  }
+
+  patrimonios = dados;
   renderizarPatrimonios();
 }
 
@@ -684,22 +924,52 @@ function renderizarPatrimonios(){
     return;
   }
 
+  lista.innerHTML = `
+    <div class="lista-header">
+      <div>Código</div>
+      <div>Patrimônio</div>
+      <div>Obra / Setor</div>
+      <div>Tipo</div>
+      <div>Valor</div>
+      <div>Status</div>
+    </div>
+  `;
+
   filtrados.forEach(p => {
 
     const statusClasse = String(p.status || "")
-      .replace(" ", "-")
-      .replace("Ç", "C")
-      .replace("Ã", "A");
+      .replaceAll(" ", "-")
+      .replaceAll("_", "-")
+      .replaceAll("Ç", "C")
+      .replaceAll("Ã", "A");
 
     lista.innerHTML += `
-      <div class="item" onclick="abrirModal(${p.id})">
-        <b>${p.nome_bem || "-"}</b><br>
-        <span>${p.localizacao || "SEM OBRA"}</span><br>
-        <span>${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}</span><br>
-        <div class="codigo">${p.codigo_qr || "-"}</div>
-        <small>Antigo: ${p.codigo_antigo || "-"}</small><br>
-        <small>Valor: ${formatarMoeda(p.valor_bem)}</small><br>
-        <span class="status status-${statusClasse}">${p.status || "SEM STATUS"}</span>
+      <div class="linha-patrimonio" onclick="abrirModal(${p.id})">
+
+        <div class="pat-codigo">
+          ${p.codigo_qr || "-"}
+        </div>
+
+        <div class="pat-nome" title="${p.nome_bem || "-"}">
+          ${p.nome_bem || "-"}
+        </div>
+
+        <div class="pat-local" title="${p.localizacao || "SEM OBRA"}">
+          ${p.localizacao || "SEM OBRA"}
+        </div>
+
+        <div class="pat-tipo">
+          ${p.tipo_item || "-"}
+        </div>
+
+        <div class="pat-valor">
+          ${formatarMoeda(p.valor_bem)}
+        </div>
+
+        <div class="pat-status status-${statusClasse}">
+          ${p.status || "SEM STATUS"}
+        </div>
+
       </div>
     `;
   });
@@ -740,12 +1010,57 @@ function abrirModal(id){
 
   document.getElementById("observacaoMov").value = "";
   document.getElementById("novaObraSelect").value = "";
+
+  aplicarPermissoesTela();
+
   document.getElementById("modalBg").style.display = "flex";
 }
 
 function fecharModal(){
   document.getElementById("modalBg").style.display = "none";
   patrimonioSelecionado = null;
+}
+
+function aplicarPermissoesTela(){
+  const usuario = usuarioAtual();
+
+  if(!usuario) return;
+
+  const podeCadastrar =
+    usuarioEhGestao() || usuarioTemPermissao("CADASTRAR_PATRIMONIO");
+
+  const podeMovimentar =
+    usuarioEhGestao() || usuarioTemPermissao("ALTERAR_STATUS");
+
+  const podeEditar =
+    usuarioEhGestao() || usuarioTemPermissao("CADASTRAR_PATRIMONIO");
+
+  const cardEntrada = document.getElementById("cardEntradaPatrimonio");
+  const cardObra = document.getElementById("cardObraLancamento");
+
+  if(cardEntrada && !podeCadastrar){
+    cardEntrada.style.display = "none";
+  }
+
+  if(cardObra && !podeCadastrar){
+    cardObra.style.display = "none";
+  }
+
+  document.querySelectorAll(".acao-movimentar").forEach(btn => {
+    btn.style.display = podeMovimentar ? "" : "none";
+  });
+
+  document.querySelectorAll(".acao-editar").forEach(btn => {
+    btn.style.display = podeEditar ? "" : "none";
+  });
+
+  const observacaoMov = document.getElementById("observacaoMov");
+  const novaObraSelect = document.getElementById("novaObraSelect");
+
+  if(!podeMovimentar){
+    if(observacaoMov) observacaoMov.style.display = "none";
+    if(novaObraSelect) novaObraSelect.style.display = "none";
+  }
 }
 
 async function gravarMovimentacao(dados){
@@ -998,6 +1313,9 @@ async function salvarEdicaoPatrimonio(){
 }
 async function iniciar(){
 
+  carregarUsuarioTopo();
+  gerarNotificacoesPadrao();
+
   if(!db()){
     alert("Supabase não carregado.");
     return;
@@ -1021,12 +1339,15 @@ async function iniciar(){
   }
 
   atualizarVisualTrava();
+  aplicarPermissoesTela();
 
   await carregarPatrimonios();
 }
 
+setInterval(gerarNotificacoesPadrao, 30000);
 iniciar();
 </script>
 
+<script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>

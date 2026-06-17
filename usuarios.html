@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Usuários</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+/* =========================================================
+   USUÁRIOS - PADRÃO BDR EM LINHA
+========================================================= */
+
+.usuario-form-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.usuario-filtro-grid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:8px;
+}
+
+.permissoes-box{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:8px;
+}
+
+.perm-label{
+  background:#f9fafb;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-size:12px;
+}
+
+.perm-label input{
+  width:auto;
+}
+
+.perm-tag{
+  display:inline-block;
+  background:#eef2f7;
+  color:#333;
+  padding:3px 7px;
+  border-radius:20px;
+  font-size:10px;
+  margin:2px;
+}
+
+.aviso{
+  background:#fff7ed;
+  border-left:5px solid #f97316;
+  padding:10px;
+  border-radius:8px;
+  font-size:12px;
+  color:#374151;
+}
+
+.usuario-header{
+  display:grid;
+  grid-template-columns:1.7fr 120px 110px 1.4fr 1.6fr 90px 240px;
+  gap:10px;
+  padding:10px 14px;
+  margin-bottom:8px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+.usuario-linha{
+  display:grid;
+  grid-template-columns:1.7fr 120px 110px 1.4fr 1.6fr 90px 240px;
+  gap:10px;
+  align-items:center;
+  background:white;
+  padding:9px 14px;
+  min-height:42px;
+  border-radius:10px;
+  border-left:4px solid var(--bdr-red);
+  margin-bottom:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.07);
+  cursor:pointer;
+  font-size:13px;
+  transition:.18s ease;
+}
+.usuario-linha:hover{
+  background:#f9fafb;
+  transform:translateX(4px);
+  box-shadow:0 5px 14px rgba(0,0,0,.10);
+}
+.usuario-nome{
+  font-weight:900;
+  color:var(--bdr-red);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.usuario-info{
+  color:#374151;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.usuario-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  justify-self:start;
+  width:max-content;
+  padding:4px 10px;
+  border-radius:8px;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+}
+
+.usuario-status.ATIVO{background:#16a34a}
+.usuario-status.INATIVO{background:#dc2626}
+
+.usuario-acoes{
+  display:flex;
+  gap:6px;
+  margin-left:20px;
+  align-items:center;
+}
+.btn-mini{
+  min-width:70px;
+  height:30px;
+  padding:4px 8px;
+  font-size:10px;
+  white-space:nowrap;
+}
+
+.btn-mini:hover{background:var(--bdr-red)}
+.btn-mini.btn-editar{background:#2563eb}
+.btn-mini.btn-status-danger{background:#dc2626}
+.btn-mini.btn-status-ok{background:#16a34a}
+
+.usuario-detalhes{
+  grid-column:1/-1;
+  display:none;
+  background:#f8fafc;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+  line-height:1.6;
+  color:#374151;
+}
+
+.usuario-linha.aberta .usuario-detalhes{
+  display:block;
+}
+
+.mov-usuario-lista{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.mov-usuario-linha{
+  background:#f8fafc;
+  border-left:4px solid var(--bdr-red);
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:12px;
+  line-height:1.45;
+  color:#374151;
+}
+
+.mov-usuario-linha strong{
+  color:var(--bdr-red);
+}
+
+.form-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.btn-salvar{background:#2a9d8f}
+.btn-limpar{background:#6b7280}
+
+@media(max-width:1250px){
+  .usuario-header{
+    display:none;
+  }
+
+  .usuario-linha{
+    grid-template-columns:1fr;
+    gap:5px;
+    padding:12px;
+  }
+
+  .usuario-acoes{
+    margin-top:6px;
+  }
+}
+
+@media(max-width:1000px){
+  .usuario-form-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .usuario-filtro-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:700px){
+  .usuario-form-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + SININHO REAL
+========================================================= */
+.bdr-topbar-title{
+  color:var(--bdr-red)!important;
+  font-weight:900;
+}
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
+}
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+}
+.notif-wrap{position:relative;}
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  padding:0;
+  outline:none!important;
+  box-shadow:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-user-select:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
+}
+.notif-btn i,
+.notif-badge{pointer-events:none;}
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:360px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+.notif-list{
+  max-height:300px;
+  overflow:auto;
+}
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+.notif-item:hover{background:#f9fafb;}
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+.user-menu:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+.user-mini b{display:block;}
+.user-mini small{
+  color:var(--bdr-red);
+  font-weight:900;
+}
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+.user-menu:hover .avatar{transform:scale(1.06);}
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+}
+.dropdown-user .logout-btn{color:#dc2626;}
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.notif-sem-permissao{
+  display:none!important;
+}
+@media(max-width:900px){
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-70px;width:310px;}
+}
+
+/* =========================================================
+   CENTRAL MASTER DE PERMISSÕES - ESTOQUE / PEDIDOS
+   Edite aqui o visual dos cards de permissão
+========================================================= */
+.perm-master-panel{
+  margin-top:12px;
+  border:1px solid #fee2e2;
+  background:linear-gradient(135deg,#fff,#fff7f7);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 8px 26px rgba(15,23,42,.06);
+}
+.perm-master-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.perm-master-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.perm-master-icon{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:#fff1f2;
+  border:1px solid #fecaca;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+}
+.perm-master-title h3{
+  margin:0!important;
+  color:#111827!important;
+  font-size:16px!important;
+}
+.perm-master-title p{
+  margin:2px 0 0;
+  color:#6b7280;
+  font-size:12px;
+}
+.perm-actions-top{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.perm-action-btn{
+  border:none;
+  border-radius:10px;
+  padding:9px 12px;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  background:#111827;
+  color:#fff;
+  transition:.18s;
+}
+.perm-action-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,23,42,.14);}
+.perm-action-btn.red{background:var(--bdr-red);}
+.perm-action-btn.gray{background:#6b7280;}
+.perm-action-btn.green{background:#16a34a;}
+.perm-groups{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.perm-group{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  overflow:hidden;
+  height:auto;
+}
+.perm-group-head{
+  padding:11px 12px;
+  background:#f9fafb;
+  border-bottom:1px solid #eef2f7;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
+  color:#111827;
+  font-size:13px;
+}
+.perm-group-head i{color:var(--bdr-red);}
+.perm-group-body{
+  padding:10px;
+  display:grid;
+  gap:8px;
+}
+.perm-card{
+  border:1px solid #e5e7eb;
+  border-left:4px solid #d1d5db;
+  background:#fff;
+  border-radius:12px;
+  padding:9px 10px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:9px;
+  align-items:start;
+  cursor:pointer;
+  transition:.18s;
+}
+.perm-card:hover{
+  background:#fff1f2;
+  border-left-color:var(--bdr-red);
+  transform:translateX(3px);
+}
+.perm-card input{
+  width:18px!important;
+  height:18px!important;
+  margin-top:1px;
+  accent-color:var(--bdr-red);
+}
+.perm-card strong{
+  display:block;
+  color:#111827;
+  font-size:12px;
+  line-height:1.2;
+}
+.perm-card span{
+  display:block;
+  color:#6b7280;
+  font-size:10.5px;
+  line-height:1.3;
+  margin-top:2px;
+}
+.perm-card.danger{border-left-color:#dc2626;}
+.perm-card.good{border-left-color:#16a34a;}
+.perm-card.warn{border-left-color:#f59e0b;}
+.perm-obras-box{
+  max-height:220px;
+  overflow:auto;
+  padding-right:3px;
+}
+.perm-obras-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:8px;
+}
+.perm-help{
+  background:#f8fafc;
+  border:1px dashed #cbd5e1;
+  border-radius:12px;
+  padding:10px 12px;
+  color:#475569;
+  font-size:12px;
+  line-height:1.45;
+  margin-top:10px;
+}
+.perm-help b{color:var(--bdr-red);}
+@media(max-width:1200px){
+  .perm-groups{grid-template-columns:1fr;}
+  .perm-master-head{align-items:flex-start;flex-direction:column;}
+  .perm-actions-top{justify-content:flex-start;}
+}
+
+
+/* =========================================================
+   PERMISSÕES CRÍTICAS MASTER / ADMIN
+   Edite aqui se quiser mudar o visual ou esconder/mostrar.
+========================================================= */
+.admin-critico-perm{
+  display:none!important;
+  border-color:#fecaca!important;
+  background:#fff1f2!important;
+  box-shadow:0 8px 20px rgba(220,38,38,.08)!important;
+}
+.admin-critico-perm.perm-visivel{
+  display:flex!important;
+}
+.admin-critico-perm strong{
+  color:#dc2626!important;
+}
+.admin-critico-aviso{
+  display:none;
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:12px;
+  border-left:5px solid #dc2626;
+  background:#fff1f2;
+  color:#7f1d1d;
+  font-size:12px;
+  font-weight:800;
+}
+.admin-critico-aviso.ativo{
+  display:block;
+}
+
+
+/* =========================================================
+   USUÁRIOS 100.1 - LAYOUT MASTER PREMIUM
+   Altere somente as variáveis abaixo para ajustar tamanhos.
+========================================================= */
+:root{
+  --usuarios-gap-geral:12px;
+  --usuarios-card-radius:18px;
+  --usuarios-card-padding:14px;
+  --usuarios-perm-altura-obras:330px;
+  --usuarios-perm-coluna-esquerda:1.25fr;
+  --usuarios-perm-coluna-direita:.85fr;
+}
+
+.card{
+  border-radius:var(--usuarios-card-radius)!important;
+  box-shadow:0 8px 24px rgba(15,23,42,.06)!important;
+  border:1px solid #e5e7eb!important;
+}
+
+.usuario-form-grid{
+  grid-template-columns:repeat(4,1fr)!important;
+  gap:10px!important;
+}
+
+.perm-master-panel{
+  padding:var(--usuarios-card-padding)!important;
+  border-radius:22px!important;
+  background:linear-gradient(135deg,#fff,#fff7f7)!important;
+}
+
+.perm-groups{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:var(--usuarios-gap-geral)!important;
+  align-items:start!important;
+}
+
+.perm-left-stack,
+.perm-right-stack{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:var(--usuarios-gap-geral)!important;
+}
+
+.perm-group{
+  border-radius:18px!important;
+  box-shadow:0 4px 16px rgba(15,23,42,.045)!important;
+}
+
+.perm-group-head{
+  padding:12px 14px!important;
+  background:linear-gradient(135deg,#fff5f5,#f9fafb)!important;
+  font-size:13px!important;
+}
+
+.perm-group-body{
+  padding:12px!important;
+}
+
+.perm-card{
+  min-height:48px!important;
+  border-radius:14px!important;
+}
+
+.perm-card strong{font-size:12px!important;}
+.perm-card span{font-size:10.5px!important;}
+
+.perm-obras-box{
+  max-height:220px!important;
+  min-height:220px!important;
+  overflow:auto;
+}
+.perm-obras-grid{
+  grid-template-columns:1fr!important;
+}
+
+.usuario-master-resumo{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:12px 0;
+}
+
+.usuario-master-kpi{
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-radius:16px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 4px 14px rgba(15,23,42,.04);
+}
+.usuario-master-kpi i{
+  width:38px;height:38px;border-radius:14px;
+  background:#fff1f2;color:var(--bdr-red);
+  display:flex;align-items:center;justify-content:center;
+}
+.usuario-master-kpi strong{display:block;font-size:17px;color:#111827;line-height:1;}
+.usuario-master-kpi span{display:block;font-size:11px;color:#6b7280;font-weight:800;margin-top:4px;}
+
+/* =========================================================
+   MODAL SENHA MASTER
+========================================================= */
+.master-modal-bg{
+  position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:99999;
+  display:none;align-items:center;justify-content:center;padding:18px;
+}
+.master-modal-bg.ativo{display:flex;}
+.master-modal{
+  width:min(460px,100%);background:#fff;border-radius:22px;overflow:hidden;
+  box-shadow:0 28px 80px rgba(0,0,0,.35);
+  animation:masterModalIn .18s ease;
+}
+@keyframes masterModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.master-modal-head{
+  background:linear-gradient(135deg,#fff1f2,#fff);border-bottom:1px solid #fecaca;
+  padding:16px 18px;display:flex;gap:12px;align-items:center;
+}
+.master-modal-icon{
+  width:44px;height:44px;border-radius:16px;background:#d71920;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.master-modal-head h3{margin:0;color:#111827;font-size:17px;font-weight:900;}
+.master-modal-head p{margin:3px 0 0;color:#6b7280;font-size:12px;}
+.master-modal-body{padding:16px 18px;}
+.master-resumo{
+  background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;
+  padding:11px 12px;color:#334155;font-size:12px;line-height:1.45;margin-bottom:12px;
+}
+.master-modal-body input{
+  width:100%;padding:12px 13px;border:1px solid #d1d5db;border-radius:14px;
+  font-size:14px;box-sizing:border-box;
+}
+.master-modal-actions{display:flex;gap:9px;justify-content:flex-end;padding:0 18px 18px;}
+.master-modal-actions button{
+  border:none;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer;
+}
+.master-cancelar{background:#e5e7eb;color:#374151;}
+.master-confirmar{background:#d71920;color:#fff;}
+.master-erro{display:none;margin-top:10px;color:#dc2626;font-size:12px;font-weight:900;}
+.master-erro.ativo{display:block;}
+
+@media(max-width:1200px){
+  .perm-groups{grid-template-columns:1fr!important;}
+  .usuario-master-resumo{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:700px){
+  .usuario-form-grid{grid-template-columns:1fr!important;}
+  .usuario-master-resumo{grid-template-columns:1fr;}
+}
+
+
+/* =========================================================
+   CORREÇÃO FINAL PREMIUM - USUÁRIOS
+   Ajuste aqui os tamanhos principais
+========================================================= */
+:root{
+  --user-gap: 12px;
+  --user-card-radius: 18px;
+  --user-card-pad: 12px;
+  --user-perm-card-height: 46px;
+  --user-obras-altura: 228px;
+}
+.bdr-main{padding-bottom:24px!important; overflow:visible!important;}
+.card{overflow:visible!important;}
+.usuario-master-resumo{margin:10px 0 12px!important;}
+.usuario-master-kpi{min-height:48px!important;padding:10px 12px!important;}
+.usuario-master-kpi i{width:34px!important;height:34px!important;}
+.usuario-master-kpi strong{font-size:15px!important;}
+.usuario-form-grid input,.usuario-form-grid select{height:38px!important;}
+.perm-master-panel{padding:12px!important;border-radius:18px!important;margin-top:12px!important;}
+.perm-master-head{margin-bottom:10px!important;}
+.perm-actions-top .perm-action-btn{height:36px!important;padding:8px 12px!important;}
+.premium-perm-top{display:grid!important;grid-template-columns:1fr 1fr 1.45fr!important;gap:var(--user-gap)!important;align-items:start!important;}
+.premium-perm-bottom{display:grid!important;grid-template-columns:1.1fr 1fr 1.2fr!important;gap:var(--user-gap)!important;margin-top:var(--user-gap)!important;align-items:stretch!important;}
+.perm-group{height:auto!important;min-height:0!important;border-radius:var(--user-card-radius)!important;overflow:hidden!important;}
+.perm-group-head{min-height:38px!important;padding:10px 12px!important;}
+.perm-group-body{padding:10px!important;gap:7px!important;}
+.perm-card{min-height:var(--user-perm-card-height)!important;padding:8px 10px!important;border-radius:13px!important;}
+.perm-card strong{font-size:12px!important;line-height:1.15!important;}
+.perm-card span{font-size:10px!important;line-height:1.2!important;}
+.operacao-grid{display:grid!important;grid-template-columns:1fr 190px!important;gap:10px!important;align-items:stretch!important;}
+.operacao-grid .perm-group-body{max-height:none!important;}
+.atencao-master-card{border:1px solid #fecaca;background:linear-gradient(135deg,#fff1f2,#fff);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;min-height:100%;}
+.atencao-master-top{width:100%;background:#d71920;color:#fff;margin:-12px -12px 12px;padding:10px;font-weight:900;text-align:left;box-sizing:border-box;}
+.atencao-master-ico{width:72px;height:72px;border-radius:50%;background:#fff;border:8px solid #fff1f2;color:#d71920;display:flex;align-items:center;justify-content:center;font-size:32px;margin:2px auto 10px;}
+.atencao-master-card b{color:#d71920;font-size:13px;display:block;margin-bottom:5px;}
+.atencao-master-card p{margin:0;color:#6b7280;font-size:11px;line-height:1.35;}
+.obras-toolbar{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:8px;align-items:center;}
+.obras-toolbar input{height:34px!important;font-size:12px!important;}
+.obras-toolbar button{border:none;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:900;cursor:pointer;}
+.obras-toolbar .red{background:#d71920;color:#fff;}.obras-toolbar .gray{background:#e5e7eb;color:#374151;}
+.perm-obras-box{max-height:var(--user-obras-altura)!important;min-height:var(--user-obras-altura)!important;overflow:auto!important;padding-right:4px!important;}
+.perm-obras-grid{grid-template-columns:1fr!important;gap:7px!important;}
+.resumo-card-box{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.resumo-mini{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:10px;text-align:center;}
+.resumo-mini strong{display:block;font-size:20px;color:#111827;line-height:1;}.resumo-mini span{font-size:10px;color:#6b7280;font-weight:800;}
+.acesso-lista{display:grid;gap:6px;font-size:12px;}.acesso-lista div{background:#f8fafc;border-radius:10px;padding:8px 10px;font-weight:800;}.oktxt{color:#16a34a}.badtxt{color:#dc2626}
+.perfis-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.perfil-card{border:1px solid #e5e7eb;background:#fff;border-radius:16px;padding:10px;text-align:center;cursor:pointer;transition:.18s;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;}
+.perfil-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(15,23,42,.10);border-color:#fecaca;}
+.perfil-card i{font-size:26px;color:#2563eb;margin-bottom:6px;}.perfil-card.gestor i{color:#f97316}.perfil-card.master i{color:#d71920}.perfil-card.operador i{color:#0f766e}
+.perfil-card strong{display:block;font-size:12px;color:#111827}.perfil-card span{font-size:10px;color:#6b7280;display:block;margin:4px 0 8px;}.perfil-card button{border:none;border-radius:10px;padding:7px;background:#f8fafc;font-weight:900;cursor:pointer;}
+.form-actions{position:static!important;margin:12px 0 4px!important;display:flex!important;gap:8px!important;z-index:auto!important;}
+.btn-salvar,.btn-limpar{border:none!important;border-radius:10px!important;padding:10px 14px!important;color:#fff!important;font-weight:900!important;cursor:pointer!important;}
+.btn-salvar{background:#2a9d8f!important}.btn-limpar{background:#6b7280!important}
+.usuario-filtro-grid input,.usuario-filtro-grid select{height:38px!important;}
+@media(max-width:1300px){.premium-perm-top,.premium-perm-bottom{grid-template-columns:1fr!important}.operacao-grid{grid-template-columns:1fr!important}.perfis-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.resumo-card-box,.perfis-grid,.obras-toolbar{grid-template-columns:1fr!important}}
+
+
+
+/* =========================================================
+   AJUSTE FINAL SEM BURACOS - PERMISSÕES MASTER
+   Altere aqui se quiser mexer nas larguras/alturas depois.
+========================================================= */
+:root{
+  --user-gap: 10px;
+  --user-perm-card-height: 42px;
+  --user-obras-altura: 210px;
+}
+.premium-perm-top{
+  display:grid!important;
+  grid-template-columns:1fr 1fr 1.35fr!important;
+  gap:var(--user-gap)!important;
+  align-items:stretch!important;
+}
+.premium-perm-bottom{
+  display:grid!important;
+  grid-template-columns:1.05fr .95fr 1fr!important;
+  gap:var(--user-gap)!important;
+  margin-top:var(--user-gap)!important;
+  align-items:stretch!important;
+}
+.operacao-grid{
+  display:block!important;
+}
+.operacao-grid .perm-group-body{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.operacao-grid .admin-critico-aviso{
+  grid-column:1 / -1!important;
+}
+.atencao-master-card{
+  display:none!important;
+}
+.perm-card{
+  min-height:var(--user-perm-card-height)!important;
+  padding:7px 9px!important;
+}
+.perm-card input{
+  width:16px!important;
+  height:16px!important;
+}
+.perm-group-head{
+  min-height:34px!important;
+  padding:9px 11px!important;
+}
+.perm-group-body{
+  padding:9px!important;
+  gap:7px!important;
+}
+.perm-obras-box{
+  max-height:var(--user-obras-altura)!important;
+  min-height:var(--user-obras-altura)!important;
+}
+.perfis-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.perfil-card{
+  min-height:104px!important;
+  padding:9px!important;
+}
+.form-actions{
+  margin:10px 0 10px!important;
+  padding-top:0!important;
+}
+@media(max-width:1300px){
+  .premium-perm-top,.premium-perm-bottom{grid-template-columns:1fr!important;}
+  .operacao-grid .perm-group-body{grid-template-columns:1fr!important;}
+  .perfis-grid{grid-template-columns:repeat(2,1fr)!important;}
+}
+@media(max-width:700px){
+  .perfis-grid,.resumo-card-box,.obras-toolbar{grid-template-columns:1fr!important;}
+}
+
+</style>
+</head>
+
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script>verificarLogin();</script>
+
+<div class="bdr-app">
+
+  <aside class="bdr-sidebar">
+
+    <div class="bdr-brand">
+      <div class="bdr-brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+    </div>
+
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn active" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+</aside>
+
+  <main class="bdr-main">
+
+    <section class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">👥 BDR Usuários</div>
+        <div class="bdr-topbar-sub">
+          Cadastro, permissões, notificações e controle de acesso dos usuários do sistema.
+        </div>
+      </div>
+
+      <div class="bdr-top-actions">
+        <div class="notif-wrap" id="notifWrap">
+          <button class="notif-btn" type="button" tabindex="-1"
+            onmousedown="event.preventDefault()"
+            onclick="toggleNotificacoes(event); this.blur();"
+            title="Notificações">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+
+          <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list">
+              <div class="notif-item">Nenhuma notificação no momento.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini">
+            <b id="usuarioNome" tabindex="-1">Olá, -</b>
+            <small id="usuarioPerfil" tabindex="-1">-</small>
+          </div>
+
+          <div class="avatar">
+            <i class="fa-solid fa-user"></i>
+          </div>
+
+          <div id="dropdownUser" class="dropdown-user">
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+              <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+            </button>
+
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
+              <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 id="tituloForm">➕ Cadastrar Usuário</h3>
+
+      <div class="aviso">
+        O perfil define o tipo de usuário. As permissões definem exatamente o que ele pode fazer.
+      </div>
+
+      <div class="usuario-master-resumo">
+        <div class="usuario-master-kpi"><i class="fa-solid fa-user-shield"></i><div><strong>Controle Master</strong><span>Alterações só salvam com senha MASTER</span></div></div>
+        <div class="usuario-master-kpi"><i class="fa-solid fa-eye"></i><div><strong>Visibilidade</strong><span>CD, obra própria e outras obras</span></div></div>
+        <div class="usuario-master-kpi"><i class="fa-solid fa-cart-plus"></i><div><strong>Solicitação</strong><span>Pedidos com origem e destino</span></div></div>
+        <div class="usuario-master-kpi"><i class="fa-solid fa-lock"></i><div><strong>Crítico</strong><span>Usuários e configurações protegidos</span></div></div>
+      </div>
+
+      <br>
+
+      <input type="hidden" id="usuario_id">
+
+      <div class="usuario-form-grid">
+        <input id="nome" placeholder="Nome completo">
+
+        <input id="usuario" placeholder="Usuário de login. Ex: joao">
+
+        <input id="senha" placeholder="Senha">
+
+        <input id="email" placeholder="E-mail">
+
+        <select id="perfil" onchange="sugerirPermissoes()">
+          <option value="">Selecione o perfil</option>
+          <option value="MASTER">MASTER</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="ALMOXARIFADO">ALMOXARIFADO</option>
+          <option value="OBRA">OBRA</option>
+          <option value="CONSULTA">CONSULTA</option>
+        </select>
+
+        <select id="empresa_id">
+          <option value="">Empresa opcional</option>
+        </select>
+
+        <select id="obra_id">
+          <option value="">Obra/Setor opcional</option>
+        </select>
+
+        <select id="ativo">
+          <option value="true">Ativo</option>
+          <option value="false">Inativo</option>
+        </select>
+      </div>
+
+      <br>
+
+      <div class="perm-master-panel">
+        <div class="perm-master-head">
+          <div class="perm-master-title">
+            <div class="perm-master-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div>
+              <h3>Central Master de Permissões</h3>
+              <p>Defina o que cada usuário pode visualizar, solicitar e operar no sistema.</p>
+            </div>
+          </div>
+          <div class="perm-actions-top">
+            <button type="button" class="perm-action-btn green" onclick="presetPermissao('TOTAL'); atualizarResumoPermissoes();">🛡️ Liberar tudo</button>
+            <button type="button" class="perm-action-btn" onclick="presetPermissao('CD'); atualizarResumoPermissoes();">Só CD</button>
+            <button type="button" class="perm-action-btn gray" onclick="presetPermissao('OBRA'); atualizarResumoPermissoes();">Só própria obra</button>
+            <button type="button" class="perm-action-btn red" onclick="presetPermissao('BLOQUEADO'); atualizarResumoPermissoes();">🔒 Bloquear externo</button>
+          </div>
+        </div>
+
+        <div class="premium-perm-top">
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-eye"></i> O que pode visualizar</div>
+            <div class="perm-group-body">
+              <label class="perm-card good"><input type="checkbox" class="perm" value="VER_ESTOQUE_CD"><div><strong>Ver estoque do CD</strong><span>Itens disponíveis no Centro de Distribuição.</span></div></label>
+              <label class="perm-card good"><input type="checkbox" class="perm" value="VER_ESTOQUE_PROPRIA_OBRA"><div><strong>Ver estoque da própria obra</strong><span>Itens da obra/setor do usuário.</span></div></label>
+              <label class="perm-card warn"><input type="checkbox" class="perm" value="VER_ESTOQUE_OUTRAS_OBRAS"><div><strong>Ver estoque de outras obras</strong><span>Itens disponíveis fora da própria obra.</span></div></label>
+              <label class="perm-card danger"><input type="checkbox" class="perm" value="VER_EM_USO_OUTRAS_OBRAS"><div><strong>Ver itens EM USO de outras obras</strong><span>Equipamentos e ferramentas em uso.</span></div></label>
+              <label class="perm-card"><input type="checkbox" class="perm" value="VER_VALORES"><div><strong>Ver valores e informações financeiras</strong><span>Valores patrimoniais e custos dos itens.</span></div></label>
+            </div>
+          </div>
+
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-cart-plus"></i> O que pode solicitar</div>
+            <div class="perm-group-body">
+              <label class="perm-card good"><input type="checkbox" class="perm" value="SOLICITAR_MATERIAL"><div><strong>Solicitar material do CD</strong><span>Criar pedido e adicionar itens ao carrinho.</span></div></label>
+              <label class="perm-card warn"><input type="checkbox" class="perm" value="SOLICITAR_OUTRAS_OBRAS"><div><strong>Solicitar de outras obras</strong><span>Pedir item em estoque de outra obra.</span></div></label>
+              <label class="perm-card danger"><input type="checkbox" class="perm" value="SOLICITAR_EM_USO"><div><strong>Solicitar itens EM USO</strong><span>Pedir empréstimo/transferência de item em uso.</span></div></label>
+              <label class="perm-card"><input type="checkbox" class="perm" value="RECEBER_NOTIFICACOES"><div><strong>Receber notificações e sininho</strong><span>Receber alerta de pedidos e movimentações.</span></div></label>
+            </div>
+          </div>
+
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-gears"></i> Operações e administração</div>
+            <div class="operacao-grid">
+              <div class="perm-group-body">
+                <div id="avisoPermissoesCriticas" class="admin-critico-aviso">⚠️ Permissões críticas liberadas somente para perfil MASTER ou ADMIN.</div>
+                <label class="perm-card"><input type="checkbox" class="perm" value="CONFERIR_MERCADORIA"><div><strong>Conferir mercadoria</strong><span>Conferência de entrada/recebimento.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="GUARDAR_ESTOQUE"><div><strong>Guardar estoque</strong><span>Endereçar e armazenar produtos.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="SEPARAR_PEDIDO"><div><strong>Separar pedido</strong><span>Bipar prateleira/patrimônio e finalizar.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="ENTREGAR_MATERIAL"><div><strong>Entregar / enviar material</strong><span>Liberar transferência e registrar saída.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="APROVAR_PEDIDO_ORIGEM"><div><strong>Aprovar pedido da origem</strong><span>Aprovar quando o item pertence à sua obra.</span></div></label>
+                <label class="perm-card admin-critico-perm"><input type="checkbox" class="perm" value="USUARIOS"><div><strong>Gerenciar usuários</strong><span>Criar, editar, bloquear e liberar usuários.</span></div></label>
+                <label class="perm-card admin-critico-perm"><input type="checkbox" class="perm" value="CONFIGURACOES"><div><strong>Configurações do sistema</strong><span>Acesso às configurações avançadas.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="CONSULTAR_PATRIMONIO"><div><strong>Consultar patrimônios</strong><span>Consulta geral permitida.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="VER_PATRIMONIO_OBRA"><div><strong>Ver patrimônio da própria obra</strong><span>Patrimônios do setor/obra.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="CADASTRAR_PATRIMONIO"><div><strong>Cadastrar patrimônio</strong><span>Criar novos patrimônios.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="ALTERAR_STATUS"><div><strong>Alterar status / movimentar</strong><span>Movimentações e mudança de status.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="EMPRESAS"><div><strong>Empresas / obras</strong><span>Cadastrar e alterar empresas/obras.</span></div></label>
+                <label class="perm-card"><input type="checkbox" class="perm" value="RELATORIOS"><div><strong>Relatórios</strong><span>Relatórios gerenciais.</span></div></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="premium-perm-bottom">
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-building"></i> Obras / Setores liberados para este usuário</div>
+            <div class="perm-group-body">
+              <div class="obras-toolbar">
+                <input id="buscaObraPerm" placeholder="Buscar obra ou setor..." oninput="filtrarObrasPermissoes()">
+                <button type="button" class="red" onclick="marcarTodasObrasPerm(true); atualizarResumoPermissoes();">Marcar todas</button>
+                <button type="button" class="gray" onclick="marcarTodasObrasPerm(false); atualizarResumoPermissoes();">Desmarcar</button>
+              </div>
+              <label class="perm-card good"><input type="checkbox" class="perm" value="VER_TODAS_OBRAS"><div><strong>Ver todas as obras</strong><span>Permitir consulta geral. Ideal para Master/Admin.</span></div></label>
+              <div class="perm-obras-box"><div id="obrasPermissoesBox" class="perm-obras-grid"><div class="perm-help">Carregando obras/setores...</div></div></div>
+            </div>
+          </div>
+
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-chart-simple"></i> Resumo de permissões deste usuário</div>
+            <div class="perm-group-body">
+              <div class="resumo-card-box">
+                <div class="resumo-mini"><strong id="resVis">0/5</strong><span>Visualizações</span></div>
+                <div class="resumo-mini"><strong id="resSol">0/4</strong><span>Solicitações</span></div>
+                <div class="resumo-mini"><strong id="resOpe">0/13</strong><span>Operações</span></div>
+              </div>
+              <div class="acesso-lista">
+                <div>CD: <span id="resCD" class="badtxt">BLOQUEADO</span></div>
+                <div>Obra própria: <span id="resObra" class="badtxt">BLOQUEADO</span></div>
+                <div>Outras obras: <span id="resOutras" class="badtxt">BLOQUEADO</span></div>
+                <div>Itens em uso: <span id="resUso" class="badtxt">BLOQUEADO</span></div>
+                <div>Notificações: <span id="resNotif" class="badtxt">Inativas</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="perm-group">
+            <div class="perm-group-head"><i class="fa-solid fa-rocket"></i> Perfis rápidos <small style="color:#6b7280;font-weight:700;">(atalhos inteligentes)</small></div>
+            <div class="perm-group-body">
+              <div class="perfis-grid">
+                <div class="perfil-card" onclick="aplicarPerfilRapido('ALMOXARIFADO')"><i class="fa-solid fa-helmet-safety"></i><strong>ALMOXARIFE</strong><span>CD + Própria obra</span><button type="button">Aplicar</button></div>
+                <div class="perfil-card operador" onclick="aplicarPerfilRapido('OPERADOR')"><i class="fa-solid fa-user-check"></i><strong>OPERADOR</strong><span>Solicitar e acompanhar</span><button type="button">Aplicar</button></div>
+                <div class="perfil-card gestor" onclick="aplicarPerfilRapido('GESTOR')"><i class="fa-solid fa-user-tie"></i><strong>GESTOR</strong><span>CD + Obras liberadas</span><button type="button">Aplicar</button></div>
+                <div class="perfil-card master" onclick="aplicarPerfilRapido('MASTER')"><i class="fa-solid fa-crown"></i><strong>MASTER</strong><span>Acesso total</span><button type="button">Ativo</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="perm-help"><b>Dica:</b> mexa em tudo livremente. A senha MASTER só será pedida quando clicar em Salvar ou Inativar/Reativar.</div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-salvar" onclick="salvarUsuario()">💾 Salvar Usuário</button>
+        <button class="btn-limpar" onclick="limparFormulario()">🧹 Limpar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>🔎 Buscar usuários</h3>
+
+      <div class="usuario-filtro-grid">
+        <input id="busca" placeholder="Buscar por nome, usuário, perfil, empresa ou obra..." oninput="renderizarUsuarios()">
+
+        <select id="filtroPerfil" onchange="renderizarUsuarios()">
+          <option value="">Todos os perfis</option>
+          <option value="MASTER">MASTER</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="ALMOXARIFADO">ALMOXARIFADO</option>
+          <option value="OBRA">OBRA</option>
+          <option value="CONSULTA">CONSULTA</option>
+        </select>
+
+        <select id="filtroStatus" onchange="renderizarUsuarios()">
+          <option value="">Todos os status</option>
+          <option value="ATIVO">Ativos</option>
+          <option value="INATIVO">Inativos</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>👥 Usuários cadastrados</h3>
+
+      <div class="usuario-header">
+        <div>Nome</div>
+        <div>Usuário</div>
+        <div>Perfil</div>
+        <div>Empresa</div>
+        <div>Obra/Setor</div>
+        <div>Status</div>
+        <div>Ações</div>
+      </div>
+
+      <div id="listaUsuarios"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+let usuarios = [];
+let empresas = [];
+let obras = [];
+
+let acaoPendenteMaster = null;
+let resumoPendenteMaster = "";
+
+function abrirModalSenhaMaster(resumo, callback){
+  resumoPendenteMaster = resumo || "Alteração pendente.";
+  acaoPendenteMaster = callback;
+  const modal = document.getElementById("modalSenhaMaster");
+  const resumoEl = document.getElementById("masterResumoAcao");
+  const input = document.getElementById("senhaMasterConfirmacao");
+  const erro = document.getElementById("masterErroSenha");
+  if(resumoEl) resumoEl.innerHTML = resumoPendenteMaster;
+  if(erro) erro.classList.remove("ativo");
+  if(input) input.value = "";
+  modal?.classList.add("ativo");
+  setTimeout(() => input?.focus(), 120);
+}
+
+function fecharModalSenhaMaster(){
+  document.getElementById("modalSenhaMaster")?.classList.remove("ativo");
+  acaoPendenteMaster = null;
+}
+
+async function validarSenhaMaster(senha){
+  if(!senha) return false;
+  const { data, error } = await db()
+    .from("usuarios_sistema")
+    .select("id,nome,perfil,ativo")
+    .eq("perfil", "MASTER")
+    .eq("senha", senha)
+    .eq("ativo", true)
+    .limit(1);
+
+  if(error){
+    console.warn("Erro ao validar senha MASTER:", error.message);
+    return false;
+  }
+  return Array.isArray(data) && data.length > 0;
+}
+
+async function confirmarSenhaMaster(){
+  const input = document.getElementById("senhaMasterConfirmacao");
+  const erro = document.getElementById("masterErroSenha");
+  const senha = String(input?.value || "").trim();
+
+  const ok = await validarSenhaMaster(senha);
+  if(!ok){
+    erro?.classList.add("ativo");
+    input?.focus();
+    return;
+  }
+
+  const executar = acaoPendenteMaster;
+  fecharModalSenhaMaster();
+  if(typeof executar === "function"){
+    await executar();
+  }
+}
+
+async function atualizarLocalStorageSeForUsuarioAtual(idAlterado, payloadAtualizado){
+  try{
+    const logado = usuarioLogadoAtual();
+    if(!logado || String(logado.id) !== String(idAlterado)) return;
+    localStorage.setItem("usuario_logado", JSON.stringify({
+      ...logado,
+      nome: payloadAtualizado.nome,
+      usuario: payloadAtualizado.usuario,
+      email: payloadAtualizado.email,
+      perfil: payloadAtualizado.perfil,
+      empresa_id: payloadAtualizado.empresa_id,
+      obra_id: payloadAtualizado.obra_id,
+      ativo: payloadAtualizado.ativo,
+      permissoes: payloadAtualizado.permissoes
+    }));
+    localStorage.setItem("usuarioLogado", localStorage.getItem("usuario_logado"));
+  }catch(e){}
+}
+
+function ir(pagina){
+  window.location.href = pagina;
+}
+
+function db(){
+  return window.client || window.supabaseClient;
+}
+
+function usuarioLogadoAtual(){
+  const u = localStorage.getItem("usuario_logado");
+  return u ? JSON.parse(u) : null;
+}
+
+function permissoesUsuarioLogado(){
+  const u = usuarioLogadoAtual();
+  return String(u?.permissoes || "")
+    .split(",")
+    .map(p => p.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function usuarioRecebeNotificacoes(){
+  const u = usuarioLogadoAtual();
+  if(!u) return false;
+
+  const perfil = String(u.perfil || "").toUpperCase();
+  const permissoes = permissoesUsuarioLogado();
+
+  /*
+    Regra oficial:
+    - MASTER e ADMIN sempre veem o sininho para administrar.
+    - Demais usuários só veem/ouvem se tiverem RECEBER_NOTIFICACOES marcado.
+    Assim pessoas da sede/consulta podem ficar sem notificação.
+  */
+  if(perfil === "MASTER" || perfil === "ADMIN") return true;
+
+  return permissoes.includes("RECEBER_NOTIFICACOES") ||
+         permissoes.includes("NOTIFICACOES") ||
+         permissoes.includes("VER_NOTIFICACOES");
+}
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+
+  if(!usuarioRecebeNotificacoes()){
+    return;
+  }
+
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+document.addEventListener("click", fecharMenusTopo);
+
+let bdrUltimosPedidosNotificados = new Set();
+let bdrPrimeiraCargaNotificacoes = true;
+let bdrAudioCtx = null;
+
+function prepararSomNotificacao(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!bdrAudioCtx){
+      bdrAudioCtx = new AudioCtx();
+    }
+    if(bdrAudioCtx.state === "suspended"){
+      bdrAudioCtx.resume();
+    }
+  }catch(e){}
+}
+
+document.addEventListener("click", prepararSomNotificacao, { once:false });
+document.addEventListener("touchstart", prepararSomNotificacao, { once:false });
+
+function tocarSomNotificacao(){
+  if(!usuarioRecebeNotificacoes()) return;
+
+  try{
+    prepararSomNotificacao();
+    if(!bdrAudioCtx) return;
+
+    const ctx = bdrAudioCtx;
+
+    [0, .16].forEach((delay, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(idx === 0 ? 880 : 1175, ctx.currentTime + delay);
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + delay + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + delay + 0.13);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.16);
+    });
+
+    if(navigator.vibrate){
+      navigator.vibrate([120,60,120]);
+    }
+  }catch(e){
+    console.warn("Som de notificação indisponível.", e);
+  }
+}
+
+function atualizarNotificacoesTopo(lista){
+  const wrap = document.getElementById("notifWrap");
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+
+  if(!wrap || !badge || !box) return;
+
+  if(!usuarioRecebeNotificacoes()){
+    wrap.classList.add("notif-sem-permissao");
+    return;
+  }
+
+  wrap.classList.remove("notif-sem-permissao");
+
+  const total = lista.length;
+
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+
+  if(total === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+
+  box.innerHTML = lista.map(n => `
+    <div class="notif-item" onclick="${n.acao || ''}">
+      <strong>${n.titulo}</strong>
+      <span>${n.texto}</span>
+    </div>
+  `).join("");
+}
+
+async function carregarNotificacoesPedidos(){
+  if(!usuarioRecebeNotificacoes()){
+    atualizarNotificacoesTopo([]);
+    return;
+  }
+
+  try{
+    const banco = db();
+
+    const { data, error } = await banco
+      .from("pedidos_retirada")
+      .select("id,codigo,obra_nome,solicitante,status,criado_em")
+      .in("status", [
+        "AGUARDANDO_AUTORIZACAO",
+        "EM_SEPARACAO",
+        "AGUARDANDO_RETIRADA",
+        "EM_TRANSITO",
+        "AGUARDANDO_CONFERENCIA",
+        "RECEBIDO_COM_DIVERGENCIA"
+      ])
+      .order("id", { ascending:false })
+      .limit(20);
+
+    if(error){
+      console.warn("Erro ao carregar notificações:", error.message);
+      atualizarNotificacoesTopo([]);
+      return;
+    }
+
+    const pedidos = data || [];
+
+    const lista = pedidos.map(p => ({
+      titulo: `📝 ${p.codigo || "PED-" + String(p.id).padStart(4,"0")} • ${p.status || "-"}`,
+      texto: `${p.obra_nome || "Obra não informada"} | Solicitante: ${p.solicitante || "-"}`,
+      acao: `ir('pedidos.html')`
+    }));
+
+    const idsAtuais = new Set(pedidos.map(p => String(p.id)));
+
+    if(!bdrPrimeiraCargaNotificacoes){
+      const temNovo = pedidos.some(p => !bdrUltimosPedidosNotificados.has(String(p.id)));
+      if(temNovo){
+        tocarSomNotificacao();
+      }
+    }
+
+    bdrUltimosPedidosNotificados = idsAtuais;
+    bdrPrimeiraCargaNotificacoes = false;
+
+    atualizarNotificacoesTopo(lista);
+
+  }catch(e){
+    console.warn("Notificações indisponíveis.", e);
+    atualizarNotificacoesTopo([]);
+  }
+}
+
+function iniciarNotificacoesGlobais(){
+  carregarNotificacoesPedidos();
+  setInterval(carregarNotificacoesPedidos, 30000);
+
+  try{
+    const banco = db();
+
+    if(!banco || !banco.channel || !usuarioRecebeNotificacoes()){
+      return;
+    }
+
+    banco
+      .channel("bdr_notificacoes_pedidos_usuarios")
+      .on(
+        "postgres_changes",
+        { event:"*", schema:"public", table:"pedidos_retirada" },
+        payload => {
+          carregarNotificacoesPedidos();
+          if(!bdrPrimeiraCargaNotificacoes){
+            tocarSomNotificacao();
+          }
+        }
+      )
+      .subscribe();
+  }catch(e){
+    console.warn("Realtime de notificações não iniciado.", e);
+  }
+}
+
+function campo(id){
+  const el = document.getElementById(id);
+  return el ? String(el.value || "").trim() : "";
+}
+
+function nomeEmpresa(id){
+  if(!id) return "-";
+  const e = empresas.find(x => String(x.id) === String(id));
+  return e ? e.nome : "-";
+}
+
+function nomeObra(id){
+  if(!id) return "-";
+  const o = obras.find(x => String(x.id) === String(id));
+  return o ? `${o.codigo_obra || "-"} - ${o.nome || "-"}` : "-";
+}
+
+function pegarPermissoes(){
+
+  const marcadas = [];
+
+  document.querySelectorAll(".perm:checked, .obra-perm:checked")
+    .forEach(p => {
+      marcadas.push(p.value);
+    });
+
+  return [...new Set(marcadas)].join(",");
+}
+
+function marcarPermissoes(permissoes){
+
+  document.querySelectorAll(".perm, .obra-perm")
+    .forEach(p => p.checked = false);
+
+  if(!permissoes) return;
+
+  const lista = String(permissoes).split(",").map(p => p.trim());
+
+  document.querySelectorAll(".perm, .obra-perm")
+    .forEach(p => {
+      if(lista.includes(p.value)){
+        p.checked = true;
+      }
+    });
+}
+
+function presetPermissao(tipo){
+  document.querySelectorAll(".perm, .obra-perm").forEach(p => p.checked = false);
+
+  const marcar = (valores) => {
+    document.querySelectorAll(".perm, .obra-perm").forEach(p => {
+      if(valores.includes(p.value)) p.checked = true;
+    });
+  };
+
+  if(tipo === "TOTAL"){
+    document.querySelectorAll(".perm").forEach(p => p.checked = true);
+    return;
+  }
+
+  if(tipo === "CD"){
+    marcar([
+      "VER_ESTOQUE_CD",
+      "SOLICITAR_MATERIAL",
+      "RECEBER_NOTIFICACOES",
+      "CONSULTAR_PATRIMONIO"
+    ]);
+    return;
+  }
+
+  if(tipo === "OBRA"){
+    marcar([
+      "VER_ESTOQUE_PROPRIA_OBRA",
+      "SOLICITAR_MATERIAL",
+      "VER_PATRIMONIO_OBRA"
+    ]);
+    return;
+  }
+
+  if(tipo === "BLOQUEADO"){
+    marcar([
+      "VER_ESTOQUE_CD",
+      "SOLICITAR_MATERIAL"
+    ]);
+    return;
+  }
+}
+
+function atualizarPermissoesCriticas(){
+  const perfilSelecionado = campo("perfil");
+  const podeVerCriticas = ["MASTER","ADMIN"].includes(perfilSelecionado);
+
+  document.querySelectorAll(".admin-critico-perm").forEach(card => {
+    card.classList.toggle("perm-visivel", podeVerCriticas);
+    const check = card.querySelector("input");
+    if(check && !podeVerCriticas){
+      check.checked = false;
+    }
+  });
+
+  const aviso = document.getElementById("avisoPermissoesCriticas");
+  if(aviso){
+    aviso.classList.toggle("ativo", podeVerCriticas);
+  }
+}
+
+function sugerirPermissoes(){
+
+  const perfil = campo("perfil");
+
+  document.querySelectorAll(".perm, .obra-perm")
+    .forEach(p => p.checked = false);
+
+  const sugestoes = {
+    MASTER: [
+      "VER_ESTOQUE_CD",
+      "SOLICITAR_MATERIAL",
+      "CONFERIR_MERCADORIA",
+      "GUARDAR_ESTOQUE",
+      "SEPARAR_PEDIDO",
+      "ENTREGAR_MATERIAL",
+      "VER_PATRIMONIO_OBRA",
+      "CONSULTAR_PATRIMONIO",
+      "CADASTRAR_PATRIMONIO",
+      "ALTERAR_STATUS",
+      "EMPRESAS",
+      "RELATORIOS",
+      "USUARIOS",
+      "CONFIGURACOES",
+      "RECEBER_NOTIFICACOES",
+      "VER_ESTOQUE_PROPRIA_OBRA",
+      "VER_ESTOQUE_OUTRAS_OBRAS",
+      "VER_EM_USO_OUTRAS_OBRAS",
+      "SOLICITAR_OUTRAS_OBRAS",
+      "SOLICITAR_EM_USO",
+      "APROVAR_PEDIDO_ORIGEM",
+      "VER_TODAS_OBRAS",
+      "VER_VALORES"
+    ],
+
+    ADMIN: [
+      "VER_ESTOQUE_CD",
+      "CONFERIR_MERCADORIA",
+      "GUARDAR_ESTOQUE",
+      "SEPARAR_PEDIDO",
+      "ENTREGAR_MATERIAL",
+      "CONSULTAR_PATRIMONIO",
+      "CADASTRAR_PATRIMONIO",
+      "ALTERAR_STATUS",
+      "EMPRESAS",
+      "RELATORIOS",
+      "RECEBER_NOTIFICACOES",
+      "VER_ESTOQUE_PROPRIA_OBRA",
+      "VER_ESTOQUE_OUTRAS_OBRAS",
+      "VER_EM_USO_OUTRAS_OBRAS",
+      "SOLICITAR_OUTRAS_OBRAS",
+      "APROVAR_PEDIDO_ORIGEM",
+      "VER_TODAS_OBRAS",
+      "VER_VALORES"
+    ],
+
+    ALMOXARIFADO: [
+      "VER_ESTOQUE_CD",
+      "CONFERIR_MERCADORIA",
+      "GUARDAR_ESTOQUE",
+      "SEPARAR_PEDIDO",
+      "ENTREGAR_MATERIAL",
+      "RECEBER_NOTIFICACOES",
+      "APROVAR_PEDIDO_ORIGEM"
+    ],
+
+    OBRA: [
+      "VER_ESTOQUE_CD",
+      "SOLICITAR_MATERIAL",
+      "VER_PATRIMONIO_OBRA",
+      "VER_ESTOQUE_PROPRIA_OBRA"
+    ],
+
+    CONSULTA: [
+      "VER_ESTOQUE_CD",
+      "CONSULTAR_PATRIMONIO"
+    ]
+  };
+
+  const lista = sugestoes[perfil] || [];
+
+  document.querySelectorAll(".perm")
+    .forEach(p => {
+      if(lista.includes(p.value)){
+        p.checked = true;
+      }
+    });
+
+  atualizarPermissoesCriticas();
+}
+
+function validarAcesso(){
+
+  const u = usuarioLogadoAtual();
+
+  if(!u || !["MASTER","ADMIN"].includes(u.perfil)){
+    alert("Acesso permitido apenas para MASTER ou ADMIN.");
+    window.location.href = "dashboard.html";
+    return false;
+  }
+
+  
+  const nomeTopo = document.getElementById("usuarioNome");
+  const perfilTopo = document.getElementById("usuarioPerfil");
+
+  if(nomeTopo) nomeTopo.innerText = `Olá, ${u.nome || "usuário"}`;
+  if(perfilTopo) perfilTopo.innerText = u.perfil || "-";
+
+  return true;
+}
+
+async function carregarDados(){
+
+  if(!validarAcesso()) return;
+
+  const { data: empData } = await db()
+    .from("empresas")
+    .select("*")
+    .order("nome");
+
+  const { data: obrasData } = await db()
+    .from("obras")
+    .select("*")
+    .order("nome");
+
+  const { data: userData, error } = await db()
+    .from("usuarios_sistema")
+    .select("*")
+    .order("nome");
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  empresas = empData || [];
+  obras = obrasData || [];
+  usuarios = userData || [];
+
+  carregarSelects();
+  renderizarUsuarios();
+}
+
+function carregarSelects(){
+
+  const emp = document.getElementById("empresa_id");
+  emp.innerHTML = `<option value="">Empresa opcional</option>`;
+
+  empresas.forEach(e => {
+    emp.innerHTML += `<option value="${e.id}">${e.nome || "-"}</option>`;
+  });
+
+  const obra = document.getElementById("obra_id");
+  obra.innerHTML = `<option value="">Obra/Setor opcional</option>`;
+
+  obras.forEach(o => {
+    obra.innerHTML += `
+      <option value="${o.id}">
+        ${o.codigo_obra || "-"} - ${o.nome || "-"}
+      </option>
+    `;
+  });
+
+  carregarObrasPermissoes();
+  setTimeout(atualizarResumoPermissoes,80);
+}
+
+function carregarObrasPermissoes(){
+  const box = document.getElementById("obrasPermissoesBox");
+  if(!box) return;
+
+  if(!obras.length){
+    box.innerHTML = `<div class="perm-help">Nenhuma obra/setor cadastrado.</div>`;
+    return;
+  }
+
+  box.innerHTML = obras.map(o => `
+    <label class="perm-card">
+      <input type="checkbox" class="obra-perm" value="VER_OBRA_${o.id}">
+      <div>
+        <strong>${o.codigo_obra || "-"} - ${o.nome || "-"}</strong>
+        <span>Liberar consulta desta obra/setor para o usuário.</span>
+      </div>
+    </label>
+  `).join("");
+}
+
+async function salvarUsuario(){
+
+  const logado = usuarioLogadoAtual();
+  const id = campo("usuario_id");
+
+  if(!campo("nome") || !campo("usuario") || !campo("perfil")){
+    alert("Preencha nome, usuário e perfil.");
+    return;
+  }
+
+  if(!id && !campo("senha")){
+    alert("Informe uma senha.");
+    return;
+  }
+
+  const payload = {
+    nome: campo("nome"),
+    usuario: campo("usuario"),
+    email: campo("email") || null,
+    perfil: campo("perfil"),
+    empresa_id: campo("empresa_id") || null,
+    obra_id: campo("obra_id") || null,
+    ativo: campo("ativo") === "true",
+    permissoes: pegarPermissoes(),
+    atualizado_em: new Date().toISOString()
+  };
+
+  if(campo("senha")){
+    payload.senha = campo("senha");
+  }
+
+  const resumo = `
+    <b>${id ? "Editar usuário" : "Cadastrar usuário"}</b><br>
+    Usuário: <b>${payload.nome || "-"}</b><br>
+    Perfil: <b>${payload.perfil || "-"}</b><br>
+    Status: <b>${payload.ativo ? "ATIVO" : "INATIVO"}</b><br>
+    Esta ação só será executada após confirmação MASTER.
+  `;
+
+  abrirModalSenhaMaster(resumo, async () => {
+    if(!id){
+      payload.criado_por = logado?.nome || "SISTEMA";
+
+      const { error } = await db()
+        .from("usuarios_sistema")
+        .insert([payload]);
+
+      if(error){
+        alert(error.message);
+        return;
+      }
+
+      alert("Usuário criado com sucesso!");
+    }else{
+      const { error } = await db()
+        .from("usuarios_sistema")
+        .update(payload)
+        .eq("id", id);
+
+      if(error){
+        alert(error.message);
+        return;
+      }
+
+      await atualizarLocalStorageSeForUsuarioAtual(id, payload);
+      alert("Usuário atualizado com sucesso!");
+    }
+
+    limparFormulario();
+    carregarDados();
+  });
+}
+
+function editarUsuario(id){
+
+  const u = usuarios.find(x => String(x.id) === String(id));
+
+  if(!u) return;
+
+  document.getElementById("usuario_id").value = u.id;
+  document.getElementById("nome").value = u.nome || "";
+  document.getElementById("usuario").value = u.usuario || "";
+  document.getElementById("senha").value = "";
+  document.getElementById("email").value = u.email || "";
+  document.getElementById("perfil").value = u.perfil || "";
+  document.getElementById("empresa_id").value = u.empresa_id || "";
+  document.getElementById("obra_id").value = u.obra_id || "";
+  document.getElementById("ativo").value = String(u.ativo !== false);
+
+  marcarPermissoes(u.permissoes);
+  atualizarPermissoesCriticas();
+  setTimeout(atualizarResumoPermissoes,80);
+
+  document.getElementById("tituloForm").innerText =
+    "✏️ Editar Usuário";
+
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+async function registrarMovimentacaoUsuario(tipo, observacao){
+
+  const logado = usuarioLogadoAtual();
+
+  await db().from("movimentacoes").insert([{
+    tipo: tipo,
+    observacao: observacao,
+    usuario: logado?.nome || "SISTEMA",
+    data_movimentacao: new Date().toISOString()
+  }]);
+}
+
+async function alterarStatusUsuario(id, ativoNovo){
+
+  const u = usuarios.find(x => String(x.id) === String(id));
+  const statusNovo = ativoNovo === true ? "ATIVO" : "INATIVO";
+
+  const confirma = confirm(`Confirma ${statusNovo === "ATIVO" ? "REATIVAR" : "INATIVAR"} o usuário "${u?.nome || "-"}"?`);
+  if(!confirma) return;
+
+  const resumo = `
+    <b>${statusNovo === "ATIVO" ? "Reativar usuário" : "Inativar usuário"}</b><br>
+    Usuário: <b>${u?.nome || "-"}</b><br>
+    Login: <b>${u?.usuario || "-"}</b><br>
+    Novo status: <b>${statusNovo}</b><br>
+    Esta ação exige senha MASTER.
+  `;
+
+  abrirModalSenhaMaster(resumo, async () => {
+    const { error } = await db()
+      .from("usuarios_sistema")
+      .update({ ativo: ativoNovo })
+      .eq("id", id);
+
+    if(error){
+      alert(error.message);
+      return;
+    }
+
+    try{
+      const logado = usuarioLogadoAtual();
+      if(logado && String(logado.id) === String(id)){
+        localStorage.setItem("usuario_logado", JSON.stringify({...logado, ativo: ativoNovo}));
+        localStorage.setItem("usuarioLogado", localStorage.getItem("usuario_logado"));
+      }
+    }catch(e){}
+
+    carregarDados();
+  });
+}
+
+function renderizarUsuarios(){
+
+  const busca = campo("busca").toLowerCase();
+  const filtroPerfil = campo("filtroPerfil");
+  const filtroStatus = campo("filtroStatus");
+  const lista = document.getElementById("listaUsuarios");
+
+  lista.innerHTML = "";
+
+  const filtrados = usuarios.filter(u => {
+
+    const statusTexto = u.ativo === false ? "INATIVO" : "ATIVO";
+
+    const texto = `
+      ${u.nome || ""}
+      ${u.usuario || ""}
+      ${u.email || ""}
+      ${u.perfil || ""}
+      ${nomeEmpresa(u.empresa_id)}
+      ${nomeObra(u.obra_id)}
+      ${statusTexto}
+    `.toLowerCase();
+
+    return texto.includes(busca)
+      && (!filtroPerfil || u.perfil === filtroPerfil)
+      && (!filtroStatus || statusTexto === filtroStatus);
+  });
+
+  if(filtrados.length === 0){
+    lista.innerHTML = `<div class="usuario-linha">Nenhum usuário encontrado.</div>`;
+    return;
+  }
+
+  filtrados.forEach(u => {
+
+    const statusTexto = u.ativo === false ? "INATIVO" : "ATIVO";
+
+    const tags = String(u.permissoes || "")
+      .split(",")
+      .filter(Boolean)
+      .map(p => `<span class="perm-tag">${p}</span>`)
+      .join("");
+
+    lista.innerHTML += `
+      <div class="usuario-linha" id="usuario-linha-${u.id}">
+
+        <div class="usuario-nome" title="${u.nome || "-"}">
+          ${u.nome || "-"}
+        </div>
+
+        <div class="usuario-info">
+          ${u.usuario || "-"}
+        </div>
+
+        <div class="usuario-info">
+          ${u.perfil || "-"}
+        </div>
+
+        <div class="usuario-info" title="${nomeEmpresa(u.empresa_id)}">
+          ${nomeEmpresa(u.empresa_id)}
+        </div>
+
+        <div class="usuario-info" title="${nomeObra(u.obra_id)}">
+          ${nomeObra(u.obra_id)}
+        </div>
+
+        <div>
+          <span class="usuario-status ${statusTexto}">
+            ${statusTexto}
+          </span>
+        </div>
+
+        <div class="usuario-acoes">
+          <button class="btn-mini" title="Ver detalhes" onclick="toggleDetalhesUsuario(${u.id})">📂 Detalhes</button>
+
+          <button class="btn-mini btn-editar" title="Editar usuário" onclick="editarUsuario(${u.id})">✏️ Editar</button>
+
+          <button class="btn-mini ${u.ativo === false ? "btn-status-ok" : "btn-status-danger"}"
+            title="${u.ativo === false ? "Reativar usuário" : "Inativar usuário"}"
+            onclick="alterarStatusUsuario(${u.id}, ${u.ativo === false ? "true" : "false"})">
+            ${u.ativo === false ? "✅ Reativar" : "🚫 Inativar"}
+          </button>
+        </div>
+
+        <div class="usuario-detalhes">
+          <b>E-mail:</b> ${u.email || "-"}<br>
+          <b>Empresa:</b> ${nomeEmpresa(u.empresa_id)}<br>
+          <b>Obra:</b> ${nomeObra(u.obra_id)}<br>
+          <b>Permissões:</b><br>
+          ${tags || "-"}
+        </div>
+
+      </div>
+    `;
+  });
+}
+
+function toggleDetalhesUsuario(id){
+  const div = document.getElementById("usuario-linha-" + id);
+  if(div){
+    div.classList.toggle("aberta");
+  }
+}
+
+function limparFormulario(){
+
+  document.getElementById("usuario_id").value = "";
+  document.getElementById("nome").value = "";
+  document.getElementById("usuario").value = "";
+  document.getElementById("senha").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("perfil").value = "";
+  document.getElementById("empresa_id").value = "";
+  document.getElementById("obra_id").value = "";
+  document.getElementById("ativo").value = "true";
+
+  document.querySelectorAll(".perm, .obra-perm")
+    .forEach(p => p.checked = false);
+
+  atualizarPermissoesCriticas();
+  setTimeout(atualizarResumoPermissoes,80);
+
+  document.getElementById("tituloForm").innerText =
+    "➕ Cadastrar Usuário";
+}
+
+
+function marcarTodasObrasPerm(marcar){
+  document.querySelectorAll('.obra-perm').forEach(c => c.checked = !!marcar);
+}
+function filtrarObrasPermissoes(){
+  const termo = campo('buscaObraPerm').toLowerCase();
+  document.querySelectorAll('#obrasPermissoesBox .perm-card').forEach(card => {
+    card.style.display = card.innerText.toLowerCase().includes(termo) ? 'grid' : 'none';
+  });
+}
+function atualizarResumoPermissoes(){
+  const tem = v => !!document.querySelector(`.perm[value="${v}"]:checked`);
+  const count = arr => arr.filter(tem).length;
+  const vis = ['VER_ESTOQUE_CD','VER_ESTOQUE_PROPRIA_OBRA','VER_ESTOQUE_OUTRAS_OBRAS','VER_EM_USO_OUTRAS_OBRAS','VER_VALORES'];
+  const sol = ['SOLICITAR_MATERIAL','SOLICITAR_OUTRAS_OBRAS','SOLICITAR_EM_USO','RECEBER_NOTIFICACOES'];
+  const ope = ['CONFERIR_MERCADORIA','GUARDAR_ESTOQUE','SEPARAR_PEDIDO','ENTREGAR_MATERIAL','APROVAR_PEDIDO_ORIGEM','USUARIOS','CONFIGURACOES','CONSULTAR_PATRIMONIO','VER_PATRIMONIO_OBRA','CADASTRAR_PATRIMONIO','ALTERAR_STATUS','EMPRESAS','RELATORIOS'];
+  const setTxt=(id,txt,ok)=>{const el=document.getElementById(id); if(el){el.innerText=txt; el.className=ok?'oktxt':'badtxt';}};
+  const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.innerText=txt;};
+  set('resVis', `${count(vis)} / ${vis.length}`);
+  set('resSol', `${count(sol)} / ${sol.length}`);
+  set('resOpe', `${count(ope)} / ${ope.length}`);
+  setTxt('resCD', tem('VER_ESTOQUE_CD')?'PERMITIDO':'BLOQUEADO', tem('VER_ESTOQUE_CD'));
+  setTxt('resObra', tem('VER_ESTOQUE_PROPRIA_OBRA')?'PERMITIDO':'BLOQUEADO', tem('VER_ESTOQUE_PROPRIA_OBRA'));
+  setTxt('resOutras', tem('VER_ESTOQUE_OUTRAS_OBRAS')?'PERMITIDO':'BLOQUEADO', tem('VER_ESTOQUE_OUTRAS_OBRAS'));
+  setTxt('resUso', tem('VER_EM_USO_OUTRAS_OBRAS')?'PERMITIDO':'BLOQUEADO', tem('VER_EM_USO_OUTRAS_OBRAS'));
+  setTxt('resNotif', tem('RECEBER_NOTIFICACOES')?'Ativas':'Inativas', tem('RECEBER_NOTIFICACOES'));
+}
+function aplicarPerfilRapido(tipo){
+  if(tipo==='MASTER'){
+    document.getElementById('perfil').value='MASTER';
+    presetPermissao('TOTAL');
+  }else if(tipo==='GESTOR'){
+    document.getElementById('perfil').value='ADMIN';
+    presetPermissao('TOTAL');
+    document.querySelector('.perm[value="CONFIGURACOES"]') && (document.querySelector('.perm[value="CONFIGURACOES"]').checked=false);
+  }else if(tipo==='ALMOXARIFADO'){
+    document.getElementById('perfil').value='ALMOXARIFADO';
+    sugerirPermissoes();
+  }else{
+    document.getElementById('perfil').value='OBRA';
+    sugerirPermissoes();
+  }
+  atualizarPermissoesCriticas();
+  atualizarResumoPermissoes();
+}
+document.addEventListener('change', e => {
+  if(e.target && (e.target.classList.contains('perm') || e.target.classList.contains('obra-perm'))) atualizarResumoPermissoes();
+});
+
+carregarDados();
+atualizarPermissoesCriticas();
+iniciarNotificacoesGlobais();
+</script>
+
+
+<div id="modalSenhaMaster" class="master-modal-bg">
+  <div class="master-modal" onclick="event.stopPropagation()">
+    <div class="master-modal-head">
+      <div class="master-modal-icon"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <h3>Confirmação MASTER</h3>
+        <p>Digite a senha de um usuário MASTER para executar esta alteração.</p>
+      </div>
+    </div>
+    <div class="master-modal-body">
+      <div id="masterResumoAcao" class="master-resumo">Alteração pendente.</div>
+      <input id="senhaMasterConfirmacao" type="password" placeholder="Senha MASTER" onkeydown="if(event.key==='Enter') confirmarSenhaMaster()">
+      <div id="masterErroSenha" class="master-erro">Senha MASTER inválida.</div>
+    </div>
+    <div class="master-modal-actions">
+      <button type="button" class="master-cancelar" onclick="fecharModalSenhaMaster()">Cancelar</button>
+      <button type="button" class="master-confirmar" onclick="confirmarSenhaMaster()">Confirmar e salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

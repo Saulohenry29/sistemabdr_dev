@@ -11,13 +11,102 @@
     <h2 style="margin-left:20px; color:var(--vermelho-bdr);">Sistema BDR</h2>
   </header>
 
-  <nav class="menu-lateral">
-    <button onclick="window.location.href='consulta.html'">🔍 Consulta</button>
-    <button onclick="window.location.href='entrada.html'">📥 Entrada</button>
-    <button onclick="window.location.href='estoque.html'">📦 Estoque</button>
-    <button onclick="window.location.href='triagem.html'">📋 Triagem</button>
-    <button onclick="window.location.href='reservas.html'">🛒 Reservas</button>
+  <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Saída" onclick="ir('saida.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn active" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+
+</nav>
+
   </nav>
+
+  <div class="bdr-menu-footer">
+    <button class="bdr-menu-btn" data-tip="Sair" onclick="logout()">
+      <span class="bdr-menu-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+    </button>
+  </div>
 
   <div class="container">
     <h1>📦 Estoque CD</h1>
@@ -81,13 +170,14 @@
 
     carregarEstoque();
   </script>
+  <script src="./JS/bdrNotificacoes.js"></script>
 </body>
 <!-- ===================================== -->
 <!-- BLOQUEIO DE LOGIN                     -->
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>

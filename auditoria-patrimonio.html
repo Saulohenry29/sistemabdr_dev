@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>BDR Auditoria Patrimônio</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+.auditoria-grid{display:grid;grid-template-columns:1fr 360px;gap:14px}
+.audit-card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08);border-left:5px solid #a4161a}
+.audit-card h3{margin:0 0 12px;color:#a4161a}
+.audit-actions{display:flex;flex-wrap:wrap;gap:8px}
+.audit-btn{border:none;border-radius:10px;padding:10px 12px;color:white;background:#a4161a;font-weight:800;cursor:pointer}
+.audit-btn.green{background:#16a34a}.audit-btn.blue{background:#2563eb}.audit-btn.dark{background:#111827}.audit-btn.gray{background:#6b7280}.audit-btn.orange{background:#f97316}
+.audit-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.audit-kpi{background:#f9fafb;border-left:4px solid #a4161a;border-radius:12px;padding:10px}
+.audit-kpi strong{font-size:22px;display:block}.audit-kpi span{color:#6b7280;font-size:12px}
+.audit-line{display:grid;grid-template-columns:150px 1fr 140px 130px 120px;gap:8px;align-items:center;background:#f9fafb;border-left:4px solid #a4161a;border-radius:10px;padding:9px 10px;margin-bottom:7px;font-size:13px}
+.audit-line strong{color:#a4161a}.audit-line span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.badge-audit{display:inline-flex;width:max-content;padding:4px 9px;border-radius:8px;color:white;font-size:11px;font-weight:900}
+.ok{background:#16a34a}.warn{background:#f97316}.err{background:#dc2626}
+#scannerBox{display:none;background:#111827;border-radius:16px;padding:12px;color:white}
+#reader{width:100%;min-height:280px;border-radius:12px;overflow:hidden}
+.bloqueado{background:white;padding:30px;border-radius:16px;border-left:6px solid #dc2626;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.ia-box{background:#f8fafc;border-left:5px solid #2563eb;padding:10px;border-radius:9px;margin-bottom:8px;font-size:13px;line-height:1.5}
+@media(max-width:950px){.auditoria-grid{grid-template-columns:1fr}.audit-line{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script>verificarLogin();</script>
+
+<div class="app-layout">
+
+<aside class="bdr-sidebar">
+  <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
+  <nav class="bdr-menu">
+    <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span></button>
+    <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-box-open"></i></span></button>
+    <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-building"></i></span></button>
+    <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-rotate"></i></span></button>
+    <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')"><span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span></button>
+    <button class="bdr-menu-btn active" data-tip="Auditoria" onclick="ir('auditoria-patrimonio.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-qrcode"></i></span></button>
+    <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span></button>
+  </nav>
+  <div class="bdr-menu-footer"><button class="bdr-menu-btn" data-tip="Sair" onclick="logout()"><span class="bdr-menu-icon"><i class="fa-solid fa-right-from-bracket"></i></span></button></div>
+</aside>
+
+<main class="bdr-main">
+
+<div id="telaBloqueada" style="display:none" class="bloqueado">
+  <h2>🔒 Acesso restrito</h2>
+  <p>Esta tela é exclusiva para o setor de Patrimônio.</p>
+</div>
+
+<div id="telaAuditoria" style="display:none">
+  <div class="bdr-topbar">
+    <div class="bdr-topbar-title">📷 Auditoria de Patrimônio por QR Code</div>
+    <div id="usuarioInfo"></div>
+  </div>
+
+  <div class="auditoria-grid">
+    <section>
+      <div class="audit-card">
+        <h3>📍 Dados da conferência</h3>
+        <div class="grid">
+          <input id="nomeAuditoria" placeholder="Nome da auditoria. Ex: Conferência Metalúrgica BWP">
+          <select id="filtroObra"><option value="">Todas as obras/setores</option></select>
+          <input id="observacaoAuditoria" placeholder="Observação da conferência">
+        </div>
+        <br>
+        <div class="audit-actions">
+          <button class="audit-btn green" onclick="iniciarScanner()">📷 Iniciar scanner</button>
+          <button class="audit-btn gray" onclick="pararScanner()">⏹ Parar câmera</button>
+          <button class="audit-btn blue" onclick="adicionarManual()">➕ Digitar código</button>
+          <button class="audit-btn orange" onclick="finalizarAuditoria()">✅ Finalizar relatório</button>
+          <button class="audit-btn dark" onclick="baixarCSV()">⬇ Baixar CSV</button>
+          <button class="audit-btn gray" onclick="limparAuditoria()">🧹 Limpar</button>
+        </div>
+      </div>
+
+      <div id="scannerBox" class="audit-card">
+        <h3>Scanner ativo</h3>
+        <div id="reader"></div>
+      </div>
+
+      <div class="audit-card">
+        <h3>📋 Itens bipados</h3>
+        <div id="listaAuditados"></div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="audit-card">
+        <h3>📊 Resumo</h3>
+        <div class="audit-kpis">
+          <div class="audit-kpi"><strong id="kpiLidos">0</strong><span>Lidos</span></div>
+          <div class="audit-kpi"><strong id="kpiOk">0</strong><span>Encontrados</span></div>
+          <div class="audit-kpi"><strong id="kpiNao">0</strong><span>Não encontrados</span></div>
+          <div class="audit-kpi"><strong id="kpiDup">0</strong><span>Duplicados</span></div>
+        </div>
+      </div>
+
+      <div class="audit-card">
+        <h3>🤖 Análise automática</h3>
+        <div id="analiseAuditoria">Aguardando leitura dos patrimônios.</div>
+      </div>
+
+      <div class="audit-card">
+        <h3>✅ Como usar</h3>
+        <p>1. Escolha a obra/setor.</p>
+        <p>2. Clique em <b>Iniciar scanner</b>.</p>
+        <p>3. Bipe os QR Codes dos patrimônios.</p>
+        <p>4. No final, gere o relatório.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+let scanner=null,scannerAtivo=false,qrJaLido=false;
+let patrimonioBase=[],obras=[],auditados=[];
+
+window.onload=async()=>{
+  const usuario=usuarioAtual();
+  if(document.getElementById("usuarioInfo")) document.getElementById("usuarioInfo").innerText=usuario?"👤 "+usuario.nome:"";
+
+  if(!temPermissaoPatrimonio(usuario)){
+    document.getElementById("telaBloqueada").style.display="block";
+    return;
+  }
+
+  document.getElementById("telaAuditoria").style.display="block";
+
+  const salvo=localStorage.getItem("auditoria_patrimonio_andamento");
+  if(salvo){
+    try{ auditados=JSON.parse(salvo)||[]; }catch(e){}
+  }
+
+  await carregarDados();
+};
+
+function ir(pagina){window.location.href=pagina}
+function db(){return window.client||window.supabaseClient||client}
+function usuarioAtual(){const u=localStorage.getItem("usuario_logado");return u?JSON.parse(u):null}
+
+function temPermissaoPatrimonio(usuario){
+  if(!usuario) return false;
+  const perfil=String(usuario.perfil||"").toUpperCase();
+  const setor=String(usuario.setor||usuario.departamento||"").toUpperCase();
+  const cargo=String(usuario.cargo||"").toUpperCase();
+  return perfil==="MASTER"||perfil==="ADMIN"||perfil==="PATRIMONIO"||perfil==="PATRIMÔNIO"||setor.includes("PATRIMON")||cargo.includes("PATRIMON");
+}
+
+async function carregarDados(){
+  const patResp=await db().from("patrimonio").select("*").order("codigo_qr");
+  const obrasResp=await db().from("obras").select("*").order("nome");
+
+  if(patResp.error){alert("Erro ao carregar patrimônios: "+patResp.error.message);return}
+
+  patrimonioBase=patResp.data||[];
+  obras=obrasResp.data||[];
+
+  const filtro=document.getElementById("filtroObra");
+  filtro.innerHTML='<option value="">Todas as obras/setores</option>';
+  obras.forEach(o=>filtro.innerHTML+=`<option value="${o.id}">${o.codigo_obra||"-"} - ${o.nome||"-"}</option>`);
+
+  renderizar();
+}
+
+async function iniciarScanner(){
+  if(scannerAtivo) return;
+  document.getElementById("scannerBox").style.display="block";
+  scanner=new Html5Qrcode("reader");
+
+  try{
+    await scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},onScanSucesso,()=>{});
+    scannerAtivo=true;
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível abrir a câmera.");
+  }
+}
+
+async function pararScanner(){
+  if(scanner){
+    try{await scanner.stop();scanner.clear();}catch(e){}
+  }
+  scannerAtivo=false;
+  qrJaLido=false;
+  document.getElementById("scannerBox").style.display="none";
+}
+
+async function onScanSucesso(texto){
+  if(qrJaLido) return;
+  qrJaLido=true;
+  adicionarCodigo(extrairCodigo(texto));
+  setTimeout(()=>{qrJaLido=false},900);
+}
+
+function extrairCodigo(texto){
+  if(!texto) return "";
+  let t=String(texto).trim();
+  try{
+    if(t.includes("id=")){
+      const url=new URL(t);
+      t=url.searchParams.get("id")||t;
+    }
+  }catch(e){}
+  return t.replace("http://","").replace("https://","").trim();
+}
+
+function adicionarManual(){
+  const codigo=prompt("Digite ou cole o código do patrimônio:");
+  if(codigo) adicionarCodigo(codigo);
+}
+
+function adicionarCodigo(codigo){
+  codigo=String(codigo||"").trim();
+  if(!codigo) return;
+
+  const existente=auditados.find(a=>a.codigo===codigo);
+
+  const pat=patrimonioBase.find(p=>
+    String(p.codigo_qr||"").trim()===codigo||
+    String(p.codigo||"").trim()===codigo
+  );
+
+  const filtroObra=document.getElementById("filtroObra").value;
+  let situacao="OK";
+
+  if(!pat) situacao="NAO_ENCONTRADO";
+  if(existente) situacao="DUPLICADO";
+  if(pat&&filtroObra&&String(pat.obra_id||"")!==String(filtroObra)) situacao="FORA_DO_SETOR";
+
+  auditados.unshift({
+    codigo,
+    encontrado:!!pat,
+    duplicado:!!existente,
+    situacao,
+    patrimonio_id:pat?.id||null,
+    nome:pat?.nome_bem||"-",
+    status:pat?.status||"-",
+    localizacao:pat?.localizacao||"-",
+    obra_id:pat?.obra_id||null,
+    data:new Date().toLocaleString("pt-BR")
+  });
+
+  salvarLocal();
+  renderizar();
+}
+
+function renderizar(){
+  renderizarLista();
+  atualizarKPIs();
+  gerarAnalise();
+}
+
+function renderizarLista(){
+  const lista=document.getElementById("listaAuditados");
+  lista.innerHTML="";
+
+  if(auditados.length===0){
+    lista.innerHTML="<p>Nenhum patrimônio bipado ainda.</p>";
+    return;
+  }
+
+  auditados.forEach(a=>{
+    let badge='<span class="badge-audit ok">OK</span>';
+    if(a.situacao==="NAO_ENCONTRADO") badge='<span class="badge-audit err">NÃO ENCONTRADO</span>';
+    if(a.situacao==="DUPLICADO") badge='<span class="badge-audit warn">DUPLICADO</span>';
+    if(a.situacao==="FORA_DO_SETOR") badge='<span class="badge-audit warn">FORA DO SETOR</span>';
+
+    lista.innerHTML+=`
+      <div class="audit-line">
+        <strong>${a.codigo}</strong>
+        <span>${a.nome}</span>
+        <span>${a.localizacao}</span>
+        <span>${a.status}</span>
+        ${badge}
+      </div>
+    `;
+  });
+}
+
+function atualizarKPIs(){
+  kpiLidos.innerText=auditados.length;
+  kpiOk.innerText=auditados.filter(a=>a.situacao==="OK").length;
+  kpiNao.innerText=auditados.filter(a=>a.situacao==="NAO_ENCONTRADO").length;
+  kpiDup.innerText=auditados.filter(a=>a.situacao==="DUPLICADO").length;
+}
+
+function gerarAnalise(){
+  const total=auditados.length;
+  const ok=auditados.filter(a=>a.situacao==="OK").length;
+  const nao=auditados.filter(a=>a.situacao==="NAO_ENCONTRADO").length;
+  const dup=auditados.filter(a=>a.situacao==="DUPLICADO").length;
+  const fora=auditados.filter(a=>a.situacao==="FORA_DO_SETOR").length;
+
+  if(total===0){
+    analiseAuditoria.innerHTML="Aguardando leitura dos patrimônios.";
+    return;
+  }
+
+  analiseAuditoria.innerHTML=`
+    <div class="ia-box"><strong>•</strong> ${total} patrimônio(s) bipado(s).</div>
+    <div class="ia-box"><strong>•</strong> ${ok} confirmado(s) corretamente.</div>
+    <div class="ia-box"><strong>•</strong> ${nao} código(s) não encontrado(s).</div>
+    <div class="ia-box"><strong>•</strong> ${dup} leitura(s) duplicada(s).</div>
+    <div class="ia-box"><strong>•</strong> ${fora} patrimônio(s) fora do setor selecionado.</div>
+  `;
+}
+
+function finalizarAuditoria(){
+  const nome=nomeAuditoria.value||"Auditoria de Patrimônio";
+  localStorage.setItem("ultima_auditoria_patrimonio",JSON.stringify({
+    nome,
+    observacao:observacaoAuditoria.value||"",
+    data:new Date().toLocaleString("pt-BR"),
+    itens:auditados
+  }));
+  alert("Auditoria finalizada. Agora você pode baixar o CSV.");
+}
+
+function baixarCSV(){
+  if(auditados.length===0){alert("Nenhum item para exportar.");return}
+
+  const linhas=[["codigo","nome","status","localizacao","situacao","data"]];
+  auditados.forEach(a=>linhas.push([a.codigo,a.nome,a.status,a.localizacao,a.situacao,a.data]));
+
+  const csv=linhas.map(l=>l.map(c=>`"${String(c).replaceAll('"','""')}"`).join(";")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="auditoria_patrimonio.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function limparAuditoria(){
+  if(!confirm("Limpar a auditoria atual?")) return;
+  auditados=[];
+  localStorage.removeItem("auditoria_patrimonio_andamento");
+  renderizar();
+}
+
+function salvarLocal(){
+  localStorage.setItem("auditoria_patrimonio_andamento",JSON.stringify(auditados));
+}
+</script>
+
+<script src="./JS/bdrNotificacoes.js"></script>
+
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

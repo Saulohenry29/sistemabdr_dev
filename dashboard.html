@@ -2,776 +2,1937 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>BDR ERP - Dashboard Premium</title>
+<link rel="icon" href="data:,">
+<title>Torre de Controle BDR</title>
 
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-*{box-sizing:border-box}
-
-body {
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#eef2f7;
-  color:#222;
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --green:#16a34a;
+  --orange:#f97316;
+  --purple:#7c3aed;
 }
 
-header{
-  background:#fff;
-  border-bottom:4px solid #a4161a;
-  padding:14px 18px;
+body{
+  background:var(--bdr-bg) !important;
+}
+
+/* Usa o espaçamento padrão do layout-bdr.css */
+
+/* TOPO PADRÃO BDR */
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
+}
+
+.bdr-topbar .dash-user{
+  margin-left:auto;
+}
+
+.bdr-topbar-title{
+  color:var(--bdr-red) !important;
+  font-weight:900;
+}
+
+ .dash-user{
+  position:relative;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  gap:14px;
+  color:#111827;
+  font-size:13px;
 }
 
-header h1{
-  margin:0;
-  color:#a4161a;
-  font-size:22px;
+.user-menu-top{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:6px 8px;
+  border-radius:14px;
+  transition:.18s ease;
+  user-select:none;
 }
 
-.layout{display:flex}
-
-.sidebar{
-  width:210px;
-  background:#1f2937;
-  min-height:100vh;
-  padding:12px;
+.user-menu-top:hover,
+.user-menu-top.open{
+  background:#fff1f2;
 }
 
-.menu-btn{
+.user-mini{
+  text-align:right;
+}
+
+.user-mini b{
+  display:block;
+}
+
+.user-mini small{
+  color:var(--bdr-red);
+  font-weight:900;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:19px;
+}
+
+.user-dropdown{
+  position:absolute;
+  top:58px;
+  right:0;
+  width:230px;
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-radius:14px;
+  box-shadow:0 16px 40px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  z-index:9999;
+}
+
+.user-dropdown.show{
+  display:block;
+  animation:dropdownUser .16s ease;
+}
+
+@keyframes dropdownUser{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.user-dropdown-head{
+  padding:10px 10px 8px;
+  border-bottom:1px solid #f3f4f6;
+  margin-bottom:6px;
+}
+
+.user-dropdown-head strong{
+  display:block;
+  color:#111827;
+  font-size:13px;
+}
+
+.user-dropdown-head span{
+  color:var(--bdr-red);
+  font-size:11px;
+  font-weight:900;
+}
+
+.user-dropdown button{
   width:100%;
-  margin:6px 0;
-  padding:10px;
-  background:#111827;
-  color:white;
+  border:none;
+  border-radius:10px;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  font-weight:900;
+  text-align:left;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.user-dropdown button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
+}
+
+.user-dropdown .logout-btn{
+  color:#dc2626;
+}
+
+/* CONTEÚDO */
+.dash-container{
+  padding:16px 22px 24px;
+}
+
+/* FILTROS */
+.quick-filters{
+  display:grid;
+  grid-template-columns:auto repeat(5,95px) 160px 160px 95px 1fr;
+  gap:8px;
+  align-items:center;
+  margin-bottom:14px;
+}
+.quick-filters label{
+  font-weight:900;
+  color:#374151;
+  font-size:12px;
+}
+
+.pill-btn{
+  border:1px solid var(--bdr-border);
+  background:#fff;
+  color:#374151;
+  border-radius:8px;
+  height:34px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.pill-btn.active{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  border-color:#fecaca;
+}
+
+.quick-filters select,
+.quick-filters input{
+  height:34px;
+  border:1px solid var(--bdr-border);
+  border-radius:8px;
+  padding:0 10px;
+  background:#fff;
+  font-size:12px;
+}
+
+.btn-red{
+  background:var(--bdr-red);
+  color:#fff;
   border:none;
   border-radius:8px;
+  height:34px;
+  padding:0 14px;
+  font-size:12px;
+  font-weight:900;
   cursor:pointer;
-  text-align:left;
 }
 
-.menu-btn:hover{background:#a4161a}
-
-.content{
-  flex:1;
-  padding:14px;
+.update-info{
+  text-align:right;
+  color:#6b7280;
+  font-size:12px;
 }
 
-.grid-kpi{
+/* KPIs */
+.kpi-row{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  grid-template-columns:repeat(7,1fr);
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.kpi-card{
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-radius:10px;
+  min-height:88px;
+  padding:14px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+  cursor:pointer;
+  transition:.18s;
+}
+
+.kpi-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(15,23,42,.09);
+}
+
+.kpi-card.active{
+  outline:3px solid rgba(215,25,32,.12);
+}
+
+.kpi-icon{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  background:#fff1f2;
+  color:var(--bdr-red);
+  border:1px solid #fecaca;
+}
+
+.kpi-card.blue{border-color:#dbeafe}.kpi-card.blue .kpi-icon{background:#eff6ff;color:var(--blue);border-color:#bfdbfe}
+.kpi-card.green{border-color:#dcfce7}.kpi-card.green .kpi-icon{background:#f0fdf4;color:var(--green);border-color:#bbf7d0}
+.kpi-card.orange{border-color:#fed7aa}.kpi-card.orange .kpi-icon{background:#fff7ed;color:var(--orange);border-color:#fed7aa}
+.kpi-card.purple{border-color:#ede9fe}.kpi-card.purple .kpi-icon{background:#f5f3ff;color:var(--purple);border-color:#ddd6fe}
+.kpi-card.yellow{border-color:#fde68a}.kpi-card.yellow .kpi-icon{background:#fffbeb;color:#f59e0b;border-color:#fde68a}
+
+.kpi-value{
+  font-size:24px;
+  font-weight:900;
+  color:#111827;
+  line-height:1;
+}
+
+.kpi-label{
+  font-size:12px;
+  color:#111827;
+  margin-top:5px;
+  font-weight:800;
+}
+
+.kpi-sub{
+  font-size:11px;
+  color:#6b7280;
+  margin-top:4px;
+}
+
+/* GRID */
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:1.05fr .9fr .75fr;
   gap:12px;
 }
 
-.card{
-  background:white;
-  border-radius:14px;
-  padding:14px;
-  box-shadow:0 2px 8px rgba(0,0,0,.12);
-  margin-bottom:12px;
+.card-light{
+  background:#fff;
+  border:1px solid var(--bdr-border);
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+  overflow:hidden;
 }
 
-.card h3{
-  margin-top:0;
-  color:#a4161a;
+.card-light h3{
+  margin:0;
+  padding:13px 16px 8px;
+  font-size:15px;
+  font-weight:900;
+  color:#111827;
 }
 
-.kpi{
-  color:white;
-  padding:18px;
-  border-radius:15px;
-  box-shadow:0 3px 10px rgba(0,0,0,.2);
+.card-light.red-head h3{
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.card-body{
+  padding:10px 14px 14px;
+}
+
+.chart-card canvas{
+  height:190px !important;
+}
+
+.chart-card.big canvas{
+  height:205px !important;
+}
+
+.right-stack,
+.mid-stack,
+.left-stack{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+/* =========================================================
+   ÁREA DO TOP 5 PATRIMÔNIOS
+   ALTERE AQUI O TAMANHO E LARGURA
+========================================================= */
+.bottom-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+
+/* ALTURA DO CARD TOP 5 */
+:root{
+  -----------------------------------------------------------altura-card-top5:315px;
+}
+
+/* CARD TOP 5 */
+.card-top5{
+  min-height:var(--altura-card-top5);
+}
+.table-mini{
+  width:100%;
+  border-collapse:collapse;
+  font-size:10px;
+}
+
+.table-mini th{
+  text-align:left;
+  color:#6b7280;
+  border-bottom:1px solid #e5e7eb;
+  padding:6px;
+}
+
+.table-mini td{
+  border-bottom:1px solid #f1f5f9;
+  padding:6px;
+  color:#374151;
+}
+
+.table-mini tr:hover td{
+  background:#f9fafb;
+}
+
+.btn-outline{
+  margin-top:10px;
+  border:1px solid #fecaca;
+  color:var(--bdr-red);
+  background:#fff;
+  border-radius:8px;
+  padding:8px 10px;
+  font-weight:900;
+  font-size:11px;
   cursor:pointer;
-  transition:.25s;
+}
+
+.alert-row,
+.info-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 10px;
+  background:#fff;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+}
+
+.alert-row{cursor:pointer;transition:.18s}.alert-row:hover{background:#fff1f2;transform:translateX(3px)}
+.alert-row b,
+.info-row b{
+  color:#111827;
+}
+
+.badge{
+  min-width:24px;
+  height:22px;
+  border-radius:999px;
+  background:#fee2e2;
+  color:var(--bdr-red);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:11px;
+}
+
+.ai-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-size:12px;
+  color:#374151;
+  line-height:1.45;
+}
+
+.ai-line{
+  display:grid;
+  grid-template-columns:22px 1fr;
+  gap:6px;
+}
+
+.money-box{
+  border-top:1px solid #e5e7eb;
+  margin-top:10px;
+  padding-top:12px;
+}
+
+.money-box strong{
+  display:block;
+  font-size:22px;
+  margin:5px 0;
+  color:#111827;
+}
+
+.money-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+
+.money-small{
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:10px;
+  text-align:center;
+}
+
+.money-small strong{
+  display:block;
+  font-size:18px;
+  color:#111827;
+}
+
+.money-small span{
+  color:#6b7280;
+  font-size:11px;
+}
+
+/* RISCO */
+.risk-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:180px;
+}
+
+.risk-gauge{
+  width:145px;
+  height:75px;
   position:relative;
   overflow:hidden;
 }
 
-.kpi:hover{
-  transform:translateY(-5px) scale(1.02);
-  box-shadow:0 8px 20px rgba(0,0,0,.28);
+.risk-gauge::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:145px;
+  height:145px;
+  border-radius:50%;
+  background:conic-gradient(
+    from 270deg,
+    #ef4444 0deg 60deg,
+    #facc15 60deg 120deg,
+    #16a34a 120deg 180deg,
+    transparent 180deg 360deg
+  );
 }
-
-.kpi h2{
-  margin:0;
-  font-size:32px;
-}
-
-.kpi span{
-  font-size:14px;
-}
-
-.total{background:#1f2937}
-.uso{background:#2563eb}
-.estoque{background:#2a9d8f}
-.manutencao{background:#f97316}
-.baixado{background:#dc2626}
-.valor{background:#7c3aed}
-.alerta{background:#b45309}
-.mov{background:#a4161a}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:10px;
-}
-
-input,select{
-  width:100%;
-  padding:9px;
-  border:1px solid #ccc;
-  border-radius:7px;
-}
-
-.item{
+.risk-gauge::after{
+  content:"";
+  position:absolute;
+  left:24px;
+  top:24px;
+  width:97px;
+  height:97px;
+  border-radius:50%;
   background:#fff;
-  border-left:5px solid #a4161a;
-  padding:12px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,.14);
-  font-size:14px;
 }
 
-.item strong{
-  color:#a4161a;
+.needle{
+  position:absolute;
+  width:58px;
+  height:5px;
+  background:#374151;
+  left:72px;
+  top:66px;
+  transform-origin:left center;
+  transform:rotate(220deg);
+  border-radius:999px;
+  z-index:3;
 }
 
-.status{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:20px;
-  color:white;
-  font-size:12px;
-  margin-top:5px;
-  background:#6b7280;
+.needle-dot{
+  position:absolute;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#374151;
+  left:60px;
+  top:56px;
+  z-index:4;
 }
 
-.ESTOQUE{background:#2a9d8f}
-.EM_USO{background:#2563eb}
-.MANUTENCAO{background:#f97316}
-.BAIXADO{background:#dc2626}
-
-.chart-box{
-  height:300px;
+.risk-text{
+  color:#16a34a;
+  font-weight:900;
+  font-size:18px;
+  margin-top:6px;
 }
 
-.alert-box{
-  background:#fff7ed;
-  border-left:5px solid #f97316;
-  padding:10px;
-  border-radius:8px;
-  margin-bottom:8px;
-}
-
-.titulo-lista{
+.footer-dash{
+  margin-top:22px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  gap:10px;
+  color:#6b7280;
+  font-size:12px;
 }
 
-.btn-limpar{
-  background:#6b7280;
-  color:white;
-  border:none;
-  border-radius:8px;
-  padding:8px 12px;
+@media(max-width:1350px){
+  .kpi-row{grid-template-columns:repeat(4,1fr)}
+  .dashboard-grid{grid-template-columns:1fr}
+  .bottom-grid{grid-template-columns:1fr}
+  .quick-filters{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:800px){
+  .kpi-row{grid-template-columns:1fr}
+  .quick-filters{grid-template-columns:1fr}
+  .dash-top{height:auto;gap:12px;align-items:flex-start;flex-direction:column;padding:14px}
+}
+
+/* AJUSTES FINAIS 9.1 */
+.ai-line{
   cursor:pointer;
+  border-radius:8px;
+  padding:6px 7px;
+  transition:.18s;
+}
+.ai-line:hover{
+  background:#fff1f2;
+  transform:translateX(3px);
 }
 
-@media(max-width:768px){
-  .layout{flex-direction:column}
-  .sidebar{width:100%;min-height:auto}
+#topValores .info-row{
+  padding:6px 8px;
+  font-size:10px;
+  line-height:1.2;
 }
+#topValores .info-row span{
+  max-width:205px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#topValores .info-row b{
+  white-space:nowrap;
+  font-size:10px;
+}
+
+.mov-card canvas{height:auto}
+.mov-card{
+  min-height:255px;
+}
+
+.risco-card .risk-wrap{
+  min-height:140px;
+  padding-top:0;
+  padding-bottom:0;
+}
+.risco-card .risk-gauge{
+  transform:scale(.82);
+  margin-top:-5px;
+}
+.risco-card .risk-text{
+  font-size:15px;
+  margin-top:-2px;
+}
+
+.itens-alerta-card{
+  margin-top:12px;
+}
+
+/* =========================================================
+   ALTURAS EDITÁVEIS DO FINAL DO DASHBOARD
+   Mexa SOMENTE nos números abaixo quando quiser ajustar.
+   Exemplo: 315px, 340px, 380px etc.
+========================================================= */
+:root{
+  --altura-ultimas-movimentacoes: 315px;
+  --altura-top5-patrimonios: 315px;
+  --altura-itens-parados: 329px;
+}
+
+/* Últimas movimentações */
+.mov-card{
+  min-height:var(--altura-ultimas-movimentacoes) !important;
+}
+
+/* Top 5 patrimônios por valor */
+.bottom-grid .card-light:first-child{
+  min-height:var(--altura-top5-patrimonios) !important;
+}
+
+/* Risco operacional */
+
+/* Itens parados */
+.right-stack .card-light:last-child{
+  min-height:var(--altura-itens-parados) !important;
+}
+
+/* Mantém o conteúdo interno organizado nas alturas escolhidas */
+.mov-card .card-body,
+.bottom-grid .card-light:first-child .card-body,
+.risco-card .card-body,
+.right-stack .card-light:last-child .card-body{
+  box-sizing:border-box;
+}
+
+/* =========================================================
+   ESTOQUE GERAL + NÍVEIS DE ESTOQUE
+   Clique no vermelho/amarelo/verde para listar itens.
+========================================================= */
+.estoque-niveis{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+.estoque-nivel{
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:10px;
+  cursor:pointer;
+  transition:.18s;
+  background:#fff;
+  text-align:center;
+}
+
+.estoque-nivel:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(15,23,42,.10);
+}
+
+.estoque-nivel strong{
+  display:block;
+  font-size:20px;
+  color:#111827;
+}
+
+.estoque-nivel span{
+  font-size:11px;
+  color:#6b7280;
+  font-weight:900;
+}
+
+.estoque-nivel.baixo{
+  border-color:#fecaca;
+  background:#fff1f2;
+}
+
+.estoque-nivel.medio{
+  border-color:#fde68a;
+  background:#fffbeb;
+}
+
+.estoque-nivel.muito{
+  border-color:#bbf7d0;
+  background:#f0fdf4;
+}
+
+.estoque-nivel.baixo i{color:#dc2626}
+.estoque-nivel.medio i{color:#f59e0b}
+.estoque-nivel.muito i{color:#16a34a}
+
+.card-light.estoque-card h3{
+  color:#7c3aed;
+}
+
+/* CORREÇÃO FINAL: sem cursor/barra piscando no topo */
+.notif-btn,
+.notif-btn *,
+.user-menu-top,
+.user-menu-top *,
+.dash-user,
+.dash-user *{
+  caret-color:transparent !important;
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  -webkit-tap-highlight-color:transparent !important;
+  outline:none !important;
+}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
+}
+
+.user-menu-top{
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+}
+
+.user-menu-top:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu-top:hover .avatar{
+  transform:scale(1.06);
+}
+
+.avatar{transition:.22s ease;}
+
+/* =========================================================
+   SININHO REAL - NOTIFICAÇÕES DE PEDIDOS
+========================================================= */
+.notif-wrap{
+  position:relative;
+}
+
+.notif-btn{
+  position:relative;
+}
+
+.notif-badge{
+  position:absolute;
+  top:-3px;
+  right:-4px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:50px;
+  right:0;
+  width:360px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownUser .16s ease;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:330px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:11px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+  line-height:1.35;
+}
+
+.notif-item:hover{
+  background:#fff1f2;
+}
+
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+
+.notif-item small{
+  color:#6b7280;
+}
+
+.notif-empty{
+  padding:14px;
+  font-size:12px;
+  color:#6b7280;
+}
+
+@media(max-width:900px){
+  .notif-dropdown{
+    right:-120px;
+    width:310px;
+  }
+}
+
 </style>
+
+<style>
+/* AJUSTE FINAL - DROPDOWN USUÁRIO PADRÃO EMPRESAS */
+.user-dropdown{
+  min-width:220px !important;
+  width:auto !important;
+  padding:8px !important;
+}
+.user-dropdown button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.user-dropdown button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
+}
+.user-dropdown .logout-btn{color:#dc2626;}
+</style>
+
 </head>
 
 <body>
-<!-- ===================================== -->
-<!-- BLOQUEIO DE LOGIN                     -->
-<!-- ===================================== -->
-
-<script src="JS/auth.js"></script>
-
-<script>
-  verificarLogin();
-</script>
-
-<!-- ===================================== -->
-<!-- FIM BLOQUEIO DE LOGIN                 -->
-<!-- ===================================== -->
-<header>
-  <h1>📊 BDR ERP - Dashboard</h1>
-  <div id="dataAtual"></div>
-</header>
-
-<div class="layout">
-
-<div class="sidebar">
-  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
-  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
-  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
-  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
-  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
-</div>
-
-<div class="content">
-
-<div class="grid-kpi">
-
-  <div class="kpi total" onclick="filtrarCard('TODOS')">
-    <h2 id="kpiTotal">0</h2>
-    <span>📦 Total patrimônios</span>
-  </div>
-
-  <div class="kpi uso" onclick="filtrarCard('EM_USO')">
-    <h2 id="kpiUso">0</h2>
-    <span>✅ Em uso</span>
-  </div>
-
-  <div class="kpi estoque" onclick="filtrarCard('ESTOQUE')">
-    <h2 id="kpiEstoque">0</h2>
-    <span>📦 Em estoque</span>
-  </div>
-
-  <div class="kpi manutencao" onclick="filtrarCard('MANUTENCAO')">
-    <h2 id="kpiManutencao">0</h2>
-    <span>🛠 Manutenção</span>
-  </div>
-
-  <div class="kpi baixado" onclick="filtrarCard('BAIXADO')">
-    <h2 id="kpiBaixado">0</h2>
-    <span>⬇️ Baixados</span>
-  </div>
-
-  <div class="kpi valor" onclick="filtrarCard('COM_VALOR')">
-    <h2 id="kpiValor">R$ 0,00</h2>
-    <span>💰 Valor total</span>
-  </div>
-
-  <div class="kpi alerta" onclick="filtrarCard('SEM_VALOR')">
-    <h2 id="kpiSemValor">0</h2>
-    <span>⚠️ Sem valor</span>
-  </div>
-
-  <div class="kpi mov" onclick="ir('movimentacoes.html')">
-    <h2 id="kpiMovHoje">0</h2>
-    <span>🔁 Movimentações hoje</span>
-  </div>
-
-</div>
-
-<br>
-
-<div class="card">
-  <h3>🔎 Busca inteligente</h3>
-
-  <div class="grid">
-    <input id="busca" placeholder="Buscar por nome, código, obra, marca..." oninput="renderizarLista()">
-
-    <select id="filtroStatus" onchange="renderizarLista()">
-      <option value="">Todos os status</option>
-      <option value="ESTOQUE">Estoque</option>
-      <option value="EM_USO">Em uso</option>
-      <option value="MANUTENCAO">Manutenção</option>
-      <option value="BAIXADO">Baixado</option>
-    </select>
-
-    <select id="filtroTipo" onchange="renderizarLista()">
-      <option value="">Todos os tipos</option>
-    </select>
-
-    <select id="filtroObra" onchange="renderizarLista()">
-      <option value="">Todas as obras/setores</option>
-    </select>
-  </div>
-</div>
-
-<div class="grid">
-
-  <div class="card">
-    <h3>📊 Patrimônios por status</h3>
-    <div class="chart-box">
-      <canvas id="graficoStatus"></canvas>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>🏗 Patrimônios por obra/setor</h3>
-    <div class="chart-box">
-      <canvas id="graficoObras"></canvas>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>🧩 Tipos de ativos</h3>
-    <div class="chart-box">
-      <canvas id="graficoTipos"></canvas>
-    </div>
-  </div>
-
-</div>
-
-<div class="grid">
-
-  <div class="card">
-    <h3>🚨 Alertas inteligentes</h3>
-    <div id="listaAlertas"></div>
-  </div>
-
-  <div class="card">
-    <h3>🔁 Últimas movimentações</h3>
-    <div id="listaMovimentacoes"></div>
-  </div>
-
-</div>
-
-<div class="card">
-  <div class="titulo-lista">
-    <h3 id="tituloLista">📦 Patrimônios</h3>
-    <button class="btn-limpar" onclick="limparFiltroCard()">Limpar filtro</button>
-  </div>
-
-  <div id="listaPatrimonios" class="grid"></div>
-</div>
-
-</div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script src="./JS/bdrCore.js"></script>
+<script>verificarLogin();</script>
+
+<div class="bdr-app">
+
+  <aside class="bdr-sidebar">
+
+    <div class="bdr-brand">
+      <div class="bdr-brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+    </div>
+
+  <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn active" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+
+</nav>
+
+  </aside>
+
+  <main class="bdr-main">
+
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">📊 Torre de Controle BDR</div>
+        <div class="bdr-topbar-sub">
+          Visão geral, indicadores, análise inteligente e monitoramento patrimonial.
+        </div>
+      </div>
+
+      <div class="dash-user">
+        <div class="notif-wrap">
+          <button type="button" class="notif-btn" title="Notificações" onclick="toggleNotificacoes(event)">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+
+          <div id="notifDropdown" class="notif-dropdown" onclick="event.stopPropagation()">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list">
+              <div class="notif-item">Carregando notificações...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-menu-top" id="userMenuTop" onclick="toggleUserMenu(event)">
+          <div class="user-mini">
+            <b id="usuarioNome">Olá, -</b>
+            <small id="usuarioPerfil">-</small>
+          </div>
+
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+
+          <div class="user-dropdown" id="userDropdown" onclick="event.stopPropagation()">
+            <div class="user-dropdown-head" style="display:none;">
+              <strong id="usuarioNomeMenu">Usuário</strong>
+              <span id="usuarioPerfilMenu">-</span>
+            </div>
+
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+              <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+            </button>
+
+            <button type="button" class="logout-btn" onclick="sairSistema(); event.stopPropagation();">
+              <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-container">
+
+      <section class="quick-filters">
+        <label>Filtros rápidos:</label>
+        <button class="pill-btn" onclick="aplicarPeriodo('HOJE', this)">Hoje</button>
+        <button class="pill-btn" onclick="aplicarPeriodo('7DIAS', this)">7 dias</button>
+        <button class="pill-btn" onclick="aplicarPeriodo('30DIAS', this)">30 dias</button>
+        <button class="pill-btn active" onclick="aplicarPeriodo('MES', this)">Este mês</button>
+        <button class="pill-btn" onclick="aplicarPeriodo('ANO', this)">Este ano</button>
+
+        <select id="filtroObra" onchange="aplicarFiltros()">
+          <option value="">Todas as obras</option>
+        </select>
+
+        <select id="filtroTipo" onchange="aplicarFiltros()">
+          <option value="">Todos os setores</option>
+        </select>
+
+        <button class="btn-red" onclick="carregarDados()">Atualizar</button>
+
+        <div class="update-info">
+          Período: <b id="periodoSelecionadoTexto">Este mês</b><br>
+          Última atualização: <span id="ultimaAtualizacao">-</span>
+          <i class="fa-solid fa-rotate"></i>
+        </div>
+      </section>
+
+      <section class="kpi-row">
+        <div class="kpi-card active" data-kpi="TODOS" onclick="aplicarFiltroKPI('TODOS')">
+          <div class="kpi-icon"><i class="fa-solid fa-cube"></i></div>
+          <div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Patrimônios</div><div class="kpi-sub">Ativos cadastrados</div></div>
+        </div>
+
+        <div class="kpi-card blue" data-kpi="EM_USO" onclick="aplicarFiltroKPI('EM_USO')">
+          <div class="kpi-icon"><i class="fa-regular fa-circle-check"></i></div>
+          <div><div class="kpi-value" id="kpiUso">0</div><div class="kpi-label">Em uso</div><div class="kpi-sub" id="percUso">0% do total</div></div>
+        </div>
+
+        <div class="kpi-card green" data-kpi="ESTOQUE" onclick="aplicarFiltroKPI('ESTOQUE')">
+          <div class="kpi-icon"><i class="fa-solid fa-box-archive"></i></div>
+          <div><div class="kpi-value" id="kpiEstoque">0</div><div class="kpi-label">Estoque geral</div><div class="kpi-sub" id="percEstoque">Disponíveis no sistema</div></div>
+        </div>
+
+        <div class="kpi-card orange" data-kpi="MANUTENCAO" onclick="aplicarFiltroKPI('MANUTENCAO')">
+          <div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
+          <div><div class="kpi-value" id="kpiManutencao">0</div><div class="kpi-label">Em manutenção</div><div class="kpi-sub" id="percManutencao">0% do total</div></div>
+        </div>
+
+        <div class="kpi-card" data-kpi="BAIXADO" onclick="aplicarFiltroKPI('BAIXADO')">
+          <div class="kpi-icon"><i class="fa-regular fa-trash-can"></i></div>
+          <div><div class="kpi-value" id="kpiBaixado">0</div><div class="kpi-label">Baixados</div><div class="kpi-sub" id="percBaixado">0% do total</div></div>
+        </div>
+
+        <div class="kpi-card purple" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
+          <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+          <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor total</div><div class="kpi-sub">Ativos cadastrados</div></div>
+        </div>
+
+        <div class="kpi-card yellow" data-kpi="SEM_VALOR" onclick="aplicarFiltroKPI('SEM_VALOR')">
+          <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><div class="kpi-value" id="kpiSemValor">0</div><div class="kpi-label">Sem valor</div><div class="kpi-sub" id="percSemValor">0% do total</div></div>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+
+        <div class="left-stack">
+          <section class="card-light chart-card big">
+            <h3>Patrimônios por obra / setor</h3>
+            <div class="card-body"><canvas id="graficoObras"></canvas></div>
+          </section>
+
+          <section class="card-light chart-card big">
+            <h3>Valor total por obra / setor</h3>
+            <div class="card-body"><canvas id="graficoValorObra"></canvas></div>
+          </section>
+
+          <section class="card-light mov-card">
+            <h3>Últimas movimentações</h3>
+            <div class="card-body">
+              <table class="table-mini">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Tipo</th>
+                    <th>Patrimônio</th>
+                    <th>De</th>
+                    <th>Para</th>
+                    <th>Usuário</th>
+                  </tr>
+                </thead>
+                <tbody id="ultimasMov"></tbody>
+              </table>
+              <button class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="mid-stack">
+          <section class="card-light chart-card big">
+            <h3>Distribuição por status</h3>
+            <div class="card-body"><canvas id="graficoStatus"></canvas></div>
+          </section>
+
+          <section class="card-light chart-card big">
+            <h3>Tipos de ativos</h3>
+            <div class="card-body"><canvas id="graficoTipos"></canvas></div>
+          </section>
+
+          <div class="bottom-grid">
+            <section class="card-light card-top5">
+              <h3>Top 5 patrimônios por valor</h3>
+              <div class="card-body" id="topValores"></div>
+              <div class="card-body" style="padding-top:0;">
+                <button class="btn-outline" onclick="ir('patrimonio.html')">Ver todos os patrimônios</button>
+              </div>
+            </section>
+          </div>
+        
+</div>
+
+        <div class="right-stack">
+          <section class="card-light red-head">
+            <h3>✨ Análise inteligente (IA)</h3>
+            <div class="card-body">
+              <div id="analiseIA" class="ai-list"></div>
+            </div>
+          </section>
+
+          <section class="card-light red-head">
+            <h3>🛡️ Alertas importantes</h3>
+            <div id="alertas"></div>
+          </section>
+
+          <section class="card-light estoque-card">
+            <h3>📦 Estoque geral por nível</h3>
+            <div class="card-body">
+              <div class="money-box">
+                <span>Total de itens disponíveis</span>
+                <strong id="estoqueTotalGeral">0</strong>
+              </div>
+
+              <div style="font-size:12px;margin-top:10px;color:#374151;">
+                Clique em um nível para ver os itens.
+              </div>
+
+              <div class="estoque-niveis">
+                <div class="estoque-nivel baixo" onclick="mostrarItensAlerta('ESTOQUE_BAIXO')">
+                  <i class="fa-solid fa-circle-exclamation"></i>
+                  <strong id="estoqueBaixo">0</strong>
+                  <span>Baixo</span>
+                </div>
+
+                <div class="estoque-nivel medio" onclick="mostrarItensAlerta('ESTOQUE_MEDIO')">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <strong id="estoqueMedio">0</strong>
+                  <span>Médio</span>
+                </div>
+
+                <div class="estoque-nivel muito" onclick="mostrarItensAlerta('ESTOQUE_MUITO')">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <strong id="estoqueMuito">0</strong>
+                  <span>Muito</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </section>
+
+      <section class="card-light itens-alerta-card" id="cardItensAlerta" style="display:none;margin-top:12px;">
+        <h3 id="tituloItensAlerta">📋 Itens filtrados</h3>
+        <div class="card-body">
+          <table class="table-mini">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Patrimônio</th>
+                <th>Status</th>
+                <th>Tipo</th>
+                <th>Obra/Setor</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="listaItensAlerta"></tbody>
+          </table>
+          <button class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
+        </div>
+      </section>
+
+      <footer class="footer-dash">
+        <div>© 2026 BDR ERP 9.0 - Todos os direitos reservados</div>
+        <div>Versão 
+          9.0.0</div>
+      </footer>
+
+    </div>
+
+  </main>
+</div>
+
 <script>
 let patrimonios = [];
-let obras = [];
 let movimentacoes = [];
-let filtroCardAtual = "TODOS";
+let obras = [];
+let filtrados = [];
+let filtroKPIAtual = "TODOS";
+let periodoAtual = "MES";
+let charts = {};
 
-let chartStatus = null;
-let chartObras = null;
-let chartTipos = null;
+function ir(pagina){ window.location.href = pagina; }
+function db(){ return window.client || window.supabaseClient; }
+function valor(id){ const el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; }
+function usuarioAtual(){ const u = localStorage.getItem("usuario_logado"); return u ? JSON.parse(u) : null; }
+function toggleUserMenu(event){
+  if(event) event.stopPropagation();
 
-function ir(pagina){
-  window.location.href = pagina;
+  const menu = document.getElementById("userDropdown");
+  const box = document.getElementById("userMenuTop");
+
+  if(!menu || !box) return;
+
+  menu.classList.toggle("show");
+  box.classList.toggle("open");
 }
 
-function db(){
-  return window.client || window.supabaseClient;
+function fecharUserMenu(){
+  document.getElementById("userDropdown")?.classList.remove("show");
+  document.getElementById("userMenuTop")?.classList.remove("open");
 }
 
-function valor(id){
-  const el = document.getElementById(id);
-  return el ? String(el.value || "").trim() : "";
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  fecharUserMenu();
 }
 
-function formatarMoeda(valor){
-  return Number(valor || 0).toLocaleString("pt-BR", {
-    style:"currency",
-    currency:"BRL"
-  });
+function fecharNotificacoes(){
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
 }
 
-function formatarData(data){
+function sairSistema(){
+  fecharUserMenu();
+
+  if(typeof logout === "function"){
+    logout();
+    return;
+  }
+
+  localStorage.removeItem("usuario_logado");
+  localStorage.removeItem("usuarioLogado");
+  window.location.href = "login.html";
+}
+
+document.addEventListener("click", () => { fecharUserMenu(); fecharNotificacoes(); });
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape"){ fecharUserMenu(); fecharNotificacoes(); }
+});
+
+function moeda(v){
+  return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+
+function moedaCurta(v){
+  const n = Number(v || 0);
+  if(n >= 1000000) return "R$ " + (n/1000000).toFixed(1).replace(".",",") + "M";
+  if(n >= 1000) return "R$ " + (n/1000).toFixed(1).replace(".",",") + "K";
+  return moeda(n);
+}
+
+function dataBR(data){
   if(!data) return "-";
-  return new Date(data).toLocaleString("pt-BR");
+  const d = new Date(String(data).replace(" ","T"));
+  return isNaN(d.getTime()) ? data : d.toLocaleString("pt-BR");
 }
 
-function hojeISO(){
-  return new Date().toISOString().slice(0,10);
+function nomeObraCurto(id){
+  const o = obras.find(x => String(x.id) === String(id));
+  return o ? (o.nome || o.codigo_obra || "-") : "-";
 }
 
 function nomePatrimonio(id){
   const p = patrimonios.find(x => Number(x.id) === Number(id));
-  return p ? `${p.nome_bem || "-"} | ${p.codigo_qr || "-"}` : "Patrimônio ID " + id;
+  return p ? `${p.nome_bem || "-"} | ${p.codigo_qr || "-"}` : "-";
 }
 
-async function carregarDashboard(){
+function nomePeriodoAtual(){
+  if(periodoAtual === "HOJE") return "Hoje";
+  if(periodoAtual === "7DIAS") return "Últimos 7 dias";
+  if(periodoAtual === "30DIAS") return "Últimos 30 dias";
+  if(periodoAtual === "MES") return "Este mês";
+  if(periodoAtual === "ANO") return "Este ano";
+  return "Período selecionado";
+}
+
+function aplicarPeriodo(periodo, botao){
+  periodoAtual = periodo;
+
+  document.querySelectorAll(".pill-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  if(botao){
+    botao.classList.add("active");
+  }
+
+  atualizarTudo();
+}
+
+function dataDentroPeriodo(dataTexto){
+  if(!dataTexto) return true;
+
+  const data = new Date(String(dataTexto).replace(" ", "T"));
+
+  if(isNaN(data.getTime())){
+    return true;
+  }
+
+  const agora = new Date();
+
+  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const inicioData = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+
+  if(periodoAtual === "HOJE"){
+    return inicioData.getTime() === inicioHoje.getTime();
+  }
+
+  if(periodoAtual === "7DIAS"){
+    const limite = new Date(inicioHoje);
+    limite.setDate(limite.getDate() - 6);
+    return inicioData >= limite;
+  }
+
+  if(periodoAtual === "30DIAS"){
+    const limite = new Date(inicioHoje);
+    limite.setDate(limite.getDate() - 29);
+    return inicioData >= limite;
+  }
+
+  if(periodoAtual === "MES"){
+    return data.getFullYear() === agora.getFullYear() &&
+           data.getMonth() === agora.getMonth();
+  }
+
+  if(periodoAtual === "ANO"){
+    return data.getFullYear() === agora.getFullYear();
+  }
+
+  return true;
+}
+
+function movimentacoesPeriodo(){
+  return movimentacoes.filter(m =>
+    dataDentroPeriodo(m.data_movimentacao || m.criado_em)
+  );
+}
+
+function patrimoniosDoPeriodo(){
+  const movs = movimentacoesPeriodo();
+
+  if(!movs || movs.length === 0){
+    return [];
+  }
+
+  const ids = new Set(
+    movs
+      .map(m => Number(m.patrimonio_id))
+      .filter(id => !isNaN(id))
+  );
+
+  return patrimonios.filter(p => ids.has(Number(p.id)));
+}
+
+function basePatrimoniosDashboard(){
+  return patrimoniosDoPeriodo();
+}
+
+async function carregarDados(){
+  const usuario = usuarioAtual();
+
+  document.getElementById("usuarioNome").innerText =
+    usuario ? "Olá, " + usuario.nome : "Olá, usuário";
+
+  document.getElementById("usuarioPerfil").innerText =
+    usuario ? usuario.perfil || "-" : "-";
+
+  document.getElementById("usuarioNomeMenu").innerText =
+    usuario ? usuario.nome || "Usuário" : "Usuário";
+
+  document.getElementById("usuarioPerfilMenu").innerText =
+    usuario ? usuario.perfil || "-" : "-";
+
+  document.getElementById("ultimaAtualizacao").innerText =
+    new Date().toLocaleString("pt-BR");
 
   if(!db()){
     alert("Supabase não carregado.");
     return;
   }
 
-  document.getElementById("dataAtual").innerText =
-    new Date().toLocaleDateString("pt-BR");
-
-  const patResp = await db()
-    .from("patrimonio")
-    .select("*")
-    .order("id", { ascending:false });
-
-  const obrasResp = await db()
-    .from("obras")
-    .select("*")
-    .order("nome");
-
-  const movResp = await db()
-    .from("movimentacoes")
-    .select("*")
-    .order("id", { ascending:false })
-    .limit(20);
+  const patResp = await db().from("patrimonio").select("*").order("id",{ascending:false});
+  const obrasResp = await db().from("obras").select("*").order("nome");
+  const movResp = await db().from("movimentacoes").select("*").order("id",{ascending:false}).limit(200);
 
   if(patResp.error){
-    console.error(patResp.error);
-    alert(patResp.error.message);
+    alert("Erro ao carregar patrimônios: " + patResp.error.message);
     return;
-  }
-
-  if(obrasResp.error){
-    console.error(obrasResp.error);
-  }
-
-  if(movResp.error){
-    console.error(movResp.error);
   }
 
   patrimonios = patResp.data || [];
   obras = obrasResp.data || [];
   movimentacoes = movResp.data || [];
 
+  if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN" && usuario.obra_id){
+    patrimonios = patrimonios.filter(p => String(p.obra_id) === String(usuario.obra_id));
+    movimentacoes = movimentacoes.filter(m =>
+      String(m.obra_origem_id) === String(usuario.obra_id) ||
+      String(m.obra_destino_id) === String(usuario.obra_id)
+    );
+  }
+
   carregarFiltros();
-  atualizarKPIs();
-  renderizarLista();
-  renderizarAlertas();
-  renderizarMovimentacoes();
-  gerarGraficos();
+  aplicarFiltros();
 }
 
 function carregarFiltros(){
-
-  const tipos = [...new Set(
-    patrimonios
-      .map(p => p.tipo_item)
-      .filter(Boolean)
-  )].sort();
-
   const filtroTipo = document.getElementById("filtroTipo");
-  filtroTipo.innerHTML = `<option value="">Todos os tipos</option>`;
+  const tipos = [...new Set(patrimonios.map(p => p.tipo_item).filter(Boolean))].sort();
 
+  filtroTipo.innerHTML = `<option value="">Todos os setores</option>`;
   tipos.forEach(t => {
     filtroTipo.innerHTML += `<option value="${t}">${t}</option>`;
   });
 
   const filtroObra = document.getElementById("filtroObra");
-  filtroObra.innerHTML = `<option value="">Todas as obras/setores</option>`;
+  filtroObra.innerHTML = `<option value="">Todas as obras</option>`;
 
   obras.forEach(o => {
-    filtroObra.innerHTML += `
-      <option value="${o.id}">
-        ${o.codigo_obra || "-"} - ${o.nome || "-"}
-      </option>
-    `;
+    const qtd = patrimonios.filter(p => String(p.obra_id) === String(o.id)).length;
+    if(qtd > 0){
+      filtroObra.innerHTML += `<option value="${o.id}">${o.nome || o.codigo_obra || "-"}</option>`;
+    }
   });
+}
+
+function aplicarFiltroKPI(tipo){
+  filtroKPIAtual = tipo;
+
+  document.querySelectorAll(".kpi-card").forEach(k => k.classList.remove("active"));
+  document.querySelector(`.kpi-card[data-kpi="${tipo}"]`)?.classList.add("active");
+
+  aplicarFiltros();
+}
+
+function aplicarFiltros(){
+  const obra = valor("filtroObra");
+  const tipo = valor("filtroTipo");
+
+  const basePeriodo = filtroKPIAtual === "ESTOQUE"
+    ? patrimonios.filter(p => p.status === "ESTOQUE")
+    : basePatrimoniosDashboard();
+
+  filtrados = basePeriodo.filter(p => {
+    let passaKPI = true;
+
+    if(filtroKPIAtual === "EM_USO") passaKPI = p.status === "EM_USO";
+    if(filtroKPIAtual === "ESTOQUE") passaKPI = p.status === "ESTOQUE";
+    if(filtroKPIAtual === "MANUTENCAO") passaKPI = p.status === "MANUTENCAO";
+    if(filtroKPIAtual === "BAIXADO") passaKPI = p.status === "BAIXADO";
+    if(filtroKPIAtual === "VALOR") passaKPI = Number(p.valor_bem || 0) > 0;
+    if(filtroKPIAtual === "SEM_VALOR") passaKPI = !Number(p.valor_bem || 0);
+
+    return (!obra || String(p.obra_id) === String(obra))
+      && (!tipo || p.tipo_item === tipo)
+      && passaKPI;
+  });
+
+  atualizarTudo();
+}
+
+function atualizarTudo(){
+  atualizarKPIs();
+  gerarGraficos();
+  gerarIA();
+  gerarAlertas();
+  gerarEstoqueNivel();
+  gerarUltimasMov();
+  gerarTopValores();
+  const elPeriodo = document.getElementById('periodoSelecionadoTexto');
+  if(elPeriodo) elPeriodo.innerText = nomePeriodoAtual();
 }
 
 function atualizarKPIs(){
+  const base = basePatrimoniosDashboard();
 
-  const total = patrimonios.length;
-  const uso = patrimonios.filter(p => p.status === "EM_USO").length;
+  const total = base.length || 1;
+  const totalReal = base.length;
+
+  const uso = base.filter(p => p.status === "EM_USO").length;
+
+  /*
+    ESTOQUE GERAL:
+    Conta tudo que está com status ESTOQUE no sistema,
+    independente do período, obra ou filtro.
+  */
   const estoque = patrimonios.filter(p => p.status === "ESTOQUE").length;
-  const manutencao = patrimonios.filter(p => p.status === "MANUTENCAO").length;
-  const baixado = patrimonios.filter(p => p.status === "BAIXADO").length;
 
-  const valorTotal = patrimonios.reduce((soma, p) => {
-    return soma + Number(p.valor_bem || 0);
-  }, 0);
+  const manut = base.filter(p => p.status === "MANUTENCAO").length;
+  const baixado = base.filter(p => p.status === "BAIXADO").length;
+  const semValor = base.filter(p => !Number(p.valor_bem || 0)).length;
+  const valorTotal = base.reduce((s,p) => s + Number(p.valor_bem || 0), 0);
 
-  const semValor = patrimonios.filter(p => !p.valor_bem || Number(p.valor_bem) <= 0).length;
-
-  const movHoje = movimentacoes.filter(m =>
-    String(m.data_movimentacao || "").slice(0,10) === hojeISO()
-  ).length;
-
-  document.getElementById("kpiTotal").innerText = total;
+  document.getElementById("kpiTotal").innerText = totalReal;
   document.getElementById("kpiUso").innerText = uso;
   document.getElementById("kpiEstoque").innerText = estoque;
-  document.getElementById("kpiManutencao").innerText = manutencao;
+  document.getElementById("kpiManutencao").innerText = manut;
   document.getElementById("kpiBaixado").innerText = baixado;
-  document.getElementById("kpiValor").innerText = formatarMoeda(valorTotal);
   document.getElementById("kpiSemValor").innerText = semValor;
-  document.getElementById("kpiMovHoje").innerText = movHoje;
+  document.getElementById("kpiValor").innerText = moedaCurta(valorTotal);
+
+  document.getElementById("percUso").innerText = ((uso/total)*100).toFixed(1).replace(".",",") + "% do período";
+  document.getElementById("percEstoque").innerText = "Disponíveis no sistema";
+  document.getElementById("percManutencao").innerText = ((manut/total)*100).toFixed(1).replace(".",",") + "% do período";
+  document.getElementById("percBaixado").innerText = ((baixado/total)*100).toFixed(1).replace(".",",") + "% do período";
+  document.getElementById("percSemValor").innerText = ((semValor/total)*100).toFixed(1).replace(".",",") + "% do período";
 }
 
-function filtrarCard(tipo){
-  filtroCardAtual = tipo;
-
-  document.getElementById("filtroStatus").value = "";
-
-  const titulos = {
-    TODOS:"📦 Todos os patrimônios",
-    EM_USO:"✅ Patrimônios em uso",
-    ESTOQUE:"📦 Patrimônios em estoque",
-    MANUTENCAO:"🛠 Patrimônios em manutenção",
-    BAIXADO:"⬇️ Patrimônios baixados",
-    COM_VALOR:"💰 Patrimônios com valor informado",
-    SEM_VALOR:"⚠️ Patrimônios sem valor informado"
-  };
-
-  document.getElementById("tituloLista").innerText =
-    titulos[tipo] || "📦 Patrimônios";
-
-  renderizarLista();
-
-  document.getElementById("listaPatrimonios").scrollIntoView({
-    behavior:"smooth",
-    block:"start"
+function contarPor(lista, fn){
+  const obj = {};
+  lista.forEach(item => {
+    const k = fn(item) || "-";
+    obj[k] = (obj[k] || 0) + 1;
   });
-}
-function limparFiltroCard(){
-  filtroCardAtual = "TODOS";
-  document.getElementById("busca").value = "";
-  document.getElementById("filtroStatus").value = "";
-  document.getElementById("filtroTipo").value = "";
-  document.getElementById("filtroObra").value = "";
-  document.getElementById("tituloLista").innerText = "📦 Patrimônios";
-  renderizarLista();
+  return obj;
 }
 
-function obterFiltrados(){
+function somarPor(lista, fn, val){
+  const obj = {};
+  lista.forEach(item => {
+    const k = fn(item) || "-";
+    obj[k] = (obj[k] || 0) + Number(val(item) || 0);
+  });
+  return obj;
+}
 
-  const busca = valor("busca").toLowerCase();
-  const status = valor("filtroStatus");
-  const tipo = valor("filtroTipo");
-  const obra = valor("filtroObra");
+function destruir(id){
+  if(charts[id]){
+    charts[id].destroy();
+    charts[id] = null;
+  }
+}
 
-  return patrimonios.filter(p => {
-
-    const texto = `
-      ${p.nome_bem || ""}
-      ${p.codigo_qr || ""}
-      ${p.codigo_antigo || ""}
-      ${p.localizacao || ""}
-      ${p.marca || ""}
-      ${p.modelo || ""}
-      ${p.numero_serie || ""}
-      ${p.tipo_item || ""}
-      ${p.tipo_outro || ""}
-      ${p.status || ""}
-    `.toLowerCase();
-
-    let passaCard = true;
-
-    if(filtroCardAtual === "EM_USO") passaCard = p.status === "EM_USO";
-    if(filtroCardAtual === "ESTOQUE") passaCard = p.status === "ESTOQUE";
-    if(filtroCardAtual === "MANUTENCAO") passaCard = p.status === "MANUTENCAO";
-    if(filtroCardAtual === "BAIXADO") passaCard = p.status === "BAIXADO";
-    if(filtroCardAtual === "COM_VALOR") passaCard = Number(p.valor_bem || 0) > 0;
-    if(filtroCardAtual === "SEM_VALOR") passaCard = !p.valor_bem || Number(p.valor_bem) <= 0;
-
-    const passaBusca = texto.includes(busca);
-    const passaStatus = !status || p.status === status;
-    const passaTipo = !tipo || p.tipo_item === tipo;
-    const passaObra = !obra || String(p.obra_id) === String(obra);
-
-    return passaCard && passaBusca && passaStatus && passaTipo && passaObra;
+function bar(id, labels, data, horizontal=false, color="#d71920"){
+  destruir(id);
+  charts[id] = new Chart(document.getElementById(id),{
+    type:"bar",
+    data:{labels,datasets:[{data,backgroundColor:color,borderRadius:3}]},
+    options:{
+      indexAxis:horizontal ? "y" : "x",
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{beginAtZero:true,grid:{color:"#eef2f7"},ticks:{font:{size:10}}},
+        y:{beginAtZero:true,grid:{color:"#eef2f7"},ticks:{font:{size:10}}}
+      }
+    }
   });
 }
 
-function renderizarLista(){
-
-  const lista = document.getElementById("listaPatrimonios");
-  lista.innerHTML = "";
-
-  const filtrados = obterFiltrados();
-
-  if(filtrados.length === 0){
-    lista.innerHTML = "<p>Nenhum patrimônio encontrado.</p>";
-    return;
-  }
-
-  filtrados.forEach(p => {
-    lista.innerHTML += `
-      <div class="item">
-        <strong>${p.nome_bem || "-"}</strong><br><br>
-
-        <b>Código:</b> ${p.codigo_qr || "-"}<br>
-        <b>Antigo:</b> ${p.codigo_antigo || "-"}<br>
-        <b>Obra:</b> ${p.localizacao || "-"}<br>
-        <b>Tipo:</b> ${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}<br>
-        <b>Marca:</b> ${p.marca || "-"}<br>
-        <b>Modelo:</b> ${p.modelo || "-"}<br>
-        <b>Valor:</b> ${formatarMoeda(p.valor_bem)}<br>
-
-        <span class="status ${p.status}">
-          ${p.status || "SEM STATUS"}
-        </span>
-      </div>
-    `;
-  });
-}
-
-function renderizarAlertas(){
-
-  const lista = document.getElementById("listaAlertas");
-  lista.innerHTML = "";
-
-  const semValor = patrimonios.filter(p => !p.valor_bem || Number(p.valor_bem) <= 0);
-  const semSerie = patrimonios.filter(p => !p.numero_serie && !p.placa);
-  const manutencao = patrimonios.filter(p => p.status === "MANUTENCAO");
-
-  if(semValor.length === 0 && semSerie.length === 0 && manutencao.length === 0){
-    lista.innerHTML = "<p>Nenhum alerta no momento.</p>";
-    return;
-  }
-
-  if(semValor.length > 0){
-    lista.innerHTML += `
-      <div class="alert-box">
-        ⚠️ ${semValor.length} patrimônio(s) sem valor informado.
-      </div>
-    `;
-  }
-
-  if(semSerie.length > 0){
-    lista.innerHTML += `
-      <div class="alert-box">
-        🔎 ${semSerie.length} patrimônio(s) sem número de série ou placa.
-      </div>
-    `;
-  }
-
-  if(manutencao.length > 0){
-    lista.innerHTML += `
-      <div class="alert-box">
-        🛠 ${manutencao.length} patrimônio(s) em manutenção.
-      </div>
-    `;
-  }
-}
-
-function renderizarMovimentacoes(){
-
-  const lista = document.getElementById("listaMovimentacoes");
-  lista.innerHTML = "";
-
-  if(movimentacoes.length === 0){
-    lista.innerHTML = "<p>Nenhuma movimentação encontrada.</p>";
-    return;
-  }
-
-  movimentacoes.slice(0,8).forEach(m => {
-    lista.innerHTML += `
-      <div class="item">
-        <strong>${m.tipo || "-"}</strong><br><br>
-
-        ${nomePatrimonio(m.patrimonio_id)}<br><br>
-
-        <b>Status:</b>
-        ${m.status_anterior || "-"} → ${m.status_novo || "-"}<br>
-
-        <b>Data:</b> ${formatarData(m.data_movimentacao)}<br><br>
-
-        <b>Obs:</b> ${m.observacao || "-"}
-      </div>
-    `;
+function doughnut(id, labels, data){
+  destruir(id);
+  charts[id] = new Chart(document.getElementById(id),{
+    type:"doughnut",
+    data:{
+      labels,
+      datasets:[{
+        data,
+        backgroundColor:["#2563eb","#16a34a","#f97316","#d71920","#7c3aed"]
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:"55%",
+      plugins:{
+        legend:{position:"right",labels:{boxWidth:12,font:{size:11}}}
+      }
+    }
   });
 }
 
 function gerarGraficos(){
+  const porObra = contarPor(filtrados, p => nomeObraCurto(p.obra_id));
+  bar("graficoObras", Object.keys(porObra), Object.values(porObra), true, "#d71920");
 
-  gerarGraficoStatus();
-  gerarGraficoObras();
-  gerarGraficoTipos();
+  const porStatus = contarPor(filtrados, p => p.status || "-");
+  doughnut("graficoStatus", Object.keys(porStatus), Object.values(porStatus));
+
+  const valorObra = somarPor(filtrados, p => nomeObraCurto(p.obra_id), p => p.valor_bem);
+  bar("graficoValorObra", Object.keys(valorObra), Object.values(valorObra), false, "#7c3aed");
+
+  const tipos = contarPor(filtrados, p => p.tipo_item || "Sem tipo");
+  doughnut("graficoTipos", Object.keys(tipos), Object.values(tipos));
 }
 
-function gerarGraficoStatus(){
+function gerarIA(){
+  const total = filtrados.length;
+  const valorTotal = filtrados.reduce((s,p) => s + Number(p.valor_bem || 0), 0);
+  const estoque = itensEmEstoqueGeral().length;
+  const manut = filtrados.filter(p => p.status === "MANUTENCAO").length;
+  const semValor = filtrados.filter(p => !Number(p.valor_bem || 0)).length;
+  const semSerie = filtrados.filter(p => !p.numero_serie && !p.placa).length;
 
-  const dados = {
-    ESTOQUE: patrimonios.filter(p => p.status === "ESTOQUE").length,
-    EM_USO: patrimonios.filter(p => p.status === "EM_USO").length,
-    MANUTENCAO: patrimonios.filter(p => p.status === "MANUTENCAO").length,
-    BAIXADO: patrimonios.filter(p => p.status === "BAIXADO").length
-  };
+  document.getElementById("analiseIA").innerHTML = `
+    <div class="ai-line" onclick="mostrarItensAlerta('TODOS')">
+      <span>📊</span>
+      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor total estimado de <b>${moedaCurta(valorTotal)}</b>.</div>
+    </div>
 
-  if(chartStatus) chartStatus.destroy();
+    <div class="ai-line" onclick="mostrarItensAlerta('MANUTENCAO')">
+      <span>🛠</span>
+      <div><b>${manut}</b> patrimônio(s) estão em manutenção.</div>
+    </div>
 
-  chartStatus = new Chart(
-    document.getElementById("graficoStatus"),
-    {
-      type:"doughnut",
-      data:{
-        labels:["Estoque","Em uso","Manutenção","Baixado"],
-        datasets:[{
-          data:[
-            dados.ESTOQUE,
-            dados.EM_USO,
-            dados.MANUTENCAO,
-            dados.BAIXADO
-          ]
-        }]
-      }
-    }
-  );
+    <div class="ai-line" onclick="mostrarItensAlerta('ESTOQUE')">
+      <span>📦</span>
+      <div><b>${estoque}</b> item(ns) estão em estoque geral.</div>
+    </div>
+
+    <div class="ai-line" onclick="mostrarItensAlerta('SEM_VALOR')">
+      <span>⚠️</span>
+      <div><b>${semValor}</b> patrimônio(s) não possuem valor informado.</div>
+    </div>
+
+    <div class="ai-line" onclick="mostrarItensAlerta('SEM_SERIE')">
+      <span>🔎</span>
+      <div><b>${semSerie}</b> patrimônio(s) estão sem número de série ou placa.</div>
+    </div>
+  `;
 }
 
-function gerarGraficoObras(){
+function gerarAlertas(){
+  const base = basePatrimoniosDashboard();
+  const semValor = base.filter(p => !Number(p.valor_bem || 0)).length;
+  const semSerie = base.filter(p => !p.numero_serie && !p.placa).length;
+  const manut = base.filter(p => p.status === "MANUTENCAO").length;
+  const baixado = base.filter(p => p.status === "BAIXADO").length;
 
+  document.getElementById("alertas").innerHTML = `
+    <div class="alert-row" onclick="mostrarItensAlerta('SEM_VALOR')">
+      <span>⚠️ Sem valor informado</span><span class="badge">${semValor}</span>
+    </div>
+    <div class="alert-row" onclick="mostrarItensAlerta('SEM_SERIE')">
+      <span>📊 Sem número de série/placa</span><span class="badge">${semSerie}</span>
+    </div>
+    <div class="alert-row" onclick="mostrarItensAlerta('MANUTENCAO')">
+      <span>🛠 Em manutenção</span><span class="badge">${manut}</span>
+    </div>
+    <div class="alert-row" onclick="mostrarItensAlerta('BAIXADO')">
+      <span>🗑 Itens baixados</span><span class="badge">${baixado}</span>
+    </div>
+  `;
+}
+
+function mostrarItensAlerta(tipo){
+  let lista = [];
+  let titulo = "📋 Itens filtrados";
+
+  if(tipo === "TODOS"){
+    lista = filtrados.length ? filtrados : basePatrimoniosDashboard();
+    titulo = "📊 Patrimônios da análise atual";
+  }
+
+  if(tipo === "ESTOQUE"){
+    lista = itensEmEstoqueGeral();
+    titulo = "📦 Estoque geral";
+  }
+
+  if(tipo === "ESTOQUE_BAIXO" || tipo === "ESTOQUE_MEDIO" || tipo === "ESTOQUE_MUITO"){
+    const nivel = tipo.replace("ESTOQUE_", "");
+    const grupos = gruposEstoque().filter(g => nivelEstoqueGrupo(g) === nivel);
+
+    lista = grupos.flatMap(g => g.itens);
+
+    if(nivel === "BAIXO") titulo = "🔴 Itens com estoque baixo";
+    if(nivel === "MEDIO") titulo = "🟡 Itens com estoque médio";
+    if(nivel === "MUITO") titulo = "🟢 Itens com estoque alto";
+  }
+
+  if(tipo === "SEM_VALOR"){
+    lista = basePatrimoniosDashboard().filter(p => !Number(p.valor_bem || 0));
+    titulo = "⚠️ Patrimônios sem valor informado";
+  }
+
+  if(tipo === "SEM_SERIE"){
+    lista = basePatrimoniosDashboard().filter(p => !p.numero_serie && !p.placa);
+    titulo = "📊 Patrimônios sem número de série ou placa";
+  }
+
+  if(tipo === "MANUTENCAO"){
+    lista = basePatrimoniosDashboard().filter(p => p.status === "MANUTENCAO");
+    titulo = "🛠 Patrimônios em manutenção";
+  }
+
+  if(tipo === "BAIXADO"){
+    lista = basePatrimoniosDashboard().filter(p => p.status === "BAIXADO");
+    titulo = "🗑 Patrimônios baixados";
+  }
+
+  if(tipo === "RISCO"){
+    lista = basePatrimoniosDashboard().filter(p =>
+      !Number(p.valor_bem || 0) ||
+      (!p.numero_serie && !p.placa) ||
+      p.status === "MANUTENCAO"
+    );
+    titulo = "🚨 Patrimônios com risco operacional";
+  }
+
+  const card = document.getElementById("cardItensAlerta");
+  const tbody = document.getElementById("listaItensAlerta");
+
+  document.getElementById("tituloItensAlerta").innerText = `${titulo} (${lista.length})`;
+
+  if(lista.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum item encontrado.</td></tr>`;
+  }else{
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td><b>${p.codigo_qr || "-"}</b></td>
+        <td>${p.nome_bem || "-"}</td>
+        <td>${p.status || "-"}</td>
+        <td>${p.tipo_item || "-"}</td>
+        <td>${nomeObraCurto(p.obra_id)}</td>
+        <td>${moeda(p.valor_bem)}</td>
+      </tr>
+    `).join("");
+  }
+
+  card.style.display = "block";
+  card.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function itensEmEstoqueGeral(){
+  return patrimonios.filter(p => p.status === "ESTOQUE");
+}
+
+function chaveAgrupamentoEstoque(p){
+  /*
+    Agrupa por tipo + nome + marca + modelo.
+    Assim itens repetidos contam quantidade.
+  */
+  return [
+    p.tipo_item || "",
+    p.nome_bem || "",
+    p.marca || "",
+    p.modelo || ""
+  ].join("|").toUpperCase();
+}
+
+function gruposEstoque(){
+  const itens = itensEmEstoqueGeral();
   const mapa = {};
 
-  patrimonios.forEach(p => {
-    const nome = p.localizacao || "Sem obra";
-    mapa[nome] = (mapa[nome] || 0) + 1;
+  itens.forEach(p => {
+    const chave = chaveAgrupamentoEstoque(p);
+
+    if(!mapa[chave]){
+      mapa[chave] = {
+        chave,
+        nome_bem:p.nome_bem || "-",
+        tipo_item:p.tipo_item || "-",
+        marca:p.marca || "-",
+        modelo:p.modelo || "-",
+        obra_id:p.obra_id,
+        qtd:0,
+        itens:[]
+      };
+    }
+
+    mapa[chave].qtd++;
+    mapa[chave].itens.push(p);
   });
 
-  const ordenado = Object.entries(mapa)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0,8);
-
-  if(chartObras) chartObras.destroy();
-
-  chartObras = new Chart(
-    document.getElementById("graficoObras"),
-    {
-      type:"bar",
-      data:{
-        labels:ordenado.map(x => x[0]),
-        datasets:[{
-          label:"Patrimônios",
-          data:ordenado.map(x => x[1])
-        }]
-      },
-      options:{
-        indexAxis:"y"
-      }
-    }
-  );
+  return Object.values(mapa);
 }
 
-function gerarGraficoTipos(){
+function nivelEstoqueGrupo(g){
+  /*
+    Regra simples:
+    Baixo: 1 unidade
+    Médio: 2 a 4 unidades
+    Muito: 5 ou mais unidades
+  */
+  if(g.qtd <= 1) return "BAIXO";
+  if(g.qtd <= 4) return "MEDIO";
+  return "MUITO";
+}
 
-  const mapa = {};
+function gerarEstoqueNivel(){
+  const grupos = gruposEstoque();
 
-  patrimonios.forEach(p => {
-    const tipo = p.tipo_item || "SEM TIPO";
-    mapa[tipo] = (mapa[tipo] || 0) + 1;
+  const baixo = grupos.filter(g => nivelEstoqueGrupo(g) === "BAIXO").length;
+  const medio = grupos.filter(g => nivelEstoqueGrupo(g) === "MEDIO").length;
+  const muito = grupos.filter(g => nivelEstoqueGrupo(g) === "MUITO").length;
+
+  document.getElementById("estoqueTotalGeral").innerText =
+    itensEmEstoqueGeral().length + " item(ns)";
+
+  document.getElementById("estoqueBaixo").innerText = baixo;
+  document.getElementById("estoqueMedio").innerText = medio;
+  document.getElementById("estoqueMuito").innerText = muito;
+}
+
+function gerarUltimasMov(){
+  const tbody = document.getElementById("ultimasMov");
+  tbody.innerHTML = "";
+
+  const movs = movimentacoesPeriodo();
+
+  if(movs.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6">Nenhuma movimentação encontrada no período selecionado.</td></tr>`;
+    return;
+  }
+
+  movs.slice(0,5).forEach(m => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${dataBR(m.data_movimentacao)}</td>
+        <td>${m.tipo || "-"}</td>
+        <td>${nomePatrimonio(m.patrimonio_id)}</td>
+        <td>${m.status_anterior || "-"}</td>
+        <td>${m.status_novo || "-"}</td>
+        <td>${m.usuario || "-"}</td>
+      </tr>
+    `;
   });
-
-  const ordenado = Object.entries(mapa)
-    .sort((a,b) => b[1] - a[1]);
-
-  if(chartTipos) chartTipos.destroy();
-
-  chartTipos = new Chart(
-    document.getElementById("graficoTipos"),
-    {
-      type:"bar",
-      data:{
-        labels:ordenado.map(x => x[0]),
-        datasets:[{
-          label:"Quantidade",
-          data:ordenado.map(x => x[1])
-        }]
-      }
-    }
-  );
 }
 
-carregarDashboard();
+function gerarTopValores(){
+  const top = [...basePatrimoniosDashboard()]
+    .filter(p => Number(p.valor_bem || 0) > 0)
+    .sort((a,b) => Number(b.valor_bem || 0) - Number(a.valor_bem || 0))
+    .slice(0,5);
+
+  if(top.length === 0){
+    document.getElementById("topValores").innerHTML = `<div class="info-row">Nenhum valor informado.</div>`;
+    return;
+  }
+
+  document.getElementById("topValores").innerHTML = top.map((p,i) => `
+    <div class="info-row">
+      <span>${i+1}. ${p.nome_bem || "-"}</span>
+      <b>${moedaCurta(p.valor_bem)}</b>
+    </div>
+  `).join("");
+}
+
+/* Dashboard */
+carregarDados();
 </script>
 
-</body>
-</html>
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body></html>

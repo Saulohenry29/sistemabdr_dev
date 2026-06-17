@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Retirada / Separação</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script defer src="./JS/retirada.js"></script>
+
+<style>
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --green:#16a34a;
+  --blue:#2563eb;
+  --orange:#f97316;
+  --purple:#7c3aed;
+}
+
+body{background:var(--bdr-bg)!important;color:#1f2937;}
+.bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900;}
+.bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500;}
+
+/* TOPO PADRÃO BDR */
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.notif-wrap{position:relative;}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:0;outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent;}
+.notif-btn:hover{background:#fff1f2;color:var(--bdr-red);transform:translateY(-1px);}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center;}
+.notif-dropdown{position:absolute;top:48px;right:0;width:330px;background:#fff;border:1px solid var(--bdr-border);border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:9999;}
+.notif-dropdown.ativo{display:block;animation:dropdownTop .16s ease;}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--bdr-red);background:#fff5f5;border-bottom:1px solid #fecaca;}
+.notif-list{max-height:280px;overflow:auto;}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;cursor:pointer;}
+.notif-item:hover{background:#f9fafb;}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px;}
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-tap-highlight-color:transparent;}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02);}
+.user-mini{text-align:right;font-size:13px;pointer-events:none;}
+.user-mini b{display:block;outline:none!important;}
+.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important;}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--bdr-red);font-size:18px;transition:.22s ease;pointer-events:none;}
+.user-menu:hover .avatar{transform:scale(1.06);}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid var(--bdr-border);border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:9999;}
+.dropdown-user.ativo{display:block;animation:dropdownTop .16s ease;}
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px;}
+.dropdown-user button:hover{background:#fff1f2;color:var(--bdr-red);}
+.dropdown-user .logout-btn{color:#dc2626;}
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:focus,.user-menu:active{outline:none!important;box-shadow:none!important;}
+button{-webkit-tap-highlight-color:transparent;}
+
+/* RETIRADA - PADRÃO ORGANIZADO IGUAL ENTRADA */
+.retirada-hero{background:radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);border-left:4px solid var(--bdr-red);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 9px rgba(0,0,0,.07);display:grid;grid-template-columns:1.3fr .7fr;gap:12px;align-items:center;}
+.retirada-hero h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900;}
+.retirada-hero p{margin:5px 0 0;color:#6b7280;font-size:13px;}
+.hero-status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.hero-mini{background:#fff;border:1px solid #fee2e2;border-left:4px solid var(--bdr-red);border-radius:13px;padding:10px;font-size:12px;}
+.hero-mini strong{display:block;color:#111827;font-size:18px;}
+.hero-mini span{color:#6b7280;font-weight:800;}
+.alerta{background:#fff7ed;border-left:4px solid var(--orange);padding:10px 12px;border-radius:10px;margin-top:10px;color:#7c2d12;font-size:13px;}
+.card h2,.card h3{color:var(--bdr-red);margin-top:0;}
+.grid{display:grid;grid-template-columns:2fr 1fr 130px;gap:10px;align-items:center;}
+input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;box-sizing:border-box;background:#fff;font-family:Arial,sans-serif;}
+.btn-bdr,.btn{border:none;border-radius:10px;padding:10px 13px;font-size:12px;font-weight:900;cursor:pointer;transition:.18s;color:#fff;}
+.btn-bdr:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.12);}
+.red{background:var(--bdr-red)}.dark{background:#111827}.green{background:#16a34a}.blue{background:#2563eb}.orange{background:#f97316}.purple{background:#7c3aed}.gray{background:#6b7280}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+.tab-btn{border:1px solid #fecaca;background:#fff;color:#374151;border-radius:999px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;}
+.tab-btn.active{background:#fff1f2;color:var(--bdr-red);}
+.tab{display:none;}.tab.active{display:block;}
+
+/* Cards de pedido mais limpos */
+.pedido{background:#fff;border:1px solid var(--bdr-border);border-left:4px solid var(--bdr-red);border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 7px rgba(0,0,0,.06);}
+.pedido-top{display:grid;grid-template-columns:120px 1fr 145px 120px;gap:8px;align-items:center;}
+.cod{color:var(--bdr-red);font-weight:900;font-size:15px;}
+.sub{font-size:12px;color:#6b7280;line-height:1.4;}
+.det{display:none;border-top:1px solid var(--bdr-border);margin-top:10px;padding-top:10px;}
+.pedido.aberto .det{display:block;}
+.status{display:inline-flex;padding:5px 9px;border-radius:999px;background:#6b7280;color:#fff;font-size:10px;font-weight:900;}
+.st-AGUARDANDO_AUTORIZACAO{background:#f59e0b}.st-EM_SEPARACAO{background:#2563eb}.st-AGUARDANDO_RETIRADA{background:#16a34a}.st-SEPARADO{background:#16a34a}.st-PENDENTE{background:#f59e0b}.st-NEGADO{background:#dc2626}
+
+/* Modo tablet */
+.mobile-sep{background:#f8fafc;border:1px solid var(--bdr-border);border-radius:16px;padding:12px;text-align:center;margin-top:10px;}
+.progress-text{font-size:13px;color:#374151;font-weight:900;}
+.progress{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:8px 0 12px;}
+.progress span{display:block;height:100%;background:#16a34a;border-radius:999px;transition:.25s;}
+.item-atual{background:#fff;border:1px solid #fed7aa;border-left:5px solid #f97316;border-radius:16px;padding:14px;margin:12px 0;}
+.item-atual.ok{border-left-color:#16a34a;background:#f0fdf4;}
+.item-atual h2{margin:5px 0;color:#111827;font-size:20px;}
+.pat{font-size:22px;font-weight:900;color:var(--bdr-red);background:#fff;border:1px dashed #fecaca;border-radius:14px;padding:9px;margin:10px 0;}
+.end{font-size:16px;font-weight:900;color:#111827;background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:10px;margin:10px 0;}
+.bigbtn{width:100%;border:none;border-radius:16px;background:var(--bdr-red);color:#fff;font-size:17px;font-weight:900;padding:16px;cursor:pointer;box-shadow:0 8px 20px rgba(215,25,32,.18);}
+.bigbtn.green{background:#16a34a}.bigbtn.gray{background:#6b7280}
+.itens{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;}
+.item{background:#f8fafc;border:1px solid var(--bdr-border);border-left:4px solid #d1d5db;border-radius:12px;padding:9px;font-size:12px;line-height:1.45;}
+.item.ok{border-left-color:#16a34a;background:#f0fdf4;}.item strong{color:var(--bdr-red)}
+
+/* Scanner */
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.82);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.ativo{display:flex}.modal{width:min(560px,100%);background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal-head{padding:14px 16px;background:#fff5f5;color:var(--bdr-red);font-weight:900;border-bottom:1px solid #fecaca}.modal-body{padding:16px}.scan-status{text-align:center;font-weight:900;color:#374151;margin-bottom:10px}.scan-status b{display:block;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px;margin-top:8px;color:#111827}#reader{width:100%;max-width:430px;margin:auto}.toast{position:fixed;right:14px;top:14px;z-index:10000;background:#fff;border-left:5px solid var(--bdr-red);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.22);padding:13px 15px;min-width:260px;display:none}.toast strong{display:block;color:var(--bdr-red)}
+
+/* correção sino/topo */
+.bdr-top-actions,.bdr-top-actions *,.notif-wrap,.notif-wrap *,.notif-btn,.notif-btn *, .user-menu,.user-menu *{outline:none!important;box-shadow:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important;}
+.notif-btn i,.notif-badge{pointer-events:none;}
+
+@media(max-width:1000px){
+  .retirada-hero,.grid{grid-template-columns:1fr;}
+  .hero-status{grid-template-columns:1fr 1fr 1fr;}
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-80px;width:300px;}
+  .pedido-top{grid-template-columns:1fr;}
+}
+@media(max-width:700px){
+  .tabs{position:sticky;top:0;background:var(--bdr-bg);z-index:20;padding:8px 0;overflow-x:auto;flex-wrap:nowrap;}
+  .tab-btn{padding:11px 14px;}
+  .hero-status{grid-template-columns:1fr;}
+  .modal-bg{padding:0}.modal-bg.ativo{align-items:stretch}.modal{max-width:none;width:100%;min-height:100vh;border-radius:0}.toast{left:12px;right:12px;min-width:auto}.itens{grid-template-columns:1fr;}
+}
+
+/* =========================================================
+   AJUSTE COMPACTO - RETIRADA / SEPARAÇÃO
+   Página menor, menos espaço vazio e botões mais claros
+========================================================= */
+.bdr-main{padding-bottom:18px!important;}
+.bdr-topbar{min-height:54px!important;padding:12px 16px!important;margin-bottom:10px!important;}
+.bdr-topbar-title{font-size:18px!important;line-height:1.15!important;}
+.bdr-topbar-sub{font-size:11px!important;margin-top:2px!important;}
+
+.retirada-hero{
+  grid-template-columns:1fr 530px!important;
+  gap:10px!important;
+  padding:12px 14px!important;
+  margin-bottom:10px!important;
+  border-radius:14px!important;
+}
+.retirada-hero h2{font-size:18px!important;margin-bottom:3px!important;}
+.retirada-hero p{font-size:12px!important;margin:2px 0 0!important;}
+.alerta{padding:8px 10px!important;margin-top:8px!important;font-size:12px!important;}
+.hero-status{gap:7px!important;}
+.hero-mini{padding:8px 9px!important;border-radius:11px!important;min-height:42px!important;}
+.hero-mini strong{font-size:17px!important;line-height:1!important;}
+.hero-mini span{font-size:11px!important;line-height:1.1!important;}
+
+.tabs{gap:7px!important;margin:0 0 10px!important;}
+.tab-btn{padding:8px 13px!important;font-size:12px!important;border-radius:999px!important;}
+.card{padding:11px 13px!important;margin-bottom:10px!important;border-radius:14px!important;}
+.card h3{font-size:15px!important;margin:0 0 9px!important;}
+.grid{grid-template-columns:1fr 330px 115px!important;gap:8px!important;}
+input,select,textarea{padding:9px 10px!important;font-size:12px!important;}
+.btn-bdr,.btn{padding:8px 11px!important;font-size:11px!important;border-radius:9px!important;}
+
+.pedido{padding:0!important;margin-bottom:8px!important;border-radius:12px!important;overflow:hidden!important;}
+.pedido-top{
+  display:grid!important;
+  grid-template-columns:125px minmax(220px,1fr) 190px 95px!important;
+  gap:10px!important;
+  align-items:center!important;
+  padding:10px 13px!important;
+  min-height:48px!important;
+}
+.pedido-top:hover{background:#f9fafb!important;}
+.cod{font-size:14px!important;line-height:1.25!important;word-break:break-word!important;}
+.sub{font-size:11px!important;line-height:1.3!important;}
+.status{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:24px!important;
+  width:auto!important;
+  max-width:100%!important;
+  padding:5px 10px!important;
+  border-radius:999px!important;
+  white-space:normal!important;
+  text-align:center!important;
+  font-size:9px!important;
+  line-height:1.15!important;
+}
+.pedido-top > div:last-child{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  gap:5px!important;
+}
+.pedido-top > div:last-child .btn,
+.pedido-top > div:last-child button{
+  min-width:78px!important;
+  max-width:100%!important;
+  padding:7px 10px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+}
+.det{margin:0!important;padding:10px 13px!important;background:#f8fafc!important;}
+.mobile-sep{padding:10px!important;margin-top:8px!important;border-radius:14px!important;}
+.progress{height:10px!important;margin:7px 0 10px!important;}
+.item-atual{padding:12px!important;margin:9px 0!important;border-radius:14px!important;}
+.item-atual h2{font-size:18px!important;}
+.pat{font-size:19px!important;padding:8px!important;margin:8px 0!important;}
+.end{font-size:15px!important;padding:8px!important;margin:8px 0!important;}
+.bigbtn{padding:14px!important;font-size:16px!important;border-radius:14px!important;}
+.itens{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;gap:7px!important;}
+.item{padding:8px!important;font-size:11px!important;border-radius:10px!important;}
+
+@media(max-width:1200px){
+  .retirada-hero{grid-template-columns:1fr!important;}
+  .hero-status{grid-template-columns:repeat(3,1fr)!important;}
+  .pedido-top{grid-template-columns:110px 1fr 180px!important;}
+  .pedido-top > div:last-child{grid-column:1 / -1!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;border-top:1px solid #f1f5f9!important;padding-top:8px!important;}
+}
+@media(max-width:800px){
+  .grid{grid-template-columns:1fr!important;}
+  .hero-status{grid-template-columns:1fr!important;}
+  .pedido-top{grid-template-columns:1fr!important;gap:7px!important;}
+  .pedido-top > div:last-child{grid-column:auto!important;flex-direction:column!important;align-items:stretch!important;border-top:1px solid #f1f5f9!important;padding-top:8px!important;}
+  .pedido-top > div:last-child .btn,
+  .pedido-top > div:last-child button{width:100%!important;}
+}
+
+
+/* =========================================================
+   CORREÇÃO FINAL - BOTÕES DO PEDIDO LADO A LADO
+   Mantém Autorizar / Negar na mesma linha e card compacto
+========================================================= */
+.pedido{
+  padding:0!important;
+  margin-bottom:7px!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+}
+.pedido-top{
+  display:grid!important;
+  grid-template-columns:130px minmax(230px,1fr) 165px 210px!important;
+  gap:10px!important;
+  align-items:center!important;
+  padding:9px 12px!important;
+  min-height:46px!important;
+}
+.pedido-top > div:last-child{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  flex-wrap:nowrap!important;
+  border-top:none!important;
+  padding-top:0!important;
+  margin-top:0!important;
+}
+.pedido-top > div:last-child .btn,
+.pedido-top > div:last-child button{
+  width:auto!important;
+  min-width:86px!important;
+  max-width:105px!important;
+  height:34px!important;
+  padding:7px 10px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  border-radius:9px!important;
+  white-space:nowrap!important;
+}
+.cod{font-size:14px!important;line-height:1.2!important;}
+.sub{font-size:11px!important;line-height:1.25!important;}
+.status{
+  min-height:24px!important;
+  padding:5px 10px!important;
+  font-size:9px!important;
+  line-height:1.15!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+.det{padding:9px 12px!important;}
+
+@media(max-width:1200px){
+  .pedido-top{
+    grid-template-columns:120px minmax(190px,1fr) 155px 195px!important;
+  }
+  .pedido-top > div:last-child{
+    grid-column:auto!important;
+    flex-direction:row!important;
+    justify-content:flex-end!important;
+    border-top:none!important;
+    padding-top:0!important;
+  }
+}
+
+@media(max-width:850px){
+  .pedido-top{
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+  }
+  .pedido-top > div:last-child{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+    width:100%!important;
+    border-top:1px solid #f1f5f9!important;
+    padding-top:8px!important;
+  }
+  .pedido-top > div:last-child .btn,
+  .pedido-top > div:last-child button{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    height:38px!important;
+  }
+}
+
+/* BDR fluxo corrigido */
+.pedido .acao-bloqueada{font-size:11px;font-weight:900;color:#6b7280;background:#f3f4f6;border-radius:9px;padding:8px 10px;text-align:center;}
+</style>
+</head>
+<body>
+<script>verificarLogin();</script>
+
+<div class="app-layout">
+  <aside class="bdr-sidebar">
+    <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn active" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+  </aside>
+
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">📦 BDR Retirada / Separação</div>
+        <div class="bdr-topbar-sub">Modo tablet: bipar prateleira, bipar patrimônio e liberar para transferência.</div>
+      </div>
+
+      <div class="bdr-top-actions">
+        <div class="notif-wrap">
+          <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+            <i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span>
+          </button>
+          <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div>
+          </div>
+        </div>
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini"><b id="usuarioNome" tabindex="-1">Olá, -</b><small id="usuarioPerfil" tabindex="-1">-</small></div>
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+          <div id="dropdownUser" class="dropdown-user">
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="retirada-hero">
+      <div>
+        <h2>Separação operacional por pedido</h2>
+        <p>Abra o pedido, bipa o endereço e depois bipa o patrimônio. Tudo fica salvo no histórico.</p>
+        <div class="alerta"><strong>Fluxo:</strong> Autorizar → Separar → Aguardando retirada → Transferência. Solicitante acompanha, origem separa.</div>
+      </div>
+      <div class="hero-status">
+        <div class="hero-mini"><strong id="kpiAut">0</strong><span>Aguardando autorização</span></div>
+        <div class="hero-mini"><strong id="kpiSep">0</strong><span>Em separação</span></div>
+        <div class="hero-mini"><strong id="kpiPronto">0</strong><span>Aguardando retirada</span></div>
+      </div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="abrirAba('autorizar',this)">✅ Autorizar</button>
+      <button class="tab-btn" onclick="abrirAba('separar',this)">📦 Separar</button>
+      <button class="tab-btn" onclick="abrirAba('prontos',this)">🚚 Prontos</button>
+      <button class="tab-btn" onclick="abrirAba('todos',this)">📋 Todos</button>
+    </div>
+
+    <section class="card">
+      <h3>🔎 Filtros</h3>
+      <div class="grid">
+        <input id="busca" placeholder="Buscar pedido, obra, solicitante, patrimônio..." oninput="renderizarTudo()">
+        <select id="filtroObra" onchange="renderizarTudo()"><option value="">Todas as obras</option></select>
+        <button class="btn-bdr red" onclick="carregarDados()">Atualizar</button>
+      </div>
+    </section>
+
+    <section id="tab-autorizar" class="tab active"><div id="listaAutorizar"></div></section>
+    <section id="tab-separar" class="tab"><div id="listaSeparar"></div></section>
+    <section id="tab-prontos" class="tab"><div id="listaProntos"></div></section>
+    <section id="tab-todos" class="tab"><div id="listaTodos"></div></section>
+  </main>
+</div>
+
+<div id="modalScanner" class="modal-bg">
+  <div class="modal">
+    <div class="modal-head" id="scannerTitulo">Scanner</div>
+    <div class="modal-body">
+      <div id="scanStatus" class="scan-status">Aponte a câmera para o QR Code.</div>
+      <div id="reader"></div>
+      <br>
+      <button class="btn gray" onclick="fecharScanner()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"><strong></strong><span></span></div>
+
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

@@ -3,258 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <title>BDR ERP - Triagem</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script defer src="./JS/triagem.js"></script>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#0b1220;color:white}
-header{background:linear-gradient(90deg,#a4161a,#2c3e50);padding:15px 20px;font-weight:bold}
-.layout{display:flex}
-.sidebar{width:220px;background:#111b2e;min-height:100vh;padding:15px}
-.menu-btn{width:100%;padding:10px;margin:6px 0;border:none;border-radius:6px;background:#1c2b3a;color:white;cursor:pointer;text-align:left}
-.menu-btn:hover{background:#2c3e50}
-.content{flex:1;padding:20px}
-.card{background:#111b2e;padding:18px;border-radius:12px;margin-bottom:15px}
-.entrada{background:white;color:#222;border-left:5px solid #a4161a;padding:15px;border-radius:10px;margin-bottom:14px}
-.entrada strong{color:#a4161a}
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --orange:#f97316;
+  --green:#16a34a;
+}
+
+body{background:var(--bdr-bg)!important;}
+
+.bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500}
+.bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900}
+
+/* TOPO PADRÃO BDR - USUÁRIO + SININHO REAL */
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.notif-wrap{position:relative}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;box-shadow:none;outline:none!important;-webkit-tap-highlight-color:transparent;padding:0}
+.notif-btn:hover{background:#fff1f2;color:var(--bdr-red);transform:translateY(-1px)}
+.notif-btn:focus,.notif-btn:active{outline:none!important;box-shadow:none!important}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:white;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.notif-dropdown{position:absolute;top:48px;right:0;width:360px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:9999}
+.notif-dropdown.ativo{display:block;animation:dropdownTop .16s ease}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--bdr-red);background:#fff5f5;border-bottom:1px solid #fecaca}
+.notif-list{max-height:320px;overflow:auto}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;cursor:pointer}
+.notif-item:hover{background:#f9fafb}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px}
+
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-tap-highlight-color:transparent}
+.user-menu,.user-menu *,#usuarioNome,#usuarioPerfil{user-select:none!important;caret-color:transparent!important}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02)}
+.user-menu:hover .avatar{transform:scale(1.06)}
+.user-mini{text-align:right;font-size:13px;pointer-events:none}
+.user-mini b{display:block;outline:none!important;color:#111827}.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--bdr-red);font-size:18px;transition:.22s ease;pointer-events:none}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:9999}
+.dropdown-user.ativo{display:block;animation:dropdownTop .16s ease}
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px}
+.dropdown-user button:hover{background:#fff1f2;color:var(--bdr-red);transform:none;filter:none}.dropdown-user .logout-btn{color:#dc2626}
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:focus,.user-menu:active{outline:none!important;box-shadow:none!important}button{-webkit-tap-highlight-color:transparent}
+.bdr-top-actions,.bdr-top-actions *,.notif-wrap,.notif-wrap *,.notif-btn,.notif-btn *,.notif-btn i,.notif-badge{outline:none!important;box-shadow:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important}.notif-btn i,.notif-badge{pointer-events:none}.notif-btn:focus,.notif-btn:focus-visible,.notif-btn:active{outline:0!important;box-shadow:none!important}
+
+/* TRIAGEM */
+.triagem-hero{background:radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);border-left:4px solid var(--bdr-red);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 9px rgba(0,0,0,.07)}
+.triagem-hero h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900}.triagem-hero p{margin:5px 0 0;color:#6b7280;font-size:13px}
+.card h2,.card h3{margin-top:0;color:var(--bdr-red)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-select,textarea,input{width:100%;padding:10px;border:none;border-radius:6px;box-sizing:border-box}
-.btn{background:#a4161a;color:white;border:none;padding:10px;border-radius:7px;cursor:pointer;margin-top:10px}
-.btn:hover{background:#7a1014}
-.badge{display:inline-block;padding:4px 10px;border-radius:20px;color:white;font-size:12px;background:#f97316;margin-top:6px}
-.item{background:#f3f4f6;padding:10px;border-radius:8px;margin-top:8px}
-.alerta-patrimonio{background:#fff7ed;border-left:4px solid #f97316;padding:8px;border-radius:6px;margin-top:8px}
+.resumo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.resumo-card{background:#f9fafb;border-radius:12px;padding:12px;border-left:4px solid var(--bdr-red);box-shadow:0 2px 7px rgba(0,0,0,.06)}.resumo-card strong{display:block;font-size:22px;color:#111827}.resumo-card span{font-size:12px;color:#6b7280;font-weight:800}
+input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:8px;background:#fff}textarea{min-height:60px}.btn{border:none;padding:9px 12px;border-radius:8px;color:white;cursor:pointer;font-weight:bold}.btn-ok{background:#2a9d8f}.btn-dark{background:#111827}.btn-blue{background:#2563eb}.btn-gray{background:#6b7280}
+.badge{display:inline-block;padding:4px 9px;border-radius:20px;color:white;font-size:12px;background:#6b7280}.badge-pendente{background:#f97316}.badge-info{background:#2563eb}
+.info{background:#eff6ff;border-left:5px solid var(--blue);padding:10px;border-radius:8px;margin-top:8px;color:#1e3a8a}.alerta{background:#fff7ed;border-left:4px solid var(--orange);padding:8px;border-radius:8px;margin-top:8px;color:#7c2d12}
+.abas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.aba{border:none;background:#1f2937;color:white;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:900}.aba.ativa{background:var(--bdr-red)}
+.mes-card,.nf-card{background:white;border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.10);border-left:4px solid var(--bdr-red)}.mes-card h3{margin:0 0 10px;color:var(--bdr-red)}.dia-linha{display:grid;grid-template-columns:120px 1fr 130px;gap:10px;align-items:center;background:#f9fafb;border-left:4px solid #2563eb;border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer}.dia-linha:hover{background:#fff1f2;transform:translateX(3px)}
+.nf-header{display:grid;grid-template-columns:120px 1fr 130px 120px;gap:10px;align-items:center;cursor:pointer}.nf-header strong{color:var(--bdr-red)}.nf-itens{display:none;margin-top:12px}.item{background:#f9fafb;border-left:4px solid #2563eb;padding:12px;border-radius:10px;margin-top:10px}.item strong{color:var(--bdr-red);font-size:15px}.codigo-end{font-size:20px;font-weight:bold;color:var(--bdr-red);background:#fff;padding:10px;border-radius:10px;border:1px dashed var(--bdr-red);text-align:center}.linha-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:10px}
+@media(max-width:900px){.dia-linha,.nf-header{grid-template-columns:1fr}.bdr-top-actions{width:100%;justify-content:space-between}.notif-dropdown{right:-80px;width:300px}}
 </style>
 </head>
 
 <body>
-<!-- ===================================== -->
-<!-- BLOQUEIO DE LOGIN                     -->
-<!-- ===================================== -->
+<script>verificarLogin();</script>
+<span id="dataAtual" style="display:none"></span>
+<span id="usuarioInfo" style="display:none"></span>
 
-<script src="JS/auth.js"></script>
+<div class="bdr-app">
+  <aside class="bdr-sidebar">
+    <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
 
-<script>
-  verificarLogin();
-</script>
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
 
-<!-- ===================================== -->
-<!-- FIM BLOQUEIO DE LOGIN                 -->
-<!-- ===================================== -->
-<header>📋 BDR ERP - Triagem de Entradas</header>
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
 
-<div class="layout">
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
 
-<div class="sidebar">
-  <button class="menu-btn" onclick="location.href='dashboard.html'">📊 Dashboard</button>
-  <button class="menu-btn" onclick="location.href='entrada.html'">📥 Entrada</button>
-  <button class="menu-btn" onclick="location.href='triagem.html'">📋 Triagem</button>
-  <button class="menu-btn" onclick="location.href='estoque.html'">📦 Estoque</button>
-  <button class="menu-btn" onclick="location.href='patrimonio.html'">🏷 Patrimônio</button>
-</div>
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn active" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
 
-<div class="content">
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
 
-<div class="card">
-  <h2>Entradas aguardando triagem</h2>
-  <p>Escolha o destino dos materiais recebidos.</p>
-</div>
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
 
-<div id="listaEntradas"></div>
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
 
-</div>
-</div>
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="./JS/supabaseClient.js"></script>
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
 
-<script>
-let entradas = [];
-let itens = [];
-let produtos = [];
-let obras = [];
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
 
-function db(){
-  return window.client || window.supabaseClient || client;
-}
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
 
-function moeda(v){
-  return Number(v || 0).toLocaleString("pt-BR", {
-    style:"currency",
-    currency:"BRL"
-  });
-}
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
 
-async function carregarTriagem(){
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+  </aside>
 
-  const entradaResp = await db()
-    .from("entradas")
-    .select("*")
-    .eq("status", "AGUARDANDO_TRIAGEM")
-    .order("id", { ascending:false });
-
-  const itensResp = await db()
-    .from("entrada_itens")
-    .select("*")
-    .eq("status", "AGUARDANDO_TRIAGEM");
-
-  const produtosResp = await db()
-    .from("produtos")
-    .select("*");
-
-  const obrasResp = await db()
-    .from("obras")
-    .select("*")
-    .order("nome");
-
-  if(entradaResp.error){
-    alert(entradaResp.error.message);
-    return;
-  }
-
-  entradas = entradaResp.data || [];
-  itens = itensResp.data || [];
-  produtos = produtosResp.data || [];
-  obras = obrasResp.data || [];
-
-  renderizarEntradas();
-}
-
-function nomeProduto(id){
-  const p = produtos.find(x => String(x.id) === String(id));
-  return p ? (p.descricao || p.nome || "Produto") : "Produto ID " + id;
-}
-
-function renderizarEntradas(){
-
-  const lista = document.getElementById("listaEntradas");
-  lista.innerHTML = "";
-
-  if(entradas.length === 0){
-    lista.innerHTML = `
-      <div class="entrada">
-        Nenhuma entrada aguardando triagem.
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">🧪 BDR ERP - Triagem</div>
+        <div class="bdr-topbar-sub">Conferência de entradas, sugestão de endereço e separação para estoque/patrimônio.</div>
       </div>
-    `;
-    return;
-  }
 
-  entradas.forEach(e => {
-
-    const itensEntrada = itens.filter(i => String(i.entrada_id) === String(e.id));
-
-    let optionsObras = `<option value="">CD - Centro de Distribuição / Estoque</option>`;
-
-    obras.forEach(o => {
-      optionsObras += `
-        <option value="${o.id}">
-          ${o.codigo_obra || "-"} - ${o.nome || "-"}
-        </option>
-      `;
-    });
-
-    let htmlItens = "";
-
-    itensEntrada.forEach(i => {
-
-      const sugerePatrimonio = Number(i.valor_unitario || 0) >= 1200;
-
-      htmlItens += `
-        <div class="item">
-          <strong>${nomeProduto(i.produto_id)}</strong><br>
-          <b>Qtd:</b> ${i.quantidade || 0}<br>
-          <b>Valor unitário:</b> ${moeda(i.valor_unitario)}<br>
-          <b>Total:</b> ${moeda(i.valor_total)}<br>
-          <b>Estado:</b> ${i.estado_produto || "-"}<br>
-          <b>Lote:</b> ${i.lote || "-"}<br>
-
-          ${sugerePatrimonio ? `
-            <div class="alerta-patrimonio">
-              ⚠️ Sugestão: item acima de R$ 1.200,00. Avaliar cadastro como patrimônio.
-            </div>
-          ` : ""}
+      <div class="bdr-top-actions">
+        <div class="notif-wrap">
+          <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+          <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div>
+          </div>
         </div>
-      `;
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini">
+            <b id="usuarioNome" tabindex="-1">Olá, -</b>
+            <small id="usuarioPerfil" tabindex="-1">-</small>
+          </div>
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+          <div id="dropdownUser" class="dropdown-user">
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="triagem-hero">
+      <h2>Triagem simples e eficaz</h2>
+      <p>Abra a NF, confirme o destino e o sistema sugere automaticamente uma posição livre.</p>
+      <div class="info">Padrão de endereço: <b>R1-F1-P01-C2-N3</b>. O QR da posição será <b>END-R1-F1-P01-C2-N3</b>.</div>
+    </section>
+
+    <section class="card">
+      <h3>📊 Resumo</h3>
+      <div class="resumo-grid">
+        <div class="resumo-card"><strong id="resumoNFs">0</strong><span>NFs pendentes</span></div>
+        <div class="resumo-card"><strong id="resumoItens">0</strong><span>Itens pendentes</span></div>
+        <div class="resumo-card"><strong id="resumoValor">R$ 0,00</strong><span>Valor pendente</span></div>
+        <div class="resumo-card"><strong id="resumoPatrimonio">0</strong><span>Sugestões patrimônio</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>🔎 Filtros</h3>
+      <div class="grid">
+        <input id="busca" placeholder="Buscar NF, fornecedor, item..." oninput="renderizarTudo()">
+        <select id="filtroMes" onchange="renderizarTudo()"><option value="">Todos os meses</option></select>
+      </div>
+    </section>
+
+    <div class="abas">
+      <button class="aba ativa" id="abaCalendario" onclick="mudarVisao('CALENDARIO')">📅 Por data</button>
+      <button class="aba" id="abaNFs" onclick="mudarVisao('NFS')">📄 Por NF</button>
+    </div>
+
+    <div id="listaTriagem"></div>
+  </main>
+</div>
+
+<script>
+function ir(pagina){ window.location.href = pagina; }
+function db(){ return window.client || window.supabaseClient || window.clientSupabase || globalThis.client; }
+function usuarioAtualTopo(){
+  try{ const u = localStorage.getItem("usuario_logado"); return u ? JSON.parse(u) : null; }catch(e){ return null; }
+}
+function carregarUsuarioTopo(){
+  const usuario = usuarioAtualTopo();
+  const nome = document.getElementById("usuarioNome");
+  const perfil = document.getElementById("usuarioPerfil");
+  if(nome) nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
+  if(perfil) perfil.innerText = usuario ? (usuario.perfil || "-") : "-";
+  const infoAntigo = document.getElementById("usuarioInfo");
+  if(infoAntigo) infoAntigo.innerText = usuario ? "👤 " + (usuario.nome || "usuário") : "";
+  const dataAntiga = document.getElementById("dataAtual");
+  if(dataAntiga) dataAntiga.innerText = new Date().toLocaleString("pt-BR");
+}
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+document.addEventListener("click", fecharMenusTopo);
+function atualizarNotificacoes(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+  if(!badge || !box) return;
+  const total = lista.length;
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+  if(total === 0){ box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`; return; }
+  box.innerHTML = lista.map(n => `<div class="notif-item" onclick="${n.acao || ''}"><strong>${n.titulo}</strong><span>${n.texto}</span></div>`).join("");
+}
+function statusPedidoTexto(status){
+  const mapa = {
+    AGUARDANDO_AUTORIZACAO:"Aguardando autorização",
+    EM_SEPARACAO:"Em separação",
+    AGUARDANDO_RETIRADA:"Aguardando retirada",
+    EM_TRANSITO:"Em trânsito",
+    AGUARDANDO_CONFERENCIA:"Aguardando conferência",
+    ENTREGUE:"Entregue",
+    NEGADO:"Negado",
+    RECEBIDO_COM_DIVERGENCIA:"Recebido com divergência"
+  };
+  return mapa[status] || status || "-";
+}
+async function gerarNotificacoesReais(){
+  const banco = db();
+  if(!banco){ atualizarNotificacoes([]); return; }
+  const lista = [];
+  try{
+    const usuario = usuarioAtualTopo();
+    const perfil = String(usuario?.perfil || "").toUpperCase();
+    const usuarioObraId = usuario?.obra_id ? String(usuario.obra_id) : "";
+
+    const pedidosResp = await banco.from("pedidos_retirada").select("*").order("id",{ascending:false}).limit(20);
+    if(pedidosResp.error){
+      console.warn("Erro ao buscar pedidos para notificações:", pedidosResp.error.message);
+    }
+    const pedidos = pedidosResp.data || [];
+    let pedidosVisiveis = pedidos;
+    if(perfil !== "MASTER" && perfil !== "ADMIN" && perfil !== "ALMOXARIFE" && usuarioObraId){
+      pedidosVisiveis = pedidos.filter(p => String(p.obra_id || "") === usuarioObraId || String(p.solicitante || "") === String(usuario?.nome || ""));
+    }
+    const abertos = pedidosVisiveis.filter(p => !["ENTREGUE","NEGADO","RECEBIDO_COM_DIVERGENCIA"].includes(String(p.status || "")));
+    abertos.slice(0,6).forEach(p => {
+      lista.push({
+        titulo:`📝 ${p.codigo || "PED-" + p.id} - ${statusPedidoTexto(p.status)}`,
+        texto:`${p.obra_nome || "Obra não informada"} | Solicitante: ${p.solicitante || "-"}`,
+        acao:`ir('pedidos.html')`
+      });
     });
 
-    lista.innerHTML += `
-      <div class="entrada">
-        <strong>Entrada #${e.id}</strong><br><br>
+    const histResp = await banco.from("historico_pedidos_retirada").select("*").order("id",{ascending:false}).limit(5);
+    if(histResp.error){
+      console.warn("Erro ao buscar histórico de pedidos para notificações:", histResp.error.message);
+    }
+    (histResp.data || []).forEach(h => {
+      lista.push({
+        titulo:`🔄 Pedido atualizado: ${statusPedidoTexto(h.status_novo)}`,
+        texto:`Atualizado por ${h.usuario || "usuário"}. ${h.observacao || ""}`,
+        acao:`ir('pedidos.html')`
+      });
+    });
 
-        <b>NF:</b> ${e.numero_nf || "-"}<br>
-        <b>Fornecedor:</b> ${e.fornecedor || "-"}<br>
-        <b>Responsável:</b> ${e.responsavel || "-"}<br>
-        <b>Status:</b> <span class="badge">${e.status}</span><br><br>
-
-        <h4>Itens recebidos</h4>
-        ${htmlItens}
-
-        <br>
-
-        <label><b>Destino da entrada</b></label>
-        <select id="destino-${e.id}">
-          ${optionsObras}
-        </select>
-
-        <label><b>Detalhe da triagem</b></label>
-        <textarea id="detalhe-${e.id}" placeholder="Ex: material destinado para FS LRV retirar no CD"></textarea>
-
-        <button class="btn" onclick="salvarTriagem(${e.id})">
-          ✅ Confirmar triagem
-        </button>
-      </div>
-    `;
-  });
+    atualizarNotificacoes(lista.slice(0,9));
+  }catch(e){
+    console.warn("Erro ao gerar notificações reais:", e);
+    atualizarNotificacoes([]);
+  }
 }
-
-async function salvarTriagem(entradaId){
-
-  const destino = document.getElementById("destino-" + entradaId).value || null;
-  const detalhe = document.getElementById("detalhe-" + entradaId).value || "";
-
-  const { error: erroEntrada } = await db()
-    .from("entradas")
-    .update({
-      status: "TRIADO",
-      destino_obra_id: destino
-    })
-    .eq("id", entradaId);
-
-  if(erroEntrada){
-    alert(erroEntrada.message);
-    return;
-  }
-
-  const { error: erroItens } = await db()
-    .from("entrada_itens")
-    .update({
-      status: "TRIADO",
-      destino_obra_id: destino,
-      detalhe_triagem: detalhe
-    })
-    .eq("entrada_id", entradaId);
-
-  if(erroItens){
-    alert(erroItens.message);
-    return;
-  }
-
-  if(destino){
-    await db()
-      .from("alertas")
-      .insert([{
-        obra_id: destino,
-        entrada_id: entradaId,
-        titulo: "Material disponível para retirada",
-        mensagem: detalhe || "Chegou material destinado para sua obra/setor. Retirar no CD.",
-        lido: false
-      }]);
-  }
-
-  alert("Triagem confirmada com sucesso!");
-  carregarTriagem();
+function iniciarRealtimeNotificacoes(){
+  const banco = db();
+  if(!banco || typeof banco.channel !== "function") return;
+  try{
+    banco.channel("bdr_triagem_notificacoes_pedidos")
+      .on("postgres_changes", {event:"*", schema:"public", table:"pedidos_retirada"}, () => gerarNotificacoesReais())
+      .on("postgres_changes", {event:"*", schema:"public", table:"historico_pedidos_retirada"}, () => gerarNotificacoesReais())
+      .subscribe();
+  }catch(e){ console.warn("Realtime indisponível:", e); }
 }
-
-window.addEventListener("load", carregarTriagem);
+document.addEventListener("DOMContentLoaded", () => {
+  carregarUsuarioTopo();
+  gerarNotificacoesReais();
+  iniciarRealtimeNotificacoes();
+});
 </script>
 
+<!-- Notificações já estão neste HTML. Evita conflito/consulta duplicada. -->
+<script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>

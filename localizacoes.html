@@ -52,7 +52,7 @@ th{
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>
@@ -74,25 +74,13 @@ th{
 
 <nav class="menu-lateral">
 
-<button onclick="location.href='entrada.html'">
-📥 Entrada
-</button>
-
-<button onclick="location.href='triagem.html'">
-📋 Triagem
-</button>
-
-<button onclick="location.href='estoque.html'">
-📦 Estoque
-</button>
-
-<button onclick="location.href='patrimonio.html'">
-🏷 Patrimônio
-</button>
-
-<button onclick="location.href='localizacoes.html'">
-🗺 Localizações
-</button>
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Torre de Controle</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn" onclick="ir('usuarios.html')">👥 Usuários</button>
+  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
 
 </nav>
 
@@ -306,6 +294,7 @@ tbody.appendChild(tr);
 carregar();
 
 </script>
+<script src="./JS/bdrNotificacoes.js"></script>
 
 </body>
 </html>

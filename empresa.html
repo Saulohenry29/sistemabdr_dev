@@ -1,181 +1,804 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <title>BDR ERP - Empresas</title>
 
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#0b1220;color:white}
-header{background:linear-gradient(90deg,#a4161a,#2c3e50);padding:15px 20px;position:sticky;top:0;z-index:1000}
-.layout{display:flex}
-.sidebar{width:220px;background:#111b2e;min-height:100vh;padding:15px}
-.sidebar h3{color:#8ecae6}
-.menu-btn{display:block;width:100%;padding:10px;margin:8px 0;border:none;border-radius:6px;cursor:pointer;background:#1c2b3a;color:white;text-align:left}
-.menu-btn:hover{background:#2c3e50}
-.content{flex:1}
-.container{padding:20px}
-.card{background:#111b2e;padding:20px;border-radius:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-label{display:block;margin-bottom:5px}
-input,textarea{width:100%;padding:10px;border:none;border-radius:6px;box-sizing:border-box}
-textarea{height:80px}
-.btn{background:#2a9d8f;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;margin-top:15px}
+/* =========================================================
+   EMPRESAS - PADRÃO EM LINHA IGUAL PATRIMÔNIO
+========================================================= */
 
-.lista{
-  margin-top:25px;
+.empresa-form-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
-  gap:22px;
-  align-items:stretch;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
 }
 
-.item{
-  background:#fff;
-  color:#222;
-  border-left:5px solid #a4161a;
-  padding:12px; 
+.empresa-filtro-grid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:8px;
+}
+
+.empresa-header{
+  display:grid;
+  grid-template-columns:2fr 110px 1.5fr 1.2fr 90px 270px;
+  gap:10px;
+  padding:10px 14px;
+  margin-bottom:8px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.empresa-linha{
+  display:grid;
+  grid-template-columns:2fr 110px 1.5fr 1.2fr 90px 270px;
+  gap:10px;
+  align-items:center;
+  background:white;
+  padding:9px 14px;
+  min-height:42px;
   border-radius:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,.18);
-  font-size:14px;
-  line-height:1.6;
-  min-height:120px;    
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  border-left:4px solid var(--bdr-red);
+  margin-bottom:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.07);
+  cursor:pointer;
+  font-size:13px;
+  transition:.18s ease;
 }
 
-.item strong{color:#a4161a}
+.empresa-linha:hover{
+  background:#f9fafb;
+  transform:translateX(4px);
+  box-shadow:0 5px 14px rgba(0,0,0,.10);
+}
 
-.status{
-  display:inline-block;
+.empresa-nome{
+  font-weight:900;
+  color:var(--bdr-red);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empresa-info{
+  color:#374151;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empresa-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  justify-self:start;
   width:max-content;
   padding:4px 10px;
-  border-radius:20px;
+  border-radius:8px;
   color:white;
-  font-size:12px;
-  margin-top:8px;
+  font-size:10px;
+  font-weight:900;
 }
 
-.ATIVA{background:#2a9d8f}
-.INATIVA{background:#dc2626}
+.empresa-status.ATIVA{
+  background:#16a34a;
+}
 
-.btn-card{
-  background:#1f2937;
-  color:white;
+.empresa-status.INATIVA{
+  background:#dc2626;
+}
+
+.empresa-acoes{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.btn-mini{
   border:none;
-  padding:7px 10px;
-  border-radius:7px;
-  margin-top:10px;
-  margin-right:5px;
+  border-radius:8px;
+  padding:6px 9px;
+  font-size:11px;
+  font-weight:800;
+  background:#111827;
+  color:white;
   cursor:pointer;
 }
 
-.btn-card:hover{background:#a4161a}
-
-@media(max-width:768px){
-  .layout{flex-direction:column}
-  .sidebar{width:100%;min-height:auto}
-  .grid{grid-template-columns:1fr}
-  .lista{grid-template-columns:1fr}
-  .item{min-height:auto}
+.btn-mini:hover{
+  background:var(--bdr-red);
 }
-</style>
 
+.empresa-detalhes{
+  grid-column:1/-1;
+  display:none;
+  background:#f8fafc;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+  line-height:1.6;
+  color:#374151;
+}
+
+.empresa-linha.aberta .empresa-detalhes{
+  display:block;
+}
+
+.form-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.btn-salvar{background:#2a9d8f}
+.btn-limpar{background:#6b7280}
+
+.btn-mini.btn-editar{background:#2563eb}
+.btn-mini.btn-status{background:#6b7280}
+.btn-mini.btn-status-danger{background:#dc2626}
+
+.edicao-card{
+  display:none;
+  border-left-color:#2563eb;
+}
+
+.edicao-card.ativo{
+  display:block;
+}
+
+.edicao-aviso{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+  color:#1f2937;
+  font-size:12px;
+}
+
+.mov-empresa-lista{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.mov-empresa-linha{
+  background:#f8fafc;
+  border-left:4px solid var(--bdr-red);
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:12px;
+  line-height:1.45;
+  color:#374151;
+}
+
+.mov-empresa-linha strong{
+  color:var(--bdr-red);
+}
+
+@media(max-width:1100px){
+  .empresa-form-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .empresa-filtro-grid{
+    grid-template-columns:1fr;
+  }
+
+  .empresa-header{
+    display:none;
+  }
+
+  .empresa-linha{
+    grid-template-columns:1fr;
+    gap:5px;
+    padding:12px;
+  }
+
+  .empresa-acoes{
+    margin-top:6px;
+  }
+}
+
+@media(max-width:700px){
+  .empresa-form-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + SININHO REAL
+========================================================= */
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
+}
+
+.bdr-topbar-title{
+  color:var(--bdr-red)!important;
+  font-weight:900;
+}
+
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+}
+
+.notif-wrap{position:relative;}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  box-shadow:none;
+  outline:none!important;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
+}
+
+.notif-btn:focus,
+.notif-btn:focus-visible,
+.notif-btn:active{
+  outline:0!important;
+  box-shadow:none!important;
+}
+
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:340px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:300px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.notif-item:hover{background:#f9fafb;}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px;}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+.user-menu:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu:hover .avatar{transform:scale(1.06);}
+
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+
+.user-mini b{display:block;outline:none!important;}
+.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important;}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
+}
+
+.dropdown-user .logout-btn{color:#dc2626;}
+
+.bdr-toast{
+  position:fixed;
+  right:18px;
+  top:18px;
+  z-index:10000;
+  background:#fff;
+  border-left:5px solid var(--bdr-red);
+  border-radius:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+  padding:13px 15px;
+  min-width:280px;
+  max-width:380px;
+  display:none;
+  animation:dropdownTop .22s ease;
+}
+.bdr-toast strong{display:block;color:var(--bdr-red);margin-bottom:4px;}
+.bdr-toast span{color:#374151;font-size:13px;}
+
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active,
+.user-menu:focus,
+.user-menu:active{
+  outline:none!important;
+  box-shadow:none!important;
+}
+
+button,
+.bdr-top-actions,
+.bdr-top-actions *,
+.notif-wrap,
+.notif-wrap *,
+.notif-btn,
+.notif-btn *,
+.notif-badge{
+  -webkit-tap-highlight-color:transparent!important;
+  caret-color:transparent!important;
+  user-select:none!important;
+}
+
+.notif-btn i,
+.notif-badge{pointer-events:none;}
+
+@media(max-width:900px){
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-80px;width:300px;}
+  .bdr-topbar{flex-direction:column;align-items:flex-start;gap:10px;}
+}
+
+</style>
 </head>
 
 <body>
-<!-- ===================================== -->
-<!-- BLOQUEIO DE LOGIN                     -->
-<!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>
 
-<!-- ===================================== -->
-<!-- FIM BLOQUEIO DE LOGIN                 -->
-<!-- ===================================== -->
-<header>🏢 BDR ERP - Empresas</header>
+<div class="bdr-app">
 
-<div class="layout">
+  <aside class="bdr-sidebar">
 
-<div class="sidebar">
-  <h3>MENU</h3>
-  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
-  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
-  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
-  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
-  <button class="menu-btn">🚜 Veículos e Máquinas</button>
-  <button class="menu-btn">👥 Usuários</button>
-  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
-</div>
+    <div class="bdr-brand">
+      <div class="bdr-brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+    </div>
 
-<div class="content">
-<div class="container">
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
 
-<div class="card">
-<h2>Cadastro de Empresas</h2>
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
 
-<div class="grid">
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>Código da Empresa</label>
-    <input id="codigo_empresa" placeholder="Ex: 10013">
-  </div>
-  
-  <div>
-    <label>Nome da Empresa</label>
-    <input id="nome">
-  </div>
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>Setor / Obra</label>
-    <input id="setor_obra" placeholder="Ex: Oficina">
-  </div>
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>CNPJ</label>
-    <input id="cnpj">
-  </div>
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>Cidade</label>
-    <input id="cidade">
-  </div>
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>Estado</label>
-    <input id="estado">
-  </div>
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>Endereço</label>
-    <input id="endereco">
-  </div>
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
 
-  <div>
-    <label>CEP</label>
-    <input id="cep">
-  </div>
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
 
-</div>
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
 
-<br>
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn active" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
 
-<label>Observação</label>
-<textarea id="observacao"></textarea>
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
 
-<button class="btn" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
-</div>
+  </nav>
+</aside>
 
-<div id="listaEmpresas" class="lista"></div>
+  <main class="bdr-main">
 
-</div>
-</div>
+    <section class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">🏢 BDR Empresas</div>
+        <div class="bdr-topbar-sub">
+          Cadastro de empresas, obras e setores vinculados ao patrimônio.
+        </div>
+      </div>
 
+      <div class="bdr-top-actions">
+        <div class="notif-wrap">
+          <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+
+          <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list">
+              <div class="notif-item">Nenhuma notificação no momento.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini">
+            <b id="usuarioNome" tabindex="-1">Olá, -</b>
+            <small id="usuarioPerfil" tabindex="-1">-</small>
+          </div>
+
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+
+          <div id="dropdownUser" class="dropdown-user">
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+              <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+            </button>
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
+              <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>➕ Cadastro de Empresa / Obra / Setor</h3>
+
+      <div class="empresa-form-grid">
+        <div>
+          <label>Código da Empresa</label>
+          <input id="codigo_empresa" placeholder="Ex: 10013">
+        </div>
+
+        <div>
+          <label>Nome da Empresa</label>
+          <input id="nome" placeholder="Ex: METALURGICA BWP">
+        </div>
+
+        <div>
+          <label>Setor / Obra</label>
+          <input id="setor_obra" placeholder="Ex: CD CENTRO DE DISTRIBUIÇÃO">
+        </div>
+
+        <div>
+          <label>CNPJ</label>
+          <input id="cnpj" placeholder="00.000.000/0000-00">
+        </div>
+
+        <div>
+          <label>Cidade</label>
+          <input id="cidade" placeholder="Ex: Itaara">
+        </div>
+
+        <div>
+          <label>Estado</label>
+          <input id="estado" placeholder="Ex: RS">
+        </div>
+
+        <div>
+          <label>Endereço</label>
+          <input id="endereco" placeholder="Rua, número, bairro">
+        </div>
+
+        <div>
+          <label>CEP</label>
+          <input id="cep" placeholder="00000-000">
+        </div>
+      </div>
+
+      <br>
+
+      <label>Observação</label>
+      <textarea id="observacao" placeholder="Observações da empresa, obra ou setor..."></textarea>
+
+      <div class="form-actions">
+        <button class="btn-salvar" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
+        <button class="btn-limpar" onclick="limparFormulario()">🧹 Limpar</button>
+      </div>
+    </section>
+
+    <section class="card edicao-card" id="cardEdicaoEmpresa">
+      <h3>✏️ Editar Empresa / Obra / Setor</h3>
+
+      <div class="edicao-aviso">
+        Editando: <b id="editandoEmpresaTitulo">-</b><br>
+        Toda alteração será registrada automaticamente em movimentações.
+      </div>
+
+      <input type="hidden" id="edit_id">
+
+      <div class="empresa-form-grid">
+        <div>
+          <label>Código da Empresa</label>
+          <input id="edit_codigo_empresa">
+        </div>
+
+        <div>
+          <label>Nome da Empresa</label>
+          <input id="edit_nome">
+        </div>
+
+        <div>
+          <label>Setor / Obra</label>
+          <input id="edit_setor_obra">
+        </div>
+
+        <div>
+          <label>CNPJ</label>
+          <input id="edit_cnpj">
+        </div>
+
+        <div>
+          <label>Cidade</label>
+          <input id="edit_cidade">
+        </div>
+
+        <div>
+          <label>Estado</label>
+          <input id="edit_estado">
+        </div>
+
+        <div>
+          <label>Endereço</label>
+          <input id="edit_endereco">
+        </div>
+
+        <div>
+          <label>CEP</label>
+          <input id="edit_cep">
+        </div>
+      </div>
+
+      <br>
+
+      <label>Observação</label>
+      <textarea id="edit_observacao"></textarea>
+
+      <div class="form-actions">
+        <button class="btn-salvar" onclick="salvarEdicaoEmpresa()">💾 Salvar alterações</button>
+        <button class="btn-limpar" onclick="cancelarEdicaoEmpresa()">Cancelar edição</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>🔎 Buscar empresas</h3>
+
+      <div class="empresa-filtro-grid">
+        <input id="buscaEmpresa" placeholder="Buscar por nome, código, setor, cidade..." oninput="renderizarEmpresas()">
+
+        <select id="filtroStatusEmpresa" onchange="renderizarEmpresas()">
+          <option value="">Todos os status</option>
+          <option value="ATIVA">Ativas</option>
+          <option value="INATIVA">Inativas</option>
+        </select>
+
+        <select id="filtroEstadoEmpresa" onchange="renderizarEmpresas()">
+          <option value="">Todos os estados</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>📋 Empresas cadastradas</h3>
+
+      <div class="empresa-header">
+        <div>Empresa</div>
+        <div>Código</div>
+        <div>Setor / Obra</div>
+        <div>Cidade / UF</div>
+        <div>Status</div>
+        <div>Ações</div>
+      </div>
+
+      <div id="listaEmpresas"></div>
+    </section>
+
+    <section class="card">
+      <h3>🧾 Últimas movimentações de empresas</h3>
+      <div id="listaMovEmpresas" class="mov-empresa-lista"></div>
+    </section>
+
+  </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -189,6 +812,9 @@ window.supabaseClient = window.client;
 </script>
 
 <script>
+let empresas = [];
+let movimentacoesEmpresas = [];
+
 function ir(pagina){
   window.location.href = pagina;
 }
@@ -198,7 +824,28 @@ function db(){
 }
 
 function campo(id){
-  return document.getElementById(id).value.trim();
+  const el = document.getElementById(id);
+  return el ? String(el.value || "").trim() : "";
+}
+
+function usuarioAtual(){
+  const u = localStorage.getItem("usuario_logado");
+  return u ? JSON.parse(u) : null;
+}
+
+function carregarUsuario(){
+  const usuario = usuarioAtual();
+
+  const nome = document.getElementById("usuarioNome");
+  const perfil = document.getElementById("usuarioPerfil");
+
+  if(nome){
+    nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
+  }
+
+  if(perfil){
+    perfil.innerText = usuario ? (usuario.perfil || "-") : "-";
+  }
 }
 
 async function salvarEmpresa(){
@@ -217,17 +864,17 @@ async function salvarEmpresa(){
   };
 
   if(!empresa.nome){
-    alert("Informe o nome da empresa");
+    alert("Informe o nome da empresa.");
     return;
   }
 
   if(!empresa.codigo_empresa){
-    alert("Informe o código da empresa");
+    alert("Informe o código da empresa.");
     return;
   }
 
   if(!empresa.setor_obra){
-    alert("Informe o setor / obra");
+    alert("Informe o setor / obra.");
     return;
   }
 
@@ -258,6 +905,12 @@ async function salvarEmpresa(){
     return;
   }
 
+  await registrarMovimentacaoEmpresa(
+    "CADASTRO_EMPRESA",
+    empresaCriada,
+    `Empresa cadastrada: ${empresa.nome || "-"} | Código: ${empresa.codigo_empresa || "-"} | Setor/Obra: ${empresa.setor_obra || "-"}`
+  );
+
   alert("Empresa e obra/setor cadastrados com sucesso!");
 
   limparFormulario();
@@ -276,65 +929,191 @@ async function carregarEmpresas(){
     return;
   }
 
+  empresas = data || [];
+
+  await carregarMovimentacoesEmpresas();
+
+  carregarFiltroEstados();
+  renderizarEmpresas();
+  renderizarMovimentacoesEmpresas();
+}
+
+function carregarFiltroEstados(){
+  const select = document.getElementById("filtroEstadoEmpresa");
+  const atual = select.value;
+
+  const estados = [...new Set(
+    empresas.map(e => e.estado).filter(Boolean)
+  )].sort();
+
+  select.innerHTML = `<option value="">Todos os estados</option>`;
+
+  estados.forEach(uf => {
+    select.innerHTML += `<option value="${uf}">${uf}</option>`;
+  });
+
+  select.value = atual;
+}
+
+function renderizarEmpresas(){
   const lista = document.getElementById("listaEmpresas");
+  const busca = campo("buscaEmpresa").toLowerCase();
+  const filtroStatus = campo("filtroStatusEmpresa");
+  const filtroEstado = campo("filtroEstadoEmpresa");
+
   lista.innerHTML = "";
 
-  if(!data || data.length === 0){
-    lista.innerHTML = "<div class='item'>Nenhuma empresa cadastrada.</div>";
+  const filtradas = empresas.filter(e => {
+    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+
+    const texto = `
+      ${e.nome || ""}
+      ${e.codigo_empresa || ""}
+      ${e.setor_obra || ""}
+      ${e.cnpj || ""}
+      ${e.cidade || ""}
+      ${e.estado || ""}
+      ${e.endereco || ""}
+      ${e.cep || ""}
+      ${statusTexto}
+    `.toLowerCase();
+
+    return texto.includes(busca)
+      && (!filtroStatus || statusTexto === filtroStatus)
+      && (!filtroEstado || e.estado === filtroEstado);
+  });
+
+  if(filtradas.length === 0){
+    lista.innerHTML = `<div class="empresa-linha">Nenhuma empresa encontrada.</div>`;
     return;
   }
 
-  data.forEach(e => {
+  filtradas.forEach(e => {
+    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
 
-  const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+    lista.innerHTML += `
+      <div class="empresa-linha" id="empresa-${e.id}">
 
-  lista.innerHTML += `
-    <div class="item">
+        <div class="empresa-nome" title="${e.nome || "-"}">
+          ${e.nome || "-"}
+        </div>
 
-      <div>
-        <strong>${e.nome || "-"}</strong><br><br>
+        <div class="empresa-info">
+          ${e.codigo_empresa || "-"}
+        </div>
 
-        <b>Código:</b> ${e.codigo_empresa || "-"}<br>
-        <b>Setor/Obra:</b> ${e.setor_obra || "-"}<br>
-        <span class="status ${statusTexto}">
-          ${statusTexto}
-        </span>
+        <div class="empresa-info" title="${e.setor_obra || "-"}">
+          ${e.setor_obra || "-"}
+        </div>
 
-        <br><br>
+        <div class="empresa-info">
+          ${e.cidade || "-"} ${e.estado ? " / " + e.estado : ""}
+        </div>
 
-        <button class="btn-card"
-          onclick="toggleDetalhes(${e.id})">
-          📂 Ver detalhes
-        </button>
+        <div>
+          <span class="empresa-status ${statusTexto}">
+            ${statusTexto}
+          </span>
+        </div>
+
+        <div class="empresa-acoes">
+          <button class="btn-mini" title="Ver detalhes" onclick="toggleDetalhes(${e.id})">📂 Detalhes</button>
+
+          <button class="btn-mini btn-editar" title="Editar empresa" onclick="editarEmpresa(${e.id})">✏️ Editar</button>
+
+          <button class="btn-mini ${e.ativa === false ? "btn-status" : "btn-status-danger"}"
+            title="${e.ativa === false ? "Reativar empresa" : "Inativar empresa"}"
+            onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
+            ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
+          </button>
+        </div>
+
+        <div class="empresa-detalhes">
+          <b>CNPJ:</b> ${e.cnpj || "-"}<br>
+          <b>Endereço:</b> ${e.endereco || "-"}<br>
+          <b>CEP:</b> ${e.cep || "-"}<br>
+          <b>Observação:</b> ${e.observacao || "-"}<br>
+        </div>
+
       </div>
+    `;
+  });
+}
 
-      <div id="detalhes-${e.id}"
-           style="display:none;margin-top:15px;">
+function toggleDetalhes(id){
+  const div = document.getElementById("empresa-" + id);
+  if(div){
+    div.classList.toggle("aberta");
+  }
+}
 
-        <b>Setor/Obra:</b> ${e.setor_obra || "-"}<br>
-        <b>CNPJ:</b> ${e.cnpj || "-"}<br>
-        <b>Estado:</b> ${e.estado || "-"}<br>
-        <b>Endereço:</b> ${e.endereco || "-"}<br>
-        <b>CEP:</b> ${e.cep || "-"}<br>
-        <b>Observação:</b> ${e.observacao || "-"}<br><br>
+async function registrarMovimentacaoEmpresa(tipo, empresaAntes, observacao){
 
-        <button class="btn-card"
-          onclick="editarEmpresa(${e.id})">
-          ✏️ Editar
-        </button>
+  const usuario = usuarioAtual();
 
-        <button class="btn-card"
-          onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
-          ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
-        </button>
+  await db().from("movimentacoes").insert([{
+    tipo: tipo,
+    observacao: observacao,
+    usuario: usuario?.nome || "SISTEMA",
+    data_movimentacao: new Date().toISOString()
+  }]);
+}
 
-      </div>
+async function carregarMovimentacoesEmpresas(){
 
+  const { data, error } = await db()
+    .from("movimentacoes")
+    .select("*")
+    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA"])
+    .order("id", { ascending:false })
+    .limit(10);
+
+  if(error){
+    console.warn("Não foi possível carregar movimentações de empresas:", error.message);
+    movimentacoesEmpresas = [];
+    return;
+  }
+
+  movimentacoesEmpresas = data || [];
+}
+
+function renderizarMovimentacoesEmpresas(){
+  const lista = document.getElementById("listaMovEmpresas");
+
+  if(!lista) return;
+
+  if(movimentacoesEmpresas.length === 0){
+    lista.innerHTML = "<div class='mov-empresa-linha'>Nenhuma movimentação de empresa encontrada.</div>";
+    return;
+  }
+
+  lista.innerHTML = movimentacoesEmpresas.map(m => `
+    <div class="mov-empresa-linha">
+      <strong>${m.tipo || "-"}</strong><br>
+      ${m.observacao || "-"}<br>
+      <small>Usuário: ${m.usuario || "-"} • ${formatarData(m.data_movimentacao)}</small>
     </div>
-  `;
-});}
+  `).join("");
+}
+
+function formatarData(data){
+  if(!data) return "-";
+  const d = new Date(String(data).replace(" ", "T"));
+  if(isNaN(d.getTime())) return data;
+  return d.toLocaleString("pt-BR");
+}
 
 async function alterarStatusEmpresa(id, status){
+
+  const empresaAntes = empresas.find(e => String(e.id) === String(id));
+
+  const statusAtual = empresaAntes?.ativa === false ? "INATIVA" : "ATIVA";
+  const statusNovo = status === true ? "ATIVA" : "INATIVA";
+
+  const confirma = confirm(`Confirma ${statusNovo === "ATIVA" ? "REATIVAR" : "INATIVAR"} a empresa "${empresaAntes?.nome || "-"}"?`);
+
+  if(!confirma) return;
+
   const { error } = await db()
     .from("empresas")
     .update({ ativa: status })
@@ -345,11 +1124,157 @@ async function alterarStatusEmpresa(id, status){
     return;
   }
 
+  await registrarMovimentacaoEmpresa(
+    "ALTERACAO_STATUS_EMPRESA",
+    empresaAntes,
+    `Empresa: ${empresaAntes?.nome || "-"} | Status anterior: ${statusAtual} | Status novo: ${statusNovo}`
+  );
+
+  alert("Status alterado com sucesso.");
   carregarEmpresas();
 }
 
 function editarEmpresa(id){
-  alert("Próximo passo: vamos criar a edição da empresa ID: " + id);
+  const empresa = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresa){
+    alert("Empresa não encontrada.");
+    return;
+  }
+
+  document.getElementById("edit_id").value = empresa.id;
+  document.getElementById("edit_codigo_empresa").value = empresa.codigo_empresa || "";
+  document.getElementById("edit_nome").value = empresa.nome || "";
+  document.getElementById("edit_setor_obra").value = empresa.setor_obra || "";
+  document.getElementById("edit_cnpj").value = empresa.cnpj || "";
+  document.getElementById("edit_cidade").value = empresa.cidade || "";
+  document.getElementById("edit_estado").value = empresa.estado || "";
+  document.getElementById("edit_endereco").value = empresa.endereco || "";
+  document.getElementById("edit_cep").value = empresa.cep || "";
+  document.getElementById("edit_observacao").value = empresa.observacao || "";
+
+  document.getElementById("editandoEmpresaTitulo").innerText = `${empresa.nome || "-"} | ${empresa.codigo_empresa || "-"}`;
+
+  document.getElementById("cardEdicaoEmpresa").classList.add("ativo");
+
+  document.getElementById("cardEdicaoEmpresa").scrollIntoView({
+    behavior:"smooth",
+    block:"start"
+  });
+}
+
+function cancelarEdicaoEmpresa(){
+  document.getElementById("cardEdicaoEmpresa").classList.remove("ativo");
+  document.getElementById("edit_id").value = "";
+}
+
+function compararAlteracoesEmpresa(antes, depois){
+  const campos = [
+    ["codigo_empresa", "Código"],
+    ["nome", "Nome"],
+    ["setor_obra", "Setor/Obra"],
+    ["cnpj", "CNPJ"],
+    ["cidade", "Cidade"],
+    ["estado", "Estado"],
+    ["endereco", "Endereço"],
+    ["cep", "CEP"],
+    ["observacao", "Observação"]
+  ];
+
+  const alteracoes = [];
+
+  campos.forEach(([campo, rotulo]) => {
+    const valorAntes = String(antes?.[campo] || "").trim();
+    const valorDepois = String(depois?.[campo] || "").trim();
+
+    if(valorAntes !== valorDepois){
+      alteracoes.push(`${rotulo}: "${valorAntes || "-"}" → "${valorDepois || "-"}"`);
+    }
+  });
+
+  return alteracoes;
+}
+
+async function salvarEdicaoEmpresa(){
+
+  const id = campo("edit_id");
+
+  if(!id){
+    alert("Nenhuma empresa selecionada para edição.");
+    return;
+  }
+
+  const empresaAntes = empresas.find(e => String(e.id) === String(id));
+
+  const empresaEditada = {
+    codigo_empresa: campo("edit_codigo_empresa"),
+    nome: campo("edit_nome"),
+    setor_obra: campo("edit_setor_obra"),
+    cnpj: campo("edit_cnpj"),
+    cidade: campo("edit_cidade"),
+    estado: campo("edit_estado"),
+    endereco: campo("edit_endereco"),
+    cep: campo("edit_cep"),
+    observacao: campo("edit_observacao")
+  };
+
+  if(!empresaEditada.nome){
+    alert("Informe o nome da empresa.");
+    return;
+  }
+
+  if(!empresaEditada.codigo_empresa){
+    alert("Informe o código da empresa.");
+    return;
+  }
+
+  if(!empresaEditada.setor_obra){
+    alert("Informe o setor / obra.");
+    return;
+  }
+
+  const alteracoes = compararAlteracoesEmpresa(empresaAntes, empresaEditada);
+
+  if(alteracoes.length === 0){
+    alert("Nenhuma alteração foi feita.");
+    return;
+  }
+
+  const confirma = confirm(
+    "Confirma salvar as alterações desta empresa?\n\n" +
+    alteracoes.join("\n")
+  );
+
+  if(!confirma) return;
+
+  const { error } = await db()
+    .from("empresas")
+    .update(empresaEditada)
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  await db()
+    .from("obras")
+    .update({
+      nome: empresaEditada.setor_obra,
+      codigo_obra: empresaEditada.codigo_empresa
+    })
+    .eq("empresa_id", id);
+
+  await registrarMovimentacaoEmpresa(
+    "EDICAO_EMPRESA",
+    empresaAntes,
+    `Empresa: ${empresaAntes?.nome || "-"} | Alterações: ${alteracoes.join(" | ")}`
+  );
+
+  alert("Empresa alterada com sucesso.");
+
+  cancelarEdicaoEmpresa();
+  carregarEmpresas();
 }
 
 function limparFormulario(){
@@ -364,10 +1289,243 @@ function limparFormulario(){
   document.getElementById("observacao").value = "";
 }
 
-window.addEventListener("load", carregarEmpresas);
+
+/* =========================================================
+   TOPO PADRÃO - MENU USUÁRIO + SININHO REAL DE PEDIDOS
+========================================================= */
+let ultimaQtdPedidosNotificados = Number(localStorage.getItem("bdr_ultima_qtd_pedidos_notificados") || "0");
+let audioCtxNotif = null;
+let canalPedidosRealtime = null;
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+document.addEventListener("click", fecharMenusTopo);
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape") fecharMenusTopo();
+});
+
+function atualizarNotificacoes(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+
+  if(!badge || !box) return;
+
+  const total = lista.length;
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+
+  if(total === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+
+  box.innerHTML = lista.map(n => `
+    <div class="notif-item" onclick="${n.acao || ''}">
+      <strong>${n.titulo}</strong>
+      <span>${n.texto}</span>
+    </div>
+  `).join("");
+}
+
+function prepararAudioNotif(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!audioCtxNotif){
+      audioCtxNotif = new AudioCtx();
+    }
+    if(audioCtxNotif.state === "suspended"){
+      audioCtxNotif.resume();
+    }
+  }catch(e){}
+}
+
+document.addEventListener("click", prepararAudioNotif, { once:false });
+document.addEventListener("touchstart", prepararAudioNotif, { once:false });
+
+function tocarSininho(){
+  try{
+    prepararAudioNotif();
+    if(!audioCtxNotif) return;
+
+    const ctx = audioCtxNotif;
+
+    [880, 1175].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + idx * 0.16);
+      gain.gain.linearRampToValueAtTime(0.23, ctx.currentTime + idx * 0.16 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.16 + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.16);
+      osc.stop(ctx.currentTime + idx * 0.16 + 0.18);
+    });
+  }catch(e){
+    console.warn("Som de notificação indisponível.", e);
+  }
+}
+
+function mostrarToastNotificacao(titulo, texto){
+  let toast = document.getElementById("toastNotificacaoTop");
+
+  if(!toast){
+    toast = document.createElement("div");
+    toast.id = "toastNotificacaoTop";
+    toast.className = "bdr-toast";
+    toast.innerHTML = `<strong></strong><span></span>`;
+    document.body.appendChild(toast);
+  }
+
+  toast.querySelector("strong").innerText = titulo;
+  toast.querySelector("span").innerText = texto;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 5200);
+}
+
+function usuarioPodeVerPedidosTopo(){
+  const u = usuarioAtual();
+  if(!u) return false;
+  const perfil = String(u.perfil || "").toUpperCase();
+  const permissoes = String(u.permissoes || "").toUpperCase();
+  return perfil === "MASTER" || perfil === "ADMIN" || perfil === "ALMOXARIFE" || permissoes.includes("AUTORIZAR_RETIRADA");
+}
+
+async function carregarNotificacoesPedidosTopo(tocarSomSeNovo=false){
+  const banco = db();
+  const usuario = usuarioAtual();
+
+  if(!banco || !usuario){
+    atualizarNotificacoes([]);
+    return;
+  }
+
+  try{
+    let query = banco
+      .from("pedidos_retirada")
+      .select("id,codigo,status,obra_nome,solicitante,criado_em")
+      .in("status", [
+        "AGUARDANDO_AUTORIZACAO",
+        "EM_SEPARACAO",
+        "AGUARDANDO_RETIRADA",
+        "EM_TRANSITO",
+        "AGUARDANDO_CONFERENCIA"
+      ])
+      .order("id", { ascending:false })
+      .limit(10);
+
+    const resp = await query;
+
+    if(resp.error){
+      console.warn("Erro ao carregar notificações de pedidos:", resp.error.message);
+      atualizarNotificacoes([]);
+      return;
+    }
+
+    let pedidos = resp.data || [];
+
+    const perfil = String(usuario.perfil || "").toUpperCase();
+    if(perfil !== "MASTER" && perfil !== "ADMIN" && perfil !== "ALMOXARIFE"){
+      pedidos = pedidos.filter(p =>
+        String(p.solicitante || "") === String(usuario.nome || "") ||
+        String(p.obra_id || "") === String(usuario.obra_id || "")
+      );
+    }
+
+    const lista = pedidos.map(p => {
+      let titulo = "📝 Pedido em andamento";
+      if(p.status === "AGUARDANDO_AUTORIZACAO") titulo = "🔔 Pedido aguardando autorização";
+      if(p.status === "EM_SEPARACAO") titulo = "📦 Pedido em separação";
+      if(p.status === "AGUARDANDO_RETIRADA") titulo = "✅ Pedido aguardando retirada";
+      if(p.status === "EM_TRANSITO") titulo = "🚛 Pedido em trânsito";
+      if(p.status === "AGUARDANDO_CONFERENCIA") titulo = "📥 Pedido aguardando conferência";
+
+      return {
+        titulo,
+        texto:`${p.codigo || "PED-" + String(p.id).padStart(4,"0")} • ${p.obra_nome || "Obra não informada"} • ${p.solicitante || "-"}`,
+        acao:"ir('pedidos.html')"
+      };
+    });
+
+    atualizarNotificacoes(lista);
+
+    const totalAgora = pedidos.length;
+
+    if(tocarSomSeNovo && totalAgora > ultimaQtdPedidosNotificados){
+      tocarSininho();
+      mostrarToastNotificacao(
+        "🔔 Novo pedido no sistema",
+        totalAgora === 1 ? "Existe 1 pedido precisando de atenção." : `Existem ${totalAgora} pedidos precisando de atenção.`
+      );
+    }
+
+    ultimaQtdPedidosNotificados = totalAgora;
+    localStorage.setItem("bdr_ultima_qtd_pedidos_notificados", String(totalAgora));
+
+  }catch(e){
+    console.warn("Notificações indisponíveis:", e);
+    atualizarNotificacoes([]);
+  }
+}
+
+function iniciarRealtimePedidosTopo(){
+  const banco = db();
+
+  if(!banco || !banco.channel){
+    return;
+  }
+
+  try{
+    if(canalPedidosRealtime){
+      banco.removeChannel(canalPedidosRealtime);
+    }
+
+    canalPedidosRealtime = banco
+      .channel("bdr-topo-pedidos-empresas")
+      .on("postgres_changes", { event:"*", schema:"public", table:"pedidos_retirada" }, () => {
+        carregarNotificacoesPedidosTopo(true);
+      })
+      .on("postgres_changes", { event:"*", schema:"public", table:"historico_pedidos_retirada" }, () => {
+        carregarNotificacoesPedidosTopo(true);
+      })
+      .subscribe();
+  }catch(e){
+    console.warn("Realtime não iniciado:", e);
+  }
+}
+
+function iniciarTopoPadraoBDR(){
+  carregarUsuario();
+  carregarNotificacoesPedidosTopo(false);
+  iniciarRealtimePedidosTopo();
+  setInterval(() => carregarNotificacoesPedidosTopo(true), 30000);
+}
+
+window.addEventListener("load", () => {
+  iniciarTopoPadraoBDR();
+  carregarEmpresas();
+});
 </script>
 
+<script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>
-
-

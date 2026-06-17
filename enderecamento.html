@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>BDR ERP - Endereçamento</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script defer src="./JS/enderecamento.js"></script>
+
+<style>
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --green:#16a34a;
+  --orange:#f97316;
+}
+
+body{background:var(--bdr-bg)!important;color:#1f2937}
+.bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900}
+.bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500}
+
+/* TOPO PADRÃO BDR */
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
+.notif-wrap{position:relative}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;box-shadow:none;outline:none!important;-webkit-tap-highlight-color:transparent;padding:0}
+.notif-btn:hover{background:#fff1f2;color:var(--bdr-red);transform:translateY(-1px)}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:white;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}
+.notif-dropdown{position:absolute;top:48px;right:0;width:350px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:9999}
+.notif-dropdown.ativo{display:block;animation:dropdownTop .16s ease}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--bdr-red);background:#fff5f5;border-bottom:1px solid #fecaca}
+.notif-list{max-height:300px;overflow:auto}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;cursor:pointer}
+.notif-item:hover{background:#f9fafb}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px}
+
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-tap-highlight-color:transparent}
+.user-menu,.user-menu *,#usuarioNome,#usuarioPerfil{user-select:none!important;caret-color:transparent!important}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02)}
+.user-menu:hover .avatar{transform:scale(1.06)}
+.user-mini{text-align:right;font-size:13px;pointer-events:none}
+.user-mini b{display:block;color:#111827}.user-mini small{color:var(--bdr-red);font-weight:900}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--bdr-red);font-size:18px;transition:.22s ease;pointer-events:none}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:9999}
+.dropdown-user.ativo{display:block;animation:dropdownTop .16s ease}
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px}
+.dropdown-user button:hover{background:#fff1f2;color:var(--bdr-red);transform:none;filter:none}.dropdown-user .logout-btn{color:#dc2626}
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:focus,.user-menu:active,.notif-btn:focus,.notif-btn:active{outline:none!important;box-shadow:none!important}
+button{-webkit-tap-highlight-color:transparent}
+.bdr-top-actions,.bdr-top-actions *,.notif-wrap,.notif-wrap *,.notif-btn,.notif-btn *{outline:none!important;box-shadow:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important}.notif-btn i,.notif-badge{pointer-events:none}
+
+/* ENDEREÇAMENTO */
+.end-hero{background:radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);border-left:4px solid var(--bdr-red);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 9px rgba(0,0,0,.07);display:grid;grid-template-columns:1.3fr .7fr;gap:12px;align-items:center}
+.end-hero h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900}.end-hero p{margin:5px 0 0;color:#6b7280;font-size:13px}
+.end-code-big{font-size:24px;font-weight:900;color:var(--bdr-red);background:#fff;padding:14px;border-radius:14px;border:1px dashed #fecaca;text-align:center}
+.card h2,.card h3{margin-top:0;color:var(--bdr-red)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:9px;background:#fff;font-family:Arial,sans-serif}textarea{min-height:70px}
+label{display:block;margin-bottom:5px;font-weight:900;color:#374151;font-size:12px}
+.btn{border:none;padding:10px 12px;border-radius:9px;color:white;cursor:pointer;font-weight:900}.btn-ok{background:#2a9d8f}.btn-blue{background:#2563eb}.btn-red{background:#dc2626}.btn-gray{background:#6b7280}.btn-dark{background:#111827}
+.resumo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.resumo-card{background:#f9fafb;border-radius:12px;padding:12px;border-left:4px solid var(--bdr-red)}.resumo-card strong{display:block;font-size:22px;color:#111827}.resumo-card span{font-size:12px;color:#6b7280;font-weight:800}
+.lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}.item{background:#fff;border-left:5px solid #2563eb;padding:12px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.10);font-size:13px}.item strong{color:var(--bdr-red);font-size:18px}
+.badge{display:inline-block;padding:4px 9px;border-radius:20px;color:white;font-size:12px}.LIVRE{background:#2a9d8f}.OCUPADO{background:#dc2626}.RESERVADO{background:#f97316}.tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#eef2f7;color:#333;font-size:11px;margin-top:4px}
+.info{background:#eff6ff;border-left:5px solid #2563eb;padding:10px;border-radius:8px;margin-top:8px;color:#1e3a8a}.codigo-preview{font-size:24px;font-weight:bold;color:var(--bdr-red);background:#f9fafb;padding:12px;border-radius:12px;text-align:center}
+@media(max-width:900px){.end-hero{grid-template-columns:1fr}.bdr-top-actions{width:100%;justify-content:space-between}.notif-dropdown{right:-80px;width:300px}}
+</style>
+</head>
+
+<body>
+<script>verificarLogin();</script>
+<!-- Compatibilidade com JS antigo -->
+<span id="dataAtual" style="display:none"></span>
+<span id="usuarioInfo" style="display:none"></span>
+<div class="bdr-app">
+<aside class="bdr-sidebar">
+  <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn active" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+</aside>
+
+<main class="bdr-main">
+  <div class="bdr-topbar">
+    <div>
+      <div class="bdr-topbar-title">📍 BDR Endereçamento</div>
+      <div class="bdr-topbar-sub">Mapa do CD, posições, QR de endereço e controle de ocupação.</div>
+    </div>
+    <div class="bdr-top-actions">
+      <div class="notif-wrap">
+        <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+          <i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown"><div class="notif-head">🔔 Central de notificações</div><div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div></div>
+      </div>
+      <div class="user-menu" onclick="toggleMenuUsuario(event)">
+        <div class="user-mini"><b id="usuarioNome" tabindex="-1">Olá, -</b><small id="usuarioPerfil" tabindex="-1">-</small></div>
+        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+        <div id="dropdownUser" class="dropdown-user">
+          <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+          <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="end-hero">
+    <div>
+      <h2>Mapa do CD / Depósito</h2>
+      <p>Modelo oficial: <b>R1-F1-P01-C2-N3</b>.</p>
+      <div class="info">R = Rua • F = Face • P = Prateleira • C = Coluna • N = Nível • CX = Caixa opcional.</div>
+    </div>
+    <div class="end-code-big">END-R1-F1-P01-C1-N1</div>
+  </section>
+
+  <div class="card"><h3>📊 Resumo</h3><div class="resumo-grid"><div class="resumo-card"><strong id="totalEnderecos">0</strong><span>Total de posições</span></div><div class="resumo-card"><strong id="totalLivres">0</strong><span>Livres</span></div><div class="resumo-card"><strong id="totalOcupados">0</strong><span>Ocupados</span></div><div class="resumo-card"><strong id="totalReservados">0</strong><span>Reservados</span></div></div></div>
+
+  <div class="card"><h3 id="tituloForm">➕ Cadastrar endereço</h3><input type="hidden" id="endereco_id"><div class="grid">
+    <div><label>Rua</label><input id="rua_num" type="number" min="1" value="1" oninput="atualizarPreview()"></div><div><label>Face</label><input id="face_num" type="number" min="1" value="1" oninput="atualizarPreview()"></div><div><label>Prateleira</label><input id="prateleira_num" type="number" min="1" value="1" oninput="atualizarPreview()"></div><div><label>Coluna</label><input id="coluna_num" type="number" min="1" value="1" oninput="atualizarPreview()"></div><div><label>Nível</label><input id="nivel_num" type="number" min="1" value="1" oninput="atualizarPreview()"></div><div><label>Caixa opcional</label><input id="caixa_num" type="number" min="0" value="0" oninput="atualizarPreview()"></div>
+    <div><label>Tipo de área</label><select id="tipo_area"><option value="GERAL">GERAL</option><option value="PATRIMONIO">PATRIMÔNIO</option><option value="EPI">EPI</option><option value="ELETRICA">ELÉTRICA</option><option value="HIDRAULICA">HIDRÁULICA</option><option value="FERRAMENTAS">FERRAMENTAS</option><option value="QUARENTENA">QUARENTENA / AVARIADO</option><option value="REAPROVEITADO">REAPROVEITADO</option></select></div>
+    <div><label>Status</label><select id="status"><option value="LIVRE">LIVRE</option><option value="OCUPADO">OCUPADO</option><option value="RESERVADO">RESERVADO</option></select></div></div>
+    <br><div class="codigo-preview" id="codigoPreview">R1-F1-P01-C1-N1</div><br><label>Observação</label><textarea id="observacao" placeholder="Observação do endereço..."></textarea><br><br><div class="grid"><button class="btn btn-ok" onclick="salvarEndereco()">💾 Salvar endereço</button><button class="btn btn-gray" onclick="limparFormulario()">🧹 Limpar</button></div></div>
+
+  <div class="card"><h3>⚡ Gerador rápido de posições</h3><p>Exemplo: 3 ruas, 2 faces, 3 prateleiras, 3 colunas, 4 níveis = 216 posições.</p><div class="grid"><div><label>Qtd ruas</label><input id="lote_ruas" type="number" min="1" value="3"></div><div><label>Faces por rua</label><input id="lote_faces" type="number" min="1" value="2"></div><div><label>Prateleiras por face</label><input id="lote_prateleiras" type="number" min="1" value="3"></div><div><label>Colunas por prateleira</label><input id="lote_colunas" type="number" min="1" value="3"></div><div><label>Níveis por coluna</label><input id="lote_niveis" type="number" min="1" value="4"></div><div><label>Caixas por nível</label><input id="lote_caixas" type="number" min="0" value="0"></div><div><label>Tipo da área</label><select id="lote_tipo_area"><option value="GERAL">GERAL</option><option value="PATRIMONIO">PATRIMÔNIO</option><option value="EPI">EPI</option><option value="ELETRICA">ELÉTRICA</option><option value="HIDRAULICA">HIDRÁULICA</option><option value="FERRAMENTAS">FERRAMENTAS</option><option value="QUARENTENA">QUARENTENA / AVARIADO</option><option value="REAPROVEITADO">REAPROVEITADO</option></select></div></div><br><button class="btn btn-dark" onclick="gerarEnderecosRapido()">Criar posições em lote</button></div>
+
+  <div class="card"><h3>🔎 Filtros</h3><div class="grid"><input id="busca" placeholder="Buscar R1-F1-P01-C2-N3..." oninput="renderizarEnderecos()"><select id="filtroStatus" onchange="renderizarEnderecos()"><option value="">Todos os status</option><option value="LIVRE">Livres</option><option value="OCUPADO">Ocupados</option><option value="RESERVADO">Reservados</option></select><select id="filtroTipo" onchange="renderizarEnderecos()"><option value="">Todos os tipos</option><option value="GERAL">GERAL</option><option value="PATRIMONIO">PATRIMÔNIO</option><option value="EPI">EPI</option><option value="ELETRICA">ELÉTRICA</option><option value="HIDRAULICA">HIDRÁULICA</option><option value="FERRAMENTAS">FERRAMENTAS</option><option value="QUARENTENA">QUARENTENA</option><option value="REAPROVEITADO">REAPROVEITADO</option></select></div></div>
+
+  <div class="card"><h3>📍 Endereços cadastrados</h3><div id="listaEnderecos" class="lista"></div></div>
+</main>
+</div>
+
+<script>
+function ir(pagina){ window.location.href = pagina; }
+function db(){ return window.client || window.supabaseClient || window.clientSupabase; }
+function usuarioAtualTopo(){ try{ const u = localStorage.getItem("usuario_logado"); return u ? JSON.parse(u) : null; }catch(e){ return null; } }
+function carregarUsuarioTopo(){ const usuario = usuarioAtualTopo(); const nome = document.getElementById("usuarioNome"); const perfil = document.getElementById("usuarioPerfil"); if(nome) nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário"; if(perfil) perfil.innerText = usuario ? (usuario.perfil || "-") : "-"; }
+function toggleMenuUsuario(event){ if(event) event.stopPropagation(); document.getElementById("dropdownUser")?.classList.toggle("ativo"); document.getElementById("notifDropdown")?.classList.remove("ativo"); }
+function toggleNotificacoes(event){ if(event) event.stopPropagation(); document.getElementById("notifDropdown")?.classList.toggle("ativo"); document.getElementById("dropdownUser")?.classList.remove("ativo"); }
+function fecharMenusTopo(){ document.getElementById("dropdownUser")?.classList.remove("ativo"); document.getElementById("notifDropdown")?.classList.remove("ativo"); }
+document.addEventListener("click", fecharMenusTopo);
+function atualizarNotificacoes(lista){ const badge = document.getElementById("notifBadge"); const box = document.getElementById("notifLista"); if(!badge || !box) return; const total = lista.length; badge.innerText = total > 9 ? "9+" : total; badge.style.display = total > 0 ? "inline-flex" : "none"; if(total === 0){ box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`; return; } box.innerHTML = lista.map(n => `<div class="notif-item" onclick="${n.acao || ''}"><strong>${n.titulo}</strong><span>${n.texto}</span></div>`).join(""); }
+async function gerarNotificacoesPedidos(){
+  const banco = db();
+  if(!banco){ atualizarNotificacoes([]); return; }
+
+  const lista = [];
+
+  try{
+    const { data, error } = await banco
+      .from("pedidos_retirada")
+      .select("*")
+      .order("id", { ascending:false })
+      .limit(20);
+
+    if(error){
+      console.warn("Erro ao gerar notificações de pedidos:", error.message);
+      atualizarNotificacoes([]);
+      return;
+    }
+
+    const abertos = [
+      "AGUARDANDO_AUTORIZACAO",
+      "EM_SEPARACAO",
+      "AGUARDANDO_RETIRADA",
+      "EM_TRANSITO",
+      "AGUARDANDO_CONFERENCIA",
+      "RECEBIDO_COM_DIVERGENCIA"
+    ];
+
+    (data || [])
+      .filter(p => abertos.includes(String(p.status || "")))
+      .slice(0,8)
+      .forEach(p => {
+        lista.push({
+          titulo:`📝 ${p.codigo || 'PED-' + String(p.id).padStart(4,'0')} - ${p.status || '-'}`,
+          texto:`Obra: ${p.obra_nome || '-'} • Solicitante: ${p.solicitante || '-'}`,
+          acao:`ir('pedidos.html')`
+        });
+      });
+
+    atualizarNotificacoes(lista);
+
+  }catch(e){
+    console.warn("Erro ao gerar notificações de pedidos:", e);
+    atualizarNotificacoes([]);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarUsuarioTopo();
+  gerarNotificacoesPedidos();
+  setInterval(gerarNotificacoesPedidos, 30000);
+});
+</script>
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

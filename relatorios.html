@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>BDR - Relatórios</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
 *{box-sizing:border-box}
@@ -40,7 +43,522 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
   .layout{flex-direction:column}
   .sidebar{width:100%;min-height:auto}
 }
+
+/* Seleção múltipla de obras/setores para exportação */
+.obras-check-wrap{
+  max-height:190px;
+  overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:7px;
+}
+
+.obra-check{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:8px;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.obra-check input{
+  width:auto;
+}
+
+.obra-check:hover{
+  background:#fff1f2;
+  border-color:#fecaca;
+}
+
+.sienge-mini-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:8px 0 10px;
+}
+
+.btn-mini{
+  border:none;
+  border-radius:9px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  color:#fff;
+}
+
+.btn-mini.red{background:#a4161a}
+.btn-mini.dark{background:#111827}
+.btn-mini.gray{background:#6b7280}
+
 </style>
+
+<style>
+/* =========================================================
+   MELHORIA VISUAL RELATÓRIOS - SEM MEXER NA BUSCA ORIGINAL
+========================================================= */
+
+body{
+  background:#eef2f7 !important;
+}
+
+header{
+  display:none !important;
+}
+
+.layout{
+  display:flex;
+}
+
+.sidebar{
+  display:none !important;
+}
+
+.content{
+  margin-left:var(--sidebar-width);
+  width:calc(100% - var(--sidebar-width));
+  padding:12px;
+}
+
+.relatorio-topbar{
+  background:
+    radial-gradient(circle at right top, rgba(164,22,26,.12), transparent 35%),
+    linear-gradient(135deg,#ffffff,#f8fafc);
+  border-radius:16px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow:0 3px 14px rgba(0,0,0,.08);
+  border-left:4px solid #a4161a;
+}
+
+.relatorio-title{
+  font-size:19px;
+  font-weight:900;
+  color:#a4161a;
+}
+
+.relatorio-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+}
+
+.relatorio-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.btn-relatorio{
+  border:none;
+  border-radius:10px;
+  padding:9px 12px;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  transition:.2s;
+  font-size:12px;
+}
+
+.btn-relatorio:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.05);
+}
+
+.btn-print{background:#111827}
+.btn-excel{background:#16a34a}
+.btn-limpar{background:#6b7280}
+
+.kpi-relatorio-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.kpi-relatorio{
+  background:white;
+  border-left:4px solid #a4161a;
+  border-radius:14px;
+  padding:10px;
+  box-shadow:0 2px 9px rgba(0,0,0,.08);
+}
+
+.kpi-relatorio strong{
+  display:block;
+  font-size:18px;
+  color:#111827;
+}
+
+.kpi-relatorio span{
+  display:block;
+  margin-top:4px;
+  color:#6b7280;
+  font-size:11px;
+  font-weight:800;
+}
+
+.card{
+  border-radius:16px !important;
+  border-left:4px solid #a4161a;
+  box-shadow:0 2px 9px rgba(0,0,0,.08) !important;
+}
+
+.card h3{
+  color:#a4161a !important;
+}
+
+.grid{
+  grid-template-columns:1.5fr .8fr .8fr 1fr !important;
+}
+
+input,select{
+  border-radius:9px !important;
+  border:1px solid #d1d5db !important;
+  font-size:12px;
+}
+
+.tabela{
+  border-collapse:collapse;
+  font-size:12px;
+  background:white;
+}
+
+.tabela th{
+  background:#a4161a !important;
+  color:white;
+  padding:9px;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+.tabela td{
+  border-bottom:1px solid #e5e7eb;
+  padding:8px;
+}
+
+.tabela tr:hover td{
+  background:#f9fafb;
+}
+
+.status{
+  display:inline-flex;
+  width:max-content;
+  padding:4px 9px;
+  border-radius:8px;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+}
+
+.ESTOQUE{background:#16a34a !important}
+.EM_USO{background:#2563eb !important}
+.MANUTENCAO{background:#f97316 !important}
+.BAIXADO{background:#dc2626 !important}
+
+@media(max-width:900px){
+  .content{
+    margin-left:0;
+    width:100%;
+  }
+
+  .grid,
+  .kpi-relatorio-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .relatorio-topbar{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+}
+
+@media print{
+  .bdr-sidebar,
+  .relatorio-topbar,
+  .filtros,
+  .botoes,
+  .card-movimentacoes{
+    display:none !important;
+  }
+
+  .content{
+    margin-left:0 !important;
+    width:100% !important;
+    padding:0 !important;
+  }
+
+  .card{
+    box-shadow:none !important;
+    border-left:none !important;
+  }
+
+  body{
+    background:white !important;
+  }
+}
+</style>
+
+<style>
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + NOTIFICAÇÕES
+========================================================= */
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+}
+
+.notif-wrap{
+  position:relative;
+}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  box-shadow:none;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:#a4161a;
+}
+
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:330px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:#a4161a;
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:280px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.notif-item:hover{
+  background:#f9fafb;
+}
+
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+.user-menu:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu:hover .avatar{
+  transform:scale(1.06);
+}
+
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+
+.user-mini b{
+  display:block;
+  outline:none!important;
+}
+
+.user-mini small{
+  color:#a4161a;
+  font-weight:900;
+  outline:none!important;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#a4161a;
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:#a4161a;
+  transform:none;
+  filter:none;
+}
+
+.dropdown-user .logout-btn{
+  color:#dc2626;
+}
+
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active,
+.user-menu:focus,
+.user-menu:active,
+.notif-btn:focus,
+.notif-btn:active{
+  outline:none!important;
+  box-shadow:none!important;
+}
+
+button,
+.bdr-top-actions,
+.bdr-top-actions *,
+.notif-wrap,
+.notif-wrap *,
+.notif-btn,
+.notif-btn *,
+.notif-badge{
+  -webkit-tap-highlight-color:transparent!important;
+  caret-color:transparent!important;
+  user-select:none!important;
+}
+
+@media(max-width:900px){
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-80px;width:300px;}
+}
+</style>
+
 </head>
 
 <body>
@@ -49,7 +567,7 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-
+<script src="./JS/bdrSessaoRealtime.js"></script>
 <script>
   verificarLogin();
 </script>
@@ -62,10 +580,107 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
   <span id="dataAtual"></span>
 </header>
 
+<aside class="bdr-sidebar">
+  <div class="bdr-brand">
+    <div class="bdr-brand-icon">
+      <i class="fa-solid fa-cube"></i>
+    </div>
+  </div>
+
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn active" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+
+</aside>
+
 <div class="layout">
 
 <div class="sidebar">
-  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Dashboard</button>
+  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Torre de Controle</button>
   <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
   <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
   <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
@@ -75,11 +690,83 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
 
 <div class="content">
 
+<div class="relatorio-topbar">
+  <div>
+    <div class="relatorio-title">📄 BDR Relatórios</div>
+    <div class="relatorio-sub">Relatório gerencial de patrimônios, filtros, exportação e impressão.</div>
+  </div>
+
+  <div class="bdr-top-actions">
+    <div class="notif-wrap">
+      <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+        <i class="fa-regular fa-bell"></i>
+        <span id="notifBadge" class="notif-badge">0</span>
+      </button>
+
+      <div id="notifDropdown" class="notif-dropdown">
+        <div class="notif-head">🔔 Central de notificações</div>
+        <div id="notifLista" class="notif-list">
+          <div class="notif-item">Nenhuma notificação no momento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-menu" onclick="toggleMenuUsuario(event)">
+      <div class="user-mini">
+        <b id="usuarioNome" tabindex="-1">Olá, -</b>
+        <small id="usuarioPerfil" tabindex="-1">-</small>
+      </div>
+      <div class="avatar"><i class="fa-solid fa-user"></i></div>
+
+      <div id="dropdownUser" class="dropdown-user">
+        <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+          <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+        </button>
+
+        <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
+          <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="kpi-relatorio-grid">
+  <div class="kpi-relatorio">
+    <strong id="kpiTotal">0</strong>
+    <span>Total encontrado</span>
+  </div>
+  <div class="kpi-relatorio">
+    <strong id="kpiUso">0</strong>
+    <span>Em uso</span>
+  </div>
+  <div class="kpi-relatorio">
+    <strong id="kpiEstoque">0</strong>
+    <span>Estoque</span>
+  </div>
+  <div class="kpi-relatorio">
+    <strong id="kpiManutencao">0</strong>
+    <span>Manutenção</span>
+  </div>
+</div>
+
 <div class="card filtros">
   <h3>🔎 Filtros do Relatório</h3>
 
   <div class="grid">
     <input id="busca" placeholder="Buscar por nome, código, obra..." oninput="renderizarRelatorio()">
+
+    <select id="filtroObra" onchange="renderizarRelatorio()">
+      <option value="">Todas as obras/setores</option>
+    </select>
+
+    <select id="filtroOrigem" onchange="renderizarRelatorio()">
+      <option value="">Todos os cadastros</option>
+      <option value="NOVO">Somente novos do sistema</option>
+      <option value="LEGADO">Somente patrimônio antigo/legado</option>
+      <option value="PAT">Somente códigos PAT</option>
+      <option value="ANTIGO">Somente códigos antigos</option>
+    </select>
 
     <select id="filtroStatus" onchange="renderizarRelatorio()">
       <option value="">Todos os status</option>
@@ -95,20 +782,44 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
       <option value="VEICULO">Veículo</option>
       <option value="FERRAMENTA">Ferramenta</option>
       <option value="MAQUINA">Máquina agrícola</option>
+      <option value="UTILIDADE_OPERACIONAL">Utilidade operacional</option>
+      <option value="MOBILIARIO">Mobiliário</option>
       <option value="OUTRO">Outro</option>
-    </select>
-
-    <select id="filtroObra" onchange="renderizarRelatorio()">
-      <option value="">Todas as obras/setores</option>
     </select>
   </div>
 
   <br>
 
-  <div class="botoes">
-    <button class="btn-ok" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-    <button class="btn-blue" onclick="window.print()">🖨 Imprimir</button>
-    <button class="btn-dark" onclick="limparFiltros()">🧹 Limpar Filtros</button>
+  <div class="botoes relatorio-actions">
+    <button class="btn-relatorio btn-limpar" onclick="limparFiltros()">🧹 Limpar filtros</button>
+    <button class="btn-relatorio btn-print" onclick="imprimirRelatorio()">🖨 Imprimir</button>
+    <button class="btn-relatorio btn-excel" onclick="exportarCSV()">📊 Exportar Excel/CSV</button>
+    <button class="btn-relatorio btn-blue" onclick="exportarSiengeCSV()">🏗 Exportar CSV Sienge</button>
+  </div>
+
+</div>
+
+<div class="card">
+  <h3>🏗 Seleção de obras/setores para exportação</h3>
+  <p style="font-size:13px;color:#374151;margin-top:0;">
+    Marque uma ou mais obras/setores para exportar somente o que você quiser. Se nenhuma obra estiver marcada, o relatório usa o filtro normal acima.
+  </p>
+
+  <div class="sienge-mini-actions">
+    <button class="btn-mini red" onclick="marcarTodasObrasSienge()">Marcar todas</button>
+    <button class="btn-mini gray" onclick="limparObrasSienge()">Limpar seleção</button>
+  </div>
+
+  <div id="listaObrasSienge" class="obras-check-wrap"></div>
+</div>
+
+<div class="card">
+  <h3>🏗 Exportação para Sienge</h3>
+  <p style="font-size:13px;color:#374151;margin-top:0;">
+    Gera um CSV no padrão de importação de bens do Sienge. Use os filtros acima para exportar somente os bens desejados.
+  </p>
+  <div class="alerta" style="margin-top:8px;">
+    <strong>Correções aplicadas:</strong> Coluna E puxa a marca do produto. Coluna H exporta o estado como NOVO, BOM, REGULAR ou RUIM. Coluna I prioriza o código real da obra/setor.
   </div>
 </div>
 
@@ -135,7 +846,7 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
   </div>
 </div>
 
-<div class="card">
+<div class="card card-movimentacoes">
   <h3>🔁 Últimas Movimentações</h3>
 
   <div style="overflow:auto">
@@ -196,6 +907,18 @@ async function carregarDados(){
   document.getElementById("dataAtual").innerText =
     new Date().toLocaleDateString("pt-BR");
 
+  const usuarioTopo = JSON.parse(localStorage.getItem("usuario_logado") || "null");
+  const elUsuarioNome = document.getElementById("usuarioNome");
+  const elUsuarioPerfil = document.getElementById("usuarioPerfil");
+
+  if(elUsuarioNome){
+    elUsuarioNome.innerText = usuarioTopo ? "Olá, " + usuarioTopo.nome : "Olá, usuário";
+  }
+
+  if(elUsuarioPerfil){
+    elUsuarioPerfil.innerText = usuarioTopo ? (usuarioTopo.perfil || "-") : "-";
+  }
+
   if(!db()){
     alert("Supabase não carregado.");
     return;
@@ -231,13 +954,36 @@ async function carregarDados(){
     console.error(movResp.error);
   }
 
-  patrimonios = patResp.data || [];
-  obras = obrasResp.data || [];
-  movimentacoes = movResp.data || [];
+const usuario = JSON.parse(localStorage.getItem("usuario_logado"));
 
+let dadosPatrimonios = patResp.data || [];
+let dadosMovimentacoes = movResp.data || [];
+
+if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN"){
+
+  if(usuario.obra_id){
+
+    dadosPatrimonios = dadosPatrimonios.filter(p =>
+      String(p.obra_id) === String(usuario.obra_id)
+    );
+
+    dadosMovimentacoes = dadosMovimentacoes.filter(m =>
+      String(m.obra_origem_id) === String(usuario.obra_id) ||
+      String(m.obra_destino_id) === String(usuario.obra_id)
+    );
+
+    document.getElementById("filtroObra").style.display = "none";
+  }
+}
+
+patrimonios = dadosPatrimonios;
+obras = obrasResp.data || [];
+movimentacoes = dadosMovimentacoes;
   carregarFiltroObras();
+  carregarChecksObrasSienge();
   renderizarRelatorio();
   renderizarMovimentacoes();
+  gerarNotificacoesRelatorio();
 }
 
 function carregarFiltroObras(){
@@ -254,17 +1000,77 @@ function carregarFiltroObras(){
   });
 }
 
+function codigoManualBDR(p){
+  /*
+    Prioridade:
+    1) codigo_antigo, se existir
+    2) codigo_bem
+    3) codigo_qr
+  */
+  return p.codigo_antigo || p.codigo_bem || p.codigo_qr || "";
+}
+
+function tipoOrigemCadastro(p){
+  const origem = String(p.origem_cadastro || "").toUpperCase();
+  const codigo = String(codigoManualBDR(p) || "").toUpperCase();
+
+  if(origem.includes("LEGADO")) return "LEGADO";
+  if(origem.includes("NOVO")) return "NOVO";
+  if(codigo.startsWith("PAT-")) return "PAT";
+  return "ANTIGO";
+}
+
+function obrasSelecionadasSienge(){
+  return Array.from(document.querySelectorAll(".obra-sienge-check:checked"))
+    .map(c => String(c.value));
+}
+
+function carregarChecksObrasSienge(){
+  const box = document.getElementById("listaObrasSienge");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  obras.forEach(o => {
+    const qtd = patrimonios.filter(p => String(p.obra_id) === String(o.id)).length;
+    if(qtd === 0) return;
+
+    box.innerHTML += `
+      <label class="obra-check">
+        <input type="checkbox" class="obra-sienge-check" value="${o.id}" onchange="renderizarRelatorio()">
+        <span>${o.codigo_sienge || o.codigo_obra || "-"} - ${o.nome || "-"} (${qtd})</span>
+      </label>
+    `;
+  });
+}
+
+function marcarTodasObrasSienge(){
+  document.querySelectorAll(".obra-sienge-check").forEach(c => c.checked = true);
+  renderizarRelatorio();
+}
+
+function limparObrasSienge(){
+  document.querySelectorAll(".obra-sienge-check").forEach(c => c.checked = false);
+  renderizarRelatorio();
+}
+
 function renderizarRelatorio(){
 
   const busca = valor("busca").toLowerCase();
   const status = valor("filtroStatus");
   const tipo = valor("filtroTipo");
   const obra = valor("filtroObra");
+  const origem = valor("filtroOrigem");
+  const obrasMarcadas = obrasSelecionadasSienge();
 
   filtradosAtuais = patrimonios.filter(p => {
 
+    const obraObj = obras.find(o => String(o.id) === String(p.obra_id));
+
     const texto = `
       ${p.codigo_qr || ""}
+      ${p.codigo_antigo || ""}
+      ${p.codigo_bem || ""}
       ${p.nome_bem || ""}
       ${p.tipo_item || ""}
       ${p.status || ""}
@@ -273,18 +1079,41 @@ function renderizarRelatorio(){
       ${p.modelo || ""}
       ${p.numero_serie || ""}
       ${p.placa || ""}
+      ${obraObj?.nome || ""}
+      ${obraObj?.codigo_obra || ""}
+      ${obraObj?.codigo_sienge || ""}
     `.toLowerCase();
 
     const passaBusca = texto.includes(busca);
     const passaStatus = !status || p.status === status;
     const passaTipo = !tipo || p.tipo_item === tipo;
-    const passaObra = !obra || String(p.obra_id) === String(obra);
 
-    return passaBusca && passaStatus && passaTipo && passaObra;
+    /*
+      Regra de obra/setor:
+      - se marcou obras na seleção Sienge, usa as marcadas;
+      - se não marcou, usa o filtro obra normal.
+    */
+    const passaObraMarcada =
+      obrasMarcadas.length === 0 || obrasMarcadas.includes(String(p.obra_id));
+
+    const passaObraFiltro =
+      obrasMarcadas.length > 0 ? true : (!obra || String(p.obra_id) === String(obra));
+
+    let passaOrigem = true;
+    const origemItem = tipoOrigemCadastro(p);
+
+    if(origem === "NOVO") passaOrigem = origemItem === "NOVO" || origemItem === "PAT";
+    if(origem === "LEGADO") passaOrigem = origemItem === "LEGADO" || origemItem === "ANTIGO";
+    if(origem === "PAT") passaOrigem = String(codigoManualBDR(p)).toUpperCase().startsWith("PAT-");
+    if(origem === "ANTIGO") passaOrigem = !String(codigoManualBDR(p)).toUpperCase().startsWith("PAT-");
+
+    return passaBusca && passaStatus && passaTipo && passaObraMarcada && passaObraFiltro && passaOrigem;
   });
 
   document.getElementById("resumo").innerText =
     `Total encontrado: ${filtradosAtuais.length} patrimônio(s)`;
+
+  atualizarKPIsRelatorio();
 
   const corpo = document.getElementById("corpoTabela");
   corpo.innerHTML = "";
@@ -299,13 +1128,15 @@ function renderizarRelatorio(){
   }
 
   filtradosAtuais.forEach(p => {
+    const obraObj = obras.find(o => String(o.id) === String(p.obra_id));
+
     corpo.innerHTML += `
       <tr>
         <td>${p.codigo_qr || "-"}</td>
         <td>${p.nome_bem || "-"}</td>
         <td>${p.tipo_item || "-"}</td>
         <td><span class="status ${p.status}">${p.status || "-"}</span></td>
-        <td>${p.localizacao || "-"}</td>
+        <td>${obraObj ? `${obraObj.codigo_obra || obraObj.codigo_sienge || "-"} - ${obraObj.nome || "-"}` : (p.localizacao || "-")}</td>
         <td>${p.marca || "-"}</td>
         <td>${p.modelo || "-"}</td>
         <td>${p.numero_serie || p.placa || "-"}</td>
@@ -347,7 +1178,30 @@ function limparFiltros(){
   document.getElementById("filtroStatus").value = "";
   document.getElementById("filtroTipo").value = "";
   document.getElementById("filtroObra").value = "";
+  if(document.getElementById("filtroOrigem")) document.getElementById("filtroOrigem").value = "";
+  document.querySelectorAll(".obra-sienge-check").forEach(c => c.checked = false);
   renderizarRelatorio();
+}
+
+function imprimirRelatorio(){
+  window.print();
+}
+
+function atualizarKPIsRelatorio(){
+  const total = filtradosAtuais.length;
+  const uso = filtradosAtuais.filter(p => p.status === "EM_USO").length;
+  const estoque = filtradosAtuais.filter(p => p.status === "ESTOQUE").length;
+  const manutencao = filtradosAtuais.filter(p => p.status === "MANUTENCAO").length;
+
+  const elTotal = document.getElementById("kpiTotal");
+  const elUso = document.getElementById("kpiUso");
+  const elEstoque = document.getElementById("kpiEstoque");
+  const elManutencao = document.getElementById("kpiManutencao");
+
+  if(elTotal) elTotal.innerText = total;
+  if(elUso) elUso.innerText = uso;
+  if(elEstoque) elEstoque.innerText = estoque;
+  if(elManutencao) elManutencao.innerText = manutencao;
 }
 
 function exportarCSV(){
@@ -406,21 +1260,230 @@ function exportarCSV(){
   URL.revokeObjectURL(url);
 }
 
+function limparNumero(valor){
+  if(valor === null || valor === undefined) return "";
+  return String(valor).replace(/\D/g, "");
+}
+
+function csvValor(campo){
+  return `"${String(campo ?? "").replace(/"/g,'""')}"`;
+}
+
+function obraDoPatrimonio(p){
+  return obras.find(o => String(o.id) === String(p.obra_id)) || null;
+}
+
+function codigoObraSienge(p){
+  const o = obraDoPatrimonio(p);
+
+  /*
+    Correção:
+    Para evitar puxar código errado, agora prioriza o código real da obra/setor
+    cadastrado em obras.codigo_obra.
+
+    Ordem:
+    1) obras.codigo_obra
+    2) patrimonio.codigo_obra / obra_codigo
+    3) obras.codigo_sienge, se existir
+    4) obra_id como último recurso
+  */
+  return (
+    o?.codigo_obra ||
+    p.codigo_obra ||
+    p.obra_codigo ||
+    o?.codigo_sienge ||
+    p.codigo_sienge_obra ||
+    p.obra_id ||
+    ""
+  );
+}
+
+function estadoConservacaoSienge(valor){
+  const v = String(valor || "").toUpperCase().trim();
+
+  /*
+    Exportação corrigida:
+    agora sai como texto: NOVO, BOM, REGULAR ou RUIM.
+    Antes saía 1, 2, 3 ou 4.
+  */
+  if(!v) return "";
+  if(v === "1" || v.includes("NOVO") || v.includes("NOVA")) return "NOVO";
+  if(v === "2" || v.includes("BOM") || v.includes("BOA")) return "BOM";
+  if(v === "3" || v.includes("REGULAR")) return "REGULAR";
+  if(v === "4" || v.includes("RUIM")) return "RUIM";
+
+  return v;
+}
+
+function prefixoSienge(p){
+  const tipo = String(p.tipo_item || "").toUpperCase();
+
+  if(tipo.includes("MAQUINA") || tipo.includes("MÁQUINA")) return "Máquina";
+  if(tipo.includes("VEICULO") || tipo.includes("VEÍCULO")) return "Veículo";
+  if(tipo.includes("OUTRO") || tipo.includes("UTILIDADE") || tipo.includes("MOBILIARIO") || tipo.includes("MOBILIÁRIO")) return "Outros";
+
+  return "";
+}
+
+function exportarSiengeCSV(){
+
+  if(filtradosAtuais.length === 0){
+    alert("Nenhum bem filtrado para exportar ao Sienge.");
+    return;
+  }
+
+  const linhas = [];
+
+  linhas.push([
+    "Prefixo",
+    "Codigo manual",
+    "Codigo centro de custo",
+    "Codigo do insumo",
+    "Marca",
+    "Codigo do modelo",
+    "Detalhamento",
+    "Estado de conservacao",
+    "Codigo setor/obra inicial",
+    "Cor",
+    "Combustivel",
+    "Numero de serie/chassi",
+    "Ano de fabricacao",
+    "Ano do modelo",
+    "Placa"
+  ]);
+
+  filtradosAtuais.forEach(p => {
+
+    const linhasItem = [
+      prefixoSienge(p),
+      codigoManualBDR(p),
+      limparNumero(p.centro_custo) || limparNumero(p.codigo_centro_custo) || "",
+      limparNumero(p.codigo_insumo) || limparNumero(p.produto_id) || "",
+      p.marca || "",
+      p.codigo_modelo || p.modelo || "",
+      p.nome_bem || p.descricao || p.observacao || "",
+      estadoConservacaoSienge(p.estado_conservacao),
+      codigoObraSienge(p),
+      p.cor || "",
+      p.combustivel || "",
+      p.numero_serie || p.chassi || "",
+      p.ano_fabricacao || p.ano || "",
+      p.ano_modelo || p.ano || "",
+      p.placa || ""
+    ];
+
+    linhas.push(linhasItem);
+  });
+
+  const csv = linhas
+    .map(linha => linha.map(csvValor).join(";"))
+    .join("\n");
+
+  const blob = new Blob(["\uFEFF" + csv], { type:"text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  const data = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `sienge_importar_bens_${data}.csv`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+document.addEventListener("click", fecharMenusTopo);
+
+function atualizarNotificacoes(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+  if(!badge || !box) return;
+
+  const total = lista.length;
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+
+  if(total === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+
+  box.innerHTML = lista.map(n => `
+    <div class="notif-item" onclick="${n.acao || ''}">
+      <strong>${n.titulo}</strong>
+      <span>${n.texto}</span>
+    </div>
+  `).join("");
+}
+
+function gerarNotificacoesRelatorio(){
+  const semValor = patrimonios.filter(p => !Number(p.valor_bem || 0)).length;
+  const manutencao = patrimonios.filter(p => p.status === "MANUTENCAO").length;
+  const baixados = patrimonios.filter(p => p.status === "BAIXADO").length;
+  const semSerie = patrimonios.filter(p => !p.numero_serie && !p.placa).length;
+  const lista = [];
+
+  if(semValor > 0){
+    lista.push({
+      titulo:"⚠️ Patrimônios sem valor",
+      texto:`${semValor} item(ns) estão sem valor informado.`,
+      acao:"document.getElementById('filtroStatus').value=''; renderizarRelatorio();"
+    });
+  }
+
+  if(manutencao > 0){
+    lista.push({
+      titulo:"🛠 Itens em manutenção",
+      texto:`${manutencao} patrimônio(s) estão em manutenção.`,
+      acao:"document.getElementById('filtroStatus').value='MANUTENCAO'; renderizarRelatorio();"
+    });
+  }
+
+  if(baixados > 0){
+    lista.push({
+      titulo:"🗑 Itens baixados",
+      texto:`${baixados} patrimônio(s) estão baixados.`,
+      acao:"document.getElementById('filtroStatus').value='BAIXADO'; renderizarRelatorio();"
+    });
+  }
+
+  if(semSerie > 0){
+    lista.push({
+      titulo:"🔎 Série/placa ausente",
+      texto:`${semSerie} patrimônio(s) estão sem série ou placa.`,
+      acao:"document.getElementById('busca').value=''; renderizarRelatorio();"
+    });
+  }
+
+  if(movimentacoes.length > 0){
+    lista.push({
+      titulo:"🔁 Movimentações recentes",
+      texto:`Existem ${movimentacoes.length} movimentação(ões) recentes carregadas no relatório.`,
+      acao:"document.querySelector('.card-movimentacoes')?.scrollIntoView({behavior:'smooth'});"
+    });
+  }
+
+  atualizarNotificacoes(lista);
+}
+
 carregarDados();
 </script>
-
+<script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
-<!-- ===================================== -->
-<!-- BLOQUEIO DE LOGIN                     -->
-<!-- ===================================== -->
-
-<script src="JS/auth.js"></script>
-
-<script>
-  verificarLogin();
-</script>
-
-<!-- ===================================== -->
-<!-- FIM BLOQUEIO DE LOGIN                 -->
-<!-- ===================================== -->
 </html>

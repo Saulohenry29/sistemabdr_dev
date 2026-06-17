@@ -3,119 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>BDR ERP - Entrada</title>
-
-<link rel="stylesheet" href="CSS/estilo.css">
+<title>BDR ERP - Entrada de Materiais</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="JS/supabaseClient.js"></script>
-<script defer src="JS/entrada.js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script defer src="./JS/entrada.js"></script>
 
 <style>
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --orange:#f97316;
+}
 
 body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#eef2f7;
+  background:var(--bdr-bg)!important;
 }
 
-/* TOPO */
-.topo{
-  height:70px;
-  background:#fff;
-  border-bottom:4px solid #a4161a;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
 }
 
-.logo{
+.bdr-topbar-title{
+  color:var(--bdr-red)!important;
+  font-weight:900;
+}
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + NOTIFICAÇÕES
+========================================================= */
+.bdr-top-actions{
   display:flex;
   align-items:center;
   gap:12px;
+  margin-left:auto;
 }
 
-.logo img{
-  height:45px;
+.notif-wrap{
+  position:relative;
 }
 
-.logo h2{
-  margin:0;
-  color:#a4161a;
-}
-
-/* LAYOUT */
-.layout{
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
   display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  box-shadow:none;
+  outline:none!important;
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* MENU */
-.sidebar{
-  width:230px;
-  min-height:calc(100vh - 70px);
-  background:#111b2e;
-  padding:15px;
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
 }
 
-.sidebar h3{
-  color:#8ecae6;
-  margin-top:0;
+.notif-btn:focus,
+.notif-btn:active{
+  outline:none!important;
+  box-shadow:none!important;
 }
 
-.menu-btn{
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:330px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:280px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.notif-item:hover{
+  background:#f9fafb;
+}
+
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+.user-menu:hover{
+  background:rgba(255,255,255,.55);
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu:hover .avatar{
+  transform:scale(1.06);
+}
+
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+
+.user-mini b{
+  display:block;
+  outline:none!important;
+}
+
+.user-mini small{
+  color:var(--bdr-red);
+  font-weight:900;
+  outline:none!important;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.dropdown-user button{
   width:100%;
   border:none;
-  background:#1c2b3a;
-  color:white;
-  padding:12px;
-  margin-bottom:8px;
-  border-radius:8px;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
   cursor:pointer;
+  font-weight:900;
   text-align:left;
-  transition:.2s;
+  display:flex;
+  align-items:center;
+  gap:9px;
 }
 
-.menu-btn:hover{
-  background:#a4161a;
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
 }
 
-/* CONTEÚDO */
-.content{
-  flex:1;
-  padding:20px;
+.dropdown-user .logout-btn{
+  color:#dc2626;
 }
 
-.card{
-  background:white;
-  border-radius:14px;
-  padding:18px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-  margin-bottom:18px;
-  border-left:5px solid #a4161a;
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active,
+.user-menu:focus,
+.user-menu:active{
+  outline:none!important;
+  box-shadow:none!important;
 }
 
-.card h2,
-.card h3{
-  margin-top:0;
-  color:#a4161a;
+button{
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* GRID */
-.grid{
+/* =========================================================
+   ENTRADA
+========================================================= */
+.entrada-hero{
+  background:
+    radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),
+    linear-gradient(135deg,#fff,#f8fafc);
+  border-left:4px solid var(--bdr-red);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 2px 9px rgba(0,0,0,.07);
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:14px;
+  grid-template-columns:1.3fr .7fr;
+  gap:12px;
+  align-items:center;
+}
+
+.entrada-hero h2{
+  margin:0;
+  color:var(--bdr-red);
+  font-size:20px;
+  font-weight:900;
+}
+
+.entrada-hero p{
+  margin:5px 0 0;
+  color:#6b7280;
+  font-size:13px;
+}
+
+.hero-status{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.hero-mini{
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-left:4px solid var(--bdr-red);
+  border-radius:13px;
+  padding:10px;
+  font-size:12px;
+}
+
+.hero-mini strong{
+  display:block;
+  color:#111827;
+  font-size:18px;
+}
+
+.hero-mini span{
+  color:#6b7280;
+  font-weight:800;
+}
+
+.entrada-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.upload-row{
+  display:grid;
+  grid-template-columns:1fr 190px;
+  gap:10px;
+  align-items:center;
 }
 
 label{
   display:block;
   margin-bottom:5px;
-  font-weight:bold;
-  color:#333;
-  font-size:14px;
+  font-weight:900;
+  color:#374151;
+  font-size:12px;
 }
 
 input,
@@ -123,326 +362,706 @@ select,
 textarea{
   width:100%;
   padding:10px;
-  border:1px solid #ccc;
-  border-radius:8px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
   box-sizing:border-box;
+  background:#fff;
+  font-family:Arial,sans-serif;
 }
 
 textarea{
-  min-height:90px;
+  min-height:84px;
+  resize:vertical;
 }
 
-/* IMPORTAÇÃO */
-.importacao{
-  background:#fff5f5;
-  border:2px dashed #a4161a;
-  border-radius:12px;
-  padding:18px;
+.card h2,
+.card h3{
+  color:var(--bdr-red);
+  margin-top:0;
 }
 
-.importacao p{
-  margin:8px 0 0;
-  color:#555;
+.importacao-box{
+  border:2px dashed #fecaca;
+  background:#fff7f7;
+  border-radius:16px;
+  padding:14px;
 }
 
-/* BOTÕES */
-.btn{
+.info{
+  background:#eff6ff;
+  border-left:4px solid var(--blue);
+  padding:10px 12px;
+  border-radius:10px;
+  margin-top:10px;
+  color:#1e3a8a;
+  font-size:13px;
+}
+
+.alerta{
+  background:#fff7ed;
+  border-left:4px solid var(--orange);
+  padding:10px 12px;
+  border-radius:10px;
+  margin-top:10px;
+  color:#7c2d12;
+  font-size:13px;
+}
+
+.btn-bdr{
   border:none;
-  padding:11px 15px;
-  border-radius:8px;
+  border-radius:10px;
+  padding:10px 13px;
+  font-size:12px;
+  font-weight:900;
   cursor:pointer;
-  font-weight:bold;
-  transition:.2s;
+  transition:.18s;
 }
 
-.btn-primary{
-  background:#a4161a;
-  color:white;
+.btn-bdr:hover{
+  transform:translateY(-2px);
+  box-shadow:0 5px 14px rgba(0,0,0,.12);
 }
 
-.btn-primary:hover{
-  background:#7a1014;
+.btn-red{
+  background:var(--bdr-red);
+  color:#fff;
 }
 
-.btn-sec{
-  background:#1f2937;
-  color:white;
+.btn-dark{
+  background:#111827;
+  color:#fff;
 }
 
-.btn-sec:hover{
-  background:#374151;
-}
-
-.btn-danger{
-  background:#dc2626;
-  color:white;
-}
-
-/* TABELA */
 .table-wrap{
   overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:1000px;
+  min-width:1120px;
+  background:#fff;
 }
 
 th{
-  background:#111b2e;
+  background:#111827;
   color:white;
-  padding:12px;
+  padding:11px;
   text-align:left;
-  font-size:13px;
+  font-size:12px;
+  white-space:nowrap;
 }
 
 td{
   padding:8px;
-  border-bottom:1px solid #ddd;
-  font-size:13px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:12px;
+  vertical-align:top;
 }
 
 td input,
 td select{
-  font-size:13px;
-  padding:7px;
+  font-size:12px;
+  padding:8px;
 }
 
-/* TOTAL */
+.entrada-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
 .total-box{
-  margin-top:15px;
   font-size:22px;
-  font-weight:bold;
-  color:#a4161a;
+  font-weight:900;
+  color:var(--bdr-red);
   text-align:right;
 }
 
-/* STATUS */
-.alerta{
-  background:#fff7ed;
-  border-left:5px solid #f97316;
-  padding:12px;
-  border-radius:8px;
-  margin-top:10px;
-  color:#7c2d12;
+.badge-fluxo{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#fff1f2;
+  color:var(--bdr-red);
+  border:1px solid #fecaca;
+  font-size:12px;
+  font-weight:900;
 }
 
-/* MOBILE */
-@media(max-width:768px){
-
-  .layout{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-    min-height:auto;
-  }
-
-  .grid{
+@media(max-width:1000px){
+  .entrada-hero,
+  .entrada-grid,
+  .upload-row{
     grid-template-columns:1fr;
   }
 
+  .hero-status{
+    grid-template-columns:1fr;
+  }
+
+  .bdr-top-actions{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .notif-dropdown{
+    right:-80px;
+    width:300px;
+  }
 }
+
+/* CORREÇÃO DEFINITIVA: remove barra/cursor piscando no sino e topo */
+.bdr-top-actions,
+.bdr-top-actions *,
+.notif-wrap,
+.notif-wrap *,
+.notif-btn,
+.notif-btn *,
+.notif-btn i,
+.notif-badge{
+  outline:none!important;
+  box-shadow:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-user-select:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+
+.notif-btn i,
+.notif-badge{
+  pointer-events:none;
+}
+
+.notif-btn:focus,
+.notif-btn:focus-visible,
+.notif-btn:active{
+  outline:0!important;
+  box-shadow:none!important;
+}
+
 </style>
 </head>
 
 <body>
-<!-- ===================================== -->
-<!-- BLOQUEIO DE LOGIN                     -->
-<!-- ===================================== -->
+<!-- Campos de compatibilidade usados pelo arquivo ./JS/entrada.js -->
+<div style="display:none">
+  <span id="dataAtual"></span>
+  <span id="usuarioInfo"></span>
+</div>
+<script>verificarLogin();</script>
 
-<script src="JS/auth.js"></script>
+<div class="bdr-app">
+  <aside class="bdr-sidebar">
+    <div class="bdr-brand">
+      <div class="bdr-brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+    </div>
+
+    <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn active" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- PEDIDOS -->
+  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </span>
+  </button>
+
+  <!-- RETIRADA -->
+  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </span>
+  </button>
+
+  <!-- SAÍDA -->
+  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-truck-fast"></i>
+    </span>
+  </button>
+
+  <!-- ENDEREÇAMENTO -->
+  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- MOVIMENTAÇÕES -->
+  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-right-left"></i>
+    </span>
+  </button>
+
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+    </nav>
+  </aside>
+
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">📥 BDR Entrada de Materiais</div>
+        <div class="bdr-topbar-sub">Recebimento por XML/manual, conferência inicial e envio para triagem.</div>
+      </div>
+
+      <div class="bdr-top-actions">
+        <div class="notif-wrap">
+          <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
+            <i class="fa-regular fa-bell"></i>
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+
+          <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-head">🔔 Central de notificações</div>
+            <div id="notifLista" class="notif-list">
+              <div class="notif-item">Nenhuma notificação no momento.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini">
+            <b id="usuarioNome" tabindex="-1">Olá, -</b>
+            <small id="usuarioPerfil" tabindex="-1">-</small>
+          </div>
+
+          <div class="avatar">
+            <i class="fa-solid fa-user"></i>
+          </div>
+
+          <div id="dropdownUser" class="dropdown-user">
+            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+              <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+            </button>
+
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
+              <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="entrada-hero">
+      <div>
+        <h2>Recebimento de materiais</h2>
+        <p>Importe XML da NFe ou registre manualmente. A entrada será enviada para triagem.</p>
+        <div class="alerta"><strong>Fluxo:</strong> Entrada → Triagem → Estoque / Patrimônio / Obra.</div>
+      </div>
+
+      <div class="hero-status">
+        <div class="hero-mini">
+          <strong id="qtdItensEntrada">0</strong>
+          <span>Itens lançados</span>
+        </div>
+
+        <div class="hero-mini">
+          <strong id="valorHeroEntrada">R$ 0,00</strong>
+          <span>Total da entrada</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card importacao-box">
+      <h2>📂 Importação XML da NFe</h2>
+
+      <div class="upload-row">
+        <input type="file" id="xmlNfe" accept=".xml" onchange="lerXMLNFe(event)">
+        <span class="badge-fluxo"><i class="fa-solid fa-file-import"></i> XML da NFe</span>
+      </div>
+
+      <div class="info">O XML preenche número da NF, fornecedor, chave e itens automaticamente.</div>
+    </section>
+
+    <section class="card">
+      <h2>📥 Dados da Entrada</h2>
+
+      <div class="entrada-grid">
+        <div>
+          <label>Empresa</label>
+          <select id="empresa"></select>
+        </div>
+
+        <div>
+          <label>Número NF</label>
+          <input id="numero_nf" placeholder="Ex: 12345">
+        </div>
+
+        <div>
+          <label>Fornecedor</label>
+          <input id="fornecedor" placeholder="Nome do fornecedor">
+        </div>
+
+        <div>
+          <label>Responsável Recebimento</label>
+          <input id="responsavel" placeholder="Quem recebeu">
+        </div>
+
+        <div>
+          <label>Chave NFe</label>
+          <input id="chave_nfe" placeholder="Chave da nota">
+        </div>
+
+        <div>
+          <label>Data Recebimento</label>
+          <input type="date" id="data_recebimento">
+        </div>
+      </div>
+
+      <br>
+
+      <label>Observação</label>
+      <textarea id="observacao" placeholder="Observações da entrada..."></textarea>
+    </section>
+
+    <section class="card">
+      <h3>📦 Itens recebidos</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto vinculado</th>
+              <th>Descrição recebida/XML</th>
+              <th>Qtd</th>
+              <th>Valor Unit.</th>
+              <th>Estado</th>
+              <th>Lote</th>
+              <th>Validade</th>
+              <th>Sugestão</th>
+              <th>Total</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="itensBody"></tbody>
+        </table>
+      </div>
+
+      <div class="entrada-actions">
+        <button class="btn-bdr btn-dark" onclick="adicionarLinha()">➕ Adicionar item manual</button>
+        <div class="total-box" id="totalGeral">Total NF: R$ 0,00</div>
+      </div>
+
+      <br>
+
+      <button class="btn-bdr btn-red" onclick="salvarEntrada()">💾 Salvar entrada e enviar para triagem</button>
+    </section>
+  </main>
+</div>
 
 <script>
-  verificarLogin();
+function ir(pagina){
+  window.location.href = pagina;
+}
+
+function db(){
+  return window.client || window.supabaseClient || window.clientSupabase || window.supabase;
+}
+
+function usuarioAtualTopo(){
+  const u = localStorage.getItem("usuario_logado");
+  try{
+    return u ? JSON.parse(u) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+function carregarUsuarioTopo(){
+  const usuario = usuarioAtualTopo();
+
+  const nome = document.getElementById("usuarioNome");
+  const perfil = document.getElementById("usuarioPerfil");
+
+  if(nome){
+    nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
+  }
+
+  if(perfil){
+    perfil.innerText = usuario ? (usuario.perfil || "-") : "-";
+  }
+}
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+document.addEventListener("click", fecharMenusTopo);
+
+/* =========================================================
+   SININHO REAL DE PEDIDOS - PADRÃO BDR
+   Lê pedidos_retirada e escuta INSERT/UPDATE via Supabase Realtime.
+========================================================= */
+const STATUS_PEDIDOS_ABERTOS = [
+  "AGUARDANDO_AUTORIZACAO",
+  "EM_SEPARACAO",
+  "AGUARDANDO_RETIRADA",
+  "EM_TRANSITO",
+  "AGUARDANDO_CONFERENCIA"
+];
+
+let notificacoesPedidos = [];
+let canalPedidosNotificacoes = null;
+
+function dataBRTopo(data){
+  if(!data) return "";
+  const d = new Date(String(data).replace(" ","T"));
+  return isNaN(d.getTime()) ? String(data) : d.toLocaleString("pt-BR");
+}
+
+function chaveNotificacao(n){
+  return `${n.tipo || "PEDIDO"}-${n.id || ""}-${n.status || ""}`;
+}
+
+function notificacoesLidas(){
+  try{
+    return JSON.parse(localStorage.getItem("bdr_notificacoes_lidas") || "[]");
+  }catch(e){
+    return [];
+  }
+}
+
+function salvarNotificacoesLidas(lista){
+  localStorage.setItem("bdr_notificacoes_lidas", JSON.stringify(lista || []));
+}
+
+function pedidoVisivelParaUsuario(pedido, usuario){
+  const perfil = String(usuario?.perfil || "").toUpperCase();
+
+  if(perfil === "MASTER" || perfil === "ADMIN" || perfil === "ALMOXARIFE"){
+    return true;
+  }
+
+  return (
+    String(pedido.solicitante || "") === String(usuario?.nome || "") ||
+    String(pedido.usuario_criacao || "") === String(usuario?.nome || "") ||
+    String(pedido.obra_id || "") === String(usuario?.obra_id || "") ||
+    String(pedido.obra_destino_id || "") === String(usuario?.obra_id || "")
+  );
+}
+
+function abrirPedidoNotificacao(id){
+  const chaves = notificacoesPedidos.map(chaveNotificacao);
+  salvarNotificacoesLidas([...new Set([...notificacoesLidas(), ...chaves])]);
+  localStorage.setItem("bdr_pedido_foco", String(id || ""));
+  window.location.href = "pedidos.html";
+}
+
+function atualizarNotificacoesPedidos(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+
+  if(!badge || !box) return;
+
+  const lidas = new Set(notificacoesLidas());
+  const naoLidas = lista.filter(n => !lidas.has(chaveNotificacao(n)));
+
+  badge.innerText = naoLidas.length > 9 ? "9+" : naoLidas.length;
+  badge.style.display = naoLidas.length > 0 ? "inline-flex" : "none";
+
+  if(lista.length === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="notif-item" onclick="marcarTodasNotificacoesLidas(event)">
+      <strong>✅ Marcar todas como lidas</strong>
+      <span>Clique aqui para limpar o contador do sininho.</span>
+    </div>
+    ${lista.map(n => {
+      const lida = lidas.has(chaveNotificacao(n));
+      return `
+        <div class="notif-item" onclick="abrirPedidoNotificacao(${Number(n.id) || 0})" style="${lida ? "opacity:.62" : ""}">
+          <strong>${n.titulo}</strong>
+          <span>${n.texto}</span>
+          <small style="display:block;margin-top:4px;color:#6b7280;">${n.data || ""}</small>
+        </div>
+      `;
+    }).join("")}
+  `;
+}
+
+function marcarTodasNotificacoesLidas(event){
+  if(event) event.stopPropagation();
+
+  const chaves = notificacoesPedidos.map(chaveNotificacao);
+  salvarNotificacoesLidas([...new Set([...notificacoesLidas(), ...chaves])]);
+  atualizarNotificacoesPedidos(notificacoesPedidos);
+}
+
+async function gerarNotificacoesPedidos(){
+  const banco = db();
+
+  if(!banco){
+    atualizarNotificacoesPedidos([]);
+    return;
+  }
+
+  try{
+    const usuario = usuarioAtualTopo();
+
+    const { data: pedidos, error } = await banco
+      .from("pedidos_retirada")
+      .select("*")
+      .order("id", { ascending:false })
+      .limit(40);
+
+    if(error){
+      console.warn("Erro ao gerar notificações de pedidos:", error.message);
+      atualizarNotificacoesPedidos([]);
+      return;
+    }
+
+    let base = (pedidos || []).filter(p => pedidoVisivelParaUsuario(p, usuario));
+
+    const abertos = base.filter(p =>
+      STATUS_PEDIDOS_ABERTOS.includes(String(p.status || ""))
+    );
+
+    const recentes = base.slice(0, 10);
+
+    notificacoesPedidos = [];
+
+    abertos.forEach(p => {
+      notificacoesPedidos.push({
+        tipo:"PEDIDO_ABERTO",
+        id:p.id,
+        status:p.status,
+        titulo:"📝 Pedido em andamento",
+        texto:`${p.codigo || "PED-" + String(p.id).padStart(4,"0")} • ${p.obra_nome || "-"} • ${p.status || "-"}`,
+        data:dataBRTopo(p.atualizado_em || p.updated_at || p.criado_em || p.created_at)
+      });
+    });
+
+    recentes
+      .filter(p => !abertos.some(a => Number(a.id) === Number(p.id)))
+      .forEach(p => {
+        notificacoesPedidos.push({
+          tipo:"PEDIDO_RECENTE",
+          id:p.id,
+          status:p.status,
+          titulo:"🔔 Atualização de pedido",
+          texto:`${p.codigo || "PED-" + String(p.id).padStart(4,"0")} • ${p.obra_nome || "-"} • ${p.status || "-"}`,
+          data:dataBRTopo(p.atualizado_em || p.updated_at || p.criado_em || p.created_at)
+        });
+      });
+
+    atualizarNotificacoesPedidos(notificacoesPedidos);
+
+  }catch(e){
+    console.warn("Erro ao gerar notificações de pedidos:", e);
+    atualizarNotificacoesPedidos([]);
+  }
+}
+
+function iniciarRealtimePedidos(){
+  const banco = db();
+
+  if(!banco || canalPedidosNotificacoes) return;
+
+  canalPedidosNotificacoes = banco
+    .channel("bdr-entrada-pedidos-notificacoes")
+    .on("postgres_changes",
+      { event:"INSERT", schema:"public", table:"pedidos_retirada" },
+      async () => { await gerarNotificacoesPedidos(); }
+    )
+    .on("postgres_changes",
+      { event:"UPDATE", schema:"public", table:"pedidos_retirada" },
+      async () => { await gerarNotificacoesPedidos(); }
+    )
+    .on("postgres_changes",
+      { event:"INSERT", schema:"public", table:"historico_pedidos_retirada" },
+      async () => { await gerarNotificacoesPedidos(); }
+    )
+    .subscribe();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  carregarUsuarioTopo();
+  gerarNotificacoesPedidos();
+  iniciarRealtimePedidos();
+
+  if(document.getElementById("data_recebimento") && !document.getElementById("data_recebimento").value){
+    document.getElementById("data_recebimento").value = new Date().toISOString().slice(0,10);
+  }
+});
 </script>
-
-<!-- ===================================== -->
-<!-- FIM BLOQUEIO DE LOGIN                 -->
-<!-- ===================================== -->
-<header class="topo">
-
-  <div class="logo">
-    <img src="./imagens/logo.png" alt="BDR">
-    <h2>Entrada de Materiais</h2>
-  </div>
-
-  <div id="dataAtual"></div>
-
-</header>
-
-<div class="layout">
-
-<!-- MENU -->
-<div class="sidebar">
-
-  <h3>MENU</h3>
-
-  <button class="menu-btn" onclick="ir('dashboard.html')">
-    📊 Dashboard
-  </button>
-
-  <button class="menu-btn" onclick="ir('entrada.html')">
-    📥 Entrada
-  </button>
-
-  <button class="menu-btn" onclick="ir('triagem.html')">
-    📋 Triagem
-  </button>
-
-  <button class="menu-btn" onclick="ir('estoque.html')">
-    📦 Estoque
-  </button>
-
-  <button class="menu-btn" onclick="ir('patrimonio.html')">
-    🏷 Patrimônio
-  </button>
-
-  <button class="menu-btn">
-    🚚 Movimentações
-  </button>
-
-  <button class="menu-btn">
-    📄 Relatórios
-  </button>
-
-</div>
-
-<!-- CONTEÚDO -->
-<div class="content">
-
-<!-- IMPORTAÇÃO -->
-<div class="card importacao">
-
-  <h2>📂 Importação XML da NFe</h2>
-
-  <input
-    type="file"
-    id="xmlNfe"
-    accept=".xml"
-    onchange="lerXMLNFe(event)"
-  >
-
-  <p>
-    A entrada será enviada para triagem após conferência rápida.
-  </p>
-
-  <div class="alerta">
-    ⚠️ A análise de patrimônio, destino e armazenagem será feita na triagem.
-  </div>
-
-</div>
-
-<!-- DADOS -->
-<div class="card">
-
-  <h2>📥 Dados da Entrada</h2>
-
-  <div class="grid">
-
-    <div>
-      <label>Empresa</label>
-      <select id="empresa"></select>
-    </div>
-
-    <div>
-      <label>Número NF</label>
-      <input id="numero_nf">
-    </div>
-
-    <div>
-      <label>Fornecedor</label>
-      <input id="fornecedor">
-    </div>
-
-    <div>
-      <label>Responsável Recebimento</label>
-      <input id="responsavel">
-    </div>
-
-    <div>
-      <label>Chave NFe</label>
-      <input id="chave_nfe">
-    </div>
-
-    <div>
-      <label>Data Recebimento</label>
-      <input type="date" id="data_recebimento">
-    </div>
-
-  </div>
-
-  <br>
-
-  <label>Observação</label>
-
-  <textarea
-    id="observacao"
-    placeholder="Observações da entrada..."
-  ></textarea>
-
-</div>
-
-<!-- ITENS -->
-<div class="card">
-
-  <h3>📦 Itens da Nota</h3>
-
-  <div class="table-wrap">
-
-    <table>
-
-      <thead>
-        <tr>
-          <th>Produto</th>
-          <th>Descrição XML</th>
-          <th>Qtd</th>
-          <th>Valor Unit.</th>
-          <th>Estado</th>
-          <th>Lote</th>
-          <th>Validade</th>
-          <th>Total</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-
-      <tbody id="itensBody"></tbody>
-
-    </table>
-
-  </div>
-
-  <br>
-
-  <button
-    class="btn btn-sec"
-    onclick="adicionarLinha()"
-  >
-    ➕ Adicionar item manual
-  </button>
-
-  <div
-    class="total-box"
-    id="totalGeral"
-  >
-    Total NF: R$ 0,00
-  </div>
-
-  <br>
-
-  <button
-    class="btn btn-primary"
-    onclick="salvarEntrada()"
-  >
-    💾 Salvar entrada e enviar para triagem
-  </button>
-
-</div>
-
-</div>
-</div>
-
+<script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>
+
