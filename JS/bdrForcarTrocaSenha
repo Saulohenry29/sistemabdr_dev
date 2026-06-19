@@ -1,0 +1,135 @@
+/* =========================================================
+   BDR ERP - TROCA OBRIGATÓRIA DE SENHA PROVISÓRIA
+   Coloque este arquivo em todas as páginas após supabaseClient.js/auth.js.
+   Quando usuarios_sistema.trocar_senha = true, bloqueia a tela até trocar.
+========================================================= */
+(function(){
+  if(window.BDR_TROCA_SENHA_ATIVO) return;
+  window.BDR_TROCA_SENHA_ATIVO = true;
+
+  function db(){
+    if(typeof window.db === "function"){
+      try{ const b = window.db(); if(b) return b; }catch(e){}
+    }
+    return window.client || window.supabaseClient || window.clientSupabase || null;
+  }
+
+  function usuarioAtual(){
+    try{
+      const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+
+  function salvarUsuarioLocal(dados){
+    try{
+      const atual = usuarioAtual() || {};
+      const novo = {...atual, ...dados};
+      localStorage.setItem("usuario_logado", JSON.stringify(novo));
+      localStorage.setItem("usuarioLogado", JSON.stringify(novo));
+    }catch(e){}
+  }
+
+  function css(){
+    if(document.getElementById("bdrTrocaSenhaCss")) return;
+    const style = document.createElement("style");
+    style.id = "bdrTrocaSenhaCss";
+    style.textContent = `
+      .bdr-pass-bg{position:fixed;inset:0;background:rgba(15,23,42,.78);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;}
+      .bdr-pass-modal{width:min(460px,100%);background:#fff;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.38);overflow:hidden;font-family:Arial,sans-serif;}
+      .bdr-pass-head{padding:18px;background:linear-gradient(135deg,#fff1f2,#fff);border-bottom:1px solid #fecaca;display:flex;gap:12px;align-items:center;}
+      .bdr-pass-icon{width:46px;height:46px;border-radius:16px;background:#d71920;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;}
+      .bdr-pass-head h3{margin:0;color:#111827;font-size:18px;font-weight:900;}.bdr-pass-head p{margin:4px 0 0;color:#6b7280;font-size:12px;}
+      .bdr-pass-body{padding:18px;}.bdr-pass-body label{display:block;margin:10px 0 5px;font-size:12px;font-weight:900;color:#374151;}
+      .bdr-pass-body input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #d1d5db;border-radius:13px;font-size:14px;}
+      .bdr-pass-alert{background:#fff7ed;border-left:5px solid #f97316;border-radius:12px;padding:10px 12px;color:#7c2d12;font-size:12px;line-height:1.4;margin-bottom:12px;}
+      .bdr-pass-error{display:none;color:#dc2626;font-size:12px;font-weight:900;margin-top:10px;}.bdr-pass-error.ativo{display:block;}
+      .bdr-pass-actions{display:flex;gap:9px;justify-content:flex-end;padding:0 18px 18px;}.bdr-pass-actions button{border:none;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer;}
+      .bdr-pass-save{background:#16a34a;color:#fff;}.bdr-pass-logout{background:#e5e7eb;color:#374151;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function mostrarModal(user){
+    css();
+    if(document.getElementById("bdrTrocaSenhaBg")) return;
+    const div = document.createElement("div");
+    div.id = "bdrTrocaSenhaBg";
+    div.className = "bdr-pass-bg";
+    div.innerHTML = `
+      <div class="bdr-pass-modal">
+        <div class="bdr-pass-head">
+          <div class="bdr-pass-icon">🔐</div>
+          <div><h3>Troca de senha obrigatória</h3><p>Olá, ${String(user.nome || user.usuario || "usuário")}</p></div>
+        </div>
+        <div class="bdr-pass-body">
+          <div class="bdr-pass-alert">Você entrou com uma senha provisória. Crie uma nova senha para continuar usando o sistema.</div>
+          <label>Nova senha</label>
+          <input id="bdrNovaSenha" type="password" autocomplete="new-password" placeholder="Digite a nova senha">
+          <label>Confirmar nova senha</label>
+          <input id="bdrConfirmaSenha" type="password" autocomplete="new-password" placeholder="Confirme a nova senha">
+          <div id="bdrPassErro" class="bdr-pass-error">Erro</div>
+        </div>
+        <div class="bdr-pass-actions">
+          <button class="bdr-pass-logout" onclick="logout ? logout() : localStorage.clear(); location.href='login.html';">Sair</button>
+          <button class="bdr-pass-save" id="bdrBtnSalvarSenha">Salvar nova senha</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+    setTimeout(()=>document.getElementById("bdrNovaSenha")?.focus(),100);
+    document.getElementById("bdrBtnSalvarSenha").onclick = ()=>salvarSenha(user);
+  }
+
+  function erro(msg){
+    const el = document.getElementById("bdrPassErro");
+    if(el){ el.innerText = msg; el.classList.add("ativo"); }
+  }
+
+  async function salvarSenha(user){
+    const banco = db();
+    const nova = String(document.getElementById("bdrNovaSenha")?.value || "").trim();
+    const conf = String(document.getElementById("bdrConfirmaSenha")?.value || "").trim();
+    if(nova.length < 4){ erro("A nova senha precisa ter pelo menos 4 caracteres."); return; }
+    if(nova !== conf){ erro("As senhas não conferem."); return; }
+    if(user.senha && nova === String(user.senha)){
+      erro("A nova senha não pode ser igual à senha provisória.");
+      return;
+    }
+
+    const { error } = await banco
+      .from("usuarios_sistema")
+      .update({
+        senha: nova,
+        senha_provisoria: false,
+        trocar_senha: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", user.id);
+
+    if(error){ erro("Erro ao salvar senha: " + error.message); return; }
+    salvarUsuarioLocal({senha_provisoria:false,trocar_senha:false});
+    alert("Senha alterada com sucesso!");
+    document.getElementById("bdrTrocaSenhaBg")?.remove();
+  }
+
+  async function verificar(){
+    const banco = db();
+    const u = usuarioAtual();
+    if(!banco || !u || !u.id) return;
+
+    const { data, error } = await banco
+      .from("usuarios_sistema")
+      .select("id,nome,usuario,senha,senha_provisoria,trocar_senha,ativo")
+      .eq("id", u.id)
+      .single();
+
+    if(error || !data || data.ativo === false) return;
+    if(data.trocar_senha === true || data.senha_provisoria === true){
+      mostrarModal(data);
+    }
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", verificar);
+  else setTimeout(verificar, 80);
+})();

@@ -5,6 +5,7 @@
 <title>BDR - Relatórios</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/responsivo-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -99,6 +100,57 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
 .btn-mini.red{background:#a4161a}
 .btn-mini.dark{background:#111827}
 .btn-mini.gray{background:#6b7280}
+
+
+/* MODAL CÓDIGOS SIENGE */
+.sienge-modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.62);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.sienge-modal-bg.ativo{display:flex}
+.sienge-modal{
+  width:min(1100px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  background:#eef2f7;
+  border-radius:18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
+  padding:14px;
+}
+.sienge-modal-top{
+  background:#fff;
+  border-left:4px solid #a4161a;
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.sienge-modal-title{color:#a4161a;font-size:18px;font-weight:900}
+.sienge-modal-sub{color:#6b7280;font-size:12px;margin-top:3px}
+.sienge-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sienge-tab{background:#fff;color:#111827;border:1px solid #fecaca;border-radius:999px;padding:9px 13px;font-weight:900}
+.sienge-tab.active{background:#a4161a;color:#fff}
+.sienge-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+.sienge-lista{max-height:420px;overflow:auto}
+.sienge-row{display:grid;grid-template-columns:100px 100px 1fr 85px;gap:8px;align-items:center;background:#fff;border-left:4px solid #a4161a;border-radius:10px;padding:9px;margin-bottom:7px;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.sienge-row b{color:#a4161a}
+.sienge-row small{color:#6b7280}
+.import-box{border:1px dashed #fecaca;background:#fff7f7;border-radius:12px;padding:12px}
+.help{background:#eff6ff;color:#1e40af;border-left:4px solid #2563eb;padding:10px;border-radius:10px;margin-bottom:10px}
+@media(max-width:900px){
+  .sienge-grid{grid-template-columns:1fr}
+  .sienge-row{grid-template-columns:1fr}
+  .sienge-modal{width:100%;max-height:94vh}
+}
 
 </style>
 
@@ -587,7 +639,7 @@ button,
     </div>
   </div>
 
-    <!-- MENU PRINCIPAL FIXO -->
+ <!-- MENU PRINCIPAL FIXO -->
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
@@ -611,31 +663,10 @@ button,
     </span>
   </button>
 
-  <!-- PEDIDOS -->
-  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
-      <i class="fa-solid fa-clipboard-list"></i>
-    </span>
-  </button>
-
-  <!-- RETIRADA -->
-  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-ramp-box"></i>
-    </span>
-  </button>
-
-  <!-- SAÍDA -->
-  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-fast"></i>
-    </span>
-  </button>
-
-  <!-- ENDEREÇAMENTO -->
-  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-location-dot"></i>
+      <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
@@ -646,13 +677,14 @@ button,
     </span>
   </button>
 
-  <!-- MOVIMENTAÇÕES -->
-  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
 
+  
   <!-- RELATÓRIOS -->
   <button class="bdr-menu-btn active" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
@@ -673,7 +705,8 @@ button,
       <i class="fa-solid fa-users"></i>
     </span>
   </button>
-    </nav>
+
+</nav>
 
 </aside>
 
@@ -756,6 +789,10 @@ button,
   <div class="grid">
     <input id="busca" placeholder="Buscar por nome, código, obra..." oninput="renderizarRelatorio()">
 
+    <input type="date" id="dataInicio" title="Data inicial" onchange="renderizarRelatorio()">
+
+    <input type="date" id="dataFim" title="Data final" onchange="renderizarRelatorio()">
+
     <select id="filtroObra" onchange="renderizarRelatorio()">
       <option value="">Todas as obras/setores</option>
     </select>
@@ -790,11 +827,19 @@ button,
 
   <br>
 
+  <div class="sienge-mini-actions">
+    <button class="btn-mini red" onclick="periodoRelatorio('HOJE')">Hoje</button>
+    <button class="btn-mini dark" onclick="periodoRelatorio('7DIAS')">7 dias</button>
+    <button class="btn-mini dark" onclick="periodoRelatorio('30DIAS')">30 dias</button>
+    <button class="btn-mini gray" onclick="limparPeriodoRelatorio()">Limpar período</button>
+  </div>
+
   <div class="botoes relatorio-actions">
     <button class="btn-relatorio btn-limpar" onclick="limparFiltros()">🧹 Limpar filtros</button>
     <button class="btn-relatorio btn-print" onclick="imprimirRelatorio()">🖨 Imprimir</button>
     <button class="btn-relatorio btn-excel" onclick="exportarCSV()">📊 Exportar Excel/CSV</button>
     <button class="btn-relatorio btn-blue" onclick="exportarSiengeCSV()">🏗 Exportar CSV Sienge</button>
+    <button class="btn-relatorio btn-print" onclick="abrirModalSienge()">⚙️ Códigos Sienge</button>
   </div>
 
 </div>
@@ -819,7 +864,7 @@ button,
     Gera um CSV no padrão de importação de bens do Sienge. Use os filtros acima para exportar somente os bens desejados.
   </p>
   <div class="alerta" style="margin-top:8px;">
-    <strong>Correções aplicadas:</strong> Coluna E puxa a marca do produto. Coluna H exporta o estado como NOVO, BOM, REGULAR ou RUIM. Coluna I prioriza o código real da obra/setor.
+    <strong>Exportador inteligente:</strong> Prefixo BDR fixo, código manual do patrimônio, centro de custo da obra/empresa e conversão automática de insumo, marca, modelo, estado, setor/obra e cor pelos códigos Sienge.
   </div>
 </div>
 
@@ -869,6 +914,81 @@ button,
 </div>
 </div>
 
+
+<!-- MODAL CÓDIGOS SIENGE -->
+<div id="modalSiengeCodigos" class="sienge-modal-bg">
+  <div class="sienge-modal">
+    <div class="sienge-modal-top">
+      <div>
+        <div class="sienge-modal-title">⚙️ Códigos Sienge</div>
+        <div class="sienge-modal-sub">Cadastre ou importe códigos auxiliares. Depois de cadastrar, feche e pronto.</div>
+      </div>
+      <button class="btn-mini gray" onclick="fecharModalSienge()">Fechar</button>
+    </div>
+
+    <section class="card">
+      <h3>📌 Tipos de códigos</h3>
+      <div class="sienge-tabs" id="abasTipos"></div>
+      <div class="help">
+        Para COR, MARCA, MODELO, ESTADO, SETOR/OBRA e COMBUSTÍVEL: Coluna A = código e Coluna B = descrição.<br>
+        Para INSUMO: Coluna A = código, Coluna B = descrição e Coluna C = tabela 2 ou 3.
+      </div>
+    </section>
+
+    <section class="sienge-grid">
+      <div>
+        <section class="card">
+          <h3 id="tituloCadastro">➕ Cadastrar código</h3>
+          <input type="hidden" id="codigo_id">
+
+          <div class="grid" style="grid-template-columns:1fr 1fr !important;">
+            <div><label><b>Tipo</b></label><input id="tipo_atual" readonly></div>
+            <div><label><b>Tabela referência</b></label><select id="tabela_ref"><option value="PADRAO">PADRÃO</option><option value="2">Tabela 2</option><option value="3">Tabela 3</option></select></div>
+            <div><label><b>Código Sienge</b></label><input id="codigo_sienge" placeholder="Ex: 1, 106, 6623"></div>
+            <div><label><b>Descrição / referência</b></label><input id="descricao_sienge" placeholder="Ex: Amarelo, MOVIX, BEBEDOURO..."></div>
+          </div>
+
+          <br>
+          <button class="btn-ok" onclick="salvarCodigoSienge()">💾 Salvar código</button>
+          <button class="btn-dark" onclick="limparFormularioSienge()">🧹 Limpar</button>
+        </section>
+
+        <section class="card">
+          <h3>📥 Importar Excel/CSV</h3>
+          <div class="import-box">
+            <p><b>Tipo selecionado:</b> <span id="tipoImportacao">-</span></p>
+            <p><b>Importação:</b> escolha o tipo acima antes de importar.</p>
+            <input type="file" id="arquivoImportacao" accept=".csv,.txt,.xlsx,.xls">
+            <br><br>
+            <button class="btn-blue" onclick="importarArquivoSienge()">📥 Importar arquivo</button>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card">
+          <h3>🔎 Consultar códigos</h3>
+          <div class="grid" style="grid-template-columns:1fr 180px !important;">
+            <input id="buscaSienge" placeholder="Buscar por código ou descrição..." oninput="renderizarCodigosSienge()">
+            <select id="filtroTabelaRef" onchange="renderizarCodigosSienge()">
+              <option value="">Todas as tabelas</option>
+              <option value="PADRAO">PADRÃO</option>
+              <option value="2">Tabela 2</option>
+              <option value="3">Tabela 3</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3 id="tituloLista">Lista de códigos</h3>
+          <div id="listaCodigosSienge" class="sienge-lista"></div>
+        </section>
+      </div>
+    </section>
+  </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
@@ -876,6 +996,8 @@ button,
 <script>
 let patrimonios = [];
 let obras = [];
+let empresas = [];
+let siengeCodigos = [];
 let movimentacoes = [];
 let filtradosAtuais = [];
 
@@ -934,6 +1056,16 @@ async function carregarDados(){
     .select("*")
     .order("nome");
 
+  const empresasResp = await db()
+    .from("empresas")
+    .select("*")
+    .order("nome");
+
+  const siengeResp = await db()
+    .from("sienge_codigos")
+    .select("*")
+    .eq("ativo", true);
+
   const movResp = await db()
     .from("movimentacoes")
     .select("*")
@@ -948,6 +1080,14 @@ async function carregarDados(){
 
   if(obrasResp.error){
     console.error(obrasResp.error);
+  }
+
+  if(empresasResp.error){
+    console.warn("Não foi possível carregar empresas:", empresasResp.error.message);
+  }
+
+  if(siengeResp.error){
+    console.warn("Não foi possível carregar códigos Sienge:", siengeResp.error.message);
   }
 
   if(movResp.error){
@@ -978,6 +1118,8 @@ if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN"){
 
 patrimonios = dadosPatrimonios;
 obras = obrasResp.data || [];
+empresas = empresasResp.data || [];
+siengeCodigos = siengeResp.data || [];
 movimentacoes = dadosMovimentacoes;
   carregarFiltroObras();
   carregarChecksObrasSienge();
@@ -1054,6 +1196,67 @@ function limparObrasSienge(){
   renderizarRelatorio();
 }
 
+
+function dataBasePatrimonio(p){
+  return p.created_at || p.data_cadastro || p.data_aquisicao || p.data_compra || p.data_entrada || null;
+}
+
+function dentroPeriodoRelatorio(p){
+  const inicio = valor("dataInicio");
+  const fim = valor("dataFim");
+
+  if(!inicio && !fim) return true;
+
+  const base = dataBasePatrimonio(p);
+  if(!base) return false;
+
+  const d = new Date(String(base).replace(" ", "T"));
+  if(isNaN(d.getTime())) return false;
+
+  const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  if(inicio){
+    const di = new Date(inicio + "T00:00:00");
+    if(dia < di) return false;
+  }
+
+  if(fim){
+    const df = new Date(fim + "T00:00:00");
+    if(dia > df) return false;
+  }
+
+  return true;
+}
+
+function periodoRelatorio(tipo){
+  const hoje = new Date();
+  const fim = hoje.toISOString().slice(0,10);
+  const inicio = new Date(hoje);
+
+  if(tipo === "HOJE"){
+    // mantém hoje
+  }
+
+  if(tipo === "7DIAS"){
+    inicio.setDate(inicio.getDate() - 6);
+  }
+
+  if(tipo === "30DIAS"){
+    inicio.setDate(inicio.getDate() - 29);
+  }
+
+  document.getElementById("dataInicio").value = inicio.toISOString().slice(0,10);
+  document.getElementById("dataFim").value = fim;
+  renderizarRelatorio();
+}
+
+function limparPeriodoRelatorio(){
+  document.getElementById("dataInicio").value = "";
+  document.getElementById("dataFim").value = "";
+  renderizarRelatorio();
+}
+
+
 function renderizarRelatorio(){
 
   const busca = valor("busca").toLowerCase();
@@ -1061,6 +1264,8 @@ function renderizarRelatorio(){
   const tipo = valor("filtroTipo");
   const obra = valor("filtroObra");
   const origem = valor("filtroOrigem");
+  const dataInicio = valor("dataInicio");
+  const dataFim = valor("dataFim");
   const obrasMarcadas = obrasSelecionadasSienge();
 
   filtradosAtuais = patrimonios.filter(p => {
@@ -1107,7 +1312,9 @@ function renderizarRelatorio(){
     if(origem === "PAT") passaOrigem = String(codigoManualBDR(p)).toUpperCase().startsWith("PAT-");
     if(origem === "ANTIGO") passaOrigem = !String(codigoManualBDR(p)).toUpperCase().startsWith("PAT-");
 
-    return passaBusca && passaStatus && passaTipo && passaObraMarcada && passaObraFiltro && passaOrigem;
+    const passaPeriodo = dentroPeriodoRelatorio(p);
+
+    return passaBusca && passaStatus && passaTipo && passaObraMarcada && passaObraFiltro && passaOrigem && passaPeriodo;
   });
 
   document.getElementById("resumo").innerText =
@@ -1178,6 +1385,8 @@ function limparFiltros(){
   document.getElementById("filtroStatus").value = "";
   document.getElementById("filtroTipo").value = "";
   document.getElementById("filtroObra").value = "";
+  document.getElementById("dataInicio").value = "";
+  document.getElementById("dataFim").value = "";
   if(document.getElementById("filtroOrigem")) document.getElementById("filtroOrigem").value = "";
   document.querySelectorAll(".obra-sienge-check").forEach(c => c.checked = false);
   renderizarRelatorio();
@@ -1269,33 +1478,166 @@ function csvValor(campo){
   return `"${String(campo ?? "").replace(/"/g,'""')}"`;
 }
 
+function normalizarSiengeBusca(txt){
+  return String(txt || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 function obraDoPatrimonio(p){
   return obras.find(o => String(o.id) === String(p.obra_id)) || null;
 }
 
-function codigoObraSienge(p){
-  const o = obraDoPatrimonio(p);
+function empresaDaObra(obra){
+  if(!obra) return null;
 
-  /*
-    Correção:
-    Para evitar puxar código errado, agora prioriza o código real da obra/setor
-    cadastrado em obras.codigo_obra.
+  return empresas.find(e =>
+    String(e.id) === String(obra.empresa_id) ||
+    String(e.codigo_empresa || "") === String(obra.codigo_empresa || "") ||
+    String(e.codigo_empresa || "") === String(obra.codigo_obra || "")
+  ) || null;
+}
 
-    Ordem:
-    1) obras.codigo_obra
-    2) patrimonio.codigo_obra / obra_codigo
-    3) obras.codigo_sienge, se existir
-    4) obra_id como último recurso
-  */
+function tabelaInsumoDaObra(obra){
+  const v = String(
+    obra?.tabela_insumo ||
+    obra?.tabela_insumo_sienge ||
+    obra?.tabela_ref ||
+    "3"
+  ).trim().replace(".0","");
+
+  if(v === "2") return "2";
+  if(v === "3") return "3";
+  return "3";
+}
+
+function buscarCodigoSienge(tipo, descricao, tabelaRef="PADRAO"){
+  const desc = normalizarSiengeBusca(descricao);
+  if(!desc) return "";
+
+  const tabela = String(tabelaRef || "PADRAO");
+
+  let item = siengeCodigos.find(c =>
+    String(c.tipo) === String(tipo) &&
+    String(c.tabela_ref || "PADRAO") === tabela &&
+    normalizarSiengeBusca(c.descricao) === desc
+  );
+
+  if(item) return item.codigo || "";
+
+  item = siengeCodigos.find(c =>
+    String(c.tipo) === String(tipo) &&
+    String(c.tabela_ref || "PADRAO") === tabela &&
+    (
+      normalizarSiengeBusca(c.descricao).includes(desc) ||
+      desc.includes(normalizarSiengeBusca(c.descricao))
+    )
+  );
+
+  return item?.codigo || "";
+}
+
+function buscarInsumoSienge(p, obra){
+  const tabela = tabelaInsumoDaObra(obra);
+
+  const tentativas = [
+    p.codigo_insumo,
+    p.insumo,
+    p.nome_bem,
+    p.descricao,
+    p.detalhamento,
+    p.observacao
+  ].filter(Boolean);
+
+  for(const t of tentativas){
+    if(String(t).trim() && /^\d+$/.test(String(t).trim())){
+      return String(t).trim();
+    }
+
+    const codigo = buscarCodigoSienge("INSUMO", t, tabela);
+    if(codigo) return codigo;
+  }
+
+  return "";
+}
+
+function codigoCentroCustoSienge(p){
+  const obra = obraDoPatrimonio(p);
+  const empresa = empresaDaObra(obra);
+
   return (
-    o?.codigo_obra ||
-    p.codigo_obra ||
-    p.obra_codigo ||
-    o?.codigo_sienge ||
-    p.codigo_sienge_obra ||
-    p.obra_id ||
+    limparNumero(p.centro_custo) ||
+    limparNumero(p.codigo_centro_custo) ||
+    limparNumero(obra?.codigo_centro_custo) ||
+    limparNumero(obra?.codigo_sienge) ||
+    limparNumero(empresa?.codigo_centro_custo) ||
+    limparNumero(empresa?.codigo_empresa) ||
+    limparNumero(obra?.codigo_obra) ||
     ""
   );
+}
+
+function codigoSetorObraInicialSienge(p){
+  const obra = obraDoPatrimonio(p);
+  const empresa = empresaDaObra(obra);
+
+  return (
+    limparNumero(obra?.codigo_sienge) ||
+    limparNumero(p.codigo_sienge_obra) ||
+    limparNumero(obra?.codigo_obra) ||
+    limparNumero(empresa?.codigo_sienge) ||
+    limparNumero(empresa?.codigo_empresa) ||
+    limparNumero(p.obra_id) ||
+    ""
+  );
+}
+
+function codigoModeloSienge(p){
+  if(p.codigo_modelo && /^\d+$/.test(String(p.codigo_modelo).trim())){
+    return String(p.codigo_modelo).trim();
+  }
+
+  return buscarCodigoSienge("MODELO", p.modelo || p.nome_modelo || "");
+}
+
+function codigoMarcaSienge(p){
+  if(p.codigo_marca && /^\d+$/.test(String(p.codigo_marca).trim())){
+    return String(p.codigo_marca).trim();
+  }
+
+  return buscarCodigoSienge("MARCA", p.marca || "");
+}
+
+function codigoCorSienge(p){
+  if(p.codigo_cor && /^\d+$/.test(String(p.codigo_cor).trim())){
+    return String(p.codigo_cor).trim();
+  }
+
+  return buscarCodigoSienge("COR", p.cor || "");
+}
+
+function codigoEstadoConservacaoSienge(p){
+  if(p.codigo_estado_conservacao && /^\d+$/.test(String(p.codigo_estado_conservacao).trim())){
+    return String(p.codigo_estado_conservacao).trim();
+  }
+
+  return buscarCodigoSienge("ESTADO_CONSERVACAO", p.estado_conservacao || "");
+}
+
+function codigoCombustivelSienge(p){
+  if(p.codigo_combustivel && /^\d+$/.test(String(p.codigo_combustivel).trim())){
+    return String(p.codigo_combustivel).trim();
+  }
+
+  return buscarCodigoSienge("COMBUSTIVEL", p.combustivel || "");
+}
+
+function adicionarPendencia(pendencias, tipo, p){
+  const codigo = codigoManualBDR(p) || p.codigo_qr || p.id || "-";
+  pendencias.push(`${tipo}: ${codigo} - ${p.nome_bem || "-"}`);
 }
 
 function estadoConservacaoSienge(valor){
@@ -1316,13 +1658,7 @@ function estadoConservacaoSienge(valor){
 }
 
 function prefixoSienge(p){
-  const tipo = String(p.tipo_item || "").toUpperCase();
-
-  if(tipo.includes("MAQUINA") || tipo.includes("MÁQUINA")) return "Máquina";
-  if(tipo.includes("VEICULO") || tipo.includes("VEÍCULO")) return "Veículo";
-  if(tipo.includes("OUTRO") || tipo.includes("UTILIDADE") || tipo.includes("MOBILIARIO") || tipo.includes("MOBILIÁRIO")) return "Outros";
-
-  return "";
+  return "BDR";
 }
 
 function exportarSiengeCSV(){
@@ -1332,7 +1668,13 @@ function exportarSiengeCSV(){
     return;
   }
 
+  if(!siengeCodigos || siengeCodigos.length === 0){
+    alert("Atenção: códigos Sienge não foram carregados. Abra novamente a página ou confira a tabela sienge_codigos.");
+    return;
+  }
+
   const linhas = [];
+  const pendencias = [];
 
   linhas.push([
     "Prefixo",
@@ -1353,27 +1695,62 @@ function exportarSiengeCSV(){
   ]);
 
   filtradosAtuais.forEach(p => {
+    const obra = obraDoPatrimonio(p);
+
+    const prefixo = "BDR";
+    const codigoManual = codigoManualBDR(p);
+    const centroCusto = codigoCentroCustoSienge(p);
+    const codigoInsumo = buscarInsumoSienge(p, obra);
+    const marca = codigoMarcaSienge(p);
+    const modelo = codigoModeloSienge(p);
+    const detalhamento = p.nome_bem || p.descricao || p.observacao || "";
+    const estado = codigoEstadoConservacaoSienge(p);
+    const setorObra = codigoSetorObraInicialSienge(p);
+    const cor = codigoCorSienge(p);
+    const combustivel = codigoCombustivelSienge(p);
+    const serieChassi = p.numero_serie || p.chassi || "";
+    const anoFabricacao = p.ano_fabricacao || p.ano || "";
+    const anoModelo = p.ano_modelo || "";
+    const placa = p.placa || "";
+
+    if(!codigoManual) adicionarPendencia(pendencias, "Sem código manual", p);
+    if(!centroCusto) adicionarPendencia(pendencias, "Sem centro de custo", p);
+    if(!codigoInsumo) adicionarPendencia(pendencias, "Sem código do insumo", p);
+    if(!marca && p.marca) adicionarPendencia(pendencias, "Marca sem código Sienge", p);
+    if(!modelo && p.modelo) adicionarPendencia(pendencias, "Modelo sem código Sienge", p);
+    if(!estado && p.estado_conservacao) adicionarPendencia(pendencias, "Estado sem código Sienge", p);
+    if(!setorObra) adicionarPendencia(pendencias, "Sem código setor/obra", p);
+    if(!cor && p.cor) adicionarPendencia(pendencias, "Cor sem código Sienge", p);
 
     const linhasItem = [
-      prefixoSienge(p),
-      codigoManualBDR(p),
-      limparNumero(p.centro_custo) || limparNumero(p.codigo_centro_custo) || "",
-      limparNumero(p.codigo_insumo) || limparNumero(p.produto_id) || "",
-      p.marca || "",
-      p.codigo_modelo || p.modelo || "",
-      p.nome_bem || p.descricao || p.observacao || "",
-      estadoConservacaoSienge(p.estado_conservacao),
-      codigoObraSienge(p),
-      p.cor || "",
-      p.combustivel || "",
-      p.numero_serie || p.chassi || "",
-      p.ano_fabricacao || p.ano || "",
-      p.ano_modelo || p.ano || "",
-      p.placa || ""
+      prefixo,
+      codigoManual,
+      centroCusto,
+      codigoInsumo,
+      marca,
+      modelo,
+      detalhamento,
+      estado,
+      setorObra,
+      cor,
+      combustivel,
+      serieChassi,
+      anoFabricacao,
+      anoModelo,
+      placa
     ];
 
     linhas.push(linhasItem);
   });
+
+  if(pendencias.length > 0){
+    const amostra = pendencias.slice(0, 18).join("\n");
+    const continuar = confirm(
+      `Exportação com pendências: ${pendencias.length}\n\n${amostra}${pendencias.length > 18 ? "\n..." : ""}\n\nDeseja exportar mesmo assim?`
+    );
+
+    if(!continuar) return;
+  }
 
   const csv = linhas
     .map(linha => linha.map(csvValor).join(";"))
@@ -1482,8 +1859,26 @@ function gerarNotificacoesRelatorio(){
   atualizarNotificacoes(lista);
 }
 
+
+function abrirModalSienge(){
+  document.getElementById("modalSiengeCodigos")?.classList.add("ativo");
+  if(typeof selecionarTipoSienge === "function"){
+    selecionarTipoSienge(typeof tipoAtual !== "undefined" ? tipoAtual : "COR");
+  }
+}
+
+function fecharModalSienge(){
+  document.getElementById("modalSiengeCodigos")?.classList.remove("ativo");
+}
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape") fecharModalSienge();
+});
+
 carregarDados();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="./JS/sienge.js"></script>
 <script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>

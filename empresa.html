@@ -6,6 +6,7 @@
 <title>BDR ERP - Empresas</title>
 
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/responsivo-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -505,7 +506,7 @@ button,
       </div>
     </div>
 
-    <!-- MENU PRINCIPAL FIXO -->
+ <!-- MENU PRINCIPAL FIXO -->
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
@@ -529,31 +530,10 @@ button,
     </span>
   </button>
 
-  <!-- PEDIDOS -->
-  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
-      <i class="fa-solid fa-clipboard-list"></i>
-    </span>
-  </button>
-
-  <!-- RETIRADA -->
-  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-ramp-box"></i>
-    </span>
-  </button>
-
-  <!-- SAÍDA -->
-  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-fast"></i>
-    </span>
-  </button>
-
-  <!-- ENDEREÇAMENTO -->
-  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-location-dot"></i>
+      <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
@@ -564,13 +544,14 @@ button,
     </span>
   </button>
 
-  <!-- MOVIMENTAÇÕES -->
-  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
 
+  
   <!-- RELATÓRIOS -->
   <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
@@ -591,7 +572,8 @@ button,
       <i class="fa-solid fa-users"></i>
     </span>
   </button>
-    </nav>
+
+</nav>
 
   </nav>
 </aside>
@@ -661,6 +643,19 @@ button,
         </div>
 
         <div>
+          <label>Código Sienge da Obra</label>
+          <input id="codigo_sienge_obra" placeholder="Ex: 3">
+        </div>
+
+        <div>
+          <label>Tabela de Insumo</label>
+          <select id="tabela_insumo">
+            <option value="3">Tabela 3 (Nova)</option>
+            <option value="2">Tabela 2 (Antiga)</option>
+          </select>
+        </div>
+
+        <div>
           <label>CNPJ</label>
           <input id="cnpj" placeholder="00.000.000/0000-00">
         </div>
@@ -721,6 +716,19 @@ button,
         <div>
           <label>Setor / Obra</label>
           <input id="edit_setor_obra">
+        </div>
+
+        <div>
+          <label>Código Sienge da Obra</label>
+          <input id="edit_codigo_sienge_obra">
+        </div>
+
+        <div>
+          <label>Tabela de Insumo</label>
+          <select id="edit_tabela_insumo">
+            <option value="3">Tabela 3 (Nova)</option>
+            <option value="2">Tabela 2 (Antiga)</option>
+          </select>
         </div>
 
         <div>
@@ -813,6 +821,7 @@ window.supabaseClient = window.client;
 
 <script>
 let empresas = [];
+let obrasEmpresas = [];
 let movimentacoesEmpresas = [];
 
 function ir(pagina){
@@ -826,6 +835,10 @@ function db(){
 function campo(id){
   const el = document.getElementById(id);
   return el ? String(el.value || "").trim() : "";
+}
+
+function obraDaEmpresa(empresaId){
+  return obrasEmpresas.find(o => String(o.empresa_id) === String(empresaId)) || null;
 }
 
 function usuarioAtual(){
@@ -893,6 +906,8 @@ async function salvarEmpresa(){
     empresa_id: empresaCriada.id,
     nome: empresa.setor_obra,
     codigo_obra: empresa.codigo_empresa,
+    codigo_sienge: campo("codigo_sienge_obra"),
+    tabela_insumo: Number(campo("tabela_insumo") || 3),
     ativa: true
   };
 
@@ -930,6 +945,18 @@ async function carregarEmpresas(){
   }
 
   empresas = data || [];
+
+  const { data: obrasData, error: obrasError } = await db()
+    .from("obras")
+    .select("*")
+    .order("nome");
+
+  if(obrasError){
+    console.warn("Não foi possível carregar obras vinculadas:", obrasError.message);
+    obrasEmpresas = [];
+  }else{
+    obrasEmpresas = obrasData || [];
+  }
 
   await carregarMovimentacoesEmpresas();
 
@@ -976,6 +1003,8 @@ function renderizarEmpresas(){
       ${e.endereco || ""}
       ${e.cep || ""}
       ${statusTexto}
+      ${obraDaEmpresa(e.id)?.codigo_sienge || ""}
+      ${obraDaEmpresa(e.id)?.tabela_insumo || ""}
     `.toLowerCase();
 
     return texto.includes(busca)
@@ -990,6 +1019,7 @@ function renderizarEmpresas(){
 
   filtradas.forEach(e => {
     const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+    const obraVinculada = obraDaEmpresa(e.id);
 
     lista.innerHTML += `
       <div class="empresa-linha" id="empresa-${e.id}">
@@ -1032,6 +1062,8 @@ function renderizarEmpresas(){
           <b>CNPJ:</b> ${e.cnpj || "-"}<br>
           <b>Endereço:</b> ${e.endereco || "-"}<br>
           <b>CEP:</b> ${e.cep || "-"}<br>
+          <b>Código Sienge da obra:</b> ${obraVinculada?.codigo_sienge || "-"}<br>
+          <b>Tabela de insumo:</b> ${obraVinculada?.tabela_insumo || "3"}<br>
           <b>Observação:</b> ${e.observacao || "-"}<br>
         </div>
 
@@ -1153,6 +1185,10 @@ function editarEmpresa(id){
   document.getElementById("edit_cep").value = empresa.cep || "";
   document.getElementById("edit_observacao").value = empresa.observacao || "";
 
+  const obraVinculada = obraDaEmpresa(empresa.id);
+  document.getElementById("edit_codigo_sienge_obra").value = obraVinculada?.codigo_sienge || "";
+  document.getElementById("edit_tabela_insumo").value = obraVinculada?.tabela_insumo || 3;
+
   document.getElementById("editandoEmpresaTitulo").innerText = `${empresa.nome || "-"} | ${empresa.codigo_empresa || "-"}`;
 
   document.getElementById("cardEdicaoEmpresa").classList.add("ativo");
@@ -1257,6 +1293,36 @@ async function salvarEdicaoEmpresa(){
     return;
   }
 
+  const obraAtual = obraDaEmpresa(id);
+  const payloadObra = {
+    nome: empresaEditada.setor_obra,
+    codigo_obra: empresaEditada.codigo_empresa,
+    codigo_sienge: campo("edit_codigo_sienge_obra"),
+    tabela_insumo: Number(campo("edit_tabela_insumo") || 3),
+    ativa: true
+  };
+
+  if(obraAtual?.id){
+    const { error: erroObra } = await db()
+      .from("obras")
+      .update(payloadObra)
+      .eq("id", obraAtual.id);
+
+    if(erroObra){
+      alert("Empresa alterada, mas erro ao atualizar obra: " + erroObra.message);
+      return;
+    }
+  }else{
+    const { error: erroObraNova } = await db()
+      .from("obras")
+      .insert([{...payloadObra, empresa_id:id}]);
+
+    if(erroObraNova){
+      alert("Empresa alterada, mas erro ao criar obra vinculada: " + erroObraNova.message);
+      return;
+    }
+  }
+
   await db()
     .from("obras")
     .update({
@@ -1286,6 +1352,8 @@ function limparFormulario(){
   document.getElementById("estado").value = "";
   document.getElementById("endereco").value = "";
   document.getElementById("cep").value = "";
+  document.getElementById("codigo_sienge_obra").value = "";
+  document.getElementById("tabela_insumo").value = "3";
   document.getElementById("observacao").value = "";
 }
 

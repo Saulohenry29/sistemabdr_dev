@@ -6,6 +6,7 @@
 <title>Torre de Controle BDR</title>
 
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/responsivo-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -171,8 +172,8 @@ body{
 
 /* FILTROS */
 .quick-filters{
-  display:grid;
-  grid-template-columns:auto repeat(5,95px) 160px 160px 95px 1fr;
+display:grid;
+grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
   gap:8px;
   align-items:center;
   margin-bottom:14px;
@@ -929,7 +930,7 @@ body{
       </div>
     </div>
 
-  <!-- MENU PRINCIPAL FIXO -->
+ <!-- MENU PRINCIPAL FIXO -->
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
@@ -953,31 +954,10 @@ body{
     </span>
   </button>
 
-  <!-- PEDIDOS -->
-  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
-      <i class="fa-solid fa-clipboard-list"></i>
-    </span>
-  </button>
-
-  <!-- RETIRADA -->
-  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-ramp-box"></i>
-    </span>
-  </button>
-
-  <!-- SAÍDA -->
-  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-fast"></i>
-    </span>
-  </button>
-
-  <!-- ENDEREÇAMENTO -->
-  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-location-dot"></i>
+      <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
@@ -988,13 +968,14 @@ body{
     </span>
   </button>
 
-  <!-- MOVIMENTAÇÕES -->
-  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
 
+  
   <!-- RELATÓRIOS -->
   <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
@@ -1075,7 +1056,6 @@ body{
 
       <section class="quick-filters">
         <label>Filtros rápidos:</label>
-        <button class="pill-btn" onclick="aplicarPeriodo('HOJE', this)">Hoje</button>
         <button class="pill-btn" onclick="aplicarPeriodo('7DIAS', this)">7 dias</button>
         <button class="pill-btn" onclick="aplicarPeriodo('30DIAS', this)">30 dias</button>
         <button class="pill-btn active" onclick="aplicarPeriodo('MES', this)">Este mês</button>

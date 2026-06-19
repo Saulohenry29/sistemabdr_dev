@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Expedição</title>
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script defer src="./JS/expedicao.js"></script>
+<style>
+/* =========================================================
+   BDR EXPEDIÇÃO - MARKETPLACE INTERNO
+   Arquivo: expedicao.html
+   DICA: mexa primeiro nas áreas marcadas como "AJUSTE RÁPIDO".
+========================================================= */
+
+/* =========================================================
+   1) CORES E VARIÁVEIS DO MÓDULO
+========================================================= */
+:root{
+  --exp-blue:#2563eb;      /* azul: em uso / botão principal */
+  --exp-green:#16a34a;     /* verde: estoque/disponível */
+  --exp-orange:#f97316;    /* laranja: manutenção */
+  --exp-red:#dc2626;       /* vermelho: baixado/quebrado */
+  --exp-purple:#7c3aed;    /* roxo: reservado */
+  --exp-border:#e5e7eb;
+}
+
+/* =========================================================
+   2) TOPO PADRÃO BDR: TÍTULO, SININHO E USUÁRIO
+========================================================= */
+.bdr-topbar{
+  position:relative;
+  z-index:5000;
+}
+
+.bdr-topbar-title{
+  color:var(--bdr-red)!important;
+  font-weight:900;
+}
+
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
+}
+
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+  position:relative;
+  z-index:6000;
+}
+
+.notif-wrap{position:relative;}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  padding:0;
+}
+
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:340px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:999999!important;
+}
+
+.notif-dropdown.ativo{display:block;}
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+.notif-list{max-height:300px;overflow:auto;}
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+}
+.user-mini{text-align:right;font-size:13px;pointer-events:none;}
+.user-mini small{color:var(--bdr-red);font-weight:900;}
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+}
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:999999!important;
+}
+.dropdown-user.ativo{display:block;}
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.dropdown-user .logout-btn{color:#dc2626;}
+
+/* =========================================================
+   3) LAYOUT PRINCIPAL DO CATÁLOGO
+========================================================= */
+.exp-layout{
+  display:grid;
+  grid-template-columns:1fr 310px; /* AJUSTE RÁPIDO: largura do carrinho lateral */
+  gap:14px;
+  align-items:start;
+}
+
+.exp-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.exp-title h2{
+  margin:0;
+  color:#111827;
+  font-size:22px;
+}
+.exp-title p{
+  margin:3px 0 0;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* Busca do catálogo */
+.searchbar{
+  display:grid;
+  grid-template-columns:1fr 130px;
+  gap:8px;
+  margin-bottom:10px;
+}
+.searchbar input{
+  height:42px;
+  border-radius:999px;
+  padding:0 16px;
+  font-weight:700;
+}
+.searchbar button{
+  border-radius:999px;
+  background:#111827;
+}
+
+/* =========================================================
+   4) FILTROS / CHIPS
+========================================================= */
+.chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.chip-exp{
+  border:1px solid #dbeafe;
+  background:#fff;
+  color:#374151;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.chip-exp.active{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+}
+.chip-exp .num{
+  background:#f3f4f6;
+  color:#111827;
+  border-radius:999px;
+  padding:2px 7px;
+  margin-left:5px;
+}
+.chip-exp.active .num{
+  background:#fff;
+  color:#2563eb;
+}
+
+/* =========================================================
+   5) CARDS DE PRODUTO - ESTILO MARKETPLACE
+========================================================= */
+.catalogo-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); /* AJUSTE RÁPIDO: largura mínima do card */
+  gap:12px;
+}
+
+.produto-card{
+  background:#fff;
+  border:1px solid var(--exp-border);
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(15,23,42,.07);
+  cursor:pointer;
+  transition:.18s;
+  position:relative;
+  z-index:1;
+}
+.produto-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 26px rgba(15,23,42,.14);
+}
+
+.produto-foto{
+  height:118px; /* AJUSTE RÁPIDO: altura da foto do card */
+  background:#f8fafc;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.produto-foto img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.produto-foto .placeholder{
+  font-size:42px;
+}
+
+.hover-detalhe{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,.62);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:900;
+  opacity:0;
+  transition:.18s;
+}
+.produto-card:hover .hover-detalhe{opacity:1;}
+
+.btn-card-action{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:0;
+  background:#fff;
+  color:#111827;
+  box-shadow:0 5px 15px rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  z-index:2;
+}
+.btn-card-action.ok{color:#16a34a;}
+.btn-card-action.info{color:#2563eb;}
+.btn-card-action.block{color:#f97316;}
+
+.produto-info{padding:10px;}
+
+/* CORRIGIDO: sem -webkit-line-clamp para não marcar erro no editor */
+.produto-nome{
+  font-size:13px;
+  font-weight:900;
+  color:#111827;
+  line-height:1.25;
+  min-height:34px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:normal;
+  word-break:break-word;
+}
+
+.produto-obra{
+  font-size:11px;
+  color:#6b7280;
+  font-weight:800;
+  margin:7px 0 8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.produto-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.produto-qtd{
+  font-size:11px;
+  font-weight:900;
+  color:#374151;
+  white-space:nowrap;
+}
+
+/* =========================================================
+   6) CORES DE STATUS PADRÃO BDR
+========================================================= */
+.badge-status{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 7px;
+  border-radius:999px;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+.st-ESTOQUE,
+.st-DISPONIVEL,
+.st-NO_ESTOQUE{background:#16a34a;}
+.st-EM_USO{background:#2563eb;}
+.st-MANUTENCAO{background:#f97316;}
+.st-BAIXADO,
+.st-QUEBRADO{background:#dc2626;}
+.st-RESERVADO{background:#7c3aed;}
+
+/* =========================================================
+   7) CARRINHO LATERAL
+========================================================= */
+.cart-panel{
+  position:sticky;
+  top:12px;
+  background:#fff;
+  border:1px solid var(--exp-border);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 3px 14px rgba(15,23,42,.08);
+  z-index:1;
+}
+.cart-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#2563eb;
+  font-weight:900;
+  margin-bottom:10px;
+}
+.cart-item{
+  display:grid;
+  grid-template-columns:48px 1fr 28px;
+  gap:9px;
+  align-items:center;
+  border:1px solid #eef2f7;
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:8px;
+}
+.cart-img{
+  width:48px;
+  height:48px;
+  background:#f8fafc;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.cart-img img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.cart-info strong{
+  font-size:12px;
+  color:#111827;
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.cart-info span{font-size:11px;color:#6b7280;}
+.cart-remove{background:#fff;color:#dc2626;padding:0;border:0;}
+.cart-empty{
+  background:#f8fafc;
+  border-radius:12px;
+  padding:12px;
+  color:#6b7280;
+  font-size:12px;
+  text-align:center;
+}
+.btn-submit{
+  width:100%;
+  height:42px;
+  border-radius:12px;
+  background:#2563eb;
+  margin-top:10px;
+}
+.mini-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.mini-box{
+  background:#f8fafc;
+  border-radius:12px;
+  padding:9px;
+  font-size:11px;
+  color:#6b7280;
+}
+.mini-box strong{display:block;font-size:16px;color:#111827;}
+.info-box{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+  border-radius:12px;
+  padding:10px;
+  margin-top:10px;
+  color:#1e3a8a;
+  font-size:12px;
+  line-height:1.45;
+}
+
+/* =========================================================
+   8) PEDIDOS / SOLICITAÇÕES / HISTÓRICO
+========================================================= */
+.pedido-lista{display:grid;gap:8px;}
+.pedido-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-left:4px solid var(--bdr-red);
+  border-radius:14px;
+  padding:10px 12px;
+  box-shadow:0 2px 8px rgba(15,23,42,.07);
+}
+.pedido-top{
+  display:grid;
+  grid-template-columns:130px 1fr 160px 120px;
+  gap:10px;
+  align-items:center;
+}
+.pedido-cod{font-weight:900;color:var(--bdr-red);}
+.pedido-small{font-size:12px;color:#6b7280;}
+.pedido-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn-mini{padding:7px 9px;font-size:11px;border-radius:9px;}
+
+/* =========================================================
+   9) MODAIS / DETALHES / RETIRADA
+========================================================= */
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.70);
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+.modal-bg.ativo{display:flex;}
+.modal{
+  background:#fff;
+  width:min(760px,100%);
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.32);
+  overflow:hidden;
+}
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  background:#fff5f5;
+  color:var(--bdr-red);
+  font-weight:900;
+}
+.modal-body{padding:16px;}
+.modal-grid{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:14px;
+}
+.modal-img{
+  height:210px;
+  background:#f8fafc;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.modal-img img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.det-line{
+  font-size:13px;
+  border-bottom:1px solid #f1f5f9;
+  padding:7px 0;
+}
+.det-line b{color:#111827;}
+.fechar-modal{
+  background:#dc2626;
+  border-radius:10px;
+  padding:7px 10px;
+}
+
+/* =========================================================
+   10) ABAS E KPI
+========================================================= */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.tab-btn{
+  border:1px solid #fecaca;
+  background:#fff;
+  color:#374151;
+  border-radius:999px;
+  padding:9px 13px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.tab-btn.active{background:#fff1f2;color:var(--bdr-red);}
+.tab{display:none;}
+.tab.active{display:block;}
+
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;
+  margin-bottom:12px;
+}
+.kpi{
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-left:4px solid var(--bdr-red);
+  border-radius:14px;
+  padding:10px;
+  position:relative;
+  z-index:1;
+}
+.kpi strong{font-size:19px;display:block;}
+.kpi span{font-size:11px;color:#6b7280;font-weight:900;}
+
+/* =========================================================
+   11) RESPONSIVO
+========================================================= */
+@media(max-width:1100px){
+  .exp-layout{grid-template-columns:1fr;}
+  .cart-panel{position:relative;top:auto;}
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:700px){
+  .catalogo-grid{grid-template-columns:repeat(2,1fr);}
+  .searchbar{grid-template-columns:1fr;}
+  .modal-grid{grid-template-columns:1fr;}
+  .pedido-top{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<script>verificarLogin();</script>
+<div class="bdr-app">
+  <aside class="bdr-sidebar">
+ <!-- MENU PRINCIPAL FIXO -->
+ <nav class="bdr-menu">
+
+  <!-- DASHBOARD -->
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-chart-simple"></i>
+    </span>
+  </button>
+
+  <!-- ENTRADA -->
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-arrow-down-wide-short"></i>
+    </span>
+  </button>
+
+  <!-- TRIAGEM -->
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-vials"></i>
+    </span>
+  </button>
+
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-boxes-stacked"></i>
+    </span>
+  </button>
+
+  <!-- PATRIMÔNIO -->
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-tags"></i>
+    </span>
+  </button>
+
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn active" data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
+
+  
+  <!-- RELATÓRIOS -->
+  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-regular fa-file-lines"></i>
+    </span>
+  </button>
+
+  <!-- EMPRESAS -->
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-building"></i>
+    </span>
+  </button>
+
+  <!-- USUÁRIOS -->
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <span class="bdr-menu-icon">
+      <i class="fa-solid fa-users"></i>
+    </span>
+  </button>
+
+</nav>
+  </aside>
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div><div class="bdr-topbar-title">📦 BDR ERP - Expedição</div><div class="bdr-topbar-sub">Catálogo interno, solicitações, reservas, retirada e transferência entre obras/setores.</div></div>
+      <div class="bdr-top-actions">
+        <div class="notif-wrap"><button class="notif-btn" onclick="toggleNotificacoes(event)"><i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span></button><div id="notifDropdown" class="notif-dropdown"><div class="notif-head">🔔 Central de notificações</div><div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação.</div></div></div></div>
+        <div class="user-menu" onclick="toggleMenuUsuario(event)"><div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div><div class="avatar"><i class="fa-solid fa-user"></i></div><div id="dropdownUser" class="dropdown-user"><button onclick="ir('usuarios.html');event.stopPropagation()"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button><button class="logout-btn" onclick="logout();event.stopPropagation()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button></div></div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><strong id="kpiTotal">0</strong><span>Total itens</span></div>
+      <div class="kpi"><strong id="kpiEstoque">0</strong><span>Em estoque</span></div>
+      <div class="kpi"><strong id="kpiUso">0</strong><span>Em uso</span></div>
+      <div class="kpi"><strong id="kpiManutencao">0</strong><span>Manutenção</span></div>
+      <div class="kpi"><strong id="kpiReservado">0</strong><span>Reservados</span></div>
+      <div class="kpi"><strong id="kpiPedidos">0</strong><span>Solicitações</span></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="abrirAba('catalogo',this)">🛒 Catálogo</button>
+      <button class="tab-btn" onclick="abrirAba('solicitacoes',this)">📋 Solicitações</button>
+      <button class="tab-btn" onclick="abrirAba('separacao',this)">📦 Separação</button>
+      <button class="tab-btn" onclick="abrirAba('reservados',this)">🔒 Reservados</button>
+      <button class="tab-btn" onclick="abrirAba('retirada',this)">🚚 Retirada</button>
+      <button class="tab-btn" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
+      <button class="tab-btn" onclick="abrirAba('historico',this)">📜 Histórico</button>
+    </div>
+
+    <section id="tab-catalogo" class="tab active">
+      <div class="exp-layout">
+        <div>
+          <div class="card">
+            <div class="exp-head"><div class="exp-title"><h2>Catálogo de itens</h2><p>Solicite materiais entre obras/setores da rede BDR.</p></div><button class="btn-dark" onclick="carregarTudo()"><i class="fa-solid fa-rotate"></i> Atualizar</button></div>
+            <div class="searchbar"><input id="buscaCatalogo" placeholder="Buscar produto, patrimônio, código, obra..." oninput="renderizarCatalogo()"><button onclick="renderizarCatalogo()"><i class="fa-solid fa-search"></i> Buscar</button></div>
+            <div class="chips">
+              <button class="chip-exp active" data-filtro="TODOS" onclick="filtrarStatus('TODOS',this)">Todos <span class="num" id="chipTodos">0</span></button>
+              <button class="chip-exp" data-filtro="ESTOQUE" onclick="filtrarStatus('ESTOQUE',this)">🟢 Estoque <span class="num" id="chipEstoque">0</span></button>
+              <button class="chip-exp" data-filtro="EM_USO" onclick="filtrarStatus('EM_USO',this)">🟦 Em uso <span class="num" id="chipUso">0</span></button>
+              <button class="chip-exp" data-filtro="MANUTENCAO" onclick="filtrarStatus('MANUTENCAO',this)">🟠 Manutenção <span class="num" id="chipManutencao">0</span></button>
+              <button class="chip-exp" data-filtro="RESERVADO" onclick="filtrarStatus('RESERVADO',this)">🟣 Reservados <span class="num" id="chipReservado">0</span></button>
+            </div>
+            <div id="catalogoGrid" class="catalogo-grid"></div>
+          </div>
+        </div>
+        <aside class="cart-panel">
+          <div class="cart-head"><span><i class="fa-solid fa-cart-shopping"></i> Meu carrinho</span><span id="cartQtd">0</span></div>
+          <div id="cartItens"></div>
+          <textarea id="obsSolicitacao" placeholder="Observação da solicitação..." style="margin-top:8px;min-height:60px"></textarea>
+          <button class="btn-submit" onclick="enviarSolicitacao()"><i class="fa-regular fa-paper-plane"></i> Enviar solicitação</button>
+          <div class="mini-summary"><div class="mini-box"><strong id="cartResumoItens">0</strong>Itens</div><div class="mini-box"><strong id="cartResumoObras">0</strong>Origens</div></div>
+          <div class="info-box">A solicitação será enviada aos responsáveis pela obra/setor de origem. Itens em uso entram como interesse, não como retirada direta.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tab-solicitacoes" class="tab"><div class="card"><h3>📋 Solicitações aguardando autorização</h3><div id="listaSolicitacoes" class="pedido-lista"></div></div></section>
+    <section id="tab-separacao" class="tab"><div class="card"><h3>📦 Separação</h3><div id="listaSeparacao" class="pedido-lista"></div></div></section>
+    <section id="tab-reservados" class="tab"><div class="card"><h3>🔒 Reservados</h3><div id="listaReservados" class="pedido-lista"></div></div></section>
+    <section id="tab-retirada" class="tab"><div class="card"><h3>🚚 Retirada</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
+    <section id="tab-transito" class="tab"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
+    <section id="tab-historico" class="tab"><div class="card"><h3>📜 Histórico</h3><div id="listaHistorico" class="pedido-lista"></div></div></section>
+  </main>
+</div>
+
+<div id="modalDetalhe" class="modal-bg"><div class="modal"><div class="modal-head"><span id="modalTitulo">Detalhes</span><button class="fechar-modal" onclick="fecharModalDetalhe()">X</button></div><div class="modal-body" id="modalConteudo"></div></div></div>
+<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

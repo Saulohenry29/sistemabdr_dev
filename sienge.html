@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Códigos Sienge</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/responsivo-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+.sienge-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sienge-tab{background:#fff;color:#111827;border:1px solid #fecaca;border-radius:999px;padding:9px 13px;font-weight:900}
+.sienge-tab.active{background:var(--bdr-red);color:#fff}
+.sienge-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+.sienge-lista{max-height:520px;overflow:auto}
+.sienge-row{display:grid;grid-template-columns:100px 100px 1fr 85px;gap:8px;align-items:center;background:#fff;border-left:4px solid var(--bdr-red);border-radius:10px;padding:9px;margin-bottom:7px;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.sienge-row b{color:var(--bdr-red)}
+.sienge-row small{color:#6b7280}
+.import-box{border:1px dashed #fecaca;background:#fff7f7;border-radius:12px;padding:12px}
+.help{background:#eff6ff;color:#1e40af;border-left:4px solid #2563eb;padding:10px;border-radius:10px;margin-bottom:10px}
+@media(max-width:900px){.sienge-grid{grid-template-columns:1fr}.sienge-row{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script>verificarLogin();</script>
+
+<div class="bdr-app">
+  <aside class="bdr-sidebar">
+    <nav class="bdr-menu">
+      <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-arrow-down-wide-short"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-vials"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-clipboard-list"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-truck-ramp-box"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-truck-fast"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-tags"></i></span></button>
+      <button class="bdr-menu-btn active" data-tip="Sienge" onclick="ir('sienge.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-file-export"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')"><span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span></button>
+      <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span></button>
+    </nav>
+  </aside>
+
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title">🔗 Códigos Sienge</div>
+        <div class="bdr-topbar-sub">Cadastro, importação e validação dos códigos usados na exportação patrimonial.</div>
+      </div>
+      <div class="dash-user">
+        <div class="user-menu-top">
+          <div class="user-mini">
+            <b id="usuarioNome">Olá, -</b>
+            <small id="usuarioPerfil">-</small>
+          </div>
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="card">
+      <h3>📌 Tipos de códigos</h3>
+      <div class="sienge-tabs" id="abasTipos"></div>
+      <div class="help">Coluna A do Excel/CSV = <b>Código Sienge</b> | Coluna B = <b>Descrição</b>. Para insumos, use a tabela referência 2 ou 3.</div>
+    </section>
+
+    <section class="sienge-grid">
+      <div>
+        <section class="card">
+          <h3 id="tituloCadastro">➕ Cadastrar código</h3>
+          <input type="hidden" id="codigo_id">
+          <div class="grid">
+            <div><label><b>Tipo</b></label><input id="tipo_atual" readonly></div>
+            <div><label><b>Tabela referência</b></label><select id="tabela_ref"><option value="PADRAO">PADRÃO</option><option value="2">Tabela 2</option><option value="3">Tabela 3</option></select></div>
+            <div><label><b>Código Sienge</b></label><input id="codigo_sienge" placeholder="Ex: 1, 106, 6623"></div>
+            <div><label><b>Descrição / referência</b></label><input id="descricao_sienge" placeholder="Ex: Amarelo, MOVIX, BEBEDOURO..."></div>
+          </div>
+          <br>
+          <button class="btn-ok" onclick="salvarCodigoSienge()">💾 Salvar código</button>
+          <button class="btn-gray" onclick="limparFormularioSienge()">🧹 Limpar</button>
+        </section>
+
+        <section class="card">
+          <h3>📥 Importar Excel/CSV</h3>
+          <div class="import-box">
+            <p><b>Tipo selecionado:</b> <span id="tipoImportacao">-</span></p>
+            <p><b>Modelo:</b> Coluna A = código | Coluna B = descrição</p>
+            <input type="file" id="arquivoImportacao" accept=".csv,.txt,.xlsx,.xls">
+            <br><br>
+            <button class="btn-blue" onclick="importarArquivoSienge()">📥 Importar arquivo</button>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card">
+          <h3>🔎 Consultar códigos</h3>
+          <div class="grid">
+            <input id="buscaSienge" placeholder="Buscar por código ou descrição..." oninput="renderizarCodigosSienge()">
+            <select id="filtroTabelaRef" onchange="renderizarCodigosSienge()"><option value="">Todas as tabelas</option><option value="PADRAO">PADRÃO</option><option value="2">Tabela 2</option><option value="3">Tabela 3</option></select>
+          </div>
+        </section>
+        <section class="card">
+          <h3 id="tituloLista">Lista de códigos</h3>
+          <div id="listaCodigosSienge" class="sienge-lista"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="./JS/sienge.js"></script>
+<script src="./JS/bdrSininhoDashboard.js"></script>
+</body>
+</html>

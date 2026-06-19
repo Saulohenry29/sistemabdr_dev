@@ -299,3 +299,19 @@ async function gravarMovimentacoes(p,tipo,obs){
 }
 
 carregarDados();
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    document.querySelectorAll(".modal-bg.ativo, .modal.ativo").forEach(m=>{
+      m.classList.remove("ativo");
+    });
+
+    const modalDetalhe = document.getElementById("modalDetalhe");
+    if(modalDetalhe) modalDetalhe.classList.remove("ativo");
+
+    const dropdown = document.getElementById("dropdownUser");
+    if(dropdown) dropdown.classList.remove("ativo");
+
+    const notif = document.getElementById("notifDropdown");
+    if(notif) notif.classList.remove("ativo");
+  }
+});

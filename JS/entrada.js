@@ -31,3 +31,19 @@ function removerLinha(btn){btn.closest("tr").remove(); calcularTotalGeral();}
 function calcularLinha(el){const tr=el.closest("tr"); const qtd=Number(tr.querySelector(".quantidade").value||0); const valor=Number(tr.querySelector(".valor").value||0); tr.querySelector(".totalLinha").innerText=moeda(qtd*valor); atualizarSugestao(el); calcularTotalGeral();}
 function calcularTotalGeral(){let total=0; document.querySelectorAll("#itensBody tr").forEach(tr=>{const qtd=Number(tr.querySelector(".quantidade").value||0); const valor=Number(tr.querySelector(".valor").value||0); total += qtd*valor;}); document.getElementById("totalGeral").innerText="Total NF: "+moeda(total);}
 async function salvarEntrada(){try{const usuarioLogado=usuarioAtual(); const empresa_id=campo("empresa"); const numero_nf=campo("numero_nf"); const fornecedor=campo("fornecedor"); const responsavel=campo("responsavel"); const chave_nfe=campo("chave_nfe"); const observacao=campo("observacao"); const data_recebimento=campo("data_recebimento"); if(!empresa_id){alert("Selecione a empresa."); return;} if(!numero_nf){alert("Informe o número da NF."); return;} const linhas=document.querySelectorAll("#itensBody tr"); if(linhas.length===0){alert("Adicione pelo menos um item."); return;} const {data:entrada,error}=await db().from("entradas_materiais").insert([{empresa_id,numero_nf,fornecedor,responsavel,chave_nfe,data_recebimento,observacao,status:"ENVIADO_TRIAGEM",usuario_cadastro: usuarioLogado?.nome || "Usuário não identificado"}]).select().single(); if(error)throw error; const itens=[]; linhas.forEach(tr=>{const quantidade=Number(tr.querySelector(".quantidade").value||0); const valor_unitario=Number(tr.querySelector(".valor").value||0); if(quantidade<=0)return; itens.push({entrada_id:entrada.id,produto:tr.querySelector(".produto").value||null,descricao_xml:tr.querySelector(".descricao_xml").value||null,quantidade,valor_unitario,valor_total:quantidade*valor_unitario,estado_material:tr.querySelector(".estado").value,lote:tr.querySelector(".lote").value||null,validade:tr.querySelector(".validade").value||null,status_triagem:"PENDENTE"});}); if(itens.length===0){alert("Nenhum item válido para salvar."); return;} const {error:erroItens}=await db().from("entradas_materiais_itens").insert(itens); if(erroItens)throw erroItens; alert("Entrada salva e enviada para triagem!"); location.href="triagem.html";}catch(err){console.error(err); alert("Erro ao salvar entrada: "+err.message);}}
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    document.querySelectorAll(".modal-bg.ativo, .modal.ativo").forEach(m=>{
+      m.classList.remove("ativo");
+    });
+
+    const modalDetalhe = document.getElementById("modalDetalhe");
+    if(modalDetalhe) modalDetalhe.classList.remove("ativo");
+
+    const dropdown = document.getElementById("dropdownUser");
+    if(dropdown) dropdown.classList.remove("ativo");
+
+    const notif = document.getElementById("notifDropdown");
+    if(notif) notif.classList.remove("ativo");
+  }
+});

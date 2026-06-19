@@ -7,6 +7,7 @@
 <link rel="icon" href="data:,">
 
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/responsivo-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -72,9 +73,41 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
 .badge{display:inline-block;padding:4px 9px;border-radius:20px;color:white;font-size:12px;background:#6b7280}.badge-pendente{background:#f97316}.badge-info{background:#2563eb}
 .info{background:#eff6ff;border-left:5px solid var(--blue);padding:10px;border-radius:8px;margin-top:8px;color:#1e3a8a}.alerta{background:#fff7ed;border-left:4px solid var(--orange);padding:8px;border-radius:8px;margin-top:8px;color:#7c2d12}
 .abas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.aba{border:none;background:#1f2937;color:white;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:900}.aba.ativa{background:var(--bdr-red)}
-.mes-card,.nf-card{background:white;border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.10);border-left:4px solid var(--bdr-red)}.mes-card h3{margin:0 0 10px;color:var(--bdr-red)}.dia-linha{display:grid;grid-template-columns:120px 1fr 130px;gap:10px;align-items:center;background:#f9fafb;border-left:4px solid #2563eb;border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer}.dia-linha:hover{background:#fff1f2;transform:translateX(3px)}
-.nf-header{display:grid;grid-template-columns:120px 1fr 130px 120px;gap:10px;align-items:center;cursor:pointer}.nf-header strong{color:var(--bdr-red)}.nf-itens{display:none;margin-top:12px}.item{background:#f9fafb;border-left:4px solid #2563eb;padding:12px;border-radius:10px;margin-top:10px}.item strong{color:var(--bdr-red);font-size:15px}.codigo-end{font-size:20px;font-weight:bold;color:var(--bdr-red);background:#fff;padding:10px;border-radius:10px;border:1px dashed var(--bdr-red);text-align:center}.linha-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:10px}
+.mes-card,.nf-card{background:white;border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.10);border-left:4px solid var(--bdr-red);transition:.18s ease}.mes-card h3{margin:0 0 10px;color:var(--bdr-red)}.dia-linha{display:grid;grid-template-columns:120px 1fr 130px;gap:10px;align-items:center;background:#f9fafb;border-left:4px solid #2563eb;border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer}.dia-linha:hover{background:#fff1f2;transform:translateX(3px)}
+/* NF ABERTA - destaque visual para ficar claro o que está expandido */
+.nf-card.aberta{background:#fff1f2;border-left-color:#991b1b;box-shadow:0 8px 20px rgba(185,28,28,.16)}
+.nf-card.aberta .nf-header{background:#ffe4e6;border:1px solid #fecdd3;border-radius:12px;padding:10px}
+.nf-card.aberta .badge-pendente{background:#991b1b}
+.nf-header{display:grid;grid-template-columns:120px 1fr 130px 120px;gap:10px;align-items:center;cursor:pointer}.nf-header strong{color:var(--bdr-red)}.nf-itens{display:none;margin-top:12px}.item{background:#f9fafb;border-left:4px solid #2563eb;padding:9px;border-radius:10px;margin-top:8px}.item strong{color:var(--bdr-red);font-size:13px}.codigo-end{font-size:15px;font-weight:bold;color:var(--bdr-red);background:#fff;padding:7px;border-radius:9px;border:1px dashed var(--bdr-red);text-align:center}.linha-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.linha-acoes .btn{padding:6px 9px!important;font-size:11px!important;border-radius:7px!important;min-height:auto!important}.item .grid{gap:7px!important}.item label{font-size:11px;font-weight:800;color:#374151}.item input,.item select{min-height:34px!important;padding:6px 8px!important;font-size:12px!important}
 @media(max-width:900px){.dia-linha,.nf-header{grid-template-columns:1fr}.bdr-top-actions{width:100%;justify-content:space-between}.notif-dropdown{right:-80px;width:300px}}
+
+
+/* =========================================================
+   MODAL/CARD RÁPIDO DE PATRIMÔNIO NA TRIAGEM
+========================================================= */
+.triagem-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:99999;align-items:center;justify-content:center;padding:18px;}
+.triagem-modal-bg.ativo{display:flex;}
+.triagem-modal{width:min(760px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);padding:16px;border-left:5px solid var(--bdr-red);}
+.triagem-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.triagem-modal-head h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900;}
+.triagem-modal-head p{margin:4px 0 0;color:#6b7280;font-size:12px;}
+.triagem-fechar{width:34px;height:34px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:900;cursor:pointer;}
+.triagem-modal-info{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;line-height:1.45;}
+.triagem-modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.triagem-modal-grid label{display:block;font-size:11px;font-weight:900;color:#374151;margin-bottom:4px;}
+.triagem-modal-grid input,.triagem-modal-grid select,.triagem-modal textarea{font-size:12px;padding:8px;border-radius:9px;}
+.triagem-modal .full{grid-column:1/-1;}
+.triagem-modo-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.triagem-modo{border:1px solid #e5e7eb;border-left:4px solid #d1d5db;border-radius:12px;padding:9px;cursor:pointer;background:#fff;}
+.triagem-modo:hover{background:#fff1f2;border-left-color:var(--bdr-red);}
+.triagem-modo input{width:auto;margin-right:6px;}
+.triagem-modo strong{font-size:12px;color:#111827;}
+.triagem-modo span{display:block;color:#6b7280;font-size:11px;margin-top:2px;}
+.triagem-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;}
+.triagem-modal-actions button{height:38px;font-weight:900;border-radius:10px;}
+.triagem-aviso-empresa{background:#eff6ff;border-left:4px solid #2563eb;border-radius:10px;padding:8px;color:#1e3a8a;font-size:12px;font-weight:800;}
+@media(max-width:800px){.triagem-modal-grid,.triagem-modo-box,.triagem-modal-actions{grid-template-columns:1fr;}}
+
 </style>
 </head>
 
@@ -87,7 +120,7 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
   <aside class="bdr-sidebar">
     <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
 
-    <!-- MENU PRINCIPAL FIXO -->
+ <!-- MENU PRINCIPAL FIXO -->
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
@@ -111,31 +144,10 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
     </span>
   </button>
 
-  <!-- PEDIDOS -->
-  <button class="bdr-menu-btn" data-tip="Pedidos" onclick="ir('pedidos.html')">
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
-      <i class="fa-solid fa-clipboard-list"></i>
-    </span>
-  </button>
-
-  <!-- RETIRADA -->
-  <button class="bdr-menu-btn" data-tip="Retirada" onclick="ir('retirada.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-ramp-box"></i>
-    </span>
-  </button>
-
-  <!-- SAÍDA -->
-  <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-truck-fast"></i>
-    </span>
-  </button>
-
-  <!-- ENDEREÇAMENTO -->
-  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-location-dot"></i>
+      <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
@@ -146,13 +158,14 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
     </span>
   </button>
 
-  <!-- MOVIMENTAÇÕES -->
-  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
 
+  
   <!-- RELATÓRIOS -->
   <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
@@ -173,7 +186,8 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
       <i class="fa-solid fa-users"></i>
     </span>
   </button>
-    </nav>
+
+</nav>
   </aside>
 
   <main class="bdr-main">
@@ -210,8 +224,8 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
     </div>
 
     <section class="triagem-hero">
-      <h2>Triagem simples e eficaz</h2>
-      <p>Abra a NF, confirme o destino e o sistema sugere automaticamente uma posição livre.</p>
+      <h2>Triagem inteligente BDR</h2>
+      <p>O sistema recomenda Patrimônio ou Estoque comum usando regras, histórico e aprendizado interno.</p>
       <div class="info">Padrão de endereço: <b>R1-F1-P01-C2-N3</b>. O QR da posição será <b>END-R1-F1-P01-C2-N3</b>.</div>
     </section>
 
@@ -240,6 +254,75 @@ input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-rad
 
     <div id="listaTriagem"></div>
   </main>
+</div>
+
+
+
+<!-- =========================================================
+     CARD/MODAL DE CADASTRO RÁPIDO DE PATRIMÔNIO PELA TRIAGEM
+========================================================= -->
+<div class="triagem-modal-bg" id="modalPatrimonioTriagemBg">
+  <div class="triagem-modal">
+    <div class="triagem-modal-head">
+      <div>
+        <h2>🏷 Patrimônio pela Triagem</h2>
+        <p>Vincule um patrimônio existente ou cadastre rapidamente um novo, sem sair da triagem.</p>
+      </div>
+      <button class="triagem-fechar" onclick="fecharModalPatrimonioTriagem()">X</button>
+    </div>
+
+    <div class="triagem-modal-info" id="patTriagemInfoItem">Item selecionado...</div>
+
+    <div class="triagem-modo-box">
+      <label class="triagem-modo">
+        <input type="radio" name="patTriagemModo" value="EXISTENTE" onchange="atualizarModalPatrimonioTriagem()">
+        <strong>Já tem patrimônio</strong>
+        <span>Informo o código PAT existente e o sistema manda para o estoque/endereço.</span>
+      </label>
+      <label class="triagem-modo">
+        <input type="radio" name="patTriagemModo" value="NOVO" checked onchange="atualizarModalPatrimonioTriagem()">
+        <strong>Não tem / é novo</strong>
+        <span>O sistema gera o próximo PAT da obra/setor e cadastra rápido.</span>
+      </label>
+    </div>
+
+    <div class="triagem-modal-grid">
+      <div class="full" id="boxPatExistenteModal" style="display:none;">
+        <label>Código do patrimônio existente</label>
+        <input id="modalPatCodigoExistente" placeholder="Ex: PAT-1030001">
+      </div>
+
+      <div>
+        <label>Obra / Setor obrigatório</label>
+        <select id="modalPatObra" onchange="atualizarEmpresaModalPatrimonio(); recalcularEnderecoModalPatrimonio();"></select>
+      </div>
+
+      <div>
+        <label>Empresa automática</label>
+        <div class="triagem-aviso-empresa" id="modalPatEmpresaTexto">Selecione a obra.</div>
+      </div>
+
+      <div>
+        <label>Endereço destino</label>
+        <div class="codigo-end" id="modalPatEnderecoTexto" style="font-size:14px;padding:8px;">AUTO</div>
+        <input type="hidden" id="modalPatEnderecoId">
+      </div>
+
+      <div class="full"><label>Nome do bem</label><input id="modalPatNome" placeholder="Nome do patrimônio"></div>
+      <div><label>Tipo</label><select id="modalPatTipo"><option value="EQUIPAMENTO">Equipamento</option><option value="FERRAMENTA">Ferramenta</option><option value="INFORMATICA">Informática</option><option value="ELETRONICO">Eletrônico</option><option value="MAQUINA">Máquina</option><option value="MOBILIARIO">Mobiliário</option><option value="OUTRO">Outro</option></select></div>
+      <div><label>Marca</label><input id="modalPatMarca" placeholder="Marca"></div>
+      <div><label>Modelo</label><input id="modalPatModelo" placeholder="Modelo"></div>
+      <div><label>Nº série</label><input id="modalPatSerie" placeholder="Serial/chassi/identificador"></div>
+      <div><label>Valor</label><input id="modalPatValor" placeholder="Valor" oninput="if(typeof mascaraMoedaTriagem==='function') mascaraMoedaTriagem(this)"></div>
+      <div><label>Estado</label><select id="modalPatEstado"><option value="NOVO">Novo</option><option value="BOM">Bom</option><option value="REGULAR">Regular</option><option value="RUIM">Ruim</option></select></div>
+      <div class="full"><label>Observação</label><textarea id="modalPatObs" placeholder="Observação do cadastro/movimentação"></textarea></div>
+    </div>
+
+    <div class="triagem-modal-actions">
+      <button class="btn-gray" onclick="fecharModalPatrimonioTriagem()">Cancelar</button>
+      <button class="btn-ok" onclick="confirmarModalPatrimonioTriagem()">✅ Confirmar patrimônio e enviar ao estoque</button>
+    </div>
+  </div>
 </div>
 
 <script>

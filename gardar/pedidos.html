@@ -100,7 +100,8 @@ input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px s
 <div class="app-layout">
 <aside class="bdr-sidebar">
   <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
-    <!-- MENU PRINCIPAL FIXO -->
+
+ <!-- MENU PRINCIPAL FIXO -->
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
@@ -138,17 +139,17 @@ input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px s
     </span>
   </button>
 
-  <!-- TRANSFERÊNCIA -->
+  <!-- SAÍDA -->
   <button class="bdr-menu-btn" data-tip="Transferência" onclick="ir('transferencia.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-truck-fast"></i>
     </span>
   </button>
 
-  <!-- ENDEREÇAMENTO -->
-  <button class="bdr-menu-btn" data-tip="Endereçamento" onclick="ir('enderecamento.html')">
+  <!-- Estoque -->
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
-      <i class="fa-solid fa-location-dot"></i>
+      <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
@@ -159,13 +160,14 @@ input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px s
     </span>
   </button>
 
-  <!-- MOVIMENTAÇÕES -->
-  <button class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
+  <!-- EXPEDIÇÃO -->
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+     <span class="bdr-menu-icon">
+       <i class="fa-solid fa-truck-fast"></i>
+      </span>
+    </button>
 
+  
   <!-- RELATÓRIOS -->
   <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
@@ -186,7 +188,9 @@ input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px s
       <i class="fa-solid fa-users"></i>
     </span>
   </button>
-    </nav>
+
+</nav>
+
 </aside>
 
 <main class="bdr-main">

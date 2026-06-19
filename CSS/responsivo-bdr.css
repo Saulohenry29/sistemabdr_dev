@@ -1,0 +1,504 @@
+/* =========================================================
+   BDR ERP - RESPONSIVO GLOBAL PREMIUM
+   Arquivo: CSS/responsivo-bdr.css
+   Use depois do layout-bdr.css
+========================================================= */
+
+/* BASE SEGURA */
+html{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  zoom:1 !important;
+  -webkit-text-size-adjust:100%;
+}
+
+body{
+  width:100%;
+  max-width:100%;
+  min-height:100vh;
+  overflow-x:hidden;
+  touch-action:manipulation;
+}
+
+*{box-sizing:border-box}
+
+img,canvas,svg,video{max-width:100%}
+
+.bdr-main,.content,.card,.card-light,.hero,.bdr-topbar,.relatorio-topbar{
+  max-width:100%;
+}
+
+table{
+  width:100%;
+  max-width:100%;
+  border-collapse:collapse;
+}
+
+.table-wrap,
+.tabela-wrap,
+div[style*="overflow:auto"]{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+input,select,textarea{
+  font-size:16px;
+}
+
+/* DESKTOP */
+@media(min-width:1201px){
+  .bdr-sidebar{
+    position:fixed !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:0 !important;
+  }
+
+  .bdr-main,
+  .content{
+    margin-left:var(--sidebar-width,90px) !important;
+    width:calc(100% - var(--sidebar-width,90px)) !important;
+  }
+}
+
+/* TABLET / NOTEBOOK PEQUENO */
+@media(max-width:1200px){
+
+  .bdr-main,.content{
+    padding:12px !important;
+  }
+
+  .dashboard-grid,
+  .chart-grid,
+  .chart-grid-3,
+  .grid,
+  .filter-grid,
+  .usuario-form-grid,
+  .usuario-filtro-grid,
+  .empresa-form-grid,
+  .empresa-filtro-grid,
+  .premium-perm-top,
+  .premium-perm-bottom,
+  .sienge-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .kpi-grid,
+  .kpi-row,
+  .resumo-grid,
+  .usuario-master-resumo,
+  .kpi-relatorio-grid,
+  .money-grid{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+
+  .bdr-topbar,
+  .hero,
+  .relatorio-topbar{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+  }
+
+  .bdr-top-actions,
+  .dash-user,
+  .hero-right,
+  .relatorio-actions{
+    width:100% !important;
+    justify-content:space-between !important;
+    text-align:left !important;
+    flex-wrap:wrap !important;
+  }
+}
+
+/* CELULAR EM PÉ - APP */
+@media(max-width:760px) and (orientation:portrait){
+
+  :root{--sidebar-width:0px}
+
+  .app-layout,.bdr-app{
+    display:block !important;
+    min-height:100vh !important;
+  }
+
+  .bdr-sidebar{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    top:auto !important;
+    width:100% !important;
+    height:76px !important;
+    min-height:76px !important;
+    max-height:76px !important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom)) !important;
+    flex-direction:row !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    z-index:99999 !important;
+    border-radius:18px 18px 0 0 !important;
+    box-shadow:0 -10px 28px rgba(15,23,42,.20) !important;
+  }
+
+  .bdr-brand,.bdr-menu-footer{display:none !important}
+
+  .bdr-menu{
+    width:max-content !important;
+    min-width:100% !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  .bdr-menu-btn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    border-radius:15px !important;
+    transform:none !important;
+  }
+
+  .bdr-menu-btn:hover{transform:none !important}
+  .bdr-menu-btn::after{display:none !important}
+  .bdr-menu-icon i{font-size:18px !important}
+
+  .bdr-main,.content{
+    margin-left:0 !important;
+    width:100% !important;
+    padding:10px 10px calc(96px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .bdr-topbar,.hero,.relatorio-topbar{
+    border-radius:14px !important;
+    padding:12px !important;
+    margin-bottom:10px !important;
+  }
+
+  .bdr-topbar-title,.hero-title,.relatorio-title{
+    font-size:17px !important;
+    line-height:1.25 !important;
+  }
+
+  .bdr-topbar-sub,.hero-sub,.relatorio-sub{
+    font-size:11px !important;
+    line-height:1.35 !important;
+  }
+
+  .dash-user,.bdr-top-actions{
+    width:100% !important;
+    display:flex !important;
+    justify-content:space-between !important;
+    gap:8px !important;
+  }
+
+  .user-mini{font-size:12px !important}
+  .avatar{width:38px !important;height:38px !important}
+
+  .notif-dropdown,.user-dropdown,.dropdown-user{
+    position:fixed !important;
+    left:10px !important;
+    right:10px !important;
+    top:75px !important;
+    width:auto !important;
+    max-width:none !important;
+  }
+
+  .card,.card-light{
+    border-radius:14px !important;
+    padding:10px !important;
+    margin-bottom:10px !important;
+    transform:none !important;
+  }
+
+  .card:hover,.card-light:hover{transform:none !important}
+
+  .kpi-grid,
+  .kpi-row,
+  .resumo-grid,
+  .usuario-master-resumo,
+  .money-grid,
+  .estoque-niveis,
+  .kpi-relatorio-grid{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  .kpi,.kpi-card,.kpi-relatorio{
+    min-height:auto !important;
+    padding:12px !important;
+  }
+
+  .grid,
+  .filter-grid,
+  .usuario-form-grid,
+  .usuario-filtro-grid,
+  .empresa-form-grid,
+  .empresa-filtro-grid,
+  .quick-filters,
+  .sienge-grid{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  input,select,textarea,button{
+    min-height:42px !important;
+    font-size:16px !important;
+  }
+
+  .btn,
+  .btn-small,
+  .btn-salvar,
+  .btn-limpar,
+  .btn-relatorio,
+  .perm-action-btn{
+    width:100% !important;
+    margin-bottom:4px !important;
+  }
+
+  .form-actions,
+  .scan-actions,
+  .master-actions,
+  .perm-actions-top,
+  .relatorio-actions,
+  .sienge-mini-actions{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  .lista-header,.mov-header,.usuario-header,.empresa-header{
+    display:none !important;
+  }
+
+  .linha-patrimonio,
+  .mov-linha,
+  .usuario-linha,
+  .empresa-linha,
+  .pedido-top,
+  .cart-item,
+  .sienge-row,
+  .row,
+  .row-pat,
+  .row-mov,
+  .row-top{
+    grid-template-columns:1fr !important;
+    gap:6px !important;
+    padding:12px !important;
+    min-height:auto !important;
+  }
+
+  .pat-nome,
+  .pat-local,
+  .pat-tipo,
+  .mov-info,
+  .mov-patrimonio,
+  .usuario-info,
+  .usuario-nome,
+  .empresa-nome,
+  .empresa-info,
+  .row span{
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:unset !important;
+  }
+
+  .status,.badge,.pat-status,.usuario-status,.empresa-status{
+    width:max-content !important;
+    max-width:100% !important;
+    white-space:normal !important;
+  }
+
+  .chart-box,
+  .chart-box.small,
+  .chart-box.mini,
+  .chart-card canvas,
+  .chart-card.big canvas{
+    height:230px !important;
+  }
+
+  .perm-obras-box,.sienge-lista{
+    min-height:180px !important;
+    max-height:240px !important;
+  }
+
+  .perfis-grid,
+  .resumo-card-box,
+  .obras-toolbar,
+  .operacao-grid .perm-group-body{
+    grid-template-columns:1fr !important;
+  }
+
+  .modal,.master-modal,.sienge-modal{
+    width:100% !important;
+    max-width:100% !important;
+    border-radius:16px !important;
+  }
+}
+
+/* CELULAR DEITADO - TABLET COM MENU LATERAL */
+@media(max-width:950px) and (orientation:landscape){
+
+  :root{--sidebar-width:72px}
+
+  .app-layout,.bdr-app{
+    display:flex !important;
+    min-height:100vh !important;
+  }
+
+  .bdr-sidebar{
+    position:fixed !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:0 !important;
+    width:72px !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    max-height:100vh !important;
+    padding:10px 0 !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    border-radius:0 !important;
+  }
+
+  .bdr-brand{
+    display:flex !important;
+    margin-bottom:10px !important;
+  }
+
+  .bdr-brand-icon{
+    width:42px !important;
+    height:42px !important;
+    border-radius:14px !important;
+  }
+
+  .bdr-menu{
+    flex-direction:column !important;
+    gap:8px !important;
+    width:100% !important;
+    min-width:0 !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+  }
+
+  .bdr-menu-btn{
+    width:50px !important;
+    height:50px !important;
+    min-width:50px !important;
+    border-radius:16px !important;
+  }
+
+  .bdr-menu-btn::after{display:none !important}
+
+  .bdr-main,.content{
+    margin-left:72px !important;
+    width:calc(100% - 72px) !important;
+    padding:10px !important;
+  }
+
+  .bdr-topbar,.hero,.relatorio-topbar{
+    flex-direction:row !important;
+    align-items:center !important;
+  }
+
+  .kpi-grid,
+  .kpi-row,
+  .resumo-grid,
+  .kpi-relatorio-grid,
+  .money-grid{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+
+  .dashboard-grid,
+  .chart-grid,
+  .chart-grid-3,
+  .grid,
+  .filter-grid,
+  .usuario-form-grid,
+  .empresa-form-grid,
+  .sienge-grid{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .card,.card-light{
+    padding:10px !important;
+  }
+
+  .chart-box,
+  .chart-box.small,
+  .chart-box.mini,
+  .chart-card canvas,
+  .chart-card.big canvas{
+    height:210px !important;
+  }
+
+  input,select,textarea,button{
+    min-height:38px !important;
+    font-size:13px !important;
+  }
+}
+
+/* CELULAR MUITO PEQUENO */
+@media(max-width:420px){
+  .bdr-main,.content{
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+
+  .bdr-menu-btn{
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+  }
+
+  .kpi-value,.kpi h2{
+    font-size:21px !important;
+  }
+
+  .card h3,.card-light h3{
+    font-size:14px !important;
+  }
+}
+
+/* PWA INSTALADO */
+@media(display-mode:standalone){
+  body{overscroll-behavior:none}
+  .bdr-main,.content{min-height:100vh}
+}
+
+/* IMPRESSÃO */
+@media print{
+  .bdr-sidebar,
+  .bdr-topbar,
+  .hero,
+  .relatorio-topbar,
+  .notif-wrap,
+  .dash-user,
+  .bdr-menu,
+  .form-actions,
+  button{
+    display:none !important;
+  }
+
+  .bdr-main,.content{
+    margin:0 !important;
+    width:100% !important;
+    padding:0 !important;
+  }
+
+  body{background:#fff !important}
+
+  .card,.card-light{
+    box-shadow:none !important;
+    border:1px solid #000 !important;
+  }
+}
