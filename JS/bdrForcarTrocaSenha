@@ -1,135 +1,456 @@
 /* =========================================================
    BDR ERP - TROCA OBRIGATÓRIA DE SENHA PROVISÓRIA
-   Coloque este arquivo em todas as páginas após supabaseClient.js/auth.js.
-   Quando usuarios_sistema.trocar_senha = true, bloqueia a tela até trocar.
+   Arquivo: JS/bdrForcarTrocaSenha.js
+
+   Como usar:
+   Coloque em todas as páginas depois de:
+   - supabaseClient.js
+   - auth.js
+   - bdrCore.js, se existir
+
+   Exemplo:
+   <script src="./JS/bdrForcarTrocaSenha.js"></script>
+
+   Função:
+   Se usuarios_sistema.trocar_senha = true
+   OU usuarios_sistema.senha_provisoria = true
+   bloqueia a tela até o usuário trocar a senha.
 ========================================================= */
+
 (function(){
   if(window.BDR_TROCA_SENHA_ATIVO) return;
   window.BDR_TROCA_SENHA_ATIVO = true;
 
+  /* =========================================================
+     1) BANCO / USUÁRIO LOCAL
+  ========================================================= */
   function db(){
     if(typeof window.db === "function"){
-      try{ const b = window.db(); if(b) return b; }catch(e){}
+      try{
+        const banco = window.db();
+        if(banco) return banco;
+      }catch(e){}
     }
-    return window.client || window.supabaseClient || window.clientSupabase || null;
+
+    return (
+      window.client ||
+      window.supabaseClient ||
+      window.clientSupabase ||
+      null
+    );
   }
 
   function usuarioAtual(){
     try{
-      const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+      const raw =
+        localStorage.getItem("usuario_logado") ||
+        localStorage.getItem("usuarioLogado");
+
       return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
+    }catch(e){
+      return null;
+    }
   }
 
   function salvarUsuarioLocal(dados){
     try{
       const atual = usuarioAtual() || {};
       const novo = {...atual, ...dados};
+
       localStorage.setItem("usuario_logado", JSON.stringify(novo));
       localStorage.setItem("usuarioLogado", JSON.stringify(novo));
     }catch(e){}
   }
 
-  function css(){
+  function logoutSeguro(){
+    try{
+      if(typeof window.logout === "function"){
+        window.logout();
+        return;
+      }
+
+      localStorage.removeItem("usuario_logado");
+      localStorage.removeItem("usuarioLogado");
+      location.href = "login.html";
+    }catch(e){
+      location.href = "login.html";
+    }
+  }
+
+  /* =========================================================
+     2) CSS DO MODAL
+  ========================================================= */
+  function injetarCSS(){
     if(document.getElementById("bdrTrocaSenhaCss")) return;
+
     const style = document.createElement("style");
     style.id = "bdrTrocaSenhaCss";
     style.textContent = `
-      .bdr-pass-bg{position:fixed;inset:0;background:rgba(15,23,42,.78);z-index:999999;display:flex;align-items:center;justify-content:center;padding:18px;}
-      .bdr-pass-modal{width:min(460px,100%);background:#fff;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.38);overflow:hidden;font-family:Arial,sans-serif;}
-      .bdr-pass-head{padding:18px;background:linear-gradient(135deg,#fff1f2,#fff);border-bottom:1px solid #fecaca;display:flex;gap:12px;align-items:center;}
-      .bdr-pass-icon{width:46px;height:46px;border-radius:16px;background:#d71920;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;}
-      .bdr-pass-head h3{margin:0;color:#111827;font-size:18px;font-weight:900;}.bdr-pass-head p{margin:4px 0 0;color:#6b7280;font-size:12px;}
-      .bdr-pass-body{padding:18px;}.bdr-pass-body label{display:block;margin:10px 0 5px;font-size:12px;font-weight:900;color:#374151;}
-      .bdr-pass-body input{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #d1d5db;border-radius:13px;font-size:14px;}
-      .bdr-pass-alert{background:#fff7ed;border-left:5px solid #f97316;border-radius:12px;padding:10px 12px;color:#7c2d12;font-size:12px;line-height:1.4;margin-bottom:12px;}
-      .bdr-pass-error{display:none;color:#dc2626;font-size:12px;font-weight:900;margin-top:10px;}.bdr-pass-error.ativo{display:block;}
-      .bdr-pass-actions{display:flex;gap:9px;justify-content:flex-end;padding:0 18px 18px;}.bdr-pass-actions button{border:none;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer;}
-      .bdr-pass-save{background:#16a34a;color:#fff;}.bdr-pass-logout{background:#e5e7eb;color:#374151;}
+      .bdr-pass-bg{
+        position:fixed;
+        inset:0;
+        background:rgba(15,23,42,.78);
+        z-index:999999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:18px;
+        font-family:Arial,sans-serif;
+      }
+
+      .bdr-pass-modal{
+        width:min(470px,100%);
+        background:#fff;
+        border-radius:22px;
+        box-shadow:0 30px 90px rgba(0,0,0,.38);
+        overflow:hidden;
+        animation:bdrPassIn .18s ease;
+      }
+
+      @keyframes bdrPassIn{
+        from{opacity:0;transform:translateY(12px) scale(.98)}
+        to{opacity:1;transform:translateY(0) scale(1)}
+      }
+
+      .bdr-pass-head{
+        padding:18px;
+        background:linear-gradient(135deg,#fff1f2,#fff);
+        border-bottom:1px solid #fecaca;
+        display:flex;
+        gap:12px;
+        align-items:center;
+      }
+
+      .bdr-pass-icon{
+        width:48px;
+        height:48px;
+        border-radius:16px;
+        background:#d71920;
+        color:#fff;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:22px;
+        font-weight:900;
+        flex:0 0 auto;
+      }
+
+      .bdr-pass-head h3{
+        margin:0;
+        color:#111827;
+        font-size:18px;
+        font-weight:900;
+      }
+
+      .bdr-pass-head p{
+        margin:4px 0 0;
+        color:#6b7280;
+        font-size:12px;
+        font-weight:700;
+      }
+
+      .bdr-pass-body{
+        padding:18px;
+      }
+
+      .bdr-pass-alert{
+        background:#fff7ed;
+        border-left:5px solid #f97316;
+        border-radius:12px;
+        padding:10px 12px;
+        color:#7c2d12;
+        font-size:12px;
+        line-height:1.4;
+        margin-bottom:12px;
+        font-weight:700;
+      }
+
+      .bdr-pass-body label{
+        display:block;
+        margin:10px 0 5px;
+        font-size:12px;
+        font-weight:900;
+        color:#374151;
+      }
+
+      .bdr-pass-body input{
+        width:100%;
+        box-sizing:border-box;
+        padding:12px 13px;
+        border:1px solid #d1d5db;
+        border-radius:13px;
+        font-size:14px;
+        outline:none;
+      }
+
+      .bdr-pass-body input:focus{
+        border-color:#fecaca;
+        box-shadow:0 0 0 4px rgba(215,25,32,.08);
+      }
+
+      .bdr-pass-help{
+        margin-top:8px;
+        color:#64748b;
+        font-size:11px;
+        line-height:1.4;
+      }
+
+      .bdr-pass-error{
+        display:none;
+        color:#dc2626;
+        background:#fff1f2;
+        border:1px solid #fecaca;
+        border-radius:11px;
+        padding:9px 10px;
+        font-size:12px;
+        font-weight:900;
+        margin-top:10px;
+      }
+
+      .bdr-pass-error.ativo{
+        display:block;
+      }
+
+      .bdr-pass-actions{
+        display:flex;
+        gap:9px;
+        justify-content:flex-end;
+        padding:0 18px 18px;
+      }
+
+      .bdr-pass-actions button{
+        border:none;
+        border-radius:12px;
+        padding:11px 14px;
+        font-weight:900;
+        cursor:pointer;
+      }
+
+      .bdr-pass-save{
+        background:#16a34a;
+        color:#fff;
+      }
+
+      .bdr-pass-save:disabled{
+        opacity:.55;
+        cursor:not-allowed;
+      }
+
+      .bdr-pass-logout{
+        background:#e5e7eb;
+        color:#374151;
+      }
     `;
+
     document.head.appendChild(style);
   }
 
+  /* =========================================================
+     3) MODAL
+  ========================================================= */
   function mostrarModal(user){
-    css();
+    injetarCSS();
+
     if(document.getElementById("bdrTrocaSenhaBg")) return;
+
     const div = document.createElement("div");
     div.id = "bdrTrocaSenhaBg";
     div.className = "bdr-pass-bg";
+
+    const nomeUsuario = String(user.nome || user.usuario || "usuário");
+
     div.innerHTML = `
       <div class="bdr-pass-modal">
         <div class="bdr-pass-head">
           <div class="bdr-pass-icon">🔐</div>
-          <div><h3>Troca de senha obrigatória</h3><p>Olá, ${String(user.nome || user.usuario || "usuário")}</p></div>
+          <div>
+            <h3>Troca de senha obrigatória</h3>
+            <p>Olá, ${esc(nomeUsuario)}</p>
+          </div>
         </div>
+
         <div class="bdr-pass-body">
-          <div class="bdr-pass-alert">Você entrou com uma senha provisória. Crie uma nova senha para continuar usando o sistema.</div>
+          <div class="bdr-pass-alert">
+            Você entrou com uma senha provisória. Crie uma nova senha para continuar usando o sistema.
+          </div>
+
           <label>Nova senha</label>
           <input id="bdrNovaSenha" type="password" autocomplete="new-password" placeholder="Digite a nova senha">
+
           <label>Confirmar nova senha</label>
           <input id="bdrConfirmaSenha" type="password" autocomplete="new-password" placeholder="Confirme a nova senha">
+
+          <div class="bdr-pass-help">
+            Use pelo menos 4 caracteres. Evite usar a mesma senha provisória.
+          </div>
+
           <div id="bdrPassErro" class="bdr-pass-error">Erro</div>
         </div>
+
         <div class="bdr-pass-actions">
-          <button class="bdr-pass-logout" onclick="logout ? logout() : localStorage.clear(); location.href='login.html';">Sair</button>
+          <button class="bdr-pass-logout" id="bdrBtnSairSenha">Sair</button>
           <button class="bdr-pass-save" id="bdrBtnSalvarSenha">Salvar nova senha</button>
         </div>
       </div>
     `;
+
     document.body.appendChild(div);
-    setTimeout(()=>document.getElementById("bdrNovaSenha")?.focus(),100);
-    document.getElementById("bdrBtnSalvarSenha").onclick = ()=>salvarSenha(user);
+
+    document.getElementById("bdrBtnSairSenha").onclick = logoutSeguro;
+    document.getElementById("bdrBtnSalvarSenha").onclick = () => salvarSenha(user);
+
+    document.getElementById("bdrNovaSenha").addEventListener("keydown", enterSalvar);
+    document.getElementById("bdrConfirmaSenha").addEventListener("keydown", enterSalvar);
+
+    setTimeout(() => {
+      document.getElementById("bdrNovaSenha")?.focus();
+    }, 100);
+
+    function enterSalvar(e){
+      if(e.key === "Enter"){
+        salvarSenha(user);
+      }
+    }
+  }
+
+  function esc(valor){
+    return String(valor ?? "").replace(/[&<>'"]/g, c => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      "'":"&#39;",
+      '"':"&quot;"
+    }[c]));
   }
 
   function erro(msg){
     const el = document.getElementById("bdrPassErro");
-    if(el){ el.innerText = msg; el.classList.add("ativo"); }
+    if(el){
+      el.innerText = msg;
+      el.classList.add("ativo");
+    }
   }
 
+  function limparErro(){
+    const el = document.getElementById("bdrPassErro");
+    if(el){
+      el.innerText = "";
+      el.classList.remove("ativo");
+    }
+  }
+
+  /* =========================================================
+     4) SALVAR SENHA
+  ========================================================= */
   async function salvarSenha(user){
+    limparErro();
+
     const banco = db();
+    if(!banco){
+      erro("Banco não carregado. Recarregue a página.");
+      return;
+    }
+
+    const btn = document.getElementById("bdrBtnSalvarSenha");
     const nova = String(document.getElementById("bdrNovaSenha")?.value || "").trim();
     const conf = String(document.getElementById("bdrConfirmaSenha")?.value || "").trim();
-    if(nova.length < 4){ erro("A nova senha precisa ter pelo menos 4 caracteres."); return; }
-    if(nova !== conf){ erro("As senhas não conferem."); return; }
+
+    if(nova.length < 4){
+      erro("A nova senha precisa ter pelo menos 4 caracteres.");
+      return;
+    }
+
+    if(nova !== conf){
+      erro("As senhas não conferem.");
+      return;
+    }
+
     if(user.senha && nova === String(user.senha)){
       erro("A nova senha não pode ser igual à senha provisória.");
       return;
     }
 
-    const { error } = await banco
-      .from("usuarios_sistema")
-      .update({
-        senha: nova,
-        senha_provisoria: false,
-        trocar_senha: false,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", user.id);
+    try{
+      if(btn){
+        btn.disabled = true;
+        btn.innerText = "Salvando...";
+      }
 
-    if(error){ erro("Erro ao salvar senha: " + error.message); return; }
-    salvarUsuarioLocal({senha_provisoria:false,trocar_senha:false});
-    alert("Senha alterada com sucesso!");
-    document.getElementById("bdrTrocaSenhaBg")?.remove();
-  }
+      const { error } = await banco
+        .from("usuarios_sistema")
+        .update({
+          senha: nova,
+          senha_provisoria: false,
+          trocar_senha: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", user.id);
 
-  async function verificar(){
-    const banco = db();
-    const u = usuarioAtual();
-    if(!banco || !u || !u.id) return;
+      if(error){
+        erro("Erro ao salvar senha: " + error.message);
+        return;
+      }
 
-    const { data, error } = await banco
-      .from("usuarios_sistema")
-      .select("id,nome,usuario,senha,senha_provisoria,trocar_senha,ativo")
-      .eq("id", u.id)
-      .single();
+      salvarUsuarioLocal({
+        senha:nova,
+        senha_provisoria:false,
+        trocar_senha:false
+      });
 
-    if(error || !data || data.ativo === false) return;
-    if(data.trocar_senha === true || data.senha_provisoria === true){
-      mostrarModal(data);
+      alert("Senha alterada com sucesso!");
+      document.getElementById("bdrTrocaSenhaBg")?.remove();
+
+    }catch(e){
+      erro("Erro inesperado ao salvar senha.");
+      console.error(e);
+    }finally{
+      if(btn){
+        btn.disabled = false;
+        btn.innerText = "Salvar nova senha";
+      }
     }
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", verificar);
-  else setTimeout(verificar, 80);
+  /* =========================================================
+     5) VERIFICAR NO BANCO
+  ========================================================= */
+  async function verificar(){
+    const banco = db();
+    const u = usuarioAtual();
+
+    if(!banco || !u || !u.id) return;
+
+    try{
+      const { data, error } = await banco
+        .from("usuarios_sistema")
+        .select("id,nome,usuario,senha,senha_provisoria,trocar_senha,ativo")
+        .eq("id", u.id)
+        .single();
+
+      if(error || !data) return;
+
+      if(data.ativo === false){
+        alert("Seu usuário está inativo.");
+        logoutSeguro();
+        return;
+      }
+
+      if(data.trocar_senha === true || data.senha_provisoria === true){
+        mostrarModal(data);
+      }
+    }catch(e){
+      console.warn("Erro ao verificar troca de senha:", e);
+    }
+  }
+
+  /* =========================================================
+     6) INICIAR
+  ========================================================= */
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(verificar, 120);
+    });
+  }else{
+    setTimeout(verificar, 120);
+  }
 })();

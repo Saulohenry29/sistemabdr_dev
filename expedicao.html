@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
+<link rel="manifest" href="./manifest.json">
 <title>BDR ERP - Expedição</title>
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -633,6 +634,92 @@
   .pedido-top{grid-template-columns:1fr;}
   .kpi-row{grid-template-columns:repeat(2,1fr);}
 }
+
+/* =========================================================
+   PATCH BDR - CORREÇÕES EXPEDIÇÃO
+========================================================= */
+.user-mini b{
+  display:block;
+  line-height:1.15;
+}
+.user-mini small{
+  display:block;
+  line-height:1.15;
+  margin-top:2px;
+}
+
+.cart-item{
+  grid-template-columns:44px minmax(0,1fr) 34px !important;
+  align-items:start;
+}
+.cart-info{
+  min-width:0;
+  overflow:hidden;
+}
+.cart-info strong{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.22;
+  max-height:46px;
+}
+.cart-info span{
+  display:block;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.25;
+}
+.cart-remove{
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  justify-self:end;
+  flex-shrink:0;
+}
+.cart-remove:hover{
+  background:#fee2e2;
+}
+
+.produto-nome{
+  min-height:48px !important;
+  max-height:48px;
+  white-space:normal !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.2;
+}
+.produto-obra{
+  white-space:normal !important;
+  min-height:28px;
+  max-height:32px;
+  line-height:1.25;
+  overflow:hidden;
+  word-break:break-word;
+}
+
+.notif-item.update-app{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+}
+.notif-update-btn{
+  margin-top:7px;
+  border:none;
+  border-radius:9px;
+  padding:7px 10px;
+  background:#2563eb;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  font-size:11px;
+}
+
 </style>
 </head>
 <body>
@@ -774,6 +861,40 @@
 
 <div id="modalDetalhe" class="modal-bg"><div class="modal"><div class="modal-head"><span id="modalTitulo">Detalhes</span><button class="fechar-modal" onclick="fecharModalDetalhe()">X</button></div><div class="modal-body" id="modalConteudo"></div></div></div>
 <div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
+
+<script>
+/* PATCH BDR - abre expedição direto na aba certa via URL
+   Exemplo: expedicao.html?aba=separacao */
+(function(){
+  function abrirAbaPorUrl(){
+    const params = new URLSearchParams(location.search);
+    const aba = params.get("aba");
+    if(!aba) return;
+
+    const tentar = () => {
+      if(typeof abrirAba !== "function") return false;
+
+      const botao = Array.from(document.querySelectorAll(".tab-btn"))
+        .find(b => (b.getAttribute("onclick") || "").includes("'" + aba + "'"));
+
+      abrirAba(aba, botao || null);
+      return true;
+    };
+
+    if(!tentar()){
+      let tentativas = 0;
+      const timer = setInterval(() => {
+        tentativas++;
+        if(tentar() || tentativas > 20) clearInterval(timer);
+      }, 150);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", abrirAbaPorUrl);
+})();
+</script>
+<script defer src="./JS/pwa-update.js"></script>
+
 <script src="./JS/bdrSininhoDashboard.js"></script>
 </body>
 </html>

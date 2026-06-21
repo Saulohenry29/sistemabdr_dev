@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BDR ERP - Login</title>
 
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<meta name="theme-color" content="#a4161a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 <style>
 *{
   margin:0;
@@ -15,14 +22,16 @@
 body{
   font-family:Arial,sans-serif;
   background:linear-gradient(135deg,#0b1220,#1f2937);
-  height:100vh;
+  min-height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
+  padding:18px;
 }
 
 .card-login{
   width:420px;
+  max-width:100%;
   background:#fff;
   border-radius:18px;
   padding:35px;
@@ -37,6 +46,7 @@ body{
 
 .logo img{
   width:180px;
+  max-width:85%;
 }
 
 .logo h1{
@@ -104,6 +114,8 @@ input{
   align-items:center;
   margin-top:12px;
   font-size:13px;
+  gap:10px;
+  flex-wrap:wrap;
 }
 
 .opcoes a{
@@ -128,6 +140,23 @@ input{
   background:#7d1013;
 }
 
+.btn-install{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  background:#fff;
+  color:#a4161a;
+  border:1px solid #a4161a;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.btn-install:hover{
+  background:#fff1f2;
+}
+
 #mensagem{
   text-align:center;
   color:red;
@@ -140,6 +169,35 @@ input{
   color:#777;
   font-size:12px;
 }
+
+/* aviso de atualização no login */
+#bdrUpdateBar{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%);
+  z-index:999999;
+  background:#111827;
+  color:white;
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:0 18px 40px rgba(0,0,0,.25);
+  display:none;
+  align-items:center;
+  gap:12px;
+  font-size:13px;
+  font-weight:800;
+}
+
+#bdrUpdateBar button{
+  border:none;
+  border-radius:10px;
+  background:#a4161a;
+  color:white;
+  font-weight:900;
+  padding:8px 11px;
+  cursor:pointer;
+}
 </style>
 </head>
 
@@ -148,7 +206,7 @@ input{
 <div class="card-login">
 
   <div class="logo">
-    <img src="imagens/logo.png">
+    <img src="imagens/logo.png" alt="BDR ERP">
     <h1>BDR ERP</h1>
     <p>Acesso restrito ao sistema</p>
   </div>
@@ -211,7 +269,7 @@ input{
       Entrar no Sistema
     </button>
 
-    <div id="mensagem"></div>
+      <div id="mensagem"></div>
 
   </form>
 
@@ -221,10 +279,18 @@ input{
 
 </div>
 
+<div id="bdrUpdateBar">
+  <span>🚀 Nova versão disponível</span>
+  <button onclick="bdrAtualizarAgora()">Atualizar agora</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="JS/supabaseClient.js"></script>
 <script src="JS/auth.js"></script>
 <script src="./JS/bdrSessaoRealtime.js"></script>
+<script src="./JS/pwa-install.js"></script>
+<script src="./JS/pwa-update.js"></script>
+
 <script>
 function mostrarSenha(){
 

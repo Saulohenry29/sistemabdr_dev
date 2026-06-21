@@ -1,1 +1,796 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#a4161a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<title>BDR ERP - Portal Institucional</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+:root{
+  --red:#d71920;
+  --red-dark:#9f1117;
+  --black:#101828;
+  --muted:#667085;
+  --bg:#f7f8fb;
+  --line:#e5e7eb;
+  --shadow:0 18px 45px rgba(15,23,42,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(215,25,32,.08), transparent 30%),
+    linear-gradient(180deg,#fff 0%,#f7f8fb 45%,#fff 100%);
+  color:var(--black);
+}
+a{text-decoration:none;color:inherit}
+.container{width:min(1180px, calc(100% - 32px));margin:0 auto}
+
+/* TOPO */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(229,231,235,.9);
+}
+.topbar-inner{
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+.top-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.top-logo img{
+  height:42px;
+  max-width:180px;
+  object-fit:contain;
+}
+.top-logo span{
+  color:#98a2b3;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.nav{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  font-size:13px;
+  color:#344054;
+  font-weight:800;
+}
+.nav a:hover{color:var(--red)}
+.nav-login{
+  border:1px solid #fecaca;
+  color:var(--red);
+  padding:10px 13px;
+  border-radius:999px;
+  background:#fff;
+}
+
+/* HERO */
+.hero{
+  min-height:690px;
+  display:grid;
+  grid-template-columns:.95fr 1.05fr;
+  gap:44px;
+  align-items:center;
+  padding:58px 0 52px;
+}
+.logo-main{
+  width:min(400px, 100%);
+  display:block;
+  margin-bottom:28px;
+  filter:drop-shadow(0 14px 20px rgba(15,23,42,.08));
+}
+.eyebrow{
+  color:var(--red);
+  font-weight:1000;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  font-size:11px;
+  margin-bottom:14px;
+}
+.hero h1{
+  margin:0;
+  font-size:clamp(34px, 4.6vw, 58px);
+  line-height:1.02;
+  letter-spacing:-1.4px;
+  max-width:620px;
+}
+.hero h1 span{color:var(--red)}
+.hero-desc{
+  margin:20px 0 0;
+  color:#475467;
+  font-size:17px;
+  line-height:1.65;
+  max-width:570px;
+}
+.hero-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:28px;
+}
+.btn{
+  height:46px;
+  padding:0 18px;
+  border-radius:12px;
+  border:1px solid transparent;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  font-size:13px;
+  font-weight:1000;
+  cursor:pointer;
+  transition:.17s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-dark{
+  background:#111827;
+  color:#fff;
+  box-shadow:0 12px 24px rgba(15,23,42,.18);
+}
+.btn-soft{
+  background:#fff;
+  color:var(--red);
+  border-color:#fecaca;
+}
+.hero-mini{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  margin-top:32px;
+  color:#475467;
+  font-size:13px;
+  font-weight:800;
+}
+.hero-mini span{display:flex;align-items:center;gap:8px}
+.hero-mini i{color:var(--red)}
+.hero-photo{
+  position:relative;
+  min-height:500px;
+  border-radius:34px;
+  overflow:hidden;
+  box-shadow:0 24px 70px rgba(15,23,42,.16);
+  background:
+    linear-gradient(to top, rgba(0,0,0,.48), rgba(0,0,0,.04)),
+    url("./assets/obra-bdr.jpg") center/cover;
+  isolation:isolate;
+}
+.hero-photo::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(135deg, rgba(215,25,32,.30), transparent 38%),
+    linear-gradient(to right, rgba(255,255,255,.18), transparent 42%);
+  z-index:1;
+}
+.photo-tag{
+  position:absolute;
+  top:24px;
+  left:24px;
+  z-index:2;
+  background:rgba(17,24,39,.86);
+  color:#fff;
+  border-radius:999px;
+  padding:10px 14px;
+  font-size:12px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.photo-badge{
+  position:absolute;
+  left:24px;
+  bottom:24px;
+  right:24px;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(255,255,255,.8);
+  backdrop-filter:blur(12px);
+  border-radius:22px;
+  padding:18px;
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.photo-badge-item{
+  border-right:1px solid #eef2f7;
+  padding-right:10px;
+}
+.photo-badge-item:last-child{border-right:none}
+.photo-badge-item b{display:block;font-size:15px;color:#111827}
+.photo-badge-item span{
+  display:block;
+  margin-top:4px;
+  color:#667085;
+  font-size:12px;
+  line-height:1.35;
+}
+
+/* SEÇÕES */
+.section{padding:56px 0}
+.section-head{text-align:center;margin-bottom:30px}
+.section-head small{
+  color:var(--red);
+  font-weight:1000;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.section-head h2{
+  margin:10px 0 0;
+  font-size:32px;
+  letter-spacing:-.7px;
+}
+.section-head p{
+  margin:10px auto 0;
+  max-width:700px;
+  color:#667085;
+  line-height:1.6;
+}
+
+/* QUALIDADE */
+.authority{
+  display:grid;
+  grid-template-columns:.85fr 1.15fr;
+  gap:22px;
+}
+.cert-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:26px;
+  box-shadow:var(--shadow);
+}
+.cert-big{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
+}
+.cert-seal{
+  width:142px;
+  height:142px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at center,#fff 0 45%,#111827 46% 100%);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 22px;
+  font-size:26px;
+  font-weight:1000;
+  box-shadow:inset 0 0 0 12px #111827, 0 18px 34px rgba(15,23,42,.15);
+}
+.cert-big h3{margin:0;font-size:28px}
+.cert-big p{color:#667085;line-height:1.65}
+.quality-text{display:grid;gap:14px}
+.quality-row{
+  display:grid;
+  grid-template-columns:46px 1fr;
+  gap:14px;
+  padding:16px;
+  border:1px solid #eef2f7;
+  border-radius:18px;
+  background:#fff;
+}
+.quality-icon{
+  width:46px;
+  height:46px;
+  border-radius:15px;
+  background:#fff1f2;
+  color:var(--red);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+.quality-row h4{margin:0 0 5px}
+.quality-row p{
+  margin:0;
+  color:#667085;
+  line-height:1.55;
+  font-size:14px;
+}
+
+/* PRINCÍPIOS */
+.principles{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+.principle{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:22px;
+  box-shadow:0 10px 28px rgba(15,23,42,.07);
+}
+.principle i{
+  width:48px;
+  height:48px;
+  border-radius:16px;
+  background:#fff1f2;
+  color:var(--red);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:21px;
+  margin-bottom:14px;
+}
+.principle h3{margin:0 0 10px}
+.principle p,.principle li{
+  color:#667085;
+  font-size:13px;
+  line-height:1.55;
+}
+.principle ul{margin:0;padding-left:17px}
+
+/* SEGMENTOS */
+.segments{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+.segment{
+  min-height:250px;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  background:#111827;
+  box-shadow:var(--shadow);
+}
+.segment::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,.05));
+  z-index:1;
+}
+.segment img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:.9;
+}
+.segment-content{
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:18px;
+  z-index:2;
+  color:#fff;
+}
+.segment-content h3{margin:0 0 7px}
+.segment-content p{
+  margin:0;
+  color:rgba(255,255,255,.82);
+  font-size:13px;
+  line-height:1.45;
+}
+
+/* PARCEIROS */
+.partners{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  padding:22px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
+}
+.partner{
+  min-width:130px;
+  height:54px;
+  border-radius:14px;
+  background:#f8fafc;
+  border:1px solid #eef2f7;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:1000;
+  color:#475467;
+}
+.partner.red{color:var(--red)}
+
+/* CTA */
+.cta{
+  background:linear-gradient(135deg,#111827,#1f2937);
+  color:#fff;
+  border-radius:28px;
+  padding:32px;
+  display:flex;
+  justify-content:space-between;
+  gap:22px;
+  align-items:center;
+  box-shadow:var(--shadow);
+}
+.cta h2{margin:0}
+.cta p{
+  color:rgba(255,255,255,.75);
+  margin:8px 0 0;
+  line-height:1.5;
+}
+.footer{
+  margin-top:40px;
+  background:#111827;
+  color:#fff;
+  padding:18px 0;
+}
+.footer-inner{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:rgba(255,255,255,.72);
+}
+#bdrUpdateBar{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%);
+  z-index:999999;
+  background:#111827;
+  color:white;
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:0 18px 40px rgba(0,0,0,.25);
+  display:none;
+  align-items:center;
+  gap:12px;
+  font-size:13px;
+  font-weight:800;
+}
+#bdrUpdateBar button{
+  border:none;
+  border-radius:10px;
+  background:#d71920;
+  color:white;
+  font-weight:900;
+  padding:8px 11px;
+  cursor:pointer;
+}
+@media(max-width:1040px){
+  .nav{display:none}
+  .hero{grid-template-columns:1fr;min-height:auto}
+  .hero-photo{min-height:420px}
+  .authority{grid-template-columns:1fr}
+  .principles,.segments{grid-template-columns:repeat(2,1fr)}
+  .cta{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:620px){
+  .topbar-inner{height:auto;padding:12px 0}
+  .top-logo span{display:none}
+  .hero{padding:34px 0;gap:28px}
+  .logo-main{width:270px}
+  .hero h1{font-size:34px}
+  .hero-desc{font-size:15px}
+  .hero-actions{flex-direction:column;align-items:stretch}
+  .btn{width:100%}
+  .hero-photo{min-height:360px;border-radius:24px}
+  .photo-badge{grid-template-columns:1fr}
+  .photo-badge-item{border-right:none;border-bottom:1px solid #eef2f7;padding-bottom:10px}
+  .photo-badge-item:last-child{border-bottom:none;padding-bottom:0}
+  .principles,.segments{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a href="#topo" class="top-logo">
+      <img src="./assets/logo-bdr.png" alt="BDR Construart">
+      <span>Portal ERP</span>
+    </a>
+
+    <nav class="nav">
+      <a href="#qualidade">Qualidade</a>
+      <a href="#principios">Princípios</a>
+      <a href="#segmentos">Segmentos</a>
+      <a href="#parceiros">Parceiros</a>
+      <a class="nav-login" href="https://bdrmt.com.br/" target="_blank">Acessar Site</a>
+    </nav>
+  </div>
+</header>
+
+<main id="topo">
+  <section class="container hero">
+    <div class="hero-left">
+      <img class="logo-main" src="./assets/logo-bdr.png" alt="BDR Construart">
+
+      <div class="eyebrow">Gestão • Obras • Patrimônio</div>
+
+      <h1>
+        Inteligência operacional para quem
+        <span>constrói com excelência.</span>
+      </h1>
+
+      <p class="hero-desc">
+        O BDR ERP conecta estoque, patrimônio, expedição e controle de acesso em uma plataforma interna
+        criada para fortalecer a organização, a rastreabilidade e a eficiência das operações.
+      </p>
+
+      <div class="hero-actions">
+    <a class="btn btn-dark" href="./login.html">
+<i class="fa-solid fa-arrow-right-to-bracket"></i>
+          Entrar no sistema
+        </a>
+
+        <button id="btnInstalarApp" class="btn btn-soft" type="button">
+          <i class="fa-solid fa-download"></i>
+          Instalar aplicativo
+        </button>
+      </div>
+
+      <div class="hero-mini">
+        <span><i class="fa-solid fa-shield-halved"></i> Controle seguro</span>
+        <span><i class="fa-solid fa-qrcode"></i> QR Code e bipagem</span>
+        <span><i class="fa-solid fa-chart-simple"></i> Gestão em tempo real</span>
+      </div>
+    </div>
+
+    <div class="hero-photo">
+      <div class="photo-tag">
+        <i class="fa-solid fa-location-dot"></i>
+        Obras BDR em execução
+      </div>
+
+      <div class="photo-badge">
+        <div class="photo-badge-item">
+          <b>Estoque</b>
+          <span>Materiais organizados e rastreáveis.</span>
+        </div>
+        <div class="photo-badge-item">
+          <b>Patrimônio</b>
+          <span>Controle por etiqueta e QR Code.</span>
+        </div>
+        <div class="photo-badge-item">
+          <b>Expedição</b>
+          <span>Solicitações, separação e entrega.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="qualidade" class="section">
+    <div class="container">
+      <div class="section-head">
+        <small>Compromisso</small>
+        <h2>Qualidade e Excelência</h2>
+        <p>
+          Na busca contínua por oferecer os melhores resultados aos clientes,
+          a BDR fortalece sua metodologia com qualidade, segurança, eficiência e melhoria contínua.
+        </p>
+      </div>
+
+      <div class="authority">
+        <div class="cert-card cert-big">
+          <div class="cert-seal">ISO<br>9001</div>
+          <h3>Certificações que geram confiança</h3>
+          <p>
+            Processos com foco em qualidade, padronização, segurança,
+            eficiência e compromisso com resultados consistentes.
+          </p>
+        </div>
+
+        <div class="quality-text">
+          <div class="quality-row">
+            <div class="quality-icon"><i class="fa-solid fa-award"></i></div>
+            <div>
+              <h4>ISO 9001</h4>
+              <p>
+                Certificação que comprova a implementação de um Sistema de Gestão da Qualidade,
+                com foco em atender e superar expectativas.
+              </p>
+            </div>
+          </div>
+
+          <div class="quality-row">
+            <div class="quality-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div>
+              <h4>PBQP-H</h4>
+              <p>
+                Certificação que reforça padrões de segurança, eficiência,
+                sustentabilidade e gestão estratégica nos projetos.
+              </p>
+            </div>
+          </div>
+
+          <div class="quality-row">
+            <div class="quality-icon"><i class="fa-solid fa-check-double"></i></div>
+            <div>
+              <h4>Política da Qualidade BDR</h4>
+              <p>
+                Construir com qualidade e pontualidade, promovendo melhoria contínua,
+                satisfação dos clientes e valorização da equipe.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="principios" class="section">
+    <div class="container">
+      <div class="section-head">
+        <small>Institucional</small>
+        <h2>Missão, Visão e Valores</h2>
+      </div>
+
+      <div class="principles">
+        <article class="principle">
+          <i class="fa-solid fa-bullseye"></i>
+          <h3>Missão</h3>
+          <p>
+            Base, Direção e Resultados: solidez nas parcerias, foco em objetivos comuns
+            e entregas que superam expectativas.
+          </p>
+        </article>
+
+        <article class="principle">
+          <i class="fa-solid fa-eye"></i>
+          <h3>Visão</h3>
+          <p>
+            Ser reconhecida pela eficiência nas relações empresariais, com responsabilidade,
+            sustentabilidade, saúde e segurança.
+          </p>
+        </article>
+
+        <article class="principle">
+          <i class="fa-solid fa-gem"></i>
+          <h3>Valores</h3>
+          <ul>
+            <li>Compromisso</li>
+            <li>Responsabilidade</li>
+            <li>Ética</li>
+            <li>Segurança</li>
+            <li>Conhecimento</li>
+            <li>Eficácia</li>
+            <li>Resultados</li>
+          </ul>
+        </article>
+
+        <article class="principle">
+          <i class="fa-solid fa-rocket"></i>
+          <h3>Inovação interna</h3>
+          <p>
+            O BDR ERP nasce para apoiar a operação, reduzir falhas,
+            melhorar processos e valorizar a cultura de gestão da empresa.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="segmentos" class="section">
+    <div class="container">
+      <div class="section-head">
+        <small>Know-how BDR</small>
+        <h2>Soluções estruturais e segmentos atendidos</h2>
+        <p>
+          A BDR atua com excelência em diferentes segmentos, unindo técnica,
+          funcionalidade, robustez e compromisso com cada cliente.
+        </p>
+      </div>
+
+      <div class="segments">
+        <article class="segment">
+          <img src="./assets/obra-bdr.jpg" alt="Agroindústria">
+          <div class="segment-content">
+            <h3>Agroindústria</h3>
+            <p>Projetos de grande porte com organização, controle e desempenho.</p>
+          </div>
+        </article>
+
+        <article class="segment">
+          <img src="./assets/obra-bdr.jpg" alt="Estruturas metálicas">
+          <div class="segment-content">
+            <h3>Metalúrgica</h3>
+            <p>Alta performance em estruturas metálicas e soluções personalizadas.</p>
+          </div>
+        </article>
+
+        <article class="segment">
+          <img src="./assets/obra-bdr.jpg" alt="Pré-moldados">
+          <div class="segment-content">
+            <h3>Pré-moldados</h3>
+            <p>Produção própria, precisão, qualidade e agilidade para obras complexas.</p>
+          </div>
+        </article>
+
+        <article class="segment">
+          <img src="./assets/obra-bdr.jpg" alt="Obras comerciais">
+          <div class="segment-content">
+            <h3>Obras comerciais</h3>
+            <p>Entrega com padrão, planejamento e compromisso com o resultado.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="parceiros" class="section">
+    <div class="container">
+      <div class="section-head">
+        <small>Principais parceiros</small>
+        <h2>Clientes que confiam na nossa metodologia</h2>
+      </div>
+
+      <div class="partners">
+        <div class="partner">Comfrio</div>
+        <div class="partner">Boa Safra</div>
+        <div class="partner">SLC Sementes</div>
+        <div class="partner">Petrovina</div>
+        <div class="partner">IHARA</div>
+        <div class="partner red">BRASBIO</div>
+        <div class="partner red">Juparanã</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="cta">
+        <div>
+          <h2>BDR ERP</h2>
+          <p>
+            Sistema interno para apoiar quem faz a operação acontecer:
+            controle, rastreabilidade, solicitações e patrimônio em um só lugar.
+          </p>
+        </div>
+
+        Acessar ambiente interno
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>BDR ERP © 2026 • Desenvolvido por Saulo Henrique & Samuel Vinicius</span>
+    <span>Rua Colômbia, Nº 1802 – Alvorada, Lucas do Rio Verde – MT</span>
+  </div>
+</footer>
+
+<div id="bdrUpdateBar">
+  <span>🚀 Nova versão disponível</span>
+  <button onclick="bdrAtualizarAgora()">Atualizar agora</button>
+</div>
+
+<script src="./JS/pwa-install.js"></script>
+<script src="./JS/pwa-update.js"></script>
+</body>
+</html>

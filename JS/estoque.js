@@ -649,3 +649,261 @@ document.addEventListener("keydown", function(e){
     if(notif) notif.classList.remove("ativo");
   }
 });
+
+
+/* =========================================================
+   BDR ESTOQUE - ENDEREÇAMENTO 3D + CENTRAL QR BDR
+   Este bloco fica fora do módulo principal para poder ser chamado
+   direto pelos botões do HTML.
+========================================================= */
+
+let bdrLayout3DTipo = "RETO";
+
+function bdrV(id){
+  return String(document.getElementById(id)?.value || "").trim();
+}
+function bdrN(id){
+  return Number(bdrV(id) || 0);
+}
+function bdrPad(num){
+  return String(num).padStart(2,"0");
+}
+function bdrCodigoEndereco(rua, face, prat, col, nivel, caixa){
+  let codigo = `${rua}-F${face}-P${bdrPad(prat)}-C${col}-N${nivel}`;
+  if(Number(caixa) > 1) codigo += `-CX${caixa}`;
+  return codigo.toUpperCase();
+}
+function abrirEnderecamento3D(){
+  document.getElementById("modalEnderecamento3D")?.classList.add("ativo");
+  setTimeout(() => montarPrateleira3D(), 60);
+}
+function fecharEnderecamento3D(){
+  document.getElementById("modalEnderecamento3D")?.classList.remove("ativo");
+}
+function abrirCentralEtiquetas(){
+  document.getElementById("modalCentralEtiquetas")?.classList.add("ativo");
+  gerarPreviewEtiquetas();
+}
+function fecharCentralEtiquetas(){
+  document.getElementById("modalCentralEtiquetas")?.classList.remove("ativo");
+}
+function setLayoutTipo(btn, tipo){
+  bdrLayout3DTipo = tipo;
+  document.querySelectorAll(".layout-type").forEach(b => b.classList.remove("active"));
+  btn?.classList.add("active");
+  montarPrateleira3D(true);
+}
+function bdrLerConfig3D(){
+  return {
+    rua:bdrV("rua3d").toUpperCase() || "R1",
+    faces:Math.max(1,bdrN("faces3d")),
+    prateleiras:Math.max(1,bdrN("prateleiras3d")),
+    colunas:Math.max(1,bdrN("colunas3d")),
+    niveis:Math.max(1,bdrN("niveis3d")),
+    caixas:Math.max(1,bdrN("caixas3d")),
+    tipoArea:bdrV("tipoArea3d") || "GERAL",
+    zoom:Number(bdrV("zoom3d") || .82)
+  };
+}
+function montarPrateleira3D(animado=false){
+  const cfg = bdrLerConfig3D();
+  document.documentElement.style.setProperty("--zoom-3d", cfg.zoom);
+  const scene = document.getElementById("scene3d");
+  if(!scene) return;
+
+  let html = `
+    <div class="street-title">
+      <div>
+        <strong>${cfg.rua}</strong>
+        <div style="font-size:12px;color:#6b7280;font-weight:800;">
+          ${cfg.faces} face(s) • ${cfg.prateleiras} prateleira(s) • ${cfg.colunas} coluna(s) • ${cfg.niveis} nível(is) • Layout ${bdrLayout3DTipo}
+        </div>
+      </div>
+      <button class="btn-orange" onclick="marcarExemplo3D()">Marcar exemplos</button>
+    </div>
+    <div class="rack-area">
+  `;
+
+  for(let f=1; f<=cfg.faces; f++){
+    html += `<div class="face-box"><h3><span>Face F${f}</span><small>${cfg.tipoArea}</small></h3><div class="rack">`;
+
+    for(let p=1; p<=cfg.prateleiras; p++){
+      html += `<div class="prateleira" style="animation-delay:${animado ? (p*.08) : 0}s"><div class="prat-title">P${bdrPad(p)}</div><div class="levels">`;
+
+      for(let nv=1; nv<=cfg.niveis; nv++){
+        html += `<div class="level-row" style="grid-template-columns:repeat(${cfg.colunas}, var(--slot-w));">`;
+
+        for(let c=1; c<=cfg.colunas; c++){
+          const codigo = bdrCodigoEndereco(cfg.rua, f, p, c, nv, 1);
+          const delay = animado ? ((f*.05)+(p*.08)+(nv*.04)+(c*.025)) : 0;
+          html += `<div class="slot" data-codigo="${codigo}" data-face="${f}" data-prateleira="${p}" data-coluna="${c}" data-nivel="${nv}" onclick="selecionarSlot3D(this)" style="animation-delay:${delay}s" title="${codigo}">C${c}/N${nv}</div>`;
+        }
+
+        html += `</div>`;
+      }
+
+      html += `</div></div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  html += `</div>`;
+  scene.innerHTML = html;
+  preencherTabela3D();
+}
+function animarMontagem3D(){
+  montarPrateleira3D(true);
+}
+function selecionarSlot3D(el){
+  document.querySelectorAll(".slot").forEach(s => s.classList.remove("selected"));
+  el.classList.add("selected");
+  const codigo = el.dataset.codigo;
+  document.getElementById("qrCodePreview").innerText = codigo;
+  document.getElementById("codigoSelecionado3d").innerHTML = `
+    <b>Código:</b> ${codigo}<br>
+    <b>QR sugerido:</b> END-${codigo}<br>
+    <b>Face:</b> F${el.dataset.face}<br>
+    <b>Prateleira:</b> P${bdrPad(el.dataset.prateleira)}<br>
+    <b>Coluna:</b> C${el.dataset.coluna}<br>
+    <b>Nível:</b> N${el.dataset.nivel}<br><br>
+    Esse endereço será bipado para guardar ou retirar produto.
+  `;
+}
+function marcarExemplo3D(){
+  const slots=[...document.querySelectorAll(".slot")];
+  slots.forEach(s=>s.classList.remove("busy","reserved","block"));
+  if(slots[1]) slots[1].classList.add("busy");
+  if(slots[4]) slots[4].classList.add("reserved");
+  if(slots[7]) slots[7].classList.add("block");
+  if(slots[11]) slots[11].classList.add("busy");
+}
+function gerarListaCodigos3D(){
+  const cfg = bdrLerConfig3D();
+  const lista = [];
+  for(let f=1; f<=cfg.faces; f++){
+    for(let p=1; p<=cfg.prateleiras; p++){
+      for(let c=1; c<=cfg.colunas; c++){
+        for(let nv=1; nv<=cfg.niveis; nv++){
+          for(let cx=1; cx<=cfg.caixas; cx++){
+            lista.push({
+              rua:cfg.rua,
+              face:`F${f}`,
+              prateleira:`P${bdrPad(p)}`,
+              coluna:`C${c}`,
+              nivel:`N${nv}`,
+              caixa:cfg.caixas > 1 ? `CX${cx}` : "",
+              tipo_area:cfg.tipoArea,
+              status:"LIVRE",
+              codigo_curto:bdrCodigoEndereco(cfg.rua,f,p,c,nv,cx)
+            });
+          }
+        }
+      }
+    }
+  }
+  return lista;
+}
+function preencherTabela3D(){
+  const listaTotal = gerarListaCodigos3D();
+  const lista = listaTotal.slice(0,18);
+  const el = document.getElementById("tabelaCodigos3d");
+  if(!el) return;
+  el.innerHTML = `
+    <div style="font-size:12px;color:#6b7280;margin-bottom:8px;font-weight:800;">
+      Total: ${listaTotal.length} endereço(s). Mostrando ${lista.length}.
+    </div>
+    <table class="table-codes">
+      <thead><tr><th>Código</th><th>Face</th><th>Prat.</th><th>Col.</th><th>Nível</th></tr></thead>
+      <tbody>
+      ${lista.map(x => `<tr><td><b>${x.codigo_curto}</b></td><td>${x.face}</td><td>${x.prateleira}</td><td>${x.coluna}</td><td>${x.nivel}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
+async function cadastrarEnderecos3D(){
+  const lista = gerarListaCodigos3D();
+  if(!confirm(`Cadastrar ${lista.length} endereço(s) no sistema?`)) return;
+
+  try{
+    const banco = window.client || window.supabaseClient || window.clientSupabase || globalThis.client;
+    if(!banco){
+      alert("Banco não carregado.");
+      return;
+    }
+
+    const payload = lista.map(x => ({
+      rua:x.rua,
+      prateleira:x.prateleira,
+      coluna:x.coluna,
+      nivel:x.nivel,
+      caixa:x.caixa,
+      tipo_area:x.tipo_area,
+      status:x.status,
+      face:x.face,
+      codigo_curto:x.codigo_curto
+    }));
+
+    const { error } = await banco.from("enderecamento_estoque").insert(payload);
+    if(error){
+      alert("Erro ao cadastrar: " + error.message);
+      return;
+    }
+
+    alert("Endereços cadastrados com sucesso!");
+  }catch(e){
+    alert("Erro inesperado ao cadastrar endereços.");
+    console.error(e);
+  }
+}
+function gerarPreviewEtiquetas(){
+  const box = document.getElementById("previewEtiquetas");
+  if(!box) return;
+
+  const tipo = bdrV("tipoEtiqueta") || "ENDERECO";
+  let lista = [];
+
+  if(tipo === "ENDERECO"){
+    lista = gerarListaCodigos3D().slice(0,12).map(x => ({
+      titulo:"ENDEREÇO",
+      codigo:x.codigo_curto,
+      sub:`${x.rua} • ${x.face} • ${x.prateleira}`
+    }));
+  }else if(tipo === "PRODUTO"){
+    lista = Array.from({length:8}).map((_,i)=>({
+      titulo:"PRODUTO",
+      codigo:`EST-${String(i+1).padStart(6,"0")}`,
+      sub:"Produto comum"
+    }));
+  }else if(tipo === "PATRIMONIO"){
+    lista = Array.from({length:8}).map((_,i)=>({
+      titulo:"PATRIMÔNIO",
+      codigo:`PAT-${String(i+1).padStart(6,"0")}`,
+      sub:"Bem rastreável"
+    }));
+  }else{
+    lista = Array.from({length:8}).map((_,i)=>({
+      titulo:"VOLUME",
+      codigo:`EXP-${String(i+1).padStart(6,"0")}`,
+      sub:"Pedido / volume"
+    }));
+  }
+
+  box.innerHTML = lista.map(x => `
+    <div class="etiqueta-preview">
+      <div class="mini-qr"></div>
+      <div>
+        <strong>${x.titulo}</strong><br>
+        <b>${x.codigo}</b><br>
+        <small>${x.sub}</small>
+      </div>
+    </div>
+  `).join("");
+}
+
+/* ESC fecha todos os modais novos */
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Escape") return;
+  document.getElementById("modalEnderecamento3D")?.classList.remove("ativo");
+  document.getElementById("modalCentralEtiquetas")?.classList.remove("ativo");
+});
