@@ -1,3 +1,6 @@
+/* =========================================================
+   ATUALIZADO: USUÁRIOS COM OFFLINE BDR
+========================================================= */
 console.log("✅ BDR USUÁRIOS PREMIUM V5 carregado - arquivo correto");
 /* =========================================================
    BDR ERP 9.0 - USUÁRIOS MASTER PREMIUM
@@ -783,13 +786,10 @@ async function salvarPermissoesSelecionado(mostrarMsg){
     updated_at: new Date().toISOString()
   };
 
-  const { error } = await db()
-    .from(TABELA_USUARIOS)
-    .update(payload)
-    .eq("id", usuarioSelecionado.id);
+  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id:usuarioSelecionado.id});
 
-  if(error){
-    alert("Erro ao salvar permissões: " + error.message);
+  if(resp.error){
+    alert("Erro ao salvar permissões: " + resp.error.message);
     return;
   }
 
@@ -882,16 +882,15 @@ async function salvarLiberacoesObras(){
     .map(c => c.value)
     .join(",");
 
-  const { error } = await db()
-    .from(TABELA_USUARIOS)
-    .update({
-      obras_liberadas: lista,
-      updated_at:new Date().toISOString()
-    })
-    .eq("id", usuarioSelecionado.id);
+  const payload = {
+    obras_liberadas: lista,
+    updated_at:new Date().toISOString()
+  };
 
-  if(error){
-    alert("Erro ao salvar obras liberadas: " + error.message);
+  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id:usuarioSelecionado.id});
+
+  if(resp.error){
+    alert("Erro ao salvar obras liberadas: " + resp.error.message);
     return;
   }
 
@@ -900,7 +899,7 @@ async function salvarLiberacoesObras(){
   const alvo = usuarios.find(u => Number(u.id) === Number(usuarioSelecionado.id));
   if(alvo) alvo.obras_liberadas = lista;
 
-  alert("Obras/setores liberados com sucesso!");
+  alert(typeof estaOnline === "function" && !estaOnline() ? "📦 Obras liberadas salvas offline." : "Obras/setores liberados com sucesso!");
 }
 window.salvarLiberacoesObras = salvarLiberacoesObras;
 
@@ -974,12 +973,7 @@ async function salvarUsuario(){
   let resp;
 
   if(id){
-    resp = await banco
-      .from(TABELA_USUARIOS)
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id});
   }else{
     if(!senha){
       alert("Informe uma senha para novo usuário.");
@@ -987,12 +981,7 @@ async function salvarUsuario(){
     }
 
     payload.permissoes = (PERFIS[normalizar(perfil)] || []).join(",");
-
-    resp = await banco
-      .from(TABELA_USUARIOS)
-      .insert([payload])
-      .select()
-      .single();
+    resp = await bdrSalvarInsert(TABELA_USUARIOS, [payload]);
   }
 
   if(resp.error){
@@ -1001,8 +990,19 @@ async function salvarUsuario(){
   }
 
   fecharModalUsuario();
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    alert("📦 Usuário salvo offline. Será sincronizado quando a internet voltar.");
+    return;
+  }
+
   await carregarTudo();
-  selecionarUsuario(resp.data.id);
+
+  if(resp.data?.id){
+    selecionarUsuario(resp.data.id);
+  }else if(Array.isArray(resp.data) && resp.data[0]?.id){
+    selecionarUsuario(resp.data[0].id);
+  }
 
   alert("Usuário salvo com sucesso!");
 }
@@ -1020,16 +1020,20 @@ async function alternarStatus(id){
 
   const novo = !(u.ativo !== false);
 
-  const { error } = await db()
-    .from(TABELA_USUARIOS)
-    .update({
-      ativo: novo,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id);
+  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, {
+    ativo: novo,
+    updated_at: new Date().toISOString()
+  }, {id});
 
-  if(error){
-    alert("Erro: " + error.message);
+  if(resp.error){
+    alert("Erro: " + resp.error.message);
+    return;
+  }
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    u.ativo = novo;
+    renderizarUsuarios();
+    alert("📦 Status salvo offline.");
     return;
   }
 

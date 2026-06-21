@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<!-- =========================================================
+     BDR MARCAÇÃO OFFLINE
+     Esta página está preparada para usar JS/offlineQueue.js.
+     Próximo passo: ligar os botões que salvam dados no helper offline.
+========================================================= -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
@@ -13,7 +18,7 @@
 <script src="./JS/auth.js"></script>
 <script src="./JS/bdrSessaoRealtime.js"></script>
 <script src="./JS/bdrCore.js"></script>
-<script defer src="./JS/expedicao.js"></script>
+
 <style>
 /* =========================================================
    BDR EXPEDIÇÃO - MARKETPLACE INTERNO
@@ -895,6 +900,15 @@
 </script>
 <script defer src="./JS/pwa-update.js"></script>
 
+<!-- =========================================================
+     BDR OFFLINE QUEUE
+     Referência:
+     - Este arquivo cria a fila offline.
+     - Ele deve ficar depois de supabaseClient/auth/bdrCore.
+     - Depois vamos ligar cada salvar/update/delete usando bdrSalvarInsert/bdrSalvarUpdate.
+========================================================= -->
 <script src="./JS/bdrSininhoDashboard.js"></script>
+<script src="./JS/offlineQueue.js"></script>
+<script defer src="./JS/expedicao.js"></script>
 </body>
 </html>

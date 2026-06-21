@@ -1,4 +1,7 @@
 /* =========================================================
+   ATUALIZADO: ESTOQUE COM OFFLINE BDR
+========================================================= */
+/* =========================================================
    BDR ERP - ESTOQUE PROFISSIONAL V6
    MARCAÇÃO GERAL:
    - Estoque agora mostra TUDO que existe no controle físico:
@@ -844,13 +847,13 @@ async function cadastrarEnderecos3D(){
       codigo_curto:x.codigo_curto
     }));
 
-    const { error } = await banco.from("enderecamento_estoque").insert(payload);
+    const { error } = await bdrSalvarInsert("enderecamento_estoque", payload);
     if(error){
       alert("Erro ao cadastrar: " + error.message);
       return;
     }
 
-    alert("Endereços cadastrados com sucesso!");
+    alert(estaOnline && !estaOnline() ? "📦 Endereços salvos offline. Serão sincronizados quando a internet voltar." : "Endereços cadastrados com sucesso!");
   }catch(e){
     alert("Erro inesperado ao cadastrar endereços.");
     console.error(e);

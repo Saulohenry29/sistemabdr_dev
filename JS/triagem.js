@@ -1,8 +1,16 @@
+/* =========================================================
+   ATUALIZADO: TRIAGEM COM OFFLINE BDR
+========================================================= */
 let entradas = [];
 let itens = [];
 let obras = [];
 let enderecos = [];
 let visaoAtual = "CALENDARIO";
+
+/* =========================================================
+   OFFLINE BDR - Triagem
+   Confirmação de item pode ser salva no aparelho sem internet.
+========================================================= */
 
 // Mantém NF/dia aberto mesmo depois de confirmar item ou recarregar a triagem.
 const nfsAbertas = new Set();
@@ -31,7 +39,140 @@ function ir(pagina){ window.location.href = pagina; }
 function db(){
   return window.client || window.supabaseClient || window.clientSupabase || globalThis.client;
 }
+
+function bdrOfflineReal(){
+  return navigator.onLine === false || (typeof estaOnline === "function" && !estaOnline());
+}
+
+function bdrErroDeInternet(err){
+  const msg = String(err?.message || err || "").toLowerCase();
+  return msg.includes("failed to fetch") ||
+         msg.includes("internet_disconnected") ||
+         msg.includes("networkerror") ||
+         msg.includes("err_internet") ||
+         msg.includes("err_name_not_resolved");
+}
 function usuarioAtual(){ const u = localStorage.getItem("usuario_logado"); return u ? JSON.parse(u) : null; }
+
+/* =========================================================
+   CACHE LOCAL DA TRIAGEM
+   Funciona como memória no navegador/celular.
+========================================================= */
+const BDR_TRIAGEM_CACHE_KEY = "bdr_triagem_cache_v1";
+
+function salvarCacheTriagemLocal(){
+  try{
+    localStorage.setItem(BDR_TRIAGEM_CACHE_KEY, JSON.stringify({
+      entradas,
+      itens,
+      obras,
+      enderecos,
+      salvo_em:new Date().toISOString()
+    }));
+  }catch(e){
+    console.warn("Não foi possível salvar cache da triagem:", e);
+  }
+}
+
+function carregarCacheTriagemLocal(){
+  try{
+    const raw = localStorage.getItem(BDR_TRIAGEM_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+/* =========================================================
+   STATUS VISUAL OFFLINE DA TRIAGEM
+   Mostra no botão/card quando um item foi salvo na fila.
+========================================================= */
+const BDR_TRIAGEM_STATUS_KEY = "bdr_triagem_status_offline_v1";
+
+function carregarStatusTriagemOffline(){
+  try{
+    return JSON.parse(localStorage.getItem(BDR_TRIAGEM_STATUS_KEY) || "{}");
+  }catch(e){
+    return {};
+  }
+}
+
+function salvarStatusTriagemOffline(obj){
+  try{
+    localStorage.setItem(BDR_TRIAGEM_STATUS_KEY, JSON.stringify(obj || {}));
+  }catch(e){}
+}
+
+function marcarItemTriagemPendente(itemId, info={}){
+  const status = carregarStatusTriagemOffline();
+  status[String(itemId)] = {
+    status:"PENDENTE",
+    texto:"⏳ Salvo offline • aguardando internet",
+    data:new Date().toISOString(),
+    ...info
+  };
+  salvarStatusTriagemOffline(status);
+  aplicarStatusTriagemNaTela(itemId);
+}
+
+function limparItemTriagemPendente(itemId){
+  const status = carregarStatusTriagemOffline();
+  delete status[String(itemId)];
+  salvarStatusTriagemOffline(status);
+}
+
+function aplicarStatusTriagemNaTela(itemId){
+  const status = carregarStatusTriagemOffline();
+  const info = status[String(itemId)];
+  if(!info) return;
+
+  const btn = document.querySelector(`button[data-confirmar-triagem="${itemId}"]`)
+    || document.querySelector(`button[onclick="confirmarItem(${itemId})"]`);
+
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = info.texto || "⏳ Pendente";
+    btn.style.background = "#f59e0b";
+    btn.style.cursor = "not-allowed";
+    btn.title = "Este item já foi salvo no aparelho e está aguardando sincronização.";
+  }
+
+  const itemBox = btn?.closest(".item");
+  if(itemBox && !itemBox.querySelector(".bdr-sync-status-item")){
+    const aviso = document.createElement("div");
+    aviso.className = "bdr-sync-status-item";
+    aviso.style.cssText = `
+      margin-top:8px;
+      padding:9px 10px;
+      border-radius:10px;
+      background:#fffbeb;
+      border-left:4px solid #f59e0b;
+      color:#92400e;
+      font-size:12px;
+      font-weight:900;
+    `;
+    aviso.innerHTML = "⏳ Este item foi salvo offline e está aguardando a internet voltar. Não precisa clicar novamente.";
+    itemBox.appendChild(aviso);
+  }
+}
+
+function aplicarTodosStatusTriagemOffline(){
+  const status = carregarStatusTriagemOffline();
+  Object.keys(status).forEach(id => aplicarStatusTriagemNaTela(id));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(aplicarTodosStatusTriagemOffline, 700);
+});
+
+window.addEventListener("bdrOfflineSincronizado", (e) => {
+  const item = e.detail;
+  if(item?.tipo === "triagem_confirmar_item"){
+    const itemId = item?.dados?.item?.id;
+    if(itemId) limparItemTriagemPendente(itemId);
+  }
+});
+
 function valor(id){ const el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; }
 function moeda(v){ return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 
@@ -59,6 +200,27 @@ async function carregarTriagem(){
 
   if(!banco){
     alert("Supabase não foi carregado. Confira o arquivo ./JS/supabaseClient.js");
+    return;
+  }
+
+  /* =========================================================
+     BDR OFFLINE LEITURA
+     Se abrir sem internet, tenta usar o último cache salvo.
+  ========================================================= */
+  if(typeof estaOnline === "function" && !estaOnline()){
+    const cache = carregarCacheTriagemLocal();
+    if(cache){
+      entradas = cache.entradas || [];
+      itens = cache.itens || [];
+      obras = cache.obras || [];
+      enderecos = cache.enderecos || [];
+      carregarFiltroMes();
+      renderizarTudo();
+      console.log("📦 Triagem carregada do cache local.");
+      return;
+    }
+
+    alert("Sem internet e sem cache local da triagem. Abra uma vez com internet para salvar os dados no aparelho.");
     return;
   }
 
@@ -96,23 +258,45 @@ async function carregarTriagem(){
   obras = obrasResp.data || [];
   enderecos = endResp.data || [];
 
+  salvarCacheTriagemLocal();
+
   carregarFiltroMes();
   renderizarTudo();
 }
 
 async function recarregarEnderecosLivres(){
-  const { data, error } = await db()
-    .from("enderecamento_estoque")
-    .select("*")
-    .eq("status","LIVRE")
-    .order("codigo_curto");
-
-  if(error){
-    alert(error.message);
+  /* =========================================================
+     BDR OFFLINE ROBUSTO
+     Se a internet caiu, não tenta buscar endereços no Supabase.
+     Se o navegador ainda achar que está online mas o fetch falhar,
+     também não trava o fluxo.
+  ========================================================= */
+  if(bdrOfflineReal()){
+    console.log("📴 Triagem offline: usando endereços já carregados na tela.");
     return;
   }
 
-  enderecos = data || [];
+  try{
+    const { data, error } = await db()
+      .from("enderecamento_estoque")
+      .select("*")
+      .eq("status","LIVRE")
+      .order("codigo_curto");
+
+    if(error){
+      console.warn("Triagem: erro ao recarregar endereços:", error.message);
+      return;
+    }
+
+    enderecos = data || [];
+  }catch(e){
+    if(bdrErroDeInternet(e)){
+      console.log("📴 Triagem sem rede: mantendo endereços já carregados.");
+      return;
+    }
+
+    throw e;
+  }
 }
 
 function carregarFiltroMes(){
@@ -161,6 +345,8 @@ function renderizarTudo(){
   }else{
     renderizarNFs(entradasFiltradas());
   }
+
+  setTimeout(aplicarTodosStatusTriagemOffline, 80);
 }
 
 function atualizarResumo(){
@@ -456,6 +642,11 @@ function valorUnitarioEstimado(item){
 }
 
 async function buscarAprendizadoTriagem(item){
+  /* OFFLINE: não consulta aprendizado no Supabase */
+  if(typeof estaOnline === "function" && !estaOnline()){
+    return null;
+  }
+
   const descricao = textoItemTriagem(item);
   const chave = palavraChaveTriagem(item);
 
@@ -483,6 +674,11 @@ async function buscarAprendizadoTriagem(item){
 }
 
 async function salvarAprendizadoTriagem(item, destino){
+  /* OFFLINE: não salva aprendizado agora. A ação principal vai para a fila. */
+  if(typeof estaOnline === "function" && !estaOnline()){
+    return;
+  }
+
   const descricaoBase = textoItemTriagem(item);
   const palavra = palavraChaveTriagem(item);
 
@@ -907,14 +1103,25 @@ window.confirmarModalPatrimonioTriagem = confirmarModalPatrimonioTriagem;
 
 async function buscarPatrimonioExistente(codigo){
   if(!codigo) return null;
-  const { data, error } = await db()
-    .from("patrimonio")
-    .select("*")
-    .eq("codigo_qr", codigo)
-    .maybeSingle();
 
-  if(error) throw error;
-  return data || null;
+  if(bdrOfflineReal()){
+    console.log("📴 Offline: não foi possível validar patrimônio existente agora.");
+    return null;
+  }
+
+  try{
+    const { data, error } = await db()
+      .from("patrimonio")
+      .select("*")
+      .eq("codigo_qr", codigo)
+      .maybeSingle();
+
+    if(error) throw error;
+    return data || null;
+  }catch(e){
+    if(bdrErroDeInternet(e)) return null;
+    throw e;
+  }
 }
 
 async function gerarCodigoPatrimonioTriagem(obra){
@@ -1105,7 +1312,7 @@ function montarItensHTML(listaItens){
 
         <div class="linha-acoes">
           <button class="btn btn-blue" onclick="atualizarEnderecoItem(${i.id})">🔄 Recalcular endereço</button>
-          <button class="btn btn-ok" onclick="confirmarItem(${i.id})">✅ Confirmar triagem</button>
+          <button class="btn btn-ok" data-confirmar-triagem="${i.id}" onclick="confirmarItem(${i.id})">✅ Confirmar triagem</button>
         </div>
       </div>
     `;
@@ -1141,7 +1348,11 @@ async function aplicarAnaliseInteligenteItem(itemId){
 }
 
 async function atualizarEnderecoItem(itemId){
-  await recarregarEnderecosLivres();
+  try{
+    await recarregarEnderecosLivres();
+  }catch(e){
+    if(!bdrErroDeInternet(e)) throw e;
+  }
 
   const item = itens.find(i => Number(i.id) === Number(itemId));
   if(!item) return;
@@ -1163,15 +1374,25 @@ async function atualizarEnderecoItem(itemId){
 
   const endereco = sugerirEndereco(destino, item);
 
-  document.getElementById("enderecoTexto-" + itemId).innerText =
-    endereco ? endereco.codigo_curto : "SEM ENDEREÇO LIVRE";
+  const enderecoTexto = document.getElementById("enderecoTexto-" + itemId);
+  const enderecoInput = document.getElementById("enderecoId-" + itemId);
 
-  document.getElementById("enderecoId-" + itemId).value =
-    endereco ? endereco.id : "";
+  if(enderecoTexto){
+    enderecoTexto.innerText = endereco ? endereco.codigo_curto : "SEM ENDEREÇO LIVRE";
+  }
+
+  if(enderecoInput){
+    enderecoInput.value = endereco ? endereco.id : "";
+  }
 }
 
 async function confirmarItem(itemId){
-  await recarregarEnderecosLivres();
+  try{
+    await recarregarEnderecosLivres();
+  }catch(e){
+    if(!bdrErroDeInternet(e)) throw e;
+    console.log("📴 Triagem: prosseguindo com cache local de endereços.");
+  }
 
   const item = itens.find(i => Number(i.id) === Number(itemId));
 
@@ -1226,6 +1447,39 @@ async function confirmarItem(itemId){
   }
 
   const endereco = enderecos.find(e => String(e.id) === String(enderecoId)) || null;
+
+  /* =========================================================
+     OFFLINE: salva confirmação completa da triagem
+     A sincronização simplificada acontece no offlineQueue.js.
+  ========================================================= */
+  if(typeof estaOnline === "function" && !estaOnline()){
+    console.log("📦 Triagem: salvando confirmação offline...");
+    await salvarOffline("triagem_confirmar_item", "triagem_materiais", {
+      item,
+      destino,
+      obraDestino,
+      endereco,
+      obs,
+      usuario:usuarioAtual()?.nome || "Usuário não identificado",
+      empresa_id:(obraDestino ? (obraPorId(obraDestino)?.empresa_id || null) : null),
+      obraNome:(obraDestino ? (obraPorId(obraDestino)?.nome || null) : null),
+      criado_offline_em:new Date().toISOString()
+    });
+
+    alert("📦 Sem internet. Triagem salva no aparelho e será sincronizada quando a internet voltar.");
+
+    nfsAbertas.add(String(item.entrada_id || ""));
+
+    // Não remove da tela agora: mostra status pendente no botão/card,
+    // igual app de mensagem aguardando rede.
+    marcarItemTriagemPendente(item.id, {
+      destino,
+      descricao:item.descricao_xml || item.descricao || "Item"
+    });
+    aplicarStatusTriagemNaTela(item.id);
+
+    return;
+  }
 
   try{
     if(destino === "ESTOQUE" || destino === "OBRA" || destino === "PATRIMONIO"){

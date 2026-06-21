@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<!-- =========================================================
+     BDR MARCAÇÃO OFFLINE
+     Esta página está preparada para usar JS/offlineQueue.js.
+     Próximo passo: ligar os botões que salvam dados no helper offline.
+========================================================= -->
 <meta charset="UTF-8">
 <title>BDR ERP - Triagem</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,9 +18,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/auth.js"></script>
-<script src="./JS/bdrSessaoRealtime.js"></script>
 <script src="./JS/bdrCore.js"></script>
-<script defer src="./JS/triagem.js"></script>
 
 <style>
 :root{
@@ -381,6 +384,11 @@ function statusPedidoTexto(status){
   return mapa[status] || status || "-";
 }
 async function gerarNotificacoesReais(){
+  // Desativado para não encher o sininho com vários pedidos automaticamente.
+  // O sininho principal fica com JS/bdrSininhoDashboard.js.
+  atualizarNotificacoes([]);
+  return;
+
   const banco = db();
   if(!banco){ atualizarNotificacoes([]); return; }
   const lista = [];
@@ -426,6 +434,9 @@ async function gerarNotificacoesReais(){
   }
 }
 function iniciarRealtimeNotificacoes(){
+  // Desativado nesta tela para evitar erro de WebSocket quando ficar offline.
+  return;
+
   const banco = db();
   if(!banco || typeof banco.channel !== "function") return;
   try{
@@ -437,12 +448,30 @@ function iniciarRealtimeNotificacoes(){
 }
 document.addEventListener("DOMContentLoaded", () => {
   carregarUsuarioTopo();
-  gerarNotificacoesReais();
-  iniciarRealtimeNotificacoes();
+
+  // Sininho simples:
+  // Não gera lista automática de pedidos aqui.
+  // Deixa o JS/bdrSininhoDashboard.js cuidar do sininho como antes.
+  if(typeof atualizarNotificacoes === "function"){
+    atualizarNotificacoes([]);
+  }
 });
 </script>
 
 <!-- Notificações já estão neste HTML. Evita conflito/consulta duplicada. -->
 <script src="./JS/bdrSininhoDashboard.js"></script>
+<!-- =========================================================
+     BDR OFFLINE QUEUE
+     Referência:
+     - Este arquivo cria a fila offline.
+     - Ele deve ficar depois de supabaseClient/auth/bdrCore.
+     - Depois vamos ligar cada salvar/update/delete usando bdrSalvarInsert/bdrSalvarUpdate.
+========================================================= -->
+<!-- =========================================================
+     BDR OFFLINE QUEUE
+     Modo memória local estilo WhatsApp: salva no aparelho e sincroniza depois.
+========================================================= -->
+<script src="./JS/offlineQueue.js"></script>
+<script defer src="./JS/triagem.js"></script>
 </body>
 </html>

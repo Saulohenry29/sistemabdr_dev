@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<!-- =========================================================
+     BDR MARCAÇÃO OFFLINE
+     Esta página está preparada para usar JS/offlineQueue.js.
+     Próximo passo: ligar os botões que salvam dados no helper offline.
+========================================================= -->
 <meta charset="UTF-8">
 <link rel="icon" href="data:,">
 <title>BDR Patrimônio</title>
@@ -43,6 +48,56 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 .bdr-top-actions,.bdr-top-actions *,.notif-wrap,.notif-wrap *,.notif-btn,.notif-btn *{outline:none!important;box-shadow:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important}
 .notif-btn i,.notif-badge{pointer-events:none}
 @media(max-width:900px){.bdr-top-actions{width:100%;justify-content:space-between;flex-wrap:wrap}.notif-dropdown{right:-80px;width:300px}.obra-ativa{white-space:normal}}
+
+/* =========================================================
+   BDR FIX PATRIMÔNIO - COLUNAS SEM SOBREPOR
+========================================================= */
+.lista-header,
+.linha-patrimonio{
+  display:grid;
+  grid-template-columns:170px minmax(230px,1.4fr) minmax(190px,1fr) 150px 140px 130px;
+  gap:12px;
+  align-items:center;
+}
+.pat-codigo{
+  font-weight:900;
+  color:#991b1b;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:170px;
+  display:block;
+}
+.pat-nome{
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  padding-left:8px;
+  display:block;
+}
+.pat-local,.pat-tipo,.pat-valor,.pat-status{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.bdr-pendente-offline{
+  display:inline-flex;
+  margin-left:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#fffbeb;
+  color:#92400e;
+  border:1px solid #f59e0b;
+  font-size:10px;
+  font-weight:900;
+}
+@media(max-width:900px){
+  .lista-header{display:none}
+  .linha-patrimonio{grid-template-columns:1fr;gap:5px}
+  .pat-codigo,.pat-nome,.pat-local,.pat-tipo,.pat-valor,.pat-status{max-width:100%}
+}
+
 </style>
 
 </head>
@@ -366,6 +421,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
+<script src="./JS/offlineQueue.js"></script>
+<script src="./JS/bdrLocalCache.js"></script>
 <script>
 let obras = [];
 let patrimonios = [];
@@ -378,7 +435,34 @@ function ir(pagina){
 }
 
 function db(){
-  return window.client || window.supabaseClient;
+  return window.client || window.supabaseClient || null;
+}
+
+function patrimonioOffline(){
+  return navigator.onLine === false || (typeof estaOnline === "function" && !estaOnline()) || !db();
+}
+
+function patrimonioErroInternet(err){
+  const msg = String(err?.message || err || "").toLowerCase();
+  return msg.includes("failed to fetch") ||
+         msg.includes("internet_disconnected") ||
+         msg.includes("networkerror") ||
+         msg.includes("err_internet") ||
+         msg.includes("err_name_not_resolved");
+}
+
+async function salvarOperacaoPatrimonioOffline(tipo, tabela, dados, opcoes={}){
+  if(typeof salvarOffline !== "function"){
+    alert("offlineQueue.js não carregou. Não foi possível salvar offline.");
+    return false;
+  }
+
+  await salvarOffline(tipo, tabela, dados, {
+    origem:"patrimonio.html",
+    ...opcoes
+  });
+
+  return true;
 }
 
 function usuarioAtual(){
@@ -927,8 +1011,8 @@ function renderizarPatrimonios(){
     lista.innerHTML += `
       <div class="linha-patrimonio" onclick="abrirModal(${p.id})">
 
-        <div class="pat-codigo">
-          ${p.codigo_qr || "-"}
+        <div class="pat-codigo" title="${p.codigo_qr || "-"}">
+          ${p.codigo_qr || "-"} ${p.__offline_pendente ? '<span class="bdr-pendente-offline">OFFLINE</span>' : ''}
         </div>
 
         <div class="pat-nome" title="${p.nome_bem || "-"}">
@@ -1092,6 +1176,43 @@ async function alterarStatus(novoStatus){
 
   const statusAnterior = patrimonioSelecionado.status || null;
 
+  /* =========================================================
+     OFFLINE: não tenta PATCH no Supabase.
+     Salva alteração e movimentação na fila.
+  ========================================================= */
+  if(patrimonioOffline()){
+    await salvarOperacaoPatrimonioOffline("update", "patrimonio", {
+      status: novoStatus
+    }, {
+      filtro:{ id: patrimonioSelecionado.id }
+    });
+
+    await salvarOperacaoPatrimonioOffline("insert", "movimentacoes", [{
+      patrimonio_id: patrimonioSelecionado.id,
+      empresa_id: patrimonioSelecionado.empresa_id,
+      obra_origem_id: patrimonioSelecionado.obra_id,
+      obra_destino_id: patrimonioSelecionado.obra_id,
+      tipo: "ALTERACAO_STATUS",
+      status_anterior: statusAnterior,
+      status_novo: novoStatus,
+      observacao: obs,
+      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      data_movimentacao: new Date().toISOString()
+    }]);
+
+    patrimonios = patrimonios.map(p =>
+      Number(p.id) === Number(patrimonioSelecionado.id)
+        ? {...p, status:novoStatus, __offline_pendente:true}
+        : p
+    );
+
+    alert("📦 Sem internet. Alteração de status salva no aparelho e será sincronizada quando a internet voltar.");
+
+    fecharModal();
+    renderizarPatrimonios();
+    return;
+  }
+
   const { error } = await db()
     .from("patrimonio")
     .update({ status: novoStatus })
@@ -1153,14 +1274,50 @@ async function trocarObra(){
   const statusAnterior = patrimonioSelecionado.status || null;
   const obraOrigemId = patrimonioSelecionado.obra_id || null;
 
+  const payload = {
+    obra_id: novaObra.id,
+    empresa_id: novaObra.empresa_id,
+    localizacao: novaObra.nome,
+    status: "EM_USO"
+  };
+
+  /* =========================================================
+     OFFLINE: salva troca de obra/setor na fila.
+  ========================================================= */
+  if(patrimonioOffline()){
+    await salvarOperacaoPatrimonioOffline("update", "patrimonio", payload, {
+      filtro:{ id: patrimonioSelecionado.id }
+    });
+
+    await salvarOperacaoPatrimonioOffline("insert", "movimentacoes", [{
+      patrimonio_id: patrimonioSelecionado.id,
+      empresa_id: novaObra.empresa_id,
+      obra_origem_id: obraOrigemId,
+      obra_destino_id: novaObra.id,
+      tipo: "TROCA_SETOR",
+      status_anterior: statusAnterior,
+      status_novo: "EM_USO",
+      observacao: obs,
+      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      data_movimentacao: new Date().toISOString()
+    }]);
+
+    patrimonios = patrimonios.map(p =>
+      Number(p.id) === Number(patrimonioSelecionado.id)
+        ? {...p, ...payload, __offline_pendente:true}
+        : p
+    );
+
+    alert("📦 Sem internet. Troca de setor salva no aparelho e será sincronizada quando a internet voltar.");
+
+    fecharModal();
+    renderizarPatrimonios();
+    return;
+  }
+
   const { error } = await db()
     .from("patrimonio")
-    .update({
-      obra_id: novaObra.id,
-      empresa_id: novaObra.empresa_id,
-      localizacao: novaObra.nome,
-      status: "EM_USO"
-    })
+    .update(payload)
     .eq("id", patrimonioSelecionado.id);
 
   if(error){
@@ -1264,6 +1421,41 @@ async function salvarEdicaoPatrimonio(){
     observacao: valor("edit_observacao")
   };
 
+  /* =========================================================
+     OFFLINE: salva correção cadastral na fila.
+  ========================================================= */
+  if(patrimonioOffline()){
+    await salvarOperacaoPatrimonioOffline("update", "patrimonio", dadosAtualizados, {
+      filtro:{ id: patrimonioSelecionado.id }
+    });
+
+    await salvarOperacaoPatrimonioOffline("insert", "movimentacoes", [{
+      patrimonio_id: patrimonioSelecionado.id,
+      empresa_id: patrimonioSelecionado.empresa_id,
+      obra_origem_id: patrimonioSelecionado.obra_id,
+      obra_destino_id: patrimonioSelecionado.obra_id,
+      tipo: "CORRECAO_CADASTRAL",
+      status_anterior: patrimonioSelecionado.status,
+      status_novo: patrimonioSelecionado.status,
+      observacao: motivo,
+      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      data_movimentacao: new Date().toISOString()
+    }]);
+
+    patrimonios = patrimonios.map(p =>
+      Number(p.id) === Number(patrimonioSelecionado.id)
+        ? {...p, ...dadosAtualizados, __offline_pendente:true}
+        : p
+    );
+
+    alert("📦 Sem internet. Correção salva no aparelho e será sincronizada quando a internet voltar.");
+
+    fecharEdicao();
+    fecharModal();
+    renderizarPatrimonios();
+    return;
+  }
+
   const { error } = await db()
     .from("patrimonio")
     .update(dadosAtualizados)
@@ -1295,7 +1487,7 @@ async function salvarEdicaoPatrimonio(){
 async function iniciar(){
 
   carregarUsuarioTopo();
-  gerarNotificacoesPadrao();
+  if(!patrimonioOffline()) gerarNotificacoesPadrao();
 
   if(!db()){
     alert("Supabase não carregado.");
@@ -1325,7 +1517,9 @@ async function iniciar(){
   await carregarPatrimonios();
 }
 
-setInterval(gerarNotificacoesPadrao, 30000);
+setInterval(() => {
+  if(!patrimonioOffline()) gerarNotificacoesPadrao();
+}, 30000);
 iniciar();
 </script>
 

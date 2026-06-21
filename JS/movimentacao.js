@@ -1,4 +1,31 @@
+/* =========================================================
+   BDR ERP - MOVIMENTAÇÃO SIMPLES DE PATRIMÔNIO
+   Arquivo: JS/movimentacao.js
+   Atualizado com offline.
+========================================================= */
+
 async function moverPatrimonio(id, novoStatus, novaLocal) {
+
+  const usuario = (() => {
+    try{
+      return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");
+    }catch(e){ return null; }
+  })();
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("mover_patrimonio", "patrimonio", {
+      codigo_qr:id,
+      novoStatus,
+      novaLocal,
+      empresa_id:null,
+      responsavel:usuario?.nome || "SISTEMA",
+      observacao:"movimentação registrada offline",
+      criado_offline_em:new Date().toISOString()
+    });
+
+    alert("📦 Sem internet. Movimentação salva no aparelho e será sincronizada quando a internet voltar.");
+    return;
+  }
 
   const { data: atual, error } = await client
     .from("patrimonio")
@@ -11,17 +38,15 @@ async function moverPatrimonio(id, novoStatus, novaLocal) {
     return;
   }
 
-  // grava histórico
   await client.from("movimentacoes").insert([{
     patrimonio_id: atual.id,
     status_anterior: atual.status,
     status_novo: novoStatus,
     local_anterior: atual.localizacao,
     local_novo: novaLocal,
-    responsavel: "SISTEMA"
+    responsavel: usuario?.nome || "SISTEMA"
   }]);
 
-  // atualiza patrimônio atual
   await client
     .from("patrimonio")
     .update({
@@ -32,6 +57,7 @@ async function moverPatrimonio(id, novoStatus, novaLocal) {
 
   alert("Movimentação registrada com sucesso!");
 }
+
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape"){
     document.querySelectorAll(".modal-bg.ativo, .modal.ativo").forEach(m=>{

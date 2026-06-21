@@ -1,4 +1,7 @@
 /* =========================================================
+   ATUALIZADO: EXPEDIÇÃO COM OFFLINE BDR
+========================================================= */
+/* =========================================================
    BDR ERP - EXPEDIÇÃO MARKETPLACE INTERNO
    Catálogo compacto + carrinho + aprovação + reserva + retirada
 ========================================================= */
@@ -9,8 +12,80 @@ let obras = [];
 let filtroAtual = "TODOS";
 let pedidoRetiradaAtual = null;
 
+/* =========================================================
+   OFFLINE BDR - Expedição
+   A tela cria solicitações e muda status mesmo sem internet.
+========================================================= */
+
 function ir(p){ window.location.href = p; }
 function db(){ return window.client || window.supabaseClient || window.clientSupabase || globalThis.client; }
+
+function bdrExpOfflineReal(){
+  return navigator.onLine === false || (typeof estaOnline === "function" && !estaOnline());
+}
+
+function bdrExpErroInternet(err){
+  const msg = String(err?.message || err || "").toLowerCase();
+  return msg.includes("failed to fetch") ||
+         msg.includes("internet_disconnected") ||
+         msg.includes("networkerror") ||
+         msg.includes("err_internet") ||
+         msg.includes("err_name_not_resolved");
+}
+
+const BDR_EXP_CACHE_KEY = "bdr_expedicao_cache_v1";
+const BDR_EXP_STATUS_KEY = "bdr_expedicao_status_offline_v1";
+
+function salvarCacheExpedicao(){
+  try{
+    localStorage.setItem(BDR_EXP_CACHE_KEY, JSON.stringify({
+      itensCatalogo, pedidos, obras, salvo_em:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function carregarCacheExpedicao(){
+  try{
+    const raw = localStorage.getItem(BDR_EXP_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function statusExpOffline(){
+  try{ return JSON.parse(localStorage.getItem(BDR_EXP_STATUS_KEY) || "{}"); }
+  catch(e){ return {}; }
+}
+
+function salvarStatusExpOffline(obj){
+  try{ localStorage.setItem(BDR_EXP_STATUS_KEY, JSON.stringify(obj || {})); }catch(e){}
+}
+
+function marcarExpPendente(chave, texto){
+  const s = statusExpOffline();
+  s[chave] = {texto:texto || "⏳ Salvo offline • aguardando internet", data:new Date().toISOString()};
+  salvarStatusExpOffline(s);
+  aplicarStatusExpTela();
+}
+
+function aplicarStatusExpTela(){
+  const btn = document.querySelector(".btn-submit");
+  const s = statusExpOffline();
+  const total = Object.keys(s).length;
+
+  if(btn && total > 0){
+    btn.innerHTML = "⏳ Solicitação salva offline";
+    btn.style.background = "#f59e0b";
+    btn.title = "Existe solicitação aguardando sincronização.";
+  }
+}
+
+window.addEventListener("bdrOfflineSincronizado", e => {
+  if(e.detail?.tipo === "nova_solicitacao" || e.detail?.tipo === "acao_pedido"){
+    salvarStatusExpOffline({});
+    setTimeout(aplicarStatusExpTela, 200);
+  }
+});
+document.addEventListener("DOMContentLoaded", () => setTimeout(aplicarStatusExpTela, 700));
 function valor(id){ return String(document.getElementById(id)?.value || "").trim(); }
 function esc(v){ return String(v ?? "").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function usuarioAtual(){ try{ const u=localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado"); return u ? JSON.parse(u) : null; }catch(e){ return null; } }
@@ -38,11 +113,43 @@ function filtrarStatus(st, btn){ filtroAtual = st; document.querySelectorAll(".c
 
 async function carregarTudo(){
   if(!db()){ alert("Supabase não carregado."); return; }
+
   carregarTopo();
-  const ob = await db().from("obras").select("*").eq("ativa",true).order("nome");
-  obras = ob.data || [];
-  await Promise.all([carregarCatalogo(), carregarPedidos()]);
-  renderizarTudo();
+
+  if(bdrExpOfflineReal()){
+    const cache = carregarCacheExpedicao();
+    if(cache){
+      itensCatalogo = cache.itensCatalogo || [];
+      pedidos = cache.pedidos || [];
+      obras = cache.obras || [];
+      renderizarTudo();
+      console.log("📦 Expedição carregada do cache local.");
+      return;
+    }
+
+    alert("Sem internet e sem cache da expedição. Abra uma vez com internet.");
+    return;
+  }
+
+  try{
+    const ob = await db().from("obras").select("*").eq("ativa",true).order("nome");
+    obras = ob.data || [];
+    await Promise.all([carregarCatalogo(), carregarPedidos()]);
+    salvarCacheExpedicao();
+    renderizarTudo();
+  }catch(e){
+    if(bdrExpErroInternet(e)){
+      const cache = carregarCacheExpedicao();
+      if(cache){
+        itensCatalogo = cache.itensCatalogo || [];
+        pedidos = cache.pedidos || [];
+        obras = cache.obras || [];
+        renderizarTudo();
+        return;
+      }
+    }
+    throw e;
+  }
 }
 
 async function carregarCatalogo(){
@@ -142,31 +249,81 @@ function renderizarCarrinho(){
 
 async function enviarSolicitacao(){
   if(!carrinho.length){ alert("Adicione itens ao carrinho."); return; }
-  const u=usuarioAtual();
+
+  const u = usuarioAtual();
+
   const grupos = {};
-  carrinho.forEach(i=>{ const k=String(i.obra_id||"SEM_ORIGEM"); if(!grupos[k]) grupos[k]=[]; grupos[k].push(i); });
+  carrinho.forEach(i => {
+    const k = String(i.obra_id || "SEM_ORIGEM");
+    if(!grupos[k]) grupos[k] = [];
+    grupos[k].push(i);
+  });
+
+  /* =========================================================
+     OFFLINE: guarda solicitação inteira
+  ========================================================= */
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("nova_solicitacao", "pedidos_retirada", {
+      grupos,
+      solicitante:u?.nome || "Usuário",
+      obraDestinoId:u?.obra_id || null,
+      obraNome:nomeObra(u?.obra_id || null),
+      observacao:valor("obsSolicitacao") || "Solicitação criada offline."
+    });
+
+    carrinho = [];
+    if(document.getElementById("obsSolicitacao")) document.getElementById("obsSolicitacao").value = "";
+    renderizarCarrinho();
+
+    marcarExpPendente("nova_solicitacao_" + Date.now(), "⏳ Solicitação salva offline • aguardando internet");
+    alert("📦 Sem internet. Solicitação salva no aparelho e será enviada quando a internet voltar.");
+    return;
+  }
+
   for(const origemId of Object.keys(grupos)){
     const itens=grupos[origemId];
     const codigo="EXP-"+new Date().getFullYear()+"-"+String(Date.now()).slice(-6)+"-"+Math.floor(Math.random()*99);
     const obraDestinoId = u?.obra_id || null;
+
     const pedido = {
-      codigo, status:"AGUARDANDO_AUTORIZACAO", solicitante:u?.nome||"Usuário", usuario_criacao:u?.nome||"Usuário",
-      obra_id:obraDestinoId, obra_destino_id:obraDestinoId, obra_nome:nomeObra(obraDestinoId), obra_origem_id:origemId==="SEM_ORIGEM"?null:Number(origemId),
+      codigo,
+      status:"AGUARDANDO_AUTORIZACAO",
+      solicitante:u?.nome||"Usuário",
+      usuario_criacao:u?.nome||"Usuário",
+      obra_id:obraDestinoId,
+      obra_destino_id:obraDestinoId,
+      obra_nome:nomeObra(obraDestinoId),
+      obra_origem_id:origemId==="SEM_ORIGEM"?null:Number(origemId),
       observacao:valor("obsSolicitacao") || "Solicitação criada pelo catálogo interno."
     };
+
     const r=await db().from("pedidos_retirada").insert([pedido]).select().single();
     if(r.error){ alert("Erro ao criar solicitação: "+r.error.message); return; }
+
     const itensPayload=itens.map(i=>({
-      pedido_id:r.data.id, patrimonio_id:i.patrimonio_id || (i.origem_tabela==="patrimonio"?i.id:null), produto_id:i.produto_id || (i.origem_tabela==="estoque_produtos"?i.id:null),
-      patrimonio_codigo:i.codigo, patrimonio_nome:i.nome, endereco_codigo:i.localizacao, obra_origem_id:i.obra_id || null, obra_destino_id:obraDestinoId,
-      status:i.tipo_solicitacao==="INTERESSE"?"INTERESSE":"PENDENTE", quantidade:1
+      pedido_id:r.data.id,
+      patrimonio_id:i.patrimonio_id || (i.origem_tabela==="patrimonio"?i.id:null),
+      produto_id:i.produto_id || (i.origem_tabela==="estoque_produtos"?i.id:null),
+      patrimonio_codigo:i.codigo,
+      patrimonio_nome:i.nome,
+      endereco_codigo:i.localizacao,
+      obra_origem_id:i.obra_id || null,
+      obra_destino_id:obraDestinoId,
+      status:i.tipo_solicitacao==="INTERESSE"?"INTERESSE":"PENDENTE",
+      quantidade:1
     }));
+
     const ri=await db().from("itens_retirada").insert(itensPayload);
     if(ri.error){ alert("Pedido criado, mas erro nos itens: "+ri.error.message); return; }
+
     await hist(r.data.id,null,"AGUARDANDO_AUTORIZACAO",`Solicitação criada por ${u?.nome||"Usuário"}.`);
     await notificarGestao("Nova solicitação de expedição", `${u?.nome||"Usuário"} solicitou ${itens.length} item(ns) de ${nomeObra(origemId)}.`, "expedicao.html");
   }
-  carrinho=[]; document.getElementById("obsSolicitacao").value=""; alert("Solicitação enviada com sucesso!"); await carregarTudo();
+
+  carrinho=[];
+  if(document.getElementById("obsSolicitacao")) document.getElementById("obsSolicitacao").value="";
+  alert("Solicitação enviada com sucesso!");
+  await carregarTudo();
 }
 async function hist(pedidoId, anterior, novo, obs){ try{ const u=usuarioAtual(); await db().from("historico_pedidos_retirada").insert([{pedido_id:pedidoId,status_anterior:anterior,status_novo:novo,usuario:u?.nome||"Sistema",observacao:obs}]); }catch(e){} }
 async function notificarGestao(titulo,mensagem,link){
@@ -183,12 +340,120 @@ function renderizarPedidos(){
 function lista(id, arr){ const el=document.getElementById(id); if(!el) return; if(!arr.length){ el.innerHTML=`<div class="cart-empty">Nenhum registro encontrado.</div>`; return; } el.innerHTML=arr.map(p=>pedidoHTML(p)).join(""); }
 function pedidoHTML(p){ const itens=p.itens_retirada||[]; return `<div class="pedido-card"><div class="pedido-top"><div class="pedido-cod">${esc(p.codigo||"PED-"+p.id)}</div><div><b>${esc(p.obra_nome||"-")}</b><div class="pedido-small">Solicitante: ${esc(p.solicitante||"-")} • Origem: ${esc(nomeObra(p.obra_origem_id))}</div></div><div><span class="badge-status ${statusClass(p.status)}">${esc(p.status)}</span><div class="pedido-small">${itens.length} item(ns)</div></div><div class="pedido-actions">${acoesPedido(p)}</div></div></div>`; }
 function acoesPedido(p){ if(p.status==="AGUARDANDO_AUTORIZACAO"&&podeAlmoxarife()) return `<button class="btn-mini btn-ok" onclick="autorizar(${p.id})">Aprovar</button><button class="btn-mini btn-red" onclick="negar(${p.id})">Negar</button>`; if(p.status==="EM_SEPARACAO"&&podeAlmoxarife()) return `<button class="btn-mini btn-ok" onclick="reservar(${p.id})">Reservar</button>`; if(p.status==="AGUARDANDO_RETIRADA"&&podeAlmoxarife()) return `<button class="btn-mini btn-ok" onclick="abrirRetirada(${p.id})">Retirada</button>`; return `<button class="btn-mini btn-blue" onclick="alert('Detalhes em evolução')">Detalhes</button>`; }
-async function autorizar(id){ await db().from("pedidos_retirada").update({status:"EM_SEPARACAO"}).eq("id",id); await hist(id,"AGUARDANDO_AUTORIZACAO","EM_SEPARACAO","Solicitação aprovada."); await carregarTudo(); }
-async function negar(id){ const motivo=prompt("Motivo da negativa:")||"Negado"; await db().from("pedidos_retirada").update({status:"NEGADO",motivo_recusa:motivo}).eq("id",id); await hist(id,"AGUARDANDO_AUTORIZACAO","NEGADO",motivo); await carregarTudo(); }
-async function reservar(id){ await db().from("pedidos_retirada").update({status:"AGUARDANDO_RETIRADA"}).eq("id",id); await db().from("itens_retirada").update({status:"RESERVADO"}).eq("pedido_id",id); await hist(id,"EM_SEPARACAO","AGUARDANDO_RETIRADA","Itens reservados e aguardando retirada."); await carregarTudo(); }
+async function autorizar(id){
+  const payload = {status:"EM_SEPARACAO"};
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("acao_pedido", "pedidos_retirada", {
+      id,
+      payload,
+      historico:{
+        pedido_id:id,
+        status_anterior:"AGUARDANDO_AUTORIZACAO",
+        status_novo:"EM_SEPARACAO",
+        usuario:usuarioAtual()?.nome || "Sistema",
+        observacao:"Solicitação aprovada offline."
+      }
+    });
+    alert("📦 Aprovação salva offline.");
+    return;
+  }
+
+  await db().from("pedidos_retirada").update(payload).eq("id",id);
+  await hist(id,"AGUARDANDO_AUTORIZACAO","EM_SEPARACAO","Solicitação aprovada.");
+  await carregarTudo();
+}
+async function negar(id){
+  const motivo=prompt("Motivo da negativa:")||"Negado";
+  const payload = {status:"NEGADO", motivo_recusa:motivo};
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("acao_pedido", "pedidos_retirada", {
+      id,
+      payload,
+      historico:{
+        pedido_id:id,
+        status_anterior:"AGUARDANDO_AUTORIZACAO",
+        status_novo:"NEGADO",
+        usuario:usuarioAtual()?.nome || "Sistema",
+        observacao:motivo
+      }
+    });
+    alert("📦 Negativa salva offline.");
+    return;
+  }
+
+  await db().from("pedidos_retirada").update(payload).eq("id",id);
+  await hist(id,"AGUARDANDO_AUTORIZACAO","NEGADO",motivo);
+  await carregarTudo();
+}
+async function reservar(id){
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("acao_pedido", "pedidos_retirada", {
+      id,
+      payload:{status:"AGUARDANDO_RETIRADA"},
+      itensPayload:{status:"RESERVADO"},
+      historico:{
+        pedido_id:id,
+        status_anterior:"EM_SEPARACAO",
+        status_novo:"AGUARDANDO_RETIRADA",
+        usuario:usuarioAtual()?.nome || "Sistema",
+        observacao:"Itens reservados offline e aguardando retirada."
+      }
+    });
+    alert("📦 Reserva salva offline.");
+    return;
+  }
+
+  await db().from("pedidos_retirada").update({status:"AGUARDANDO_RETIRADA"}).eq("id",id);
+  await db().from("itens_retirada").update({status:"RESERVADO"}).eq("pedido_id",id);
+  await hist(id,"EM_SEPARACAO","AGUARDANDO_RETIRADA","Itens reservados e aguardando retirada.");
+  await carregarTudo();
+}
 function abrirRetirada(id){ pedidoRetiradaAtual=id; document.getElementById("modalRetirada").classList.add("ativo"); }
 function fecharModalRetirada(){ document.getElementById("modalRetirada").classList.remove("ativo"); pedidoRetiradaAtual=null; }
-async function confirmarRetiradaModal(){ const id=pedidoRetiradaAtual; if(!id) return; if(!valor("retMotorista")){alert("Informe o motorista/responsável.");return;} await db().from("pedidos_retirada").update({status:"EM_TRANSITO",motorista_nome:valor("retMotorista"),veiculo_placa:valor("retPlaca"),transportadora:valor("retVeiculo"),data_saida_cd:new Date().toISOString(),usuario_saida_cd:usuarioAtual()?.nome||"Usuário"}).eq("id",id); await hist(id,"AGUARDANDO_RETIRADA","EM_TRANSITO",`Retirado por ${valor("retMotorista")} • ${valor("retPlaca")}`); fecharModalRetirada(); await carregarTudo(); }
+async function confirmarRetiradaModal(){
+  const id=pedidoRetiradaAtual;
+  if(!id) return;
+
+  if(!valor("retMotorista")){
+    alert("Informe o motorista/responsável.");
+    return;
+  }
+
+  const payload = {
+    status:"EM_TRANSITO",
+    motorista_nome:valor("retMotorista"),
+    veiculo_placa:valor("retPlaca"),
+    transportadora:valor("retVeiculo"),
+    data_saida_cd:new Date().toISOString(),
+    usuario_saida_cd:usuarioAtual()?.nome||"Usuário"
+  };
+
+  const obs = `Retirado por ${valor("retMotorista")} • ${valor("retPlaca")}`;
+
+  if(typeof estaOnline === "function" && !estaOnline()){
+    await salvarOffline("acao_pedido", "pedidos_retirada", {
+      id,
+      payload,
+      historico:{
+        pedido_id:id,
+        status_anterior:"AGUARDANDO_RETIRADA",
+        status_novo:"EM_TRANSITO",
+        usuario:usuarioAtual()?.nome || "Sistema",
+        observacao:obs
+      }
+    });
+    fecharModalRetirada();
+    alert("📦 Retirada salva offline.");
+    return;
+  }
+
+  await db().from("pedidos_retirada").update(payload).eq("id",id);
+  await hist(id,"AGUARDANDO_RETIRADA","EM_TRANSITO",obs);
+  fecharModalRetirada();
+  await carregarTudo();
+}
 function abrirDetalhe(origem,id){ const i=buscarItem(origem,id); if(!i) return; document.getElementById("modalTitulo").innerText=i.nome; document.getElementById("modalConteudo").innerHTML=`<div class="modal-grid"><div class="modal-img">${fotoItem(i)?`<img src="${esc(fotoItem(i))}">`:`<div style="font-size:70px">${placeholderIcon(i)}</div>`}</div><div><div class="det-line"><b>Código:</b> ${esc(i.codigo||"-")}</div><div class="det-line"><b>Obra atual:</b> ${esc(nomeObra(i.obra_id))}</div><div class="det-line"><b>Status:</b> <span class="badge-status ${statusClass(normalStatus(i.status))}">${rotStatus(i.status)}</span></div><div class="det-line"><b>Quantidade:</b> ${esc(i.qtd||1)}</div><div class="det-line"><b>Localização:</b> ${esc(i.localizacao||"-")}</div><div class="det-line"><b>Marca/Modelo:</b> ${esc(i.marca||"-")} / ${esc(i.modelo||"-")}</div><div class="det-line"><b>Estado:</b> ${esc(i.estado||"-")}</div><br><button class="btn-ok" onclick="acaoItem('${i.origem_tabela}',${i.id});fecharModalDetalhe()">${normalStatus(i.status)==='ESTOQUE'?'Adicionar ao carrinho':'Registrar interesse'}</button></div></div>`; document.getElementById("modalDetalhe").classList.add("ativo"); }
 function fecharModalDetalhe(){ document.getElementById("modalDetalhe").classList.remove("ativo"); }
 

@@ -1244,7 +1244,6 @@ button{
   transition:.22s ease;
 }
 
-
 /* =========================================================
    CORREÇÃO FINAL RESPONSIVA - IPHONE / CELULAR
    Adicionado para evitar zoom estranho e deixar o menu inferior
@@ -1407,7 +1406,6 @@ button{
   z-index:1;
 }
 
-
 /* =========================================================
    ÁREA DE AJUSTE RÁPIDO - BDR
    Se algo ficar grande/pequeno, mexa primeiro no --screen-zoom
@@ -1418,3 +1416,66 @@ button{
    - .bdr-main padding aumenta/diminui espaço da página.
    - .card padding aumenta/diminui espaço dentro dos cards.
 ========================================================= */
+
+
+/* =========================================================
+   BDR FIX FINAL - TOOLTIP DO MENU POR CIMA DO CABEÇALHO
+   Motivo: o tooltip ficava atrás porque .bdr-topbar tinha z-index
+   maior que a .bdr-sidebar.
+========================================================= */
+@media(min-width:901px){
+
+  .bdr-sidebar{
+    z-index:999999 !important;
+    overflow:visible !important;
+  }
+
+  .bdr-menu,
+  .bdr-menu-btn{
+    overflow:visible !important;
+  }
+
+  .bdr-main,
+  .bdr-topbar,
+  .hero,
+  .card{
+    overflow:visible !important;
+  }
+
+  .bdr-topbar{
+    z-index:10 !important;
+  }
+
+  .bdr-menu-btn{
+    position:relative !important;
+    z-index:999999 !important;
+  }
+
+  .bdr-menu-btn::after{
+    content:attr(data-tip) !important;
+    position:absolute !important;
+    left:58px !important;
+    top:50% !important;
+    transform:translate(0,-50%) !important;
+    background:#111827 !important;
+    color:#fff !important;
+    padding:7px 11px !important;
+    border-radius:8px !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    transition:.18s ease !important;
+    box-shadow:0 8px 18px rgba(0,0,0,.35) !important;
+    z-index:1000000 !important;
+  }
+
+  .bdr-menu-btn:hover::after{
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:translate(8px,-50%) !important;
+  }
+}
+

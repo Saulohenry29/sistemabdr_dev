@@ -13,12 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:Arial,sans-serif;
   background:linear-gradient(135deg,#0b1220,#1f2937);
@@ -28,7 +23,6 @@ body{
   align-items:center;
   padding:18px;
 }
-
 .card-login{
   width:420px;
   max-width:100%;
@@ -38,173 +32,48 @@ body{
   box-shadow:0 15px 35px rgba(0,0,0,.3);
   border-top:5px solid #a4161a;
 }
-
-.logo{
-  text-align:center;
-  margin-bottom:25px;
-}
-
-.logo img{
-  width:180px;
-  max-width:85%;
-}
-
-.logo h1{
-  color:#a4161a;
-  margin-top:10px;
-}
-
-.logo p{
-  color:#555;
-  margin-top:5px;
-}
-
-label{
-  display:block;
-  margin-top:15px;
-  margin-bottom:5px;
-  font-weight:bold;
-}
-
-input{
-  width:100%;
-  padding:12px;
-  border:1px solid #ccc;
-  border-radius:8px;
-  font-size:15px;
-}
-
-.campo-senha{
-  position:relative;
-}
-
-.campo-senha input{
-  padding-right:48px;
-}
-
+.logo{text-align:center;margin-bottom:25px}
+.logo img{width:180px;max-width:85%}
+.logo h1{color:#a4161a;margin-top:10px}
+.logo p{color:#555;margin-top:5px}
+label{display:block;margin-top:15px;margin-bottom:5px;font-weight:bold}
+input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:15px}
+.campo-senha{position:relative}
+.campo-senha input{padding-right:48px}
 .btn-mostrar{
-  position:absolute;
-  right:12px;
-  top:50%;
-  transform:translateY(-50%);
-  border:none;
-  background:none;
-  color:#555;
-  cursor:pointer;
-  width:24px;
-  height:24px;
-  padding:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  border:none;background:none;color:#555;cursor:pointer;width:24px;height:24px;
+  padding:0;display:flex;align-items:center;justify-content:center;
 }
-
-.btn-mostrar:hover{
-  color:#a4161a;
-}
-
-.btn-mostrar svg{
-  width:22px;
-  height:22px;
-}
-
+.btn-mostrar:hover{color:#a4161a}
+.btn-mostrar svg{width:22px;height:22px}
 .opcoes{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-top:12px;
-  font-size:13px;
-  gap:10px;
-  flex-wrap:wrap;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:12px;font-size:13px;gap:10px;flex-wrap:wrap;
 }
-
-.opcoes a{
-  color:#a4161a;
-  text-decoration:none;
-}
-
+.opcoes a{color:#a4161a;text-decoration:none}
 .btn-login{
-  width:100%;
-  margin-top:20px;
-  padding:14px;
-  background:#a4161a;
-  color:white;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
+  width:100%;margin-top:20px;padding:14px;background:#a4161a;color:white;
+  border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;
 }
-
-.btn-login:hover{
-  background:#7d1013;
-}
-
-.btn-install{
-  width:100%;
-  margin-top:10px;
-  padding:12px;
-  background:#fff;
-  color:#a4161a;
-  border:1px solid #a4161a;
-  border-radius:8px;
-  font-size:14px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.btn-install:hover{
-  background:#fff1f2;
-}
-
-#mensagem{
-  text-align:center;
-  color:red;
-  margin-top:15px;
-}
-
-.rodape{
-  text-align:center;
-  margin-top:20px;
-  color:#777;
-  font-size:12px;
-}
-
-/* aviso de atualização no login */
+.btn-login:hover{background:#7d1013}
+#mensagem{text-align:center;color:red;margin-top:15px}
+.rodape{text-align:center;margin-top:20px;color:#777;font-size:12px}
 #bdrUpdateBar{
-  position:fixed;
-  left:50%;
-  bottom:20px;
-  transform:translateX(-50%);
-  z-index:999999;
-  background:#111827;
-  color:white;
-  border-radius:14px;
-  padding:12px 14px;
-  box-shadow:0 18px 40px rgba(0,0,0,.25);
-  display:none;
-  align-items:center;
-  gap:12px;
-  font-size:13px;
-  font-weight:800;
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  z-index:999999;background:#111827;color:white;border-radius:14px;
+  padding:12px 14px;box-shadow:0 18px 40px rgba(0,0,0,.25);
+  display:none;align-items:center;gap:12px;font-size:13px;font-weight:800;
 }
-
 #bdrUpdateBar button{
-  border:none;
-  border-radius:10px;
-  background:#a4161a;
-  color:white;
-  font-weight:900;
-  padding:8px 11px;
-  cursor:pointer;
+  border:none;border-radius:10px;background:#a4161a;color:white;
+  font-weight:900;padding:8px 11px;cursor:pointer;
 }
 </style>
 </head>
 
 <body>
-
 <div class="card-login">
-
   <div class="logo">
     <img src="imagens/logo.png" alt="BDR ERP">
     <h1>BDR ERP</h1>
@@ -212,71 +81,32 @@ input{
   </div>
 
   <form id="formLogin">
-
     <label>Usuário</label>
-    <input
-      type="text"
-      id="usuario"
-      placeholder="Digite seu usuário"
-      required
-    >
+    <input type="text" id="usuario" placeholder="Digite seu usuário" required>
 
     <label>Senha</label>
-
     <div class="campo-senha">
-
-      <input
-        type="password"
-        id="senha"
-        placeholder="Digite sua senha"
-        required
-      >
-
-      <button
-        type="button"
-        class="btn-mostrar"
-        id="btnOlho"
-        onclick="mostrarSenha()"
-        title="Mostrar senha">
+      <input type="password" id="senha" placeholder="Digite sua senha" required>
+      <button type="button" class="btn-mostrar" id="btnOlho" onclick="mostrarSenha()" title="Mostrar senha">
         <svg id="iconeOlho" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M3 3l18 18"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
         </svg>
       </button>
-
     </div>
 
     <div class="opcoes">
-
-      <label>
-        <input type="checkbox" id="lembrar" style="width:auto;">
-        Lembrar
-      </label>
-
-      <a href="#" onclick="alert('Solicite uma nova senha ao administrador MASTER.')">
-        Esqueci minha senha
-      </a>
-
+      <label><input type="checkbox" id="lembrar" style="width:auto;"> Lembrar</label>
+      <a href="#" onclick="alert('Solicite uma nova senha ao administrador MASTER.')">Esqueci minha senha</a>
     </div>
 
-    <button class="btn-login" type="submit">
-      Entrar no Sistema
-    </button>
-
-      <div id="mensagem"></div>
-
+    <button class="btn-login" type="submit">Entrar no Sistema</button>
+    <div id="mensagem"></div>
   </form>
 
-  <div class="rodape">
-    Sistema BDR ERP • v1.0
-  </div>
-
+  <div class="rodape">Sistema BDR ERP • v1.0</div>
 </div>
 
 <div id="bdrUpdateBar">
@@ -288,51 +118,34 @@ input{
 <script src="JS/supabaseClient.js"></script>
 <script src="JS/auth.js"></script>
 <script src="./JS/bdrSessaoRealtime.js"></script>
-<script src="./JS/pwa-install.js"></script>
 <script src="./JS/pwa-update.js"></script>
 
 <script>
 function mostrarSenha(){
-
   const campo = document.getElementById("senha");
   const icone = document.getElementById("iconeOlho");
 
   if(campo.type === "password"){
-
     campo.type = "text";
-
     icone.innerHTML = `
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
     `;
-
   }else{
-
     campo.type = "password";
-
     icone.innerHTML = `
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M3 3l18 18"/>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.88 4.24A9.7 9.7 0 0112 4c5 0 8.27 3.11 10 8a13.38 13.38 0 01-2.16 3.57"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.61 6.61C4.56 7.86 3.01 9.73 2 12c1.73 4.89 5 8 10 8a9.7 9.7 0 005.39-1.61"/>
     `;
-
   }
 }
 
-document
-.getElementById("formLogin")
-.addEventListener("submit", function(e){
+document.getElementById("formLogin").addEventListener("submit", function(e){
   e.preventDefault();
   fazerLogin();
 });
 </script>
-
 </body>
 </html>

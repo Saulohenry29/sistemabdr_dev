@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<!-- =========================================================
+     BDR MARCAÇÃO OFFLINE
+     Esta página está preparada para usar JS/offlineQueue.js.
+     Próximo passo: ligar os botões que salvam dados no helper offline.
+========================================================= -->
 <link rel="icon" href="data:,">
 <meta charset="UTF-8">
 <title>BDR ERP - Empresas</title>
@@ -1595,5 +1600,13 @@ window.addEventListener("load", () => {
 </script>
 
 <script src="./JS/bdrSininhoDashboard.js"></script>
+<!-- =========================================================
+     BDR OFFLINE QUEUE
+     Referência:
+     - Este arquivo cria a fila offline.
+     - Ele deve ficar depois de supabaseClient/auth/bdrCore.
+     - Depois vamos ligar cada salvar/update/delete usando bdrSalvarInsert/bdrSalvarUpdate.
+========================================================= -->
+<script src="./JS/offlineQueue.js"></script>
 </body>
 </html>

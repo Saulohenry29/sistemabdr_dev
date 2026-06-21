@@ -34,6 +34,19 @@
   let primeiraCarga = true;
   let assinaturaAnterior = "";
 
+  function bdrSininhoOfflineReal(){
+    return navigator.onLine === false;
+  }
+
+  function bdrSininhoErroInternet(e){
+    const msg = String(e?.message || e || "").toLowerCase();
+    return msg.includes("failed to fetch") ||
+           msg.includes("internet_disconnected") ||
+           msg.includes("networkerror") ||
+           msg.includes("err_internet") ||
+           msg.includes("err_name_not_resolved");
+  }
+
   function banco(){
     if(typeof window.db === "function"){
       try{
@@ -279,6 +292,14 @@
 
   async function carregar(){
     if(carregando) return;
+
+    if(bdrSininhoOfflineReal()){
+      notificacoes = [];
+      renderizar();
+      esconderBadgeAgora();
+      return;
+    }
+
     carregando = true;
 
     try{
@@ -313,7 +334,7 @@
         .limit(40);
 
       if(resp.error){
-        console.warn("BDR Sininho: erro ao buscar pedidos:", resp.error.message);
+        if(!bdrSininhoOfflineReal()) console.warn("BDR Sininho: erro ao buscar pedidos:", resp.error.message);
         notificacoes = [];
         renderizar();
         return;
@@ -419,6 +440,18 @@
     if(intervalo) clearInterval(intervalo);
     intervalo = setInterval(carregar, INTERVALO_MS);
   }
+
+  
+  window.addEventListener("offline", () => {
+    console.log("BDR Sininho: offline detectado, pausando buscas.");
+    notificacoes = [];
+    renderizar();
+    esconderBadgeAgora();
+  });
+
+  window.addEventListener("online", () => {
+    carregar();
+  });
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", iniciar);
