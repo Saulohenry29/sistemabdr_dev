@@ -1,16 +1,24 @@
 // ===============================
-// BDR CORE 9.0 - ERP COMPLETO SAFE OFFLINE
+// BDR CORE 9.1 - SAFE OFFLINE
 // ===============================
 
 const SUPABASE_URL = "https://ytalegphxrntlomkltbc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
 
+function bdrOnline(){
+  return navigator.onLine === true;
+}
+
 if (!window.client && window.supabase && window.supabase.createClient) {
-  window.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    realtime: {
+      params: { eventsPerSecond: 2 }
+    }
+  });
   window.supabaseClient = window.client;
 }
 
-console.log("✔ BDR CORE 9.0 carregado");
+console.log("✔ BDR CORE 9.1 carregado SAFE OFFLINE");
 
 function formatarStatus(status) {
   const map = {
@@ -24,8 +32,10 @@ function formatarStatus(status) {
 }
 
 async function gerarCodigoPatrimonio(empresa_id) {
-  if (!window.client) {
-    throw new Error("Supabase indisponível. Sem internet ou SDK não carregado.");
+  if (!bdrOnline() || !window.client) {
+    const prefixo = empresa_id ? String(empresa_id) : "OFF";
+    const temp = Date.now().toString().slice(-6);
+    return `PAT-OFF-${prefixo}-${temp}`;
   }
 
   const { data: empresa } = await window.client
@@ -57,22 +67,42 @@ async function gerarCodigoPatrimonio(empresa_id) {
   return `PAT${codigoEmpresa}${String(sequencial).padStart(4, "0")}`;
 }
 
+async function bdrSalvarOfflineOuOnline(tabela, payload){
+  if(bdrOnline() && window.client){
+    return await window.client.from(tabela).insert(Array.isArray(payload) ? payload : [payload]);
+  }
+
+  if(window.BDROfflineSync?.adicionarPendente){
+    await window.BDROfflineSync.adicionarPendente({
+      tipo:"insert",
+      tabela,
+      dados:payload,
+      criado_em:new Date().toISOString()
+    });
+    return { data:null, error:null, offline:true };
+  }
+
+  const key = "bdr_fila_offline_simples";
+  const fila = JSON.parse(localStorage.getItem(key) || "[]");
+  fila.push({ tipo:"insert", tabela, dados:payload, criado_em:new Date().toISOString() });
+  localStorage.setItem(key, JSON.stringify(fila));
+  return { data:null, error:null, offline:true };
+}
+
 async function salvarPatrimonio(dados) {
   try {
-    if (!window.client) throw new Error("Supabase indisponível. Sem internet ou SDK não carregado.");
-
     const codigo = await gerarCodigoPatrimonio(dados.empresa_id);
 
-    const { error } = await window.client
-      .from("patrimonio")
-      .insert([{
-        nome_bem: dados.nome_bem,
-        empresa_id: dados.empresa_id,
-        setor_obra: dados.setor_obra,
-        codigo_qr: codigo,
-        status: "ESTOQUE",
-        created_at: new Date().toISOString()
-      }]);
+    const payload = {
+      nome_bem: dados.nome_bem,
+      empresa_id: dados.empresa_id,
+      setor_obra: dados.setor_obra,
+      codigo_qr: codigo,
+      status: "ESTOQUE",
+      created_at: new Date().toISOString()
+    };
+
+    const { error, offline } = await bdrSalvarOfflineOuOnline("patrimonio", payload);
 
     if (error) {
       console.error(error);
@@ -80,7 +110,7 @@ async function salvarPatrimonio(dados) {
       return;
     }
 
-    alert("✔ Patrimônio criado: " + codigo);
+    alert(offline ? "📦 Patrimônio salvo offline. Será sincronizado quando a internet voltar." : "✔ Patrimônio criado: " + codigo);
 
   } catch (err) {
     console.error(err);
@@ -96,10 +126,21 @@ async function registrarMovimentacao({
   observacao = ""
 }) {
   try {
-    if (!window.client) throw new Error("Supabase indisponível. Sem internet ou SDK não carregado.");
-
     if (!codigo_qr) {
       alert("Código QR inválido");
+      return;
+    }
+
+    if(!bdrOnline() || !window.client){
+      await bdrSalvarOfflineOuOnline("movimentacoes", {
+        codigo_qr,
+        status_novo: novoStatus,
+        local_novo: novaLocalizacao,
+        tipo: tipoEvento,
+        observacao,
+        criado_em:new Date().toISOString()
+      });
+      alert("📦 Movimentação salva offline. Será sincronizada quando a internet voltar.");
       return;
     }
 

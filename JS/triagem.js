@@ -35,13 +35,56 @@ window.onload = async () => {
   await carregarTriagem();
 };
 
+window.addEventListener("online", async () => {
+  console.log("BDR: internet voltou, atualizando triagem e sincronizando pendências.");
+  if(window.BDROfflineSync?.sincronizarPendentes){
+    await window.BDROfflineSync.sincronizarPendentes();
+  }
+  await carregarTriagem();
+});
+
+window.addEventListener("offline", () => {
+  console.log("BDR: triagem entrou em modo offline.");
+  if(window.BDROfflineSync?.ativarOfflineAuto){
+    window.BDROfflineSync.ativarOfflineAuto("evento_offline_triagem");
+  }
+  if(window.BDROfflineSync?.atualizarStatusTela){
+    window.BDROfflineSync.atualizarStatusTela();
+  }
+});
+
+window.addEventListener("bdrOnlineRealVoltou", async () => {
+  console.log("BDR: online real voltou, atualizando triagem.");
+  await carregarTriagem();
+});
+
 function ir(pagina){ window.location.href = pagina; }
 function db(){
   return window.client || window.supabaseClient || window.clientSupabase || globalThis.client;
 }
 
 function bdrOfflineReal(){
-  return navigator.onLine === false || (typeof estaOnline === "function" && !estaOnline());
+  return localStorage.getItem("BDR_MODO_OFFLINE") === "SIM" ||
+         navigator.onLine === false ||
+         (typeof estaOnline === "function" && !estaOnline());
+}
+
+async function bdrOnlineRealTriagem(opcoes = {}){
+  try{
+    if(window.BDROfflineSync?.estaOnlineReal){
+      return await window.BDROfflineSync.estaOnlineReal(opcoes);
+    }
+    if(window.estaOnlineReal){
+      return await window.estaOnlineReal(opcoes);
+    }
+  }catch(e){
+    return false;
+  }
+  return !bdrOfflineReal();
+}
+
+async function bdrOfflineRealAsync(opcoes = {}){
+  return !(await bdrOnlineRealTriagem({ forcar:true, ...opcoes }));
 }
 
 function bdrErroDeInternet(err){
@@ -81,6 +124,31 @@ function carregarCacheTriagemLocal(){
   }catch(e){
     return null;
   }
+}
+
+
+/* =========================================================
+   COMPATIBILIDADE OFFLINE
+   Se offlineQueue.js não existir, usa IndexedDB/fila do offlineDB.
+========================================================= */
+if(typeof window.salvarOffline !== "function"){
+  window.salvarOffline = async function(tipo, tabela, dados){
+    if(window.BDROfflineDB?.adicionarPendente){
+      return await window.BDROfflineDB.adicionarPendente({
+        tabela: tabela || "triagem_materiais",
+        acao: "custom",
+        tipo,
+        payload: dados || {},
+        criado_em: new Date().toISOString()
+      });
+    }
+    const key = "bdr_fila_offline_simples_v1";
+    const fila = JSON.parse(localStorage.getItem(key) || "[]");
+    const item = { id: Date.now() + "-" + Math.random().toString(16).slice(2), tipo, tabela, dados, criado_em:new Date().toISOString() };
+    fila.push(item);
+    localStorage.setItem(key, JSON.stringify(fila));
+    return item;
+  };
 }
 
 /* =========================================================
@@ -195,19 +263,47 @@ function normalizar(txt){
   return String(txt || "").trim().toUpperCase();
 }
 
+async function carregarTriagemDoCacheRapido(){
+  if(!window.BDROfflineDB?.lerTabela) return false;
+
+  try{
+    const [entradasCache, itensCache, obrasCache, enderecosCache] = await Promise.all([
+      window.BDROfflineDB.lerTabela("entradas_materiais"),
+      window.BDROfflineDB.lerTabela("entradas_materiais_itens"),
+      window.BDROfflineDB.lerTabela("obras"),
+      window.BDROfflineDB.lerTabela("enderecamento_estoque")
+    ]);
+
+    const temCache = (entradasCache && entradasCache.length) || (itensCache && itensCache.length);
+    if(!temCache) return false;
+
+    entradas = entradasCache || [];
+    itens = itensCache || [];
+    obras = obrasCache || [];
+    enderecos = enderecosCache || [];
+
+    salvarCacheTriagemLocal();
+    carregarFiltroMes();
+    renderizarTudo();
+
+    console.log(`BDR cache rápido: triagem carregada do IndexedDB (${entradas.length} NF / ${itens.length} itens)`);
+    return true;
+  }catch(e){
+    console.warn("BDR triagem: falha ao carregar cache rápido:", e?.message || e);
+    return false;
+  }
+}
+
 async function carregarTriagem(){
   const banco = db();
+  const offline = window.BDROfflineSync;
 
-  if(!banco){
-    alert("Supabase não foi carregado. Confira o arquivo ./JS/supabaseClient.js");
+  if(!banco && !offline && !window.BDROfflineDB){
+    alert("Supabase/offline não foi carregado. Confira ./JS/supabaseClient.js, ./JS/offlineDB.js e ./JS/offlineSync.js");
     return;
   }
 
-  /* =========================================================
-     BDR OFFLINE LEITURA
-     Se abrir sem internet, tenta usar o último cache salvo.
-  ========================================================= */
-  if(typeof estaOnline === "function" && !estaOnline()){
+  const usarCacheLocalStorage = () => {
     const cache = carregarCacheTriagemLocal();
     if(cache){
       entradas = cache.entradas || [];
@@ -216,52 +312,106 @@ async function carregarTriagem(){
       enderecos = cache.enderecos || [];
       carregarFiltroMes();
       renderizarTudo();
-      console.log("📦 Triagem carregada do cache local.");
+      console.log("📦 Triagem carregada do cache local antigo.");
+      return true;
+    }
+    return false;
+  };
+
+  const cacheOk = await carregarTriagemDoCacheRapido();
+
+  let onlineReal = await bdrOnlineRealTriagem({forcar:true});
+
+  if(!onlineReal){
+    if(window.BDROfflineSync?.atualizarStatusTela){
+      window.BDROfflineSync.atualizarStatusTela();
+    }
+
+    if(cacheOk){
+      console.log("BDR triagem: offline real, mantendo dados do cache.");
       return;
     }
 
-    alert("Sem internet e sem cache local da triagem. Abra uma vez com internet para salvar os dados no aparelho.");
+    if(!usarCacheLocalStorage()){
+      alert("Sem internet e sem cache local da triagem. Abra esta tela uma vez com internet para salvar os dados no aparelho.");
+    }
     return;
   }
 
-  const entradaResp = await banco
-    .from("entradas_materiais")
-    .select("*")
-    .eq("status","ENVIADO_TRIAGEM")
-    .order("id",{ascending:false});
+  if(!banco){
+    if(cacheOk) return;
+    alert("Supabase não carregado e ainda não existe cache local da triagem.");
+    return;
+  }
 
-  const itensResp = await banco
-    .from("entradas_materiais_itens")
-    .select("*")
-    .eq("status_triagem","PENDENTE")
-    .order("id",{ascending:false});
+  try{
+    const carregarTabela = async (nomeTabela, buscarOnline, opcoes = {}) => {
+      if(offline && typeof offline.carregarTabela === "function"){
+        return await offline.carregarTabela(nomeTabela, buscarOnline, { timeout: opcoes.timeout || 1200 });
+      }
 
-  const obrasResp = await banco
-    .from("obras")
-    .select("*")
-    .eq("ativa",true)
-    .order("nome");
+      const resp = await buscarOnline();
+      if(resp.error) throw resp.error;
+      return resp.data || [];
+    };
 
-  const endResp = await banco
-    .from("enderecamento_estoque")
-    .select("*")
-    .eq("status","LIVRE")
-    .order("codigo_curto");
+    const entradasOnline = await carregarTabela("entradas_materiais", async () => {
+      return await banco
+        .from("entradas_materiais")
+        .select("*")
+        .eq("status","ENVIADO_TRIAGEM")
+        .order("id",{ascending:false});
+    }, { timeout: 1200 });
 
-  if(entradaResp.error){ alert("Erro ao carregar entradas: " + entradaResp.error.message); return; }
-  if(itensResp.error){ alert("Erro ao carregar itens da triagem: " + itensResp.error.message); return; }
-  if(obrasResp.error){ console.warn("Erro ao carregar obras:", obrasResp.error.message); }
-  if(endResp.error){ alert("Erro ao carregar endereços livres: " + endResp.error.message); return; }
+    const itensOnline = await carregarTabela("entradas_materiais_itens", async () => {
+      return await banco
+        .from("entradas_materiais_itens")
+        .select("*")
+        .eq("status_triagem","PENDENTE")
+        .order("id",{ascending:false});
+    }, { timeout: 1200 });
 
-  entradas = entradaResp.data || [];
-  itens = itensResp.data || [];
-  obras = obrasResp.data || [];
-  enderecos = endResp.data || [];
+    const obrasOnline = await carregarTabela("obras", async () => {
+      return await banco
+        .from("obras")
+        .select("*")
+        .eq("ativa",true)
+        .order("nome");
+    }, { timeout: 1200 });
 
-  salvarCacheTriagemLocal();
+    const enderecosOnline = await carregarTabela("enderecamento_estoque", async () => {
+      return await banco
+        .from("enderecamento_estoque")
+        .select("*")
+        .eq("status","LIVRE")
+        .order("codigo_curto");
+    }, { timeout: 1200 });
 
-  carregarFiltroMes();
-  renderizarTudo();
+    entradas = entradasOnline || [];
+    itens = itensOnline || [];
+    obras = obrasOnline || [];
+    enderecos = enderecosOnline || [];
+
+    salvarCacheTriagemLocal();
+    carregarFiltroMes();
+    renderizarTudo();
+
+    if(window.BDROfflineSync?.atualizarStatusTela){
+      window.BDROfflineSync.atualizarStatusTela();
+    }
+  }catch(e){
+    console.warn("Triagem: falhou online; mantendo cache quando existir.", e?.message || e);
+
+    if(cacheOk){
+      carregarFiltroMes();
+      renderizarTudo();
+      return;
+    }
+
+    if(!usarCacheLocalStorage()){
+      alert("Erro ao carregar triagem. Abra uma vez com internet para salvar o cache offline.");
+    }
+  }
 }
 
 async function recarregarEnderecosLivres(){
@@ -271,7 +421,7 @@ async function recarregarEnderecosLivres(){
      Se o navegador ainda achar que está online mas o fetch falhar,
      também não trava o fluxo.
   ========================================================= */
-  if(bdrOfflineReal()){
+  if(await bdrOfflineRealAsync()){
     console.log("📴 Triagem offline: usando endereços já carregados na tela.");
     return;
   }
@@ -643,76 +793,99 @@ function valorUnitarioEstimado(item){
 
 async function buscarAprendizadoTriagem(item){
   /* OFFLINE: não consulta aprendizado no Supabase */
-  if(typeof estaOnline === "function" && !estaOnline()){
+  if(await bdrOfflineRealAsync({forcar:true})){
     return null;
   }
+
+  const banco = db();
+  if(!banco) return null;
 
   const descricao = textoItemTriagem(item);
   const chave = palavraChaveTriagem(item);
 
   if(!descricao && !chave) return null;
 
-  const { data, error } = await db()
-    .from("triagem_aprendizado")
-    .select("*")
-    .order("vezes_usado", { ascending:false });
+  try{
+    const { data, error } = await banco
+      .from("triagem_aprendizado")
+      .select("*")
+      .order("vezes_usado", { ascending:false });
 
-  if(error){
-    console.warn("Erro ao buscar aprendizado:", error.message);
+    if(error){
+      console.warn("Erro ao buscar aprendizado:", error.message);
+      return null;
+    }
+
+    return (data || []).find(a => {
+      const base = limparDescricaoTriagem(a.descricao_base || "");
+      const palavra = limparDescricaoTriagem(a.palavra_chave || "");
+
+      return (
+        (palavra && (descricao.includes(palavra) || chave === palavra)) ||
+        (base && base.length >= 6 && (descricao.includes(base) || base.includes(descricao)))
+      );
+    }) || null;
+  }catch(e){
+    if(bdrErroDeInternet(e)){
+      console.log("📴 Triagem offline: aprendizado ignorado até a internet voltar.");
+      return null;
+    }
+    console.warn("Erro ao buscar aprendizado:", e?.message || e);
     return null;
   }
-
-  return (data || []).find(a => {
-    const base = limparDescricaoTriagem(a.descricao_base || "");
-    const palavra = limparDescricaoTriagem(a.palavra_chave || "");
-
-    return (
-      (palavra && (descricao.includes(palavra) || chave === palavra)) ||
-      (base && base.length >= 6 && (descricao.includes(base) || base.includes(descricao)))
-    );
-  }) || null;
 }
 
 async function salvarAprendizadoTriagem(item, destino){
   /* OFFLINE: não salva aprendizado agora. A ação principal vai para a fila. */
-  if(typeof estaOnline === "function" && !estaOnline()){
+  if(await bdrOfflineRealAsync({forcar:true})){
     return;
   }
+
+  const banco = db();
+  if(!banco) return;
 
   const descricaoBase = textoItemTriagem(item);
   const palavra = palavraChaveTriagem(item);
 
   if(!descricaoBase && !palavra) return;
 
-  const aprendido = await buscarAprendizadoTriagem(item);
+  try{
+    const aprendido = await buscarAprendizadoTriagem(item);
 
-  if(aprendido){
-    await db()
+    if(aprendido){
+      await banco
+        .from("triagem_aprendizado")
+        .update({
+          tipo_destino: destino,
+          categoria: destino,
+          palavra_chave: palavra || aprendido.palavra_chave,
+          vezes_usado: Number(aprendido.vezes_usado || 1) + 1,
+          confianca: Math.min(99, Number(aprendido.confianca || 80) + 1),
+          ultima_decisao: new Date().toISOString()
+        })
+        .eq("id", aprendido.id);
+      return;
+    }
+
+    await banco
       .from("triagem_aprendizado")
-      .update({
+      .insert([{
+        descricao_base: descricaoBase,
+        palavra_chave: palavra,
         tipo_destino: destino,
         categoria: destino,
-        palavra_chave: palavra || aprendido.palavra_chave,
-        vezes_usado: Number(aprendido.vezes_usado || 1) + 1,
-        confianca: Math.min(99, Number(aprendido.confianca || 80) + 1),
+        confianca: 90,
+        origem: "USUARIO",
+        vezes_usado: 1,
         ultima_decisao: new Date().toISOString()
-      })
-      .eq("id", aprendido.id);
-    return;
+      }]);
+  }catch(e){
+    if(bdrErroDeInternet(e)){
+      console.log("📴 Triagem offline: aprendizado será ignorado nesta confirmação.");
+      return;
+    }
+    console.warn("Erro ao salvar aprendizado:", e?.message || e);
   }
-
-  await db()
-    .from("triagem_aprendizado")
-    .insert([{
-      descricao_base: descricaoBase,
-      palavra_chave: palavra,
-      tipo_destino: destino,
-      categoria: destino,
-      confianca: 90,
-      origem: "USUARIO",
-      vezes_usado: 1,
-      ultima_decisao: new Date().toISOString()
-    }]);
 }
 
 function pontuarItemTriagem(item){
@@ -1104,7 +1277,7 @@ window.confirmarModalPatrimonioTriagem = confirmarModalPatrimonioTriagem;
 async function buscarPatrimonioExistente(codigo){
   if(!codigo) return null;
 
-  if(bdrOfflineReal()){
+  if(await bdrOfflineRealAsync()){
     console.log("📴 Offline: não foi possível validar patrimônio existente agora.");
     return null;
   }
@@ -1325,6 +1498,16 @@ async function aplicarAnaliseInteligenteItem(itemId){
   const item = itens.find(i => Number(i.id) === Number(itemId));
   if(!item) return;
 
+  if(await bdrOfflineRealAsync({forcar:true})){
+    const box = document.getElementById("analise-" + itemId);
+    if(box){
+      box.className = "info";
+      box.innerHTML = "📴 Offline: usando regras locais de triagem. O histórico será consultado quando a internet voltar.";
+    }
+    await atualizarEnderecoItem(itemId);
+    return;
+  }
+
   const analise = await analisarItemTriagem(item);
   const destinoPadrao = ["PATRIMONIO","ANALISAR_PATRIMONIO"].includes(analise.destino) ? "PATRIMONIO" : "ESTOQUE";
 
@@ -1452,7 +1635,7 @@ async function confirmarItem(itemId){
      OFFLINE: salva confirmação completa da triagem
      A sincronização simplificada acontece no offlineQueue.js.
   ========================================================= */
-  if(typeof estaOnline === "function" && !estaOnline()){
+  if(await bdrOfflineRealAsync({forcar:true})){
     console.log("📦 Triagem: salvando confirmação offline...");
     await salvarOffline("triagem_confirmar_item", "triagem_materiais", {
       item,
@@ -1463,6 +1646,10 @@ async function confirmarItem(itemId){
       usuario:usuarioAtual()?.nome || "Usuário não identificado",
       empresa_id:(obraDestino ? (obraPorId(obraDestino)?.empresa_id || null) : null),
       obraNome:(obraDestino ? (obraPorId(obraDestino)?.nome || null) : null),
+      patrimonio_modo: valor("patrimonioModo-" + itemId) || "NOVO",
+      patrimonio_codigo_existente: valor("codigoPatExistente-" + itemId) || null,
+      patrimonio_extra: extrasPatrimonioTriagem[itemId] || null,
+      endereco_id: enderecoId || null,
       criado_offline_em:new Date().toISOString()
     });
 
@@ -1689,3 +1876,7 @@ document.addEventListener("keydown", function(e){
     if(notif) notif.classList.remove("ativo");
   }
 });
+
+console.log('✔ BDR TRIAGEM OFFLINE AUTO V4 carregado');
+
+console.log("✔ BDR TRIAGEM OFFLINE AUTO V5 SAFE carregado");

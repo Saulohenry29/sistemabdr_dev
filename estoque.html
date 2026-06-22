@@ -3,8 +3,8 @@
 <head>
 <!-- =========================================================
      BDR MARCAÇÃO OFFLINE
-     Esta página está preparada para usar JS/offlineQueue.js.
-     Próximo passo: ligar os botões que salvam dados no helper offline.
+     Esta página usa JS/offlineDB.js + JS/offlineSync.js.
+     O estoque abre com cache local e sincroniza quando a internet voltar.
 ========================================================= -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,6 +32,10 @@
   --orange:#f97316;
 }
 body{background:var(--bdr-bg)!important;}
+
+*{
+  font-variant-numeric: lining-nums tabular-nums;
+}
 .bdr-topbar-title{color:var(--bdr-red)!important;font-weight:900;}
 .bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500;}
 .bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto;}
@@ -86,11 +90,32 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 .estoque-header{font-size:12px;color:#6b7280;font-weight:900;padding:8px 10px;border-bottom:1px solid #e5e7eb;}
 .estoque-linha{background:#fff;border:1px solid #e5e7eb;border-left:4px solid var(--bdr-red);border-radius:12px;padding:9px 10px;margin-top:8px;cursor:pointer;transition:.18s ease;font-size:13px;}
 .estoque-linha:hover{background:#fff1f2;transform:translateX(3px);}
-.prod-codigo{font-weight:900;color:var(--bdr-red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prod-nome{font-weight:900;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-codigo{
+  font-size:13px;
+  font-weight:700;
+  color:var(--bdr-red);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-variant-numeric:tabular-nums;
+}
+.prod-nome{
+  font-size:13px;
+  font-weight:700;
+  color:#111827;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .prod-sub{font-size:11px;color:#6b7280;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .prod-local,.prod-obra{font-size:12px;color:#374151;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prod-qtd{font-size:17px;font-weight:900;color:#111827;text-align:center;}
+.prod-qtd{
+  font-size:13px;
+  font-weight:700;
+  color:#111827;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
 .badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;color:white;background:#6b7280;white-space:nowrap;}
 .badge-ok{background:#16a34a;}.badge-uso{background:#2563eb;}.badge-baixo{background:#f97316;}.badge-zero{background:#dc2626;}.badge-pat{background:#7c3aed;}
 
@@ -125,7 +150,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   --slot-h:34px;
 }
 
-/* Botões novos no Estoque */
+/* Botões novos Estoque */
 .acoes-estoque-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
@@ -632,7 +657,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
     <h3>📊 Resumo do estoque</h3>
     <div class="resumo-grid">
       <div class="resumo-card" onclick="filtrarResumo('TODOS')"><strong id="resumoProdutos">0</strong><span>Total geral</span></div>
-      <div class="resumo-card" onclick="filtrarResumo('DISPONIVEL')"><strong id="resumoDisponiveis">0</strong><span>No estoque</span></div>
+      <div class="resumo-card" onclick="filtrarResumo('DISPONIVEL')"><strong id="resumoDisponiveis">0</strong><span>estoque</span></div>
       <div class="resumo-card" onclick="filtrarResumo('EM_USO')"><strong id="resumoEmUso">0</strong><span>Em uso</span></div>
       <div class="resumo-card" onclick="filtrarResumo('PATRIMONIO')"><strong id="resumoBaixo">0</strong><span>Patrimônios</span></div>
       <div class="resumo-card" onclick="abrirResumoValor()"><strong id="resumoValor">R$ 0,00</strong><span>Valor estimado</span></div>
@@ -674,7 +699,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 
       <select id="filtroStatus" onchange="renderizarProdutos()">
         <option value="">Todos os status</option>
-        <option value="DISPONIVEL">No estoque / disponível</option>
+        <option value="DISPONIVEL">estoque / disponível</option>
         <option value="EM_USO">Em uso</option>
         <option value="MANUTENCAO">Manutenção</option>
         <option value="BAIXADO">Baixado</option>
@@ -833,14 +858,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   </div>
 </div>
 
+<script src="./JS/offlineDB.js"></script>
+<script src="./JS/offlineSync.js"></script>
 <script defer src="./JS/estoque.js"></script>
-<!-- =========================================================
-     BDR OFFLINE QUEUE
-     Referência:
-     - Este arquivo cria a fila offline.
-     - Ele deve ficar depois de supabaseClient/auth/bdrCore.
-     - Depois vamos ligar cada salvar/update/delete usando bdrSalvarInsert/bdrSalvarUpdate.
-========================================================= -->
-<script src="./JS/offlineQueue.js"></script>
 </body>
 </html>

@@ -34,8 +34,22 @@
   let primeiraCarga = true;
   let assinaturaAnterior = "";
 
-  function bdrSininhoOfflineReal(){
-    return navigator.onLine === false;
+  async function bdrSininhoOfflineReal(){
+    if(localStorage.getItem("BDR_MODO_OFFLINE") === "SIM") return true;
+    if(navigator.onLine === false) return true;
+
+    try{
+      if(window.BDROfflineSync?.estaOnlineReal){
+        return !(await window.BDROfflineSync.estaOnlineReal({forcar:true}));
+      }
+      if(window.estaOnlineReal){
+        return !(await window.estaOnlineReal({forcar:true}));
+      }
+    }catch(e){
+      return true;
+    }
+
+    return false;
   }
 
   function bdrSininhoErroInternet(e){
@@ -293,7 +307,7 @@
   async function carregar(){
     if(carregando) return;
 
-    if(bdrSininhoOfflineReal()){
+    if(await bdrSininhoOfflineReal()){
       notificacoes = [];
       renderizar();
       esconderBadgeAgora();
@@ -334,7 +348,7 @@
         .limit(40);
 
       if(resp.error){
-        if(!bdrSininhoOfflineReal()) console.warn("BDR Sininho: erro ao buscar pedidos:", resp.error.message);
+        if(!(await bdrSininhoOfflineReal())) console.warn("BDR Sininho: erro ao buscar pedidos:", resp.error.message);
         notificacoes = [];
         renderizar();
         return;
@@ -393,7 +407,20 @@
     }
   }
 
-  function iniciarRealtime(){
+  async function pararRealtime(){
+    const b = banco();
+    if(canal && b && typeof b.removeChannel === "function"){
+      try{ await b.removeChannel(canal); }catch(e){}
+    }
+    canal = null;
+  }
+
+  async function iniciarRealtime(){
+    if(await bdrSininhoOfflineReal()){
+      await pararRealtime();
+      return;
+    }
+
     const b = banco();
     if(!b || typeof b.channel !== "function") return;
     if(canal) return;
@@ -405,6 +432,7 @@
         .on("postgres_changes", {event:"*", schema:"public", table:"historico_pedidos_retirada"}, carregar)
         .subscribe();
     }catch(e){
+      canal = null;
       console.warn("BDR Sininho: realtime não iniciou:", e);
     }
   }
@@ -434,23 +462,43 @@
     aplicarCss();
     esconderBadgeAgora();
     protegerBadgeContraScriptsAntigos();
+
     carregar();
     iniciarRealtime();
 
     if(intervalo) clearInterval(intervalo);
-    intervalo = setInterval(carregar, INTERVALO_MS);
+    intervalo = setInterval(async () => {
+      if(await bdrSininhoOfflineReal()){
+        notificacoes = [];
+        renderizar();
+        esconderBadgeAgora();
+        await pararRealtime();
+        return;
+      }
+
+      await carregar();
+      await iniciarRealtime();
+    }, INTERVALO_MS);
   }
 
   
-  window.addEventListener("offline", () => {
-    console.log("BDR Sininho: offline detectado, pausando buscas.");
+  window.addEventListener("offline", async () => {
+    console.log("BDR Sininho: offline detectado, pausando buscas e realtime.");
+    if(window.BDROfflineSync?.ativarOfflineAuto){
+      window.BDROfflineSync.ativarOfflineAuto("sininho_offline");
+    }
     notificacoes = [];
     renderizar();
     esconderBadgeAgora();
+    await pararRealtime();
   });
 
-  window.addEventListener("online", () => {
-    carregar();
+  window.addEventListener("online", async () => {
+    if(window.BDROfflineSync?.tentarVoltarOnline){
+      await window.BDROfflineSync.tentarVoltarOnline();
+    }
+    await carregar();
+    await iniciarRealtime();
   });
 
   if(document.readyState === "loading"){
@@ -458,4 +506,5 @@
   }else{
     iniciar();
   }
+  console.log("✅ BDR Sininho Global SAFE OFFLINE V2 carregado.");
 })();

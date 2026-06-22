@@ -97,9 +97,9 @@
     return st || "DISPONIVEL";
   }
 
-  function textoStatus(item){
-    const st = normalizar(item.status || "DISPONIVEL");
-    if(st === "ESTOQUE" || st === "DISPONIVEL") return "NO ESTOQUE";
+function textoStatus(item){
+const st = normalizar(item.status || "DISPONIVEL");
+if(st === "ESTOQUE" || st === "DISPONIVEL") return "ESTOQUE";
     if(st === "EM_USO") return "EM USO";
     if(st === "MANUTENCAO") return "MANUTENÇÃO";
     if(st === "BAIXADO") return "BAIXADO";
@@ -216,6 +216,15 @@
 
   async function carregarNotificacoes(){
     try{
+      // SAFE OFFLINE: não tenta Supabase/sininho quando a internet real não existe.
+      if(window.estaOnlineReal){
+        const onlineReal = await window.estaOnlineReal({forcar:true});
+        if(!onlineReal){ atualizarNotificacoes([]); return; }
+      }else if(!navigator.onLine){
+        atualizarNotificacoes([]);
+        return;
+      }
+
       const banco = db();
       if(!banco){ atualizarNotificacoes([]); return; }
 
@@ -250,7 +259,21 @@
     }
   }
 
-  function iniciarRealtimeSininho(){
+  async function iniciarRealtimeSininho(){
+    // SAFE OFFLINE: se não existir internet real, não abre WebSocket/realtime.
+    if(window.estaOnlineReal){
+      const onlineReal = await window.estaOnlineReal({forcar:true});
+      if(!onlineReal){
+        console.log("BDR: sininho/realtime desativado offline.");
+        atualizarNotificacoes([]);
+        return;
+      }
+    }else if(!navigator.onLine){
+      console.log("BDR: sininho/realtime desativado offline.");
+      atualizarNotificacoes([]);
+      return;
+    }
+
     carregarNotificacoes();
     setInterval(carregarNotificacoes, 30000);
 
@@ -266,39 +289,150 @@
   // =========================================================
   // MARCAÇÃO 4: CARREGAMENTO DO BANCO
   // =========================================================
+  async function carregarDadosDoCacheRapido(){
+    const dbLocal = window.BDROfflineDB;
+    if(!dbLocal || typeof dbLocal.lerTabela !== "function") return false;
+
+    try{
+      const [obrasCache, produtosCache, patrimoniosCache, movEstCache, movPatCache] = await Promise.all([
+        dbLocal.lerTabela("obras"),
+        dbLocal.lerTabela("estoque_produtos"),
+        dbLocal.lerTabela("patrimonio"),
+        dbLocal.lerTabela("estoque_movimentacoes"),
+        dbLocal.lerTabela("movimentacoes")
+      ]);
+
+      const temCache = (produtosCache && produtosCache.length) || (patrimoniosCache && patrimoniosCache.length);
+      if(!temCache) return false;
+
+      obras = obrasCache || [];
+      itensTodos = [
+        ...(produtosCache || []).map(itemDeEstoqueProduto),
+        ...(patrimoniosCache || []).map(itemDePatrimonio)
+      ];
+      movimentacoesEstoque = movEstCache || [];
+      movimentacoesPatrimonio = movPatCache || [];
+
+      aplicarRegraAcesso();
+      carregarFiltroObras();
+      renderizarTudo();
+
+      atualizarContexto(
+        podeVerTudo ? "Todas as obras/setores autorizados" : (obraSelecionadaId ? nomeObra(obraSelecionadaId) : "CD / sem obra"),
+        "Dados carregados do dispositivo. Se houver internet, o sistema atualiza em segundo plano."
+      );
+
+      console.log(`BDR cache rápido: estoque carregado do IndexedDB (${itensTodos.length})`);
+      return true;
+    }catch(e){
+      console.warn("BDR: falha ao carregar cache rápido do estoque:", e);
+      return false;
+    }
+  }
+
   async function carregarDados(){
     const banco = db();
-    if(!banco){
-      alert("Supabase não carregado. Confira JS/supabaseClient.js");
+    const offline = window.BDROfflineSync;
+
+    if(!banco && !offline && !window.BDROfflineDB){
+      alert("Supabase/offline não carregado. Confira JS/supabaseClient.js, JS/offlineDB.js e JS/offlineSync.js");
       return;
     }
 
-    const obrasResp = await banco.from("obras").select("*").eq("ativa", true).order("nome");
-    if(obrasResp.error){ console.error(obrasResp.error); alert(obrasResp.error.message); return; }
-    obras = obrasResp.data || [];
+    atualizarContexto("Carregando estoque...", "Primeiro buscando dados salvos no dispositivo.");
 
-    const prodResp = await banco.from("estoque_produtos").select("*").order("id", { ascending:false });
-    if(prodResp.error){ console.error(prodResp.error); alert(prodResp.error.message); return; }
+    const cacheOk = await carregarDadosDoCacheRapido();
 
-    const patResp = await banco.from("patrimonio").select("*").order("id", { ascending:false });
-    if(patResp.error){ console.error(patResp.error); alert(patResp.error.message); return; }
+    let onlineReal = false;
+    try{
+      if(window.estaOnlineReal){
+        onlineReal = await window.estaOnlineReal({forcar:true});
+      }else{
+        onlineReal = navigator.onLine === true;
+      }
+    }catch(e){
+      onlineReal = false;
+    }
 
-    itensTodos = [
-      ...(prodResp.data || []).map(itemDeEstoqueProduto),
-      ...(patResp.data || []).map(itemDePatrimonio)
-    ];
+    if(!onlineReal){
+      if(offline && typeof offline.atualizarStatusTela === "function"){
+        offline.atualizarStatusTela();
+      }
 
-    const movEstResp = await banco.from("estoque_movimentacoes").select("*").order("id", { ascending:false }).limit(300);
-    if(movEstResp.error){ console.warn("Movimentações estoque:", movEstResp.error.message); }
-    movimentacoesEstoque = movEstResp.data || [];
+      if(cacheOk){
+        console.log("BDR estoque: offline real, mantendo dados do cache.");
+        return;
+      }
 
-    const movPatResp = await banco.from("movimentacoes").select("*").order("id", { ascending:false }).limit(300);
-    if(movPatResp.error){ console.warn("Movimentações patrimônio:", movPatResp.error.message); }
-    movimentacoesPatrimonio = movPatResp.data || [];
+      atualizarContexto("Sem dados offline", "Abra esta tela uma vez com internet para salvar o estoque no aparelho.");
+      renderizarTudo();
+      return;
+    }
 
-    aplicarRegraAcesso();
-    carregarFiltroObras();
-    renderizarTudo();
+    if(!banco){
+      if(cacheOk) return;
+      alert("Supabase não carregado e ainda não existe cache local.");
+      return;
+    }
+
+    try{
+      const carregarTabela = async (nomeTabela, buscarOnline, opcoes = {}) => {
+        if(offline && typeof offline.carregarTabela === "function"){
+          return await offline.carregarTabela(nomeTabela, buscarOnline, opcoes);
+        }
+        const resp = await buscarOnline();
+        if(resp.error) throw resp.error;
+        return resp.data || [];
+      };
+
+      const obrasOnline = await carregarTabela("obras", async () => {
+        return await banco.from("obras").select("*").eq("ativa", true).order("nome");
+      }, { timeout: 1200 });
+
+      const produtos = await carregarTabela("estoque_produtos", async () => {
+        return await banco.from("estoque_produtos").select("*").order("id", { ascending:false });
+      }, { timeout: 1200 });
+
+      const patrimonios = await carregarTabela("patrimonio", async () => {
+        return await banco.from("patrimonio").select("*").order("id", { ascending:false });
+      }, { timeout: 1200 });
+
+      const movEst = await carregarTabela("estoque_movimentacoes", async () => {
+        return await banco.from("estoque_movimentacoes").select("*").order("id", { ascending:false }).limit(300);
+      }, { timeout: 1200 });
+
+      const movPat = await carregarTabela("movimentacoes", async () => {
+        return await banco.from("movimentacoes").select("*").order("id", { ascending:false }).limit(300);
+      }, { timeout: 1200 });
+
+      // Só troca a tela depois que os dados novos chegaram.
+      // Assim, se a internet cair no meio, a lista antiga/cacheada não some.
+      obras = obrasOnline || obras || [];
+      itensTodos = [
+        ...(produtos || []).map(itemDeEstoqueProduto),
+        ...(patrimonios || []).map(itemDePatrimonio)
+      ];
+      movimentacoesEstoque = movEst || movimentacoesEstoque || [];
+      movimentacoesPatrimonio = movPat || movimentacoesPatrimonio || [];
+
+      aplicarRegraAcesso();
+      carregarFiltroObras();
+      renderizarTudo();
+
+      if(offline && typeof offline.atualizarStatusTela === "function"){
+        offline.atualizarStatusTela();
+      }
+    }catch(e){
+      console.error("Erro ao carregar dados online. Mantendo cache quando existir:", e);
+
+      if(cacheOk){
+        atualizarContexto("Estoque offline", "A internet falhou, mas os dados salvos foram mantidos na tela.");
+        return;
+      }
+
+      atualizarContexto("Erro ao carregar dados", "Não foi possível carregar nem do servidor nem do cache local.");
+      alert("Não consegui carregar os dados. Abra uma vez com internet para salvar o cache offline.");
+    }
   }
 
   // =========================================================
@@ -630,8 +764,36 @@
       }
     });
 
+    window.addEventListener("online", async () => {
+      console.log("BDR: internet voltou, recarregando estoque e sincronizando cache.");
+      if(window.BDROfflineSync?.sincronizarPendentes){
+        await window.BDROfflineSync.sincronizarPendentes();
+      }
+      await carregarDados();
+    });
+
+    window.addEventListener("pageshow", async (event) => {
+      // Quando o navegador volta pelo histórico/BFCache, garante que a tela reidrata do IndexedDB.
+      if(event.persisted){
+        await carregarDados();
+      }
+    });
+
+    window.addEventListener("offline", () => {
+      console.log("BDR: modo offline ativado.");
+      if(window.BDROfflineSync?.atualizarStatusTela){
+        window.BDROfflineSync.atualizarStatusTela();
+      }
+    });
+
+    window.addEventListener("bdrOnlineRealVoltou", async () => {
+      console.log("BDR: online real voltou, atualizando estoque.");
+      await carregarDados();
+      await iniciarRealtimeSininho();
+    });
+
     await carregarDados();
-    iniciarRealtimeSininho();
+    await iniciarRealtimeSininho();
   }
 
   iniciar();
@@ -652,7 +814,6 @@ document.addEventListener("keydown", function(e){
     if(notif) notif.classList.remove("ativo");
   }
 });
-
 
 /* =========================================================
    BDR ESTOQUE - ENDEREÇAMENTO 3D + CENTRAL QR BDR

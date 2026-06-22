@@ -2,7 +2,11 @@ const supabaseUrl = "https://ytalegphxrntlomkltbc.supabase.co";
 const supabaseKey = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
 
 if(window.supabase && typeof window.supabase.createClient === "function"){
-  const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const client = window.supabase.createClient(supabaseUrl, supabaseKey, {
+    realtime: {
+      params: { eventsPerSecond: 2 }
+    }
+  });
   window.client = client;
   window.supabaseClient = client;
   console.log("SUPABASE OK");

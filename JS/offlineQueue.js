@@ -156,6 +156,8 @@ async function sincronizarOffline(){
 
   console.log(`🔄 BDR OFFLINE: sincronizando ${itens.length} item(ns).`);
 
+  let sincronizadosAgora = 0;
+
   for(const item of itens){
     try{
       let ok = false;
@@ -189,6 +191,7 @@ async function sincronizarOffline(){
       }
 
       if(ok){
+        sincronizadosAgora++;
         window.dispatchEvent(new CustomEvent("bdrOfflineSincronizado", { detail:item }));
         await removerItemOffline(item.id);
         console.log("✅ BDR OFFLINE: sincronizado", item.id);
@@ -200,8 +203,13 @@ async function sincronizarOffline(){
     }
   }
 
-  bdrMostrarAvisoOffline("✅ Sincronização concluída.");
-  if(typeof bdrAtualizarStatusGlobal === "function") setTimeout(bdrAtualizarStatusGlobal, 100);
+  if(sincronizadosAgora > 0){
+    bdrMostrarAvisoOffline(`✅ ${sincronizadosAgora} pendência(s) sincronizada(s).`);
+  }
+
+  if(typeof bdrAtualizarStatusGlobal === "function"){
+    setTimeout(bdrAtualizarStatusGlobal, 100);
+  }
 }
 
 /* =========================================================
@@ -506,10 +514,19 @@ async function contarFilaOffline(){
 /* =========================================================
    [06] EVENTOS / AVISO
 ========================================================= */
-window.addEventListener("online", () => {
+window.addEventListener("online", async () => {
   console.log("🌐 BDR OFFLINE: internet voltou.");
-  bdrMostrarAvisoOffline("🌐 Internet voltou. Sincronizando...");
-  sincronizarOffline();
+
+  const total = await contarFilaOffline().catch(() => 0);
+
+  if(total > 0){
+    bdrMostrarAvisoOffline("🌐 Internet voltou. Sincronizando pendências...");
+    sincronizarOffline();
+  }else{
+    if(typeof bdrAtualizarStatusGlobal === "function"){
+      setTimeout(bdrAtualizarStatusGlobal, 100);
+    }
+  }
 });
 
 window.addEventListener("offline", () => {
@@ -564,7 +581,6 @@ window.bdrSalvarInsert = bdrSalvarInsert;
 window.bdrSalvarUpdate = bdrSalvarUpdate;
 window.bdrSalvarDelete = bdrSalvarDelete;
 
-
 /* =========================================================
    BDR STATUS GLOBAL DE INTERNET / FILA
    Barra pequena igual app: online, offline, pendente.
@@ -615,15 +631,9 @@ async function bdrAtualizarStatusGlobal(){
     return;
   }
 
-  el.innerHTML = "🟢 Tudo sincronizado";
-  el.style.background = "#16a34a";
-  el.style.color = "#fff";
-  el.style.display = "flex";
-
-  clearTimeout(window.__bdrStatusGlobalTimer);
-  window.__bdrStatusGlobalTimer = setTimeout(() => {
-    if(estaOnline()) el.style.display = "none";
-  }, 2600);
+  // Quando está online e não há pendências, não mostra nada.
+  // Evita aparecer "Tudo sincronizado" toda vez que troca de tela.
+  el.style.display = "none";
 }
 
 window.addEventListener("online", () => setTimeout(bdrAtualizarStatusGlobal, 400));

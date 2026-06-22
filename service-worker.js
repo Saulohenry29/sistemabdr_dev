@@ -1,5 +1,5 @@
-/* BDR ERP - Service Worker V3 */
-const BDR_CACHE_VERSION = "bdr-erp-v3.0.0";
+/* BDR ERP - Service Worker V4 SAFE OFFLINE */
+const BDR_CACHE_VERSION = "bdr-erp-v4.0.0";
 
 const BDR_ASSETS = [
   "./",
@@ -31,6 +31,8 @@ const BDR_ASSETS = [
   "./JS/auth.js",
   "./JS/bdrCore.js",
   "./JS/bdrSessaoRealtime.js",
+  "./JS/offlineDB.js",
+  "./JS/offlineSync.js",
   "./JS/offlineQueue.js",
   "./JS/bdrLocalCache.js",
   "./JS/bdrSininhoDashboard.js",
@@ -49,11 +51,8 @@ self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(BDR_CACHE_VERSION).then(async cache => {
       for(const asset of BDR_ASSETS){
-        try{
-          await cache.add(asset);
-        }catch(e){
-          console.warn("Cache parcial:", asset, e.message || e);
-        }
+        try{ await cache.add(asset); }
+        catch(e){ console.warn("Cache parcial:", asset, e.message || e); }
       }
     })
   );
@@ -73,11 +72,18 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(req.url);
 
-  if(
-    url.hostname.includes("supabase.co") ||
-    url.hostname.includes("cdn.jsdelivr.net") ||
-    url.hostname.includes("cdnjs.cloudflare.com")
-  ){
+  if(url.hostname.includes("supabase.co")) return;
+
+  if(url.hostname.includes("cdn.jsdelivr.net") || url.hostname.includes("cdnjs.cloudflare.com")){
+    event.respondWith(
+      caches.match(req).then(cached => {
+        return cached || fetch(req).then(resp => {
+          const clone = resp.clone();
+          caches.open(BDR_CACHE_VERSION).then(cache => cache.put(req, clone));
+          return resp;
+        }).catch(() => cached);
+      })
+    );
     return;
   }
 
@@ -108,7 +114,5 @@ self.addEventListener("fetch", event => {
 });
 
 self.addEventListener("message", event => {
-  if(event.data && event.data.type === "SKIP_WAITING"){
-    self.skipWaiting();
-  }
+  if(event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
