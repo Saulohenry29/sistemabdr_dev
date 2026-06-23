@@ -108,7 +108,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 <!-- ===================================== -->
 
 <script src="JS/auth.js"></script>
-<script src="./JS/bdrSessaoRealtime.js"></script>
+<!-- Sessão realtime removida nesta tela offline-first para não travar sem internet -->
 <script>
   verificarLogin();
 </script>
@@ -218,7 +218,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
         <span id="notifBadge" class="notif-badge">0</span>
       </button>
 
-      <div id="notifDropdown" class="notif-dropdown">
+      <div id="notifDropdown" class="notif-dropdown" onclick="event.stopPropagation()">
         <div class="notif-head">🔔 Central de notificações</div>
         <div id="notifLista" class="notif-list">
           <div class="notif-item">Nenhuma notificação no momento.</div>
@@ -299,18 +299,9 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
     Patrimônio já existente / legado
   </label>
 
-  <div id="camposLegado" class="grid" style="display:none;margin-top:10px;">
-    <input id="codigo_antigo" placeholder="Código antigo patrimônio">
-
-    <select id="estado_conservacao">
-      <option value="">Estado conservação</option>
-      <option value="NOVO">Novo</option>
-      <option value="BOM">Bom</option>
-      <option value="REGULAR">Regular</option>
-      <option value="RUIM">Ruim</option>
-    </select>
-  </div>
-
+<div id="camposLegado" class="grid" style="display:none;margin-top:10px;">
+  <input id="codigo_antigo" placeholder="Código antigo do patrimônio">
+</div>
   <br>
 
   <textarea id="observacao" placeholder="Observações do patrimônio..."></textarea>
@@ -422,7 +413,13 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
 <script src="./JS/offlineQueue.js"></script>
-<script src="./JS/bdrLocalCache.js"></script>
+<!-- bdrLocalCache removido nesta tela offline-first -->
+
+<!-- OFFLINE-FIRST PROFISSIONAL BDR -->
+<script src="./JS/offlineDB.js"></script>
+<script src="./JS/bdrSyncEngine.js"></script>
+<script src="./JS/bdrSyncCenter.js"></script>
+<script src="./JS/bdrSininhoDashboard.js"></script>
 <script>
 let obras = [];
 let patrimonios = [];
@@ -438,10 +435,6 @@ function db(){
   return window.client || window.supabaseClient || null;
 }
 
-function patrimonioOffline(){
-  return navigator.onLine === false || (typeof estaOnline === "function" && !estaOnline()) || !db();
-}
-
 function patrimonioErroInternet(err){
   const msg = String(err?.message || err || "").toLowerCase();
   return msg.includes("failed to fetch") ||
@@ -449,6 +442,49 @@ function patrimonioErroInternet(err){
          msg.includes("networkerror") ||
          msg.includes("err_internet") ||
          msg.includes("err_name_not_resolved");
+}
+
+let BDR_PATRIMONIO_ONLINE_REAL = null;
+
+async function patrimonioOnlineReal(){
+  if(navigator.onLine === false) return false;
+  if(!db()) return false;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1800);
+
+  try{
+    const { error } = await db()
+      .from("obras")
+      .select("id")
+      .limit(1)
+      .abortSignal(controller.signal);
+
+    clearTimeout(timer);
+
+    if(error) return false;
+
+    BDR_PATRIMONIO_ONLINE_REAL = true;
+    return true;
+  }catch(e){
+    clearTimeout(timer);
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    return false;
+  }
+}
+
+function patrimonioOffline(){
+  return BDR_PATRIMONIO_ONLINE_REAL === false ||
+         navigator.onLine === false ||
+         (typeof estaOnline === "function" && !estaOnline()) ||
+         !db();
+}
+
+function mostrarAvisoModoOffline(){
+  const topo = document.getElementById("obraAtivaTexto");
+  if(topo && BDR_PATRIMONIO_ONLINE_REAL === false){
+    topo.innerText = "📴 MODO OFFLINE - usando cache local";
+  }
 }
 
 async function salvarOperacaoPatrimonioOffline(tipo, tabela, dados, opcoes={}){
@@ -463,6 +499,49 @@ async function salvarOperacaoPatrimonioOffline(tipo, tabela, dados, opcoes={}){
   });
 
   return true;
+}
+
+/* =========================================================
+   BDR OFFLINE-FIRST PROFISSIONAL
+   Modelo para seguir nas outras telas:
+   - grava primeiro no tablet/fila
+   - atualiza a tela na hora
+   - sincroniza automático pelo BDRSyncEngine
+========================================================= */
+async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
+  if(window.BDRSync?.criar){
+    await window.BDRSync.criar(tabela, payload, {
+      origem:"patrimonio.html",
+      ...meta
+    });
+    return { offlineFirst:true, error:null };
+  }
+
+  // Fallback antigo se o Sync Engine ainda não carregou
+  const { error } = await db().from(tabela).insert([payload]);
+  return { offlineFirst:false, error };
+}
+
+async function bdrAtualizarPrimeiroNoTablet(tabela, match, payload, meta={}){
+  if(window.BDRSync?.atualizar){
+    await window.BDRSync.atualizar(tabela, match, payload, {
+      origem:"patrimonio.html",
+      ...meta
+    });
+    return { offlineFirst:true, error:null };
+  }
+
+  let query = db().from(tabela).update(payload);
+  Object.entries(match || {}).forEach(([campo, valor]) => {
+    query = query.eq(campo, valor);
+  });
+
+  const { error } = await query;
+  return { offlineFirst:false, error };
+}
+
+function bdrAvisoSalvoTablet(texto="Salvo no tablet. Está pendente de sincronização. Pode continuar trabalhando."){
+  alert("📦 " + texto);
 }
 
 function usuarioAtual(){
@@ -484,62 +563,10 @@ function toggleMenuUsuario(event){
   document.getElementById("notifDropdown")?.classList.remove("ativo");
 }
 
-function toggleNotificacoes(event){
-  if(event) event.stopPropagation();
-  document.getElementById("notifDropdown")?.classList.toggle("ativo");
-  document.getElementById("dropdownUser")?.classList.remove("ativo");
-}
-
 function fecharMenusTopo(){
   document.getElementById("dropdownUser")?.classList.remove("ativo");
-  document.getElementById("notifDropdown")?.classList.remove("ativo");
 }
 document.addEventListener("click", fecharMenusTopo);
-
-function atualizarNotificacoes(lista){
-  const badge = document.getElementById("notifBadge");
-  const box = document.getElementById("notifLista");
-  if(!badge || !box) return;
-  const total = lista.length;
-  badge.innerText = total > 9 ? "9+" : total;
-  badge.style.display = total > 0 ? "inline-flex" : "none";
-  if(total === 0){
-    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
-    return;
-  }
-  box.innerHTML = lista.map(n => `
-    <div class="notif-item" onclick="${n.acao || ''}">
-      <strong>${n.titulo}</strong>
-      <span>${n.texto}</span>
-    </div>
-  `).join("");
-}
-
-async function gerarNotificacoesPadrao(){
-  const banco = db();
-  if(!banco){ atualizarNotificacoes([]); return; }
-  const lista = [];
-  try{
-    const usuario = usuarioAtual();
-    const perfil = String(usuario?.perfil || "").toUpperCase();
-    const isGestao = perfil === "MASTER" || perfil === "ADMIN" || perfil === "ALMOXARIFE";
-    const pedResp = await banco.from("pedidos_retirada").select("id,codigo,status,obra_nome,solicitante,criado_em").order("id",{ascending:false}).limit(20);
-    const pedidos = pedResp.data || [];
-    const abertos = pedidos.filter(p => ["AGUARDANDO_AUTORIZACAO","EM_SEPARACAO","AGUARDANDO_RETIRADA","EM_TRANSITO","AGUARDANDO_CONFERENCIA"].includes(p.status));
-    const aguardando = pedidos.filter(p => p.status === "AGUARDANDO_AUTORIZACAO");
-    if(isGestao && aguardando.length > 0){
-      lista.push({titulo:"📝 Pedido aguardando autorização", texto:`${aguardando.length} pedido(s) precisam de autorização.`, acao:"ir('retirada.html')"});
-    }
-    if(abertos.length > 0){
-      const p = abertos[0];
-      lista.push({titulo:"📦 Pedido em andamento", texto:`${p.codigo || 'PED-' + p.id} - ${p.status} - ${p.obra_nome || '-'}`, acao:"ir('pedidos.html')"});
-    }
-    atualizarNotificacoes(lista);
-  }catch(e){
-    console.warn("Erro ao gerar notificações:", e);
-    atualizarNotificacoes([]);
-  }
-}
 
 function usuarioEhGestao(){
   const u = usuarioAtual();
@@ -605,49 +632,72 @@ function mascaraMoeda(input){
 
 async function carregarObras(){
 
-  const { data, error } = await db()
-    .from("obras")
-    .select("*")
-    .eq("ativa", true)
-    .order("nome");
+  const preencherSelectObras = () => {
+    const select = document.getElementById("obraSelect");
+    const novaSelect = document.getElementById("novaObraSelect");
 
-  if(error){
-    console.error(error);
-    alert(error.message);
-    return;
-  }
+    if(!select || !novaSelect) return;
 
-  obras = data || [];
+    select.innerHTML = `<option value="">Selecione a obra/setor</option>`;
+    novaSelect.innerHTML = `<option value="">Selecione nova obra/setor</option>`;
 
-  const select = document.getElementById("obraSelect");
-  const novaSelect = document.getElementById("novaObraSelect");
+    obras.forEach(o => {
+      const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
+      select.innerHTML += `<option value="${o.id}">${texto}</option>`;
+      novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
+    });
 
-  select.innerHTML = `<option value="">Selecione a obra/setor</option>`;
-  novaSelect.innerHTML = `<option value="">Selecione nova obra/setor</option>`;
+    const usuario = usuarioAtual();
 
-  obras.forEach(o => {
-    const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
+    if(usuario && !usuarioEhGestao()){
+      if(usuario.obra_id){
+        select.value = usuario.obra_id;
+        select.disabled = true;
 
-    select.innerHTML += `<option value="${o.id}">${texto}</option>`;
-    novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
-  });
+        const obraUsuario = obras.find(o =>
+          String(o.id) === String(usuario.obra_id)
+        );
 
-  const usuario = usuarioAtual();
-
-  if(usuario && !usuarioEhGestao()){
-    if(usuario.obra_id){
-      select.value = usuario.obra_id;
-      select.disabled = true;
-
-      const obraUsuario = obras.find(o =>
-        String(o.id) === String(usuario.obra_id)
-      );
-
-      if(obraUsuario){
-        window.obraAtiva = obraUsuario;
-        window.obraTravada = true;
+        if(obraUsuario){
+          window.obraAtiva = obraUsuario;
+          window.obraTravada = true;
+        }
       }
     }
+  };
+
+  try{
+    const onlineReal = await patrimonioOnlineReal();
+
+    if(!onlineReal){
+      obras = await BDROfflineDB.lerTabela("obras") || [];
+      preencherSelectObras();
+      mostrarAvisoModoOffline();
+      return;
+    }
+
+    const { data, error } = await db()
+      .from("obras")
+      .select("*")
+      .eq("ativa", true)
+      .order("nome");
+
+    if(error) throw error;
+
+    obras = data || [];
+
+    if(window.BDROfflineDB?.salvarTabela){
+      await BDROfflineDB.salvarTabela("obras", obras);
+    }
+
+    preencherSelectObras();
+
+  }catch(e){
+    console.warn("Patrimônio: falha ao carregar obras online, usando cache:", e.message || e);
+    obras = await BDROfflineDB.lerTabela("obras") || [];
+    preencherSelectObras();
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    mostrarAvisoModoOffline();
   }
 }
 
@@ -777,27 +827,29 @@ function mostrarCampos(){
     `;
   }
 
-  if(tipo === "VEICULO"){
-    div.innerHTML = `
-      <input id="placa" placeholder="Placa">
-      <input id="marca" placeholder="Marca">
-      <input id="modelo" placeholder="Modelo">
-      <input id="cor" placeholder="Cor">
-      <input id="ano" placeholder="Ano">
-      <input id="combustivel" placeholder="Combustível">
-    `;
-  }
-
+if(tipo === "VEICULO"){
+  div.innerHTML = `
+    <input id="placa" placeholder="Placa">
+    <input id="marca" placeholder="Marca">
+    <input id="modelo" placeholder="Modelo">
+    <input id="cor" placeholder="Cor">
+    <input id="ano_fabricacao" placeholder="Ano fabricação">
+    <input id="ano_modelo" placeholder="Ano modelo">
+    <input id="combustivel" placeholder="Combustível">
+    <input id="horimetro" placeholder="KM / Horímetro">
+  `;
+}
   if(tipo === "MAQUINA"){
-    div.innerHTML = `
-      <input id="marca" placeholder="Marca">
-      <input id="modelo" placeholder="Modelo">
-      <input id="potencia" placeholder="Potência">
-      <input id="horimetro" placeholder="Horímetro">
-      <input id="combustivel" placeholder="Combustível">
-      <input id="ano_fabricacao" placeholder="Ano fabricação">
-    `;
-  }
+  div.innerHTML = `
+    <input id="marca" placeholder="Marca">
+    <input id="modelo" placeholder="Modelo">
+    <input id="potencia" placeholder="Potência">
+    <input id="horimetro" placeholder="KM / Horímetro">
+    <input id="combustivel" placeholder="Combustível">
+    <input id="ano_fabricacao" placeholder="Ano fabricação">
+    <input id="ano_modelo" placeholder="Ano modelo">
+  `;
+}
 
   if(tipo === "MOBILIARIO" || tipo === "MATERIAL_APOIO"){
     div.innerHTML = `
@@ -832,32 +884,54 @@ async function gerarPatrimonio(){
 
 const prefixoCodigo = "PAT-" + (obra.codigo_obra || "");
 
-const { data: ultimo, error: erroUltimo } = await db()
-  .from("patrimonio")
-  .select("codigo_qr")
-  .like("codigo_qr", prefixoCodigo + "%")
-  .order("codigo_qr", { ascending:false })
-  .limit(1);
-
-if(erroUltimo){
-  alert("Erro ao buscar último código.");
-  return;
-}
-
 let sequencial = 1;
 
-if(ultimo && ultimo.length > 0 && ultimo[0].codigo_qr){
-  const ultimoCodigo = ultimo[0].codigo_qr;
-  const numeroFinal = ultimoCodigo.replace(prefixoCodigo, "");
-  sequencial = Number(numeroFinal) + 1;
+try{
+  const onlineReal = await patrimonioOnlineReal();
+
+  if(onlineReal){
+    const { data: ultimo, error: erroUltimo } = await db()
+      .from("patrimonio")
+      .select("codigo_qr")
+      .like("codigo_qr", prefixoCodigo + "%")
+      .order("codigo_qr", { ascending:false })
+      .limit(1);
+
+    if(erroUltimo) throw erroUltimo;
+
+    if(ultimo && ultimo.length > 0 && ultimo[0].codigo_qr){
+      const ultimoCodigo = ultimo[0].codigo_qr;
+      const numeroFinal = ultimoCodigo.replace(prefixoCodigo, "");
+      sequencial = Number(numeroFinal) + 1;
+    }
+  }else{
+    const cachePat = await BDROfflineDB.lerTabela("patrimonio") || [];
+    const locais = patrimonios || [];
+    const todos = [...cachePat, ...locais];
+
+    const codigos = todos
+      .map(p => p.codigo_qr)
+      .filter(c => String(c || "").startsWith(prefixoCodigo))
+      .sort()
+      .reverse();
+
+    if(codigos.length){
+      const numeroFinal = String(codigos[0]).replace(prefixoCodigo, "");
+      sequencial = (Number(numeroFinal) || 0) + 1;
+    }
+  }
+}catch(e){
+  console.warn("Não foi possível calcular sequência online. Usando sequência local temporária.", e.message || e);
+  sequencial = Number(Date.now().toString().slice(-4));
 }
 
 const codigo_qr =
   prefixoCodigo +
   String(sequencial).padStart(4, "0");
+
 const usuarioLogado = JSON.parse(
   localStorage.getItem("usuario_logado")
-);  
+);
 const patrimonio = {
     nome_bem,
     tipo_item,
@@ -877,11 +951,13 @@ const patrimonio = {
 
     placa: valor("placa") || null,
     cor: valor("cor") || null,
-    ano: valor("ano") ? parseInt(valor("ano")) : null,
+  ano_fabricacao: valor("ano_fabricacao") ? parseInt(valor("ano_fabricacao")) : null,
+ano_modelo: valor("ano_modelo") ? parseInt(valor("ano_modelo")) : null,
 
     combustivel: valor("combustivel") || null,
     potencia: valor("potencia") || null,
     horimetro: moedaParaNumero(valor("horimetro")),
+    quilometragem: moedaParaNumero(valor("quilometragem")),
     ano_fabricacao: valor("ano_fabricacao") ? parseInt(valor("ano_fabricacao")) : null,
 
     valor_bem: moedaParaNumero(valor("valor_bem")),
@@ -897,21 +973,29 @@ usuario_cadastro:
   usuarioLogado?.nome || "Usuário não identificado",
   };
 
-  const { error } = await db()
-    .from("patrimonio")
-    .insert([patrimonio]);
+  const resp = await bdrSalvarPrimeiroNoTablet("patrimonio", patrimonio, {
+    acao:"CADASTRO_PATRIMONIO",
+    codigo_qr
+  });
 
-  if(error){
-    console.error(error);
-    alert(error.message);
+  if(resp.error){
+    console.error(resp.error);
+    alert(resp.error.message || "Erro ao salvar patrimônio.");
     return;
   }
 
-  alert("Patrimônio criado: " + codigo_qr);
+  // Atualiza a tela na hora, mesmo antes da sincronização terminar
+  patrimonios.unshift({
+    ...patrimonio,
+    id: "LOCAL-" + Date.now(),
+    __offline_pendente: true
+  });
 
+  bdrAvisoSalvoTablet("Patrimônio criado offline: " + codigo_qr + "\nSerá sincronizado automaticamente quando a internet voltar.");
   limparFormularioCadastro();
-  carregarPatrimonios();
-}function limparFormularioCadastro(){
+  renderizarPatrimonios();
+}
+function limparFormularioCadastro(){
   document.getElementById("nome_bem").value = "";
   document.getElementById("tipo_item").value = "";
   document.getElementById("status_inicial").value = "ESTOQUE";
@@ -920,7 +1004,12 @@ usuario_cadastro:
   document.getElementById("campoOutroTipo").style.display = "none";
   document.getElementById("observacao").value = "";
   document.getElementById("codigo_antigo").value = "";
-  document.getElementById("estado_conservacao").value = "";
+
+  const campoEstado = document.getElementById("estado_conservacao");
+  if(campoEstado){
+    campoEstado.value = "";
+  }
+
   document.getElementById("checkLegado").checked = false;
   document.getElementById("camposLegado").style.display = "none";
   document.getElementById("camposExtras").innerHTML = "";
@@ -928,32 +1017,52 @@ usuario_cadastro:
 
 async function carregarPatrimonios(){
 
-  const { data, error } = await db()
-    .from("patrimonio")
-    .select("*")
-    .order("id", { ascending:false });
+  try{
+    const onlineReal = await patrimonioOnlineReal();
 
-  if(error){
-    console.error(error);
-    alert(error.message);
-    return;
-  }
-
-  let dados = data || [];
-  const usuario = usuarioAtual();
-
-  if(usuario && !usuarioEhGestao()){
-    if(usuario.obra_id){
-      dados = dados.filter(p =>
-        String(p.obra_id) === String(usuario.obra_id)
-      );
-    }else{
-      dados = [];
+    if(!onlineReal){
+      patrimonios = await BDROfflineDB.lerTabela("patrimonio") || [];
+      renderizarPatrimonios();
+      mostrarAvisoModoOffline();
+      return;
     }
-  }
 
-  patrimonios = dados;
-  renderizarPatrimonios();
+    const { data, error } = await db()
+      .from("patrimonio")
+      .select("*")
+      .neq("ativo", false)
+      .order("id", { ascending:false });
+
+    if(error) throw error;
+
+    let dados = data || [];
+    const usuario = usuarioAtual();
+
+    if(usuario && !usuarioEhGestao()){
+      if(usuario.obra_id){
+        dados = dados.filter(p =>
+          String(p.obra_id) === String(usuario.obra_id)
+        );
+      }else{
+        dados = [];
+      }
+    }
+
+    patrimonios = dados;
+
+    if(window.BDROfflineDB?.salvarTabela){
+      await BDROfflineDB.salvarTabela("patrimonio", patrimonios);
+    }
+
+    renderizarPatrimonios();
+
+  }catch(e){
+    console.warn("Patrimônio: falha ao carregar patrimônios online, usando cache:", e.message || e);
+    patrimonios = await BDROfflineDB.lerTabela("patrimonio") || [];
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    renderizarPatrimonios();
+    mostrarAvisoModoOffline();
+  }
 }
 
 function renderizarPatrimonios(){
@@ -1138,23 +1247,26 @@ const usuarioLogado = JSON.parse(
   localStorage.getItem("usuario_logado")
 );
 
-  const { error } = await db()
-    .from("movimentacoes")
-    .insert([{
-      patrimonio_id: dados.patrimonio_id,
-      empresa_id: dados.empresa_id,
-      obra_origem_id: dados.obra_origem_id,
-      obra_destino_id: dados.obra_destino_id,
-      tipo: dados.tipo,
-      status_anterior: dados.status_anterior,
-      status_novo: dados.status_novo,
-      observacao: dados.observacao,
-usuario: usuarioLogado?.nome || "Usuário não identificado",
-data_movimentacao: agoraLocal    }]);
+  const payloadMovimentacao = {
+    patrimonio_id: dados.patrimonio_id,
+    empresa_id: dados.empresa_id,
+    obra_origem_id: dados.obra_origem_id,
+    obra_destino_id: dados.obra_destino_id,
+    tipo: dados.tipo,
+    status_anterior: dados.status_anterior,
+    status_novo: dados.status_novo,
+    observacao: dados.observacao,
+    usuario: usuarioLogado?.nome || "Usuário não identificado",
+    data_movimentacao: agoraLocal
+  };
 
-  if(error){
-    console.error(error);
-    alert("Erro ao gravar movimentação: " + error.message);
+  const resp = await bdrSalvarPrimeiroNoTablet("movimentacoes", payloadMovimentacao, {
+    acao:"MOVIMENTACAO_PATRIMONIO"
+  });
+
+  if(resp.error){
+    console.error(resp.error);
+    alert("Erro ao gravar movimentação: " + resp.error.message);
     return false;
   }
 
@@ -1213,16 +1325,24 @@ async function alterarStatus(novoStatus){
     return;
   }
 
-  const { error } = await db()
-    .from("patrimonio")
-    .update({ status: novoStatus })
-    .eq("id", patrimonioSelecionado.id);
+  const respStatus = await bdrAtualizarPrimeiroNoTablet(
+    "patrimonio",
+    { id: patrimonioSelecionado.id },
+    { status: novoStatus },
+    { acao:"ALTERACAO_STATUS_PATRIMONIO" }
+  );
 
-  if(error){
-    console.error(error);
-    alert(error.message);
+  if(respStatus.error){
+    console.error(respStatus.error);
+    alert(respStatus.error.message || "Erro ao alterar status.");
     return;
   }
+
+  patrimonios = patrimonios.map(p =>
+    Number(p.id) === Number(patrimonioSelecionado.id)
+      ? {...p, status:novoStatus, __offline_pendente:true}
+      : p
+  );
 
   await gravarMovimentacao({
     patrimonio_id: patrimonioSelecionado.id,
@@ -1235,10 +1355,10 @@ async function alterarStatus(novoStatus){
     observacao: obs
   });
 
-  alert("Status alterado com sucesso.");
+  bdrAvisoSalvoTablet("Status alterado no tablet. Sincronização automática em andamento.");
 
   fecharModal();
-  carregarPatrimonios();
+  renderizarPatrimonios();
 }
 
 async function trocarObra(){
@@ -1315,16 +1435,24 @@ async function trocarObra(){
     return;
   }
 
-  const { error } = await db()
-    .from("patrimonio")
-    .update(payload)
-    .eq("id", patrimonioSelecionado.id);
+  const respTroca = await bdrAtualizarPrimeiroNoTablet(
+    "patrimonio",
+    { id: patrimonioSelecionado.id },
+    payload,
+    { acao:"TROCA_SETOR_PATRIMONIO" }
+  );
 
-  if(error){
-    console.error(error);
-    alert(error.message);
+  if(respTroca.error){
+    console.error(respTroca.error);
+    alert(respTroca.error.message || "Erro ao transferir patrimônio.");
     return;
   }
+
+  patrimonios = patrimonios.map(p =>
+    Number(p.id) === Number(patrimonioSelecionado.id)
+      ? {...p, ...payload, __offline_pendente:true}
+      : p
+  );
 
   await gravarMovimentacao({
     patrimonio_id: patrimonioSelecionado.id,
@@ -1337,10 +1465,10 @@ async function trocarObra(){
     observacao: obs
   });
 
-  alert("Patrimônio transferido com sucesso.");
+  bdrAvisoSalvoTablet("Transferência salva no tablet. Sincronização automática em andamento.");
 
   fecharModal();
-  carregarPatrimonios();
+  renderizarPatrimonios();
 }
 
 function imprimirEtiqueta(){
@@ -1456,16 +1584,24 @@ async function salvarEdicaoPatrimonio(){
     return;
   }
 
-  const { error } = await db()
-    .from("patrimonio")
-    .update(dadosAtualizados)
-    .eq("id", patrimonioSelecionado.id);
+  const respEdicao = await bdrAtualizarPrimeiroNoTablet(
+    "patrimonio",
+    { id: patrimonioSelecionado.id },
+    dadosAtualizados,
+    { acao:"CORRECAO_CADASTRAL_PATRIMONIO", motivo }
+  );
 
-  if(error){
-    console.error(error);
-    alert(error.message);
+  if(respEdicao.error){
+    console.error(respEdicao.error);
+    alert(respEdicao.error.message || "Erro ao salvar correção.");
     return;
   }
+
+  patrimonios = patrimonios.map(p =>
+    Number(p.id) === Number(patrimonioSelecionado.id)
+      ? {...p, ...dadosAtualizados, __offline_pendente:true}
+      : p
+  );
 
   await gravarMovimentacao({
     patrimonio_id: patrimonioSelecionado.id,
@@ -1478,20 +1614,25 @@ async function salvarEdicaoPatrimonio(){
     observacao: motivo
   });
 
-  alert("Correção cadastral salva com sucesso!");
+  bdrAvisoSalvoTablet("Correção cadastral salva no tablet. Sincronização automática em andamento.");
 
   fecharEdicao();
   fecharModal();
-  carregarPatrimonios();
+  renderizarPatrimonios();
 }
 async function iniciar(){
 
   carregarUsuarioTopo();
-  if(!patrimonioOffline()) gerarNotificacoesPadrao();
 
   if(!db()){
-    alert("Supabase não carregado.");
-    return;
+    console.warn("Supabase não carregado. Tentando cache local.");
+  }
+
+  const onlineReal = await patrimonioOnlineReal();
+
+  if(!onlineReal){
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    mostrarAvisoModoOffline();
   }
 
   await carregarObras();
@@ -1517,12 +1658,15 @@ async function iniciar(){
   await carregarPatrimonios();
 }
 
-setInterval(() => {
-  if(!patrimonioOffline()) gerarNotificacoesPadrao();
+setInterval(async () => {
+  await patrimonioOnlineReal();
+  if(typeof BDRSyncCenter?.atualizar === "function"){
+    BDRSyncCenter.atualizar();
+  }
 }, 30000);
 iniciar();
 </script>
 
-<script src="./JS/bdrSininhoDashboard.js"></script>
+<script src="./JS/bdrUppercase.js"></script>
 </body>
 </html>

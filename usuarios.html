@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+s<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <!-- =========================================================
@@ -10,6 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/bdr-owner-core.css">
 <title>BDR - Usuários </title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -1959,7 +1960,7 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
         <div class="alert-card">
           <div class="alert-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Atenção Master</div>
           <div class="alert-body">
-            <div class="alert-shield"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="alert-shield" onclick="bdrCliqueSecretoOwner(event)" style="cursor:pointer;"><i class="fa-solid fa-shield-halved"></i></div>
             <b>Permissões críticas</b>
             <p>Apenas perfis MASTER ou ADMIN podem liberar estas opções.</p>
             <p>• Gerenciar usuários<br>• Configurações do sistema</p>
@@ -2069,5 +2070,6 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
      - Depois vamos ligar cada salvar/update/delete usando bdrSalvarInsert/bdrSalvarUpdate.
 ========================================================= -->
 <script src="./JS/offlineQueue.js"></script>
+<script src="./JS/bdr-owner-core.js"></script>
 </body>
 </html>

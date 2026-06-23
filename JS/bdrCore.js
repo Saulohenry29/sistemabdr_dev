@@ -186,3 +186,13 @@ async function registrarMovimentacao({
     alert("Erro inesperado: " + err.message);
   }
 }
+document.addEventListener("input", function(e){
+  if(
+    (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") &&
+    !e.target.matches(
+      "#usuario, #login, #senha, #formUsuario, #formEmail, #formSenha, [type='email'], [type='password'], [type='number']"
+    )
+  ){
+    e.target.value = e.target.value.toUpperCase();
+  }
+});
