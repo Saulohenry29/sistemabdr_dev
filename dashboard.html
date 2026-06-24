@@ -232,7 +232,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 /* KPIs */
 .kpi-row{
   display:grid;
-  grid-template-columns:repeat(7,1fr);
+  grid-template-columns:repeat(8,1fr);
   gap:12px;
   margin-bottom:14px;
 }
@@ -353,7 +353,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 ========================================================= */
 .bottom-grid{
   display:grid;
-  grid-template-columns:1fr;
+  grid-template-columns:1fr 1fr;
   gap:12px;
 }
 
@@ -1092,6 +1092,38 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
   }
 }
 
+
+/* =========================================================
+   BDR FOCO GERENCIAL
+   Valor patrimonial em evidência; quantidade fica em segundo plano.
+========================================================= */
+.kpi-card.valor-destaque{
+  grid-column:span 2;
+  border-color:#ddd6fe;
+  background:linear-gradient(135deg,#fff,#f5f3ff);
+}
+.kpi-card.valor-destaque .kpi-value{
+  font-size:30px;
+}
+.kpi-card.valor-destaque .kpi-label{
+  color:#7c3aed;
+}
+@media(max-width:1350px){
+  .kpi-card.valor-destaque{grid-column:span 2}
+}
+@media(max-width:800px){
+  .kpi-card.valor-destaque{grid-column:span 1}
+}
+
+
+.valor-principal{
+  border-left:5px solid #7c3aed;
+  box-shadow:0 8px 24px rgba(124,58,237,.10);
+}
+.valor-principal h3{
+  color:#7c3aed;
+}
+
 </style>
 
 <style>
@@ -1342,6 +1374,11 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
       </div>
 
       <section class="kpi-row">
+        <div class="kpi-card purple valor-destaque" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
+          <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+          <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor patrimonial total</div><div class="kpi-sub">Soma em R$ da seleção</div></div>
+        </div>
+
         <div class="kpi-card active" data-kpi="TODOS" onclick="aplicarFiltroKPI('TODOS')">
           <div class="kpi-icon"><i class="fa-solid fa-cube"></i></div>
           <div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Patrimônios</div><div class="kpi-sub">Ativos da seleção</div></div>
@@ -1367,10 +1404,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
           <div><div class="kpi-value" id="kpiBaixado">0</div><div class="kpi-label">Baixados</div><div class="kpi-sub" id="percBaixado">0% do total</div></div>
         </div>
 
-        <div class="kpi-card purple" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
-          <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
-          <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor total</div><div class="kpi-sub">Ativos da seleção</div></div>
-        </div>
+
 
         <div class="kpi-card yellow" data-kpi="SEM_VALOR" onclick="aplicarFiltroKPI('SEM_VALOR')">
           <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -1381,14 +1415,14 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
       <section class="dashboard-grid">
 
         <div class="left-stack">
-          <section class="card-light chart-card big">
-            <h3>Patrimônios por obra / setor</h3>
-            <div class="card-body"><canvas id="graficoObras"></canvas></div>
+          <section class="card-light chart-card big valor-principal">
+            <h3>💰 Valor patrimonial por obra / setor <small style="color:#6b7280;font-size:11px;">(R$)</small></h3>
+            <div class="card-body"><canvas id="graficoValorObra"></canvas></div>
           </section>
 
           <section class="card-light chart-card big">
-            <h3>Valor total por obra / setor</h3>
-            <div class="card-body"><canvas id="graficoValorObra"></canvas></div>
+            <h3>📦 Quantidade de patrimônios por obra / setor <small style="color:#6b7280;font-size:11px;">(itens)</small></h3>
+            <div class="card-body"><canvas id="graficoObras"></canvas></div>
           </section>
 
           <section class="card-light mov-card">
@@ -1425,10 +1459,18 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
           <div class="bottom-grid">
             <section class="card-light card-top5">
-              <h3>Top 5 patrimônios por valor</h3>
-              <div class="card-body" id="topValores"></div>
+              <h3>🏆 Ranking principal: obras por valor</h3>
+              <div class="card-body" id="topObrasValor"></div>
               <div class="card-body" style="padding-top:0;">
-                <button class="btn-outline" onclick="ir('patrimonio.html')">Ver todos os patrimônios</button>
+                <button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
+              </div>
+            </section>
+
+            <section class="card-light card-top5">
+              <h3>📦 Ranking secundário: obras por quantidade</h3>
+              <div class="card-body" id="topObrasQuantidade"></div>
+              <div class="card-body" style="padding-top:0;">
+                <button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
               </div>
             </section>
           </div>
@@ -2069,7 +2111,8 @@ function atualizarTudo(){
   gerarAlertas();
   gerarEstoqueNivel();
   gerarUltimasMov();
-  gerarTopValores();
+  gerarTopObrasValor();
+  gerarTopObrasQuantidade();
   const elPeriodo = document.getElementById('periodoSelecionadoTexto');
   if(elPeriodo) elPeriodo.innerText = nomePeriodoAtual();
 }
@@ -2168,14 +2211,35 @@ function doughnut(id, labels, data){
 }
 
 function gerarGraficos(){
-  const porObra = contarPor(filtrados, p => nomeObraCurto(p.obra_id));
-  bar("graficoObras", Object.keys(porObra), Object.values(porObra), true, "#d71920");
+  const ranking = rankingObrasPatrimonio();
+
+  const qtdObra = [...ranking]
+    .sort((a,b) => b.qtd - a.qtd)
+    .slice(0,10);
+
+  bar(
+    "graficoObras",
+    qtdObra.map(o => o.nome),
+    qtdObra.map(o => o.qtd),
+    true,
+    "#d71920"
+  );
 
   const porStatus = contarPor(filtrados, p => p.status || "-");
   doughnut("graficoStatus", Object.keys(porStatus), Object.values(porStatus));
 
-  const valorObra = somarPor(filtrados, p => nomeObraCurto(p.obra_id), p => valorPatrimonio(p));
-  bar("graficoValorObra", Object.keys(valorObra), Object.values(valorObra), false, "#7c3aed");
+  const valorObra = [...ranking]
+    .filter(o => o.valor > 0)
+    .sort((a,b) => b.valor - a.valor)
+    .slice(0,10);
+
+  bar(
+    "graficoValorObra",
+    valorObra.map(o => o.nome),
+    valorObra.map(o => Number(o.valor.toFixed(2))),
+    false,
+    "#7c3aed"
+  );
 
   const tipos = contarPor(filtrados, p => p.tipo_item || "Sem tipo");
   doughnut("graficoTipos", Object.keys(tipos), Object.values(tipos));
@@ -2192,7 +2256,7 @@ function gerarIA(){
   document.getElementById("analiseIA").innerHTML = `
     <div class="ai-line" onclick="mostrarItensAlerta('TODOS')">
       <span>📊</span>
-      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor total estimado de <b>${moedaCurta(valorTotal)}</b>.</div>
+      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor patrimonial de <b>${moedaCurta(valorTotal)}</b>. Valor patrimonial é a visão principal; quantidade fica separada para conferência.</div>
     </div>
 
     <div class="ai-line" onclick="mostrarItensAlerta('MANUTENCAO')">
@@ -2414,23 +2478,117 @@ function gerarUltimasMov(){
   });
 }
 
-function gerarTopValores(){
-  const top = [...patrimonioPorFiltrosTela()]
-    .filter(p => valorPatrimonio(p) > 0)
-    .sort((a,b) => valorPatrimonio(b) - valorPatrimonio(a))
+function rankingObrasPatrimonio(){
+  /*
+    Ranking oficial:
+    QUANTIDADE = número de patrimônios por obra/setor.
+    VALOR = soma oficial de valorPatrimonio(p).
+  */
+  const mapa = {};
+
+  patrimonioPorFiltrosTela().forEach(p => {
+    const obraId = String(p.obra_id || "SEM_OBRA");
+    const obraNome = nomeObraCurto(p.obra_id);
+
+    if(!mapa[obraId]){
+      mapa[obraId] = { obra_id:obraId, nome:obraNome, qtd:0, valor:0, semValor:0, itens:[] };
+    }
+
+    const v = valorPatrimonio(p);
+    mapa[obraId].qtd++;
+    mapa[obraId].valor += v;
+    if(v <= 0) mapa[obraId].semValor++;
+    mapa[obraId].itens.push(p);
+  });
+
+  return Object.values(mapa);
+}
+
+function gerarTopObrasValor(){
+  const el = document.getElementById("topObrasValor");
+  if(!el) return;
+
+  const lista = rankingObrasPatrimonio()
+    .filter(o => o.valor > 0)
+    .sort((a,b) => b.valor - a.valor)
     .slice(0,5);
 
-  if(top.length === 0){
-    document.getElementById("topValores").innerHTML = `<div class="info-row">Nenhum valor informado.</div>`;
+  if(lista.length === 0){
+    el.innerHTML = `<div class="info-row">Nenhuma obra com valor informado.</div>`;
     return;
   }
 
-  document.getElementById("topValores").innerHTML = top.map((p,i) => `
-    <div class="info-row">
-      <span>${i+1}. ${p.nome_bem || "-"}</span>
-      <b>${moedaCurta(valorPatrimonio(p))}</b>
+  el.innerHTML = lista.map((o,i) => `
+    <div class="info-row" onclick="mostrarItensObraRanking('${o.obra_id}','VALOR')" style="cursor:pointer;">
+      <span title="${escapeHtmlBDR(o.nome)}">${i+1}. ${escapeHtmlBDR(o.nome)}</span>
+      <b>${moedaCurta(o.valor)}</b>
     </div>
   `).join("");
+}
+
+function gerarTopObrasQuantidade(){
+  const el = document.getElementById("topObrasQuantidade");
+  if(!el) return;
+
+  const lista = rankingObrasPatrimonio()
+    .sort((a,b) => b.qtd - a.qtd)
+    .slice(0,5);
+
+  if(lista.length === 0){
+    el.innerHTML = `<div class="info-row">Nenhum patrimônio encontrado.</div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map((o,i) => `
+    <div class="info-row" onclick="mostrarItensObraRanking('${o.obra_id}','QTD')" style="cursor:pointer;">
+      <span title="${escapeHtmlBDR(o.nome)}">${i+1}. ${escapeHtmlBDR(o.nome)}</span>
+      <b>${o.qtd} item(ns)</b>
+    </div>
+  `).join("");
+}
+
+function mostrarItensObraRanking(obraId, modo){
+  const obra = rankingObrasPatrimonio().find(o => String(o.obra_id) === String(obraId));
+  if(!obra) return;
+
+  const lista = [...obra.itens].sort((a,b) => {
+    if(modo === "VALOR") return valorPatrimonio(b) - valorPatrimonio(a);
+    return String(a.nome_bem || "").localeCompare(String(b.nome_bem || ""));
+  });
+
+  const titulo = modo === "VALOR"
+    ? `💰 ${obra.nome} - ${moeda(obra.valor)} em patrimônio (${obra.qtd} item(ns))`
+    : `📦 ${obra.nome} - ${obra.qtd} patrimônio(s)`;
+
+  renderizarListaItensDashboard(lista, titulo);
+}
+
+function renderizarListaItensDashboard(lista, titulo){
+  const card = document.getElementById("cardItensAlerta");
+  const tbody = document.getElementById("listaItensAlerta");
+  const title = document.getElementById("tituloItensAlerta");
+
+  if(!card || !tbody || !title) return;
+
+  title.innerText = `${titulo} (${lista.length})`;
+
+  if(lista.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum item encontrado.</td></tr>`;
+  }else{
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td><b>${p.codigo_qr || "-"}</b></td>
+        <td>${p.nome_bem || "-"}</td>
+        <td>${p.status || "-"}</td>
+        <td>${p.tipo_item || "-"}</td>
+        <td>${nomeObraCurto(p.obra_id)}</td>
+        <td>${moeda(valorPatrimonio(p))}</td>
+      </tr>
+    `).join("");
+  }
+
+  card.style.display = "block";
+  card.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 /* Dashboard */
