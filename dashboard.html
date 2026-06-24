@@ -1165,6 +1165,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 <script src="./JS/auth.js"></script>
 <script src="./JS/bdrSessaoRealtime.js"></script>
 <script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
 <script>verificarLogin();</script>
 
 <div class="bdr-app">
@@ -1181,42 +1182,42 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button class="bdr-menu-btn active" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD" class="bdr-menu-btn active" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -1224,21 +1225,21 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
   
   <!-- RELATÓRIOS -->
-  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -1287,7 +1288,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
               <span id="usuarioPerfilMenu">-</span>
             </div>
 
-            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+            <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
               <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
             </button>
 
@@ -1441,7 +1442,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
                 </thead>
                 <tbody id="ultimasMov"></tbody>
               </table>
-              <button class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
+              <button data-permissao="RELATORIOS" class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
             </div>
           </section>
         </div>
@@ -1543,7 +1544,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
             </thead>
             <tbody id="listaItensAlerta"></tbody>
           </table>
-          <button class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
+          <button data-permissao="PATRIMONIO" class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
         </div>
       </section>
 

@@ -18,6 +18,7 @@
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/auth.js"></script>
 <script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
 
 <style>
 /* =========================================================
@@ -1903,7 +1904,7 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
           <div class="avatar"><i class="fa-solid fa-user"></i></div>
 
           <div id="dropdownUser" class="dropdown-user">
-            <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+            <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
               <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
             </button>
             <button type="button" class="logout-btn" onclick="logoutSeguro(); event.stopPropagation();">
@@ -2187,20 +2188,26 @@ function aplicarMenuPorPermissao(){
   const usuario = bdrUsuarioAtualPermissao();
   if(!usuario) return;
 
-  if(String(usuario.perfil || "").toUpperCase() === "MASTER"){
+  const perfil = String(usuario.perfil || "").toUpperCase();
+  const permissoes = bdrListaPermissoesUsuario(usuario);
+
+  // MASTER/ADMIN sem permissões = vê tudo
+  if((perfil === "MASTER" || perfil === "ADMIN") && permissoes.length === 0){
     document.querySelectorAll("[data-permissao]").forEach(btn => {
       btn.style.display = "";
+      btn.hidden = false;
       btn.dataset.bloqueado = "NAO";
     });
     return;
   }
 
-  const permissoes = bdrListaPermissoesUsuario(usuario);
-
+  // Usuário comum ou MASTER limitado = só vê o que estiver no campo permissoes
   document.querySelectorAll("[data-permissao]").forEach(btn => {
     const p = String(btn.dataset.permissao || "").toUpperCase();
     const liberado = permissoes.includes(p);
+
     btn.style.display = liberado ? "" : "none";
+    btn.hidden = !liberado;
     btn.dataset.bloqueado = liberado ? "NAO" : "SIM";
   });
 }

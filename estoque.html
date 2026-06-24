@@ -537,6 +537,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 <script src="./JS/auth.js"></script>
 <script src="./JS/bdrSessaoRealtime.js"></script>
 <script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
 <script>verificarLogin();</script>
 
 <div class="app-layout">
@@ -547,42 +548,42 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button class="bdr-menu-btn active" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE" class="bdr-menu-btn active" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -590,21 +591,21 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 
   
   <!-- RELATÓRIOS -->
-  <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -636,7 +637,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
         <div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div>
         <div class="avatar"><i class="fa-solid fa-user"></i></div>
         <div id="dropdownUser" class="dropdown-user">
-          <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+          <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
           <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
         </div>
       </div>
@@ -733,9 +734,9 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
     <div id="modalMovimentacoes" class="mov-lista"></div>
 
     <div class="modal-acoes">
-      <button class="btn btn-blue" onclick="ir('expedicao.html')">📋 Solicitar</button>
-      <button class="btn btn-green" onclick="ir('expedicao.html')">🚚 Expedição</button>
-      <button class="btn btn-orange" onclick="ir('expedicao.html')">📦 Catálogo</button>
+      <button data-permissao="EXPEDICAO" class="btn btn-blue" onclick="ir('expedicao.html')">📋 Solicitar</button>
+      <button data-permissao="EXPEDICAO" class="btn btn-green" onclick="ir('expedicao.html')">🚚 Expedição</button>
+      <button data-permissao="EXPEDICAO" class="btn btn-orange" onclick="ir('expedicao.html')">📦 Catálogo</button>
       <button class="btn btn-gray" onclick="fecharModalProduto()">Fechar</button>
     </div>
   </div>

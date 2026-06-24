@@ -1,0 +1,28 @@
+<!-- =========================================================
+     DROPDOWN DO USUÁRIO / AVATAR COM PERMISSÕES
+========================================================= -->
+
+<div id="dropdownUser" class="dropdown-user">
+
+  <button
+    type="button"
+    data-permissao="USUARIOS"
+    onclick="ir('usuarios.html'); event.stopPropagation();">
+    <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
+  </button>
+
+  <button
+    type="button"
+    data-permissao="CONFIGURACOES"
+    onclick="ir('configuracoes.html'); event.stopPropagation();">
+    <i class="fa-solid fa-gears"></i> Configurações
+  </button>
+
+  <button
+    type="button"
+    class="logout-btn"
+    onclick="logoutSeguro(); event.stopPropagation();">
+    <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
+  </button>
+
+</div>
