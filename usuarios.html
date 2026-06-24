@@ -1,4 +1,4 @@
-s<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <!-- =========================================================
@@ -1738,6 +1738,79 @@ button:active,
   }
 }
 
+
+.profile-card.consulta i{color:#7c3aed}
+.bdr-menu-btn[data-bloqueado="SIM"]{display:none!important}
+.bdr-salvar-fixo-removido{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:9999;
+  box-shadow:0 14px 28px rgba(215,25,32,.28)!important;
+}
+
+
+/* =========================================================
+   BDR PATCH - LAYOUT PERMISSÕES POR USUÁRIO
+========================================================= */
+.usuario-selecionado-card{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+  align-items:center;
+  background:linear-gradient(135deg,#fff,#fff1f2);
+  border:1px solid #fecaca;
+  border-left:5px solid var(--red,#d71920);
+  border-radius:16px;
+  padding:12px 16px;
+  box-shadow:0 8px 20px rgba(15,23,42,.06);
+  margin-bottom:10px;
+}
+.usuario-selecionado-card span{
+  display:block;
+  font-size:11px;
+  color:#6b7280;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.usuario-selecionado-card strong{
+  display:block;
+  font-size:17px;
+  color:#111827;
+  margin-top:2px;
+}
+.usuario-selecionado-card small{
+  display:block;
+  color:#6b7280;
+  margin-top:2px;
+  font-size:12px;
+}
+.tr.usuario-ativo{
+  background:#fff1f2!important;
+  border-left:5px solid var(--red,#d71920);
+}
+.tr.usuario-ativo .user-cell b{
+  color:var(--red,#d71920)!important;
+}
+.board{
+  grid-template-columns:1fr 1fr 1fr!important;
+}
+.panel-head{
+  background:#fff!important;
+  border-bottom:1px solid #f1f5f9!important;
+}
+.master-actions{
+  flex-wrap:wrap!important;
+}
+@media(max-width:1100px){
+  .usuario-selecionado-card{
+    grid-template-columns:1fr;
+  }
+  .board{
+    grid-template-columns:1fr!important;
+  }
+}
+
 </style>
 </head>
 
@@ -1757,39 +1830,39 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
 
   <nav class="bdr-menu">
 
-    <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+    <button class="bdr-menu-btn" data-permissao="DASHBOARD" data-tip="Dashboard" onclick="ir('dashboard.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+    <button class="bdr-menu-btn" data-permissao="ENTRADA" data-tip="Entrada" onclick="ir('entrada.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-arrow-down-wide-short"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+    <button class="bdr-menu-btn" data-permissao="TRIAGEM" data-tip="Triagem" onclick="ir('triagem.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-vials"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+    <button class="bdr-menu-btn" data-permissao="ESTOQUE" data-tip="Estoque" onclick="ir('estoque.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+    <button class="bdr-menu-btn" data-permissao="PATRIMONIO" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-tags"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Expedição" onclick="ir('expedicao.html')">
+    <button class="bdr-menu-btn" data-permissao="EXPEDICAO" data-tip="Expedição" onclick="ir('expedicao.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-truck-fast"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+    <button class="bdr-menu-btn" data-permissao="RELATORIOS" data-tip="Relatórios" onclick="ir('relatorios.html')">
       <span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span>
     </button>
 
-    <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+    <button class="bdr-menu-btn" data-permissao="EMPRESAS" data-tip="Empresas" onclick="ir('empresa.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-building"></i></span>
     </button>
 
-    <button class="bdr-menu-btn active" data-tip="Usuários" onclick="ir('usuarios.html')">
+    <button class="bdr-menu-btn active" data-permissao="USUARIOS" data-tip="Usuários" onclick="ir('usuarios.html')">
       <span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span>
     </button>
 
@@ -1803,7 +1876,7 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
       <div>
         <div class="bdr-topbar-title">👥 BDR Usuários</div>
         <div class="bdr-topbar-sub">
-          Gerenciamento de usuários, permissões, obras liberadas e controle de acesso.
+          Selecione um usuário e aplique permissões, menus liberados e obras/setores.
         </div>
       </div>
 
@@ -1891,16 +1964,16 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
     <section class="master-strip">
       <div class="master-icon"><i class="fa-solid fa-shield-halved"></i></div>
       <div>
-        <h2>Central Master de Permissões</h2>
-        <p>Defina o que cada usuário pode visualizar, solicitar e operar no sistema.</p>
+        <h2>Central de Permissões por Usuário</h2>
+        <p>Clique em um usuário na lista, marque as permissões e salve. Não precisa editar dados pessoais.</p>
       </div>
       <div class="master-actions">
         <button class="btn btn-soft btn-icon-only" title="Atualizar dados" onclick="carregarTudo()">
           <i class="fa-solid fa-rotate"></i>
         </button>
 
-        <button class="btn btn-red" onclick="abrirModalUsuario()">
-          <i class="fa-solid fa-plus"></i> Novo usuário
+        <button class="btn btn-soft" onclick="limparSelecaoPermissao()">
+          <i class="fa-solid fa-eraser"></i> Limpar seleção
         </button>
 
         <button class="btn btn-green" onclick="liberarTudo()">
@@ -1915,10 +1988,25 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
           <i class="fa-solid fa-gear"></i> Só própria obra
         </button>
 
+        <button class="btn btn-red" onclick="salvarAlteracoesUsuarioSelecionado()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar alterações
+        </button>
+
         <button class="btn btn-red" onclick="bloquearExterno()">
           <i class="fa-solid fa-lock"></i> Bloquear externo
         </button>
       </div>
+    </section>
+
+    <section class="usuario-selecionado-card" id="usuarioSelecionadoCard">
+      <div>
+        <span>Usuário selecionado</span>
+        <strong id="usuarioSelecionadoNome">Nenhum usuário selecionado</strong>
+        <small id="usuarioSelecionadoDetalhe">Clique em um usuário na lista para aplicar permissões.</small>
+      </div>
+      <button class="btn btn-red" onclick="salvarPermissoesUsuarioSelecionado()">
+        <i class="fa-solid fa-floppy-disk"></i> Salvar permissões deste usuário
+      </button>
     </section>
 
     <section class="board">
@@ -1930,6 +2018,15 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
           <div class="perm-row"><div class="perm-ico"><i class="fa-solid fa-people-arrows"></i></div><div class="perm-text"><b>Ver estoque de outras obras</b><span>Itens disponíveis fora da própria obra.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_ESTOQUE_OUTRAS_OBRAS"><span class="slider"></span></label></div>
           <div class="perm-row"><div class="perm-ico orange"><i class="fa-solid fa-wrench"></i></div><div class="perm-text"><b>Ver itens EM USO de outras obras</b><span>Equipamentos e ferramentas em uso.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_EM_USO_OUTRAS_OBRAS"><span class="slider"></span></label></div>
           <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-dollar-sign"></i></div><div class="perm-text"><b>Ver valores e informações financeiras</b><span>Valores patrimoniais e custo dos itens.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_VALORES"><span class="slider"></span></label></div>
+                    <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico blue"><i class="fa-solid fa-gauge-high"></i></div><div class="perm-text"><b>Menu Dashboard</b><span>Mostrar botão e liberar tela de dashboard.</span></div><label class="switch"><input type="checkbox" class="perm" value="DASHBOARD"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico green"><i class="fa-solid fa-arrow-down-wide-short"></i></div><div class="perm-text"><b>Menu Entrada</b><span>Mostrar botão e liberar tela de entrada.</span></div><label class="switch"><input type="checkbox" class="perm" value="ENTRADA"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico orange"><i class="fa-solid fa-vials"></i></div><div class="perm-text"><b>Menu Triagem</b><span>Mostrar botão e liberar tela de triagem.</span></div><label class="switch"><input type="checkbox" class="perm" value="TRIAGEM"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico green"><i class="fa-solid fa-boxes-stacked"></i></div><div class="perm-text"><b>Menu Estoque</b><span>Mostrar botão e liberar tela de estoque.</span></div><label class="switch"><input type="checkbox" class="perm" value="ESTOQUE"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico"><i class="fa-solid fa-tags"></i></div><div class="perm-text"><b>Menu Patrimônio</b><span>Mostrar botão e liberar tela de patrimônio.</span></div><label class="switch"><input type="checkbox" class="perm" value="PATRIMONIO"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico blue"><i class="fa-solid fa-truck-fast"></i></div><div class="perm-text"><b>Menu Expedição</b><span>Mostrar botão e liberar tela de expedição.</span></div><label class="switch"><input type="checkbox" class="perm" value="EXPEDICAO"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico orange"><i class="fa-regular fa-file-lines"></i></div><div class="perm-text"><b>Menu Relatórios</b><span>Mostrar botão e liberar tela de relatórios.</span></div><label class="switch"><input type="checkbox" class="perm" value="RELATORIOS"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico gray"><i class="fa-solid fa-building"></i></div><div class="perm-text"><b>Menu Empresas</b><span>Mostrar botão e liberar tela de empresas/obras.</span></div><label class="switch"><input type="checkbox" class="perm" value="EMPRESAS"><span class="slider"></span></label></div>
+          <div class="perm-row" style="background:#fff1f2;border-color:#fecaca;"><div class="perm-ico"><i class="fa-solid fa-users"></i></div><div class="perm-text"><b>Menu Usuários</b><span>Mostrar botão e liberar tela de usuários.</span></div><label class="switch"><input type="checkbox" class="perm" value="USUARIOS"><span class="slider"></span></label></div>
         </div>
       </div>
 
@@ -2016,6 +2113,7 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
             <div class="profile-card almox" onclick="aplicarPerfilRapido('ALMOXARIFE')"><i class="fa-solid fa-helmet-safety"></i><b>ALMOXARIFE</b><p>CD + Própria obra<br>Operações básicas</p><button>Aplicar</button></div>
             <div class="profile-card operador" onclick="aplicarPerfilRapido('OPERADOR')"><i class="fa-solid fa-user-tie"></i><b>OPERADOR</b><p>Própria obra<br>Solicitar e acompanhar</p><button>Aplicar</button></div>
             <div class="profile-card gestor" onclick="aplicarPerfilRapido('GESTOR')"><i class="fa-solid fa-user-gear"></i><b>GESTOR</b><p>CD + Obras liberadas<br>Solicitar e operar</p><button>Aplicar</button></div>
+            <div class="profile-card consulta" onclick="aplicarPerfilRapido('CONSULTA_PATRIMONIO')"><i class="fa-solid fa-chart-simple"></i><b>CONSULTA</b><p>Dashboard + Patrimônio<br>Somente consulta</p><button>Aplicar</button></div>
             <div class="profile-card master active" onclick="aplicarPerfilRapido('MASTER')"><i class="fa-solid fa-crown"></i><b>MASTER</b><p>Acesso total<br>Todas as opções</p><button>Ativo</button></div>
           </div>
         </div>
@@ -2061,7 +2159,392 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
   </div>
 </div>
 
+
+<script>
+/* =========================================================
+   BDR PATCH - MENUS POR PERMISSÃO + SALVAR ALTERAÇÕES
+   Permissões de menu:
+   DASHBOARD, PATRIMONIO, ESTOQUE, RELATORIOS, ENTRADA, TRIAGEM,
+   EXPEDICAO, EMPRESAS, USUARIOS
+========================================================= */
+
+function bdrUsuarioAtualPermissao(){
+  try{
+    return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");
+  }catch(e){
+    return null;
+  }
+}
+
+function bdrListaPermissoesUsuario(usuario){
+  return String(usuario?.permissoes || "")
+    .split(",")
+    .map(p => p.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function aplicarMenuPorPermissao(){
+  const usuario = bdrUsuarioAtualPermissao();
+  if(!usuario) return;
+
+  if(String(usuario.perfil || "").toUpperCase() === "MASTER"){
+    document.querySelectorAll("[data-permissao]").forEach(btn => {
+      btn.style.display = "";
+      btn.dataset.bloqueado = "NAO";
+    });
+    return;
+  }
+
+  const permissoes = bdrListaPermissoesUsuario(usuario);
+
+  document.querySelectorAll("[data-permissao]").forEach(btn => {
+    const p = String(btn.dataset.permissao || "").toUpperCase();
+    const liberado = permissoes.includes(p);
+    btn.style.display = liberado ? "" : "none";
+    btn.dataset.bloqueado = liberado ? "NAO" : "SIM";
+  });
+}
+
+function bdrGetPermissoesMarcadas(){
+  return Array.from(document.querySelectorAll(".perm:checked"))
+    .map(el => String(el.value || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function bdrSetPermissoesMarcadas(permissoes){
+  const set = new Set((permissoes || []).map(p => String(p).trim().toUpperCase()));
+
+  document.querySelectorAll(".perm").forEach(el => {
+    el.checked = set.has(String(el.value || "").trim().toUpperCase());
+  });
+
+  if(typeof atualizarResumo === "function"){
+    atualizarResumo();
+  }
+}
+
+function aplicarPerfilConsultaPatrimonio(){
+  const permissoes = [
+    "DASHBOARD",
+    "PATRIMONIO",
+    "VER_VALORES",
+    "VER_ESTOQUE_PROPRIA_OBRA",
+    "VER_ESTOQUE_CD"
+  ];
+
+  bdrSetPermissoesMarcadas(permissoes);
+  document.querySelectorAll(".profile-card").forEach(c => c.classList.remove("active"));
+  document.querySelector(".profile-card.consulta")?.classList.add("active");
+}
+
+const bdrAplicarPerfilRapidoOriginal = window.aplicarPerfilRapido;
+window.aplicarPerfilRapido = function(perfil){
+  if(String(perfil).toUpperCase() === "CONSULTA_PATRIMONIO"){
+    aplicarPerfilConsultaPatrimonio();
+    return;
+  }
+
+  if(typeof bdrAplicarPerfilRapidoOriginal === "function"){
+    bdrAplicarPerfilRapidoOriginal(perfil);
+  }
+
+  if(String(perfil).toUpperCase() === "MASTER"){
+    document.querySelectorAll(".perm").forEach(el => el.checked = true);
+  }
+};
+
+async function salvarAlteracoesUsuarioSelecionado(){
+  const id = document.getElementById("usuarioId")?.value || window.usuarioSelecionadoId || window.usuarioAtualEditandoId || null;
+
+  if(!id){
+    alert("Selecione/edite um usuário primeiro. Clique no lápis do usuário, ajuste as permissões e depois salve.");
+    return;
+  }
+
+  const permissoes = bdrGetPermissoesMarcadas().join(",");
+
+  if(!window.client && !window.supabaseClient){
+    alert("Supabase não carregado.");
+    return;
+  }
+
+  const supa = window.client || window.supabaseClient;
+
+  const payload = {
+    permissoes: permissoes,
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supa
+    .from("usuarios_sistema")
+    .update(payload)
+    .eq("id", id);
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar alterações: " + error.message);
+    return;
+  }
+
+  alert("✅ Alterações salvas com sucesso.");
+
+  if(typeof carregarTudo === "function"){
+    await carregarTudo();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  aplicarMenuPorPermissao();
+
+  setTimeout(() => {
+    aplicarMenuPorPermissao();
+
+    if(!document.getElementById("btnSalvarAlteracoesFixo")){
+      const btn = document.createElement("button");
+      btn.id = "btnSalvarAlteracoesFixo";
+      btn.className = "btn btn-red bdr-salvar-fixo-removido";
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar alterações';
+      btn.onclick = salvarAlteracoesUsuarioSelecionado;
+      document.body.appendChild(btn);
+    }
+  }, 600);
+});
+</script>
+
 <script src="./JS/usuarios.js"></script>
+
+<script>
+/* =========================================================
+   BDR PATCH - PERMISSÕES POR USUÁRIO
+   Não altera nome, senha ou dados pessoais.
+   Fluxo:
+   1. Clique em um usuário na lista
+   2. Permissões dele aparecem marcadas
+   3. Altere menus/permissões/obras
+   4. Salve permissões
+========================================================= */
+
+window.usuarioPermissaoSelecionado = null;
+
+function bdrSupaPerm(){
+  return window.client || window.supabaseClient || null;
+}
+
+function bdrPermListaUsuarios(){
+  const nomes = ["usuarios","listaUsuariosSistema","usuariosSistema","todosUsuarios","dadosUsuarios"];
+  for(const n of nomes){
+    try{
+      if(Array.isArray(window[n])) return window[n];
+      if(eval("typeof " + n + " !== 'undefined'") && Array.isArray(eval(n))) return eval(n);
+    }catch(e){}
+  }
+  return [];
+}
+
+function bdrPermArray(txt){
+  return String(txt || "")
+    .split(",")
+    .map(p => p.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function bdrPermMarcadas(){
+  return Array.from(document.querySelectorAll(".perm:checked"))
+    .map(el => String(el.value || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function bdrMarcarPermissoesUsuario(permissoes){
+  const set = new Set(bdrPermArray(permissoes));
+
+  document.querySelectorAll(".perm").forEach(el => {
+    el.checked = set.has(String(el.value || "").trim().toUpperCase());
+  });
+
+  if(typeof atualizarResumo === "function"){
+    atualizarResumo();
+  }
+}
+
+async function bdrBuscarUsuarioPermissao(id){
+  let usuario = bdrPermListaUsuarios().find(u => String(u.id) === String(id));
+  if(usuario) return usuario;
+
+  const supa = bdrSupaPerm();
+  if(!supa) throw new Error("Supabase não carregado.");
+
+  const {data,error} = await supa
+    .from("usuarios_sistema")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if(error) throw error;
+  return data;
+}
+
+function bdrAtualizarCardUsuarioSelecionado(u){
+  const nome = document.getElementById("usuarioSelecionadoNome");
+  const detalhe = document.getElementById("usuarioSelecionadoDetalhe");
+
+  if(!u){
+    if(nome) nome.innerText = "Nenhum usuário selecionado";
+    if(detalhe) detalhe.innerText = "Clique em um usuário na lista para aplicar permissões.";
+    return;
+  }
+
+  if(nome) nome.innerText = `${u.nome || u.usuario || "Usuário"} — ${u.perfil || "-"}`;
+  if(detalhe) detalhe.innerText = `ID ${u.id} • ${u.email || "-"} • Permissões carregadas para edição.`;
+}
+
+function bdrDestacarUsuarioNaLista(id){
+  document.querySelectorAll("#listaUsuarios .tr").forEach(row => row.classList.remove("usuario-ativo"));
+
+  const btn = document.querySelector(`[data-editar-usuario="${id}"]`);
+  const row = btn?.closest(".tr");
+  if(row) row.classList.add("usuario-ativo");
+}
+
+/* Clique no usuário para carregar SOMENTE permissões */
+async function selecionarUsuarioPermissoes(id){
+  try{
+    const u = await bdrBuscarUsuarioPermissao(id);
+
+    if(!u){
+      alert("Usuário não encontrado.");
+      return;
+    }
+
+    window.usuarioPermissaoSelecionado = u;
+    window.usuarioSelecionadoId = u.id;
+    window.usuarioAtualEditandoId = u.id;
+
+    const hidden = document.getElementById("usuarioId");
+    if(hidden) hidden.value = u.id;
+
+    bdrMarcarPermissoesUsuario(u.permissoes || "");
+    bdrAtualizarCardUsuarioSelecionado(u);
+    bdrDestacarUsuarioNaLista(u.id);
+
+  }catch(e){
+    console.error(e);
+    alert("Erro ao carregar permissões: " + (e.message || e));
+  }
+}
+
+window.selecionarUsuarioPermissoes = selecionarUsuarioPermissoes;
+window.editarUsuario = selecionarUsuarioPermissoes;
+window.abrirEdicaoUsuario = selecionarUsuarioPermissoes;
+window.editarDadosUsuario = selecionarUsuarioPermissoes;
+window.selecionarUsuario = selecionarUsuarioPermissoes;
+
+async function salvarPermissoesUsuarioSelecionado(){
+  const u = window.usuarioPermissaoSelecionado;
+  const id = u?.id || document.getElementById("usuarioId")?.value || window.usuarioSelecionadoId;
+
+  if(!id){
+    alert("Selecione um usuário primeiro.");
+    return;
+  }
+
+  const supa = bdrSupaPerm();
+  if(!supa){
+    alert("Supabase não carregado.");
+    return;
+  }
+
+  const permissoes = bdrPermMarcadas().join(",");
+
+  const {error} = await supa
+    .from("usuarios_sistema")
+    .update({
+      permissoes: permissoes,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar permissões: " + error.message);
+    return;
+  }
+
+  alert("✅ Permissões salvas para este usuário.");
+
+  if(window.usuarioPermissaoSelecionado){
+    window.usuarioPermissaoSelecionado.permissoes = permissoes;
+  }
+
+  if(typeof carregarTudo === "function"){
+    await carregarTudo();
+    setTimeout(() => {
+      bdrDestacarUsuarioNaLista(id);
+      bdrAtualizarCardUsuarioSelecionado(window.usuarioPermissaoSelecionado);
+    }, 300);
+  }
+}
+
+window.salvarPermissoesUsuarioSelecionado = salvarPermissoesUsuarioSelecionado;
+window.salvarAlteracoesUsuarioSelecionado = salvarPermissoesUsuarioSelecionado;
+
+function limparSelecaoPermissao(){
+  window.usuarioPermissaoSelecionado = null;
+  window.usuarioSelecionadoId = null;
+  window.usuarioAtualEditandoId = null;
+
+  const hidden = document.getElementById("usuarioId");
+  if(hidden) hidden.value = "";
+
+  document.querySelectorAll(".perm").forEach(el => el.checked = false);
+  document.querySelectorAll("#listaUsuarios .tr").forEach(row => row.classList.remove("usuario-ativo"));
+
+  bdrAtualizarCardUsuarioSelecionado(null);
+
+  if(typeof atualizarResumo === "function"){
+    atualizarResumo();
+  }
+}
+
+window.limparSelecaoPermissao = limparSelecaoPermissao;
+
+function bdrPrepararBotoesListaUsuarios(){
+  document.querySelectorAll("#listaUsuarios button").forEach(btn => {
+    const onclick = String(btn.getAttribute("onclick") || "");
+    const match = onclick.match(/(?:editarUsuario|abrirEdicaoUsuario|selecionarUsuario|editarDadosUsuario)\(['"]?([^'")]+)['"]?\)/i);
+    if(match){
+      const id = match[1];
+      btn.setAttribute("data-editar-usuario", id);
+      btn.setAttribute("onclick", `selecionarUsuarioPermissoes('${id}')`);
+      btn.setAttribute("title", "Selecionar usuário para permissões");
+    }
+  });
+}
+
+/* Observa a lista e ajusta botões depois que usuarios.js renderizar */
+const bdrObsUsuarios = new MutationObserver(() => bdrPrepararBotoesListaUsuarios());
+
+document.addEventListener("DOMContentLoaded", () => {
+  const alvo = document.getElementById("listaUsuarios");
+  if(alvo){
+    bdrObsUsuarios.observe(alvo, {childList:true, subtree:true});
+  }
+
+  setTimeout(bdrPrepararBotoesListaUsuarios, 500);
+  setTimeout(bdrPrepararBotoesListaUsuarios, 1200);
+});
+
+document.addEventListener("change", e => {
+  if(e.target?.classList?.contains("perm")){
+    if(typeof atualizarResumo === "function"){
+      atualizarResumo();
+    }
+  }
+});
+</script>
+
+
+
+
 <!-- =========================================================
      BDR OFFLINE QUEUE
      Referência:
@@ -2071,5 +2554,29 @@ if(typeof verificarLogin === "function"){ verificarLogin(); }
 ========================================================= -->
 <script src="./JS/offlineQueue.js"></script>
 <script src="./JS/bdr-owner-core.js"></script>
+
+<script>
+setTimeout(() => {
+  const originalDepoisUsuarios = window.aplicarPerfilRapido;
+
+  window.aplicarPerfilRapido = function(perfil){
+    if(String(perfil).toUpperCase() === "CONSULTA_PATRIMONIO"){
+      aplicarPerfilConsultaPatrimonio();
+      return;
+    }
+
+    if(typeof originalDepoisUsuarios === "function"){
+      originalDepoisUsuarios(perfil);
+    }
+
+    if(String(perfil).toUpperCase() === "MASTER"){
+      document.querySelectorAll(".perm").forEach(el => el.checked = true);
+    }
+  };
+
+  aplicarMenuPorPermissao();
+}, 1000);
+</script>
+
 </body>
 </html>
