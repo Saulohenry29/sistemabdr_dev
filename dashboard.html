@@ -359,7 +359,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
 /* ALTURA DO CARD TOP 5 */
 :root{
-  -----------------------------------------------------------altura-card-top5:315px;
+  --altura-card-top5:315px;
 }
 
 /* CARD TOP 5 */
@@ -877,6 +877,221 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
   }
 }
 
+
+/* =========================================================
+   BDR PREMIUM - FILTRO MODAL LIMPO
+========================================================= */
+.quick-filters{
+  grid-template-columns:auto repeat(4,95px) 220px 220px 130px 95px 1fr !important;
+  align-items:center !important;
+}
+
+.filter-premium-btn{
+  height:42px;
+  border:1px solid #fee2e2;
+  background:linear-gradient(135deg,#fff,#fff7f7);
+  border-radius:12px;
+  padding:5px 12px;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:1px;
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+  transition:.18s;
+}
+
+.filter-premium-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(15,23,42,.10);
+  border-color:#d71920;
+}
+
+.filter-premium-btn span{
+  color:#6b7280;
+  font-size:10px;
+  font-weight:900;
+}
+
+.filter-premium-btn b{
+  color:#111827;
+  font-size:12px;
+  max-width:190px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.modo-pill{
+  height:34px;
+  border-radius:999px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  color:#374151;
+  font-size:11px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+}
+
+.modo-pill.periodo{
+  background:#fff1f2;
+  border-color:#fecaca;
+  color:#d71920;
+}
+
+.bdr-filter-modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.58);
+  backdrop-filter:blur(4px);
+  z-index:1000000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.bdr-filter-modal-bg.ativo{
+  display:flex;
+}
+
+.bdr-filter-modal{
+  width:min(620px,96vw);
+  max-height:86vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  border-left:5px solid #d71920;
+  box-shadow:0 28px 90px rgba(15,23,42,.35);
+  padding:18px;
+}
+
+.bdr-filter-modal-top{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.bdr-filter-modal-top h2{
+  margin:0;
+  color:#d71920;
+  font-size:20px;
+}
+
+.bdr-filter-modal-top p{
+  margin:4px 0 0;
+  color:#6b7280;
+  font-size:12px;
+}
+
+.bdr-filter-modal-top button{
+  border:none;
+  background:#dc2626;
+  color:#fff;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.bdr-filter-tools{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.bdr-filter-tools input{
+  height:42px;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:0 12px;
+  font-size:13px;
+}
+
+.bdr-filter-tools button{
+  height:42px;
+  border:none;
+  background:#111827;
+  color:#fff;
+  border-radius:12px;
+  padding:0 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.bdr-filter-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.bdr-filter-option{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:14px;
+  padding:11px 12px;
+  cursor:pointer;
+  transition:.18s;
+  min-height:52px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+
+.bdr-filter-option:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 18px rgba(15,23,42,.10);
+  border-color:#fecaca;
+}
+
+.bdr-filter-option.ativo{
+  background:linear-gradient(135deg,#d71920,#ef4444);
+  color:#fff;
+  border-color:#d71920;
+  box-shadow:0 12px 25px rgba(215,25,32,.25);
+}
+
+.bdr-filter-option strong{
+  font-size:12px;
+  line-height:1.25;
+}
+
+.bdr-filter-option span{
+  min-width:30px;
+  height:24px;
+  border-radius:999px;
+  background:#f3f4f6;
+  color:#6b7280;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:900;
+}
+
+.bdr-filter-option.ativo span{
+  background:#fff;
+  color:#d71920;
+}
+
+@media(max-width:1350px){
+  .quick-filters{
+    grid-template-columns:1fr 1fr !important;
+  }
+}
+
 </style>
 
 <style>
@@ -1056,32 +1271,80 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
       <section class="quick-filters">
         <label>Filtros rápidos:</label>
-        <button class="pill-btn" onclick="aplicarPeriodo('7DIAS', this)">7 dias</button>
+        <button class="pill-btn" onclick="aplicarPeriodo('15DIAS', this)">15 dias</button>
         <button class="pill-btn" onclick="aplicarPeriodo('30DIAS', this)">30 dias</button>
-        <button class="pill-btn active" onclick="aplicarPeriodo('MES', this)">Este mês</button>
+        <button class="pill-btn" onclick="aplicarPeriodo('MES', this)">Este mês</button>
         <button class="pill-btn" onclick="aplicarPeriodo('ANO', this)">Este ano</button>
 
-        <select id="filtroObra" onchange="aplicarFiltros()">
-          <option value="">Todas as obras</option>
-        </select>
+        <input type="hidden" id="filtroObra" value="">
+        <input type="hidden" id="filtroTipo" value="">
 
-        <select id="filtroTipo" onchange="aplicarFiltros()">
-          <option value="">Todos os setores</option>
-        </select>
+        <button type="button" class="filter-premium-btn" onclick="abrirModalObras(event)">
+          <span>📍 Obra/Setor</span>
+          <b id="resumoObrasFiltro">Todas</b>
+        </button>
+
+        <button type="button" class="filter-premium-btn" onclick="abrirModalTipos(event)">
+          <span>🧩 Tipo de ativo</span>
+          <b id="resumoTiposFiltro">Todos</b>
+        </button>
+
+        <div class="modo-pill" id="modoDashboardTexto">Modo: Atual</div>
 
         <button class="btn-red" onclick="carregarDados()">Atualizar</button>
 
         <div class="update-info">
-          Período: <b id="periodoSelecionadoTexto">Este mês</b><br>
+          Período: <b id="periodoSelecionadoTexto">Atual</b><br>
           Última atualização: <span id="ultimaAtualizacao">-</span>
           <i class="fa-solid fa-rotate"></i>
         </div>
       </section>
 
+
+      <!-- MODAL PREMIUM - OBRA/SETOR -->
+      <div id="modalObrasFiltro" class="bdr-filter-modal-bg" onclick="if(event.target.id==='modalObrasFiltro') fecharModalObras()">
+        <div class="bdr-filter-modal" onclick="event.stopPropagation()">
+          <div class="bdr-filter-modal-top">
+            <div>
+              <h2>📍 Obra/Setor</h2>
+              <p>Clique em uma ou mais obras. O dashboard atualiza na hora.</p>
+            </div>
+            <button type="button" onclick="fecharModalObras()">×</button>
+          </div>
+
+          <div class="bdr-filter-tools">
+            <input id="buscaObraModal" placeholder="Buscar obra..." oninput="renderizarModalObras()">
+            <button type="button" onclick="limparObrasSelecionadas()">Limpar filtro</button>
+          </div>
+
+          <div id="listaObrasModal" class="bdr-filter-list"></div>
+        </div>
+      </div>
+
+      <!-- MODAL PREMIUM - TIPO -->
+      <div id="modalTiposFiltro" class="bdr-filter-modal-bg" onclick="if(event.target.id==='modalTiposFiltro') fecharModalTipos()">
+        <div class="bdr-filter-modal" onclick="event.stopPropagation()">
+          <div class="bdr-filter-modal-top">
+            <div>
+              <h2>🧩 Tipo de ativo</h2>
+              <p>Clique em um ou mais tipos. O dashboard atualiza na hora.</p>
+            </div>
+            <button type="button" onclick="fecharModalTipos()">×</button>
+          </div>
+
+          <div class="bdr-filter-tools">
+            <input id="buscaTipoModal" placeholder="Buscar tipo..." oninput="renderizarModalTipos()">
+            <button type="button" onclick="limparTiposSelecionados()">Limpar filtro</button>
+          </div>
+
+          <div id="listaTiposModal" class="bdr-filter-list"></div>
+        </div>
+      </div>
+
       <section class="kpi-row">
         <div class="kpi-card active" data-kpi="TODOS" onclick="aplicarFiltroKPI('TODOS')">
           <div class="kpi-icon"><i class="fa-solid fa-cube"></i></div>
-          <div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Patrimônios</div><div class="kpi-sub">Ativos cadastrados</div></div>
+          <div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Patrimônios</div><div class="kpi-sub">Ativos da seleção</div></div>
         </div>
 
         <div class="kpi-card blue" data-kpi="EM_USO" onclick="aplicarFiltroKPI('EM_USO')">
@@ -1106,7 +1369,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
         <div class="kpi-card purple" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
           <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
-          <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor total</div><div class="kpi-sub">Ativos cadastrados</div></div>
+          <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor total</div><div class="kpi-sub">Ativos da seleção</div></div>
         </div>
 
         <div class="kpi-card yellow" data-kpi="SEM_VALOR" onclick="aplicarFiltroKPI('SEM_VALOR')">
@@ -1259,7 +1522,10 @@ let movimentacoes = [];
 let obras = [];
 let filtrados = [];
 let filtroKPIAtual = "TODOS";
-let periodoAtual = "MES";
+let periodoAtual = "ATUAL";
+let modoDashboard = "ATUAL";
+let obrasSelecionadasDashboard = [];
+let tiposSelecionadosDashboard = [];
 let charts = {};
 
 function ir(pagina){ window.location.href = pagina; }
@@ -1322,6 +1588,44 @@ function moedaCurta(v){
   return moeda(n);
 }
 
+/* =========================================================
+   VALOR OFICIAL DO PATRIMÔNIO
+   Usa valor_bem primeiro. Se não tiver, usa valor_aquisicao.
+   Converte número BR tipo "70.000,00" corretamente.
+========================================================= */
+function numeroBR(v){
+  if(v === null || v === undefined || v === "") return 0;
+
+  if(typeof v === "number"){
+    return isNaN(v) ? 0 : v;
+  }
+
+  let s = String(v).trim();
+
+  if(!s) return 0;
+
+  s = s.replace(/R\$/gi, "").replace(/\s/g, "");
+
+  if(s.includes(",") && s.includes(".")){
+    s = s.replace(/\./g, "").replace(",", ".");
+  }else if(s.includes(",")){
+    s = s.replace(",", ".");
+  }
+
+  const n = Number(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function valorPatrimonio(p){
+  const vb = numeroBR(p?.valor_bem);
+  if(vb > 0) return vb;
+
+  const va = numeroBR(p?.valor_aquisicao);
+  if(va > 0) return va;
+
+  return 0;
+}
+
 function dataBR(data){
   if(!data) return "-";
   const d = new Date(String(data).replace(" ","T"));
@@ -1339,8 +1643,8 @@ function nomePatrimonio(id){
 }
 
 function nomePeriodoAtual(){
-  if(periodoAtual === "HOJE") return "Hoje";
-  if(periodoAtual === "7DIAS") return "Últimos 7 dias";
+  if(periodoAtual === "ATUAL") return "Atual";
+  if(periodoAtual === "15DIAS") return "Últimos 15 dias";
   if(periodoAtual === "30DIAS") return "Últimos 30 dias";
   if(periodoAtual === "MES") return "Este mês";
   if(periodoAtual === "ANO") return "Este ano";
@@ -1349,6 +1653,7 @@ function nomePeriodoAtual(){
 
 function aplicarPeriodo(periodo, botao){
   periodoAtual = periodo;
+  modoDashboard = "CADASTRO_PERIODO";
 
   document.querySelectorAll(".pill-btn").forEach(btn => {
     btn.classList.remove("active");
@@ -1358,7 +1663,8 @@ function aplicarPeriodo(periodo, botao){
     botao.classList.add("active");
   }
 
-  atualizarTudo();
+  carregarFiltros();
+  aplicarFiltros();
 }
 
 function dataDentroPeriodo(dataTexto){
@@ -1379,9 +1685,9 @@ function dataDentroPeriodo(dataTexto){
     return inicioData.getTime() === inicioHoje.getTime();
   }
 
-  if(periodoAtual === "7DIAS"){
+  if(periodoAtual === "15DIAS"){
     const limite = new Date(inicioHoje);
-    limite.setDate(limite.getDate() - 6);
+    limite.setDate(limite.getDate() - 14);
     return inicioData >= limite;
   }
 
@@ -1404,29 +1710,65 @@ function dataDentroPeriodo(dataTexto){
 }
 
 function movimentacoesPeriodo(){
-  return movimentacoes.filter(m =>
-    dataDentroPeriodo(m.data_movimentacao || m.criado_em)
-  );
+  return movimentacoes.filter(m => {
+    const dentroPeriodo = modoDashboard === "ATUAL"
+      ? true
+      : dataDentroPeriodo(m.data_movimentacao || m.criado_em);
+
+    const dentroObra = obrasSelecionadasDashboard.length === 0 ||
+      obrasSelecionadasDashboard.includes(String(m.obra_origem_id)) ||
+      obrasSelecionadasDashboard.includes(String(m.obra_destino_id));
+
+    return dentroPeriodo && dentroObra;
+  });
 }
 
+/* =========================================================
+   BASE OFICIAL DO DASHBOARD
+   Patrimônio mostra a posição atual do cadastro.
+   O período serve para "Últimas movimentações", não para zerar o total patrimonial.
+========================================================= */
 function patrimoniosDoPeriodo(){
-  const movs = movimentacoesPeriodo();
-
-  if(!movs || movs.length === 0){
-    return [];
-  }
-
-  const ids = new Set(
-    movs
-      .map(m => Number(m.patrimonio_id))
-      .filter(id => !isNaN(id))
-  );
-
-  return patrimonios.filter(p => ids.has(Number(p.id)));
+  return patrimonios;
 }
 
 function basePatrimoniosDashboard(){
-  return patrimoniosDoPeriodo();
+  const base = patrimonios.filter(p => p.ativo !== false);
+
+  if(modoDashboard === "ATUAL"){
+    return base;
+  }
+
+  return base.filter(p => {
+    const data = p.criado_em || p.created_at || p.data_cadastro || p.data_lancamento || p.data_aquisicao || p.data || null;
+    if(!data) return false;
+    return dataDentroPeriodo(data);
+  });
+}
+
+function patrimonioPorFiltrosTela(){
+  return basePatrimoniosDashboard().filter(p => {
+    const passaObra = obrasSelecionadasDashboard.length === 0 ||
+      obrasSelecionadasDashboard.includes(String(p.obra_id));
+
+    const tipoAtual = p.tipo_item || "SEM TIPO";
+    const passaTipo = tiposSelecionadosDashboard.length === 0 ||
+      tiposSelecionadosDashboard.includes(String(tipoAtual));
+
+    return passaObra && passaTipo;
+  });
+}
+
+function aplicarFiltroKPILista(lista){
+  return lista.filter(p => {
+    if(filtroKPIAtual === "EM_USO") return p.status === "EM_USO";
+    if(filtroKPIAtual === "ESTOQUE") return p.status === "ESTOQUE";
+    if(filtroKPIAtual === "MANUTENCAO") return p.status === "MANUTENCAO";
+    if(filtroKPIAtual === "BAIXADO") return p.status === "BAIXADO";
+    if(filtroKPIAtual === "VALOR") return valorPatrimonio(p) > 0;
+    if(filtroKPIAtual === "SEM_VALOR") return valorPatrimonio(p) <= 0;
+    return true;
+  });
 }
 
 async function carregarDados(){
@@ -1475,26 +1817,217 @@ async function carregarDados(){
 
   carregarFiltros();
   aplicarFiltros();
+
+  console.log("BDR Dashboard OK:", {
+    patrimonios: patrimonios.length,
+    obras: obras.length,
+    movimentacoes: movimentacoes.length,
+    valor_total_geral: patrimonios.reduce((s,p) => s + valorPatrimonio(p), 0)
+  });
 }
 
 function carregarFiltros(){
-  const filtroTipo = document.getElementById("filtroTipo");
-  const tipos = [...new Set(patrimonios.map(p => p.tipo_item).filter(Boolean))].sort();
+  atualizarResumoFiltrosPremium();
+  renderizarModalObras();
+  renderizarModalTipos();
+}
 
-  filtroTipo.innerHTML = `<option value="">Todos os setores</option>`;
-  tipos.forEach(t => {
-    filtroTipo.innerHTML += `<option value="${t}">${t}</option>`;
-  });
+function atualizarResumoFiltrosPremium(){
+  const resumoObras = document.getElementById("resumoObrasFiltro");
+  const resumoTipos = document.getElementById("resumoTiposFiltro");
+  const modo = document.getElementById("modoDashboardTexto");
 
-  const filtroObra = document.getElementById("filtroObra");
-  filtroObra.innerHTML = `<option value="">Todas as obras</option>`;
-
-  obras.forEach(o => {
-    const qtd = patrimonios.filter(p => String(p.obra_id) === String(o.id)).length;
-    if(qtd > 0){
-      filtroObra.innerHTML += `<option value="${o.id}">${o.nome || o.codigo_obra || "-"}</option>`;
+  if(resumoObras){
+    if(obrasSelecionadasDashboard.length === 0){
+      resumoObras.innerText = "Todas";
+    }else if(obrasSelecionadasDashboard.length === 1){
+      const o = obras.find(x => String(x.id) === String(obrasSelecionadasDashboard[0]));
+      resumoObras.innerText = o ? `${o.codigo_obra || ""} ${o.nome || "-"}`.trim() : "1 selecionada";
+    }else{
+      resumoObras.innerText = `${obrasSelecionadasDashboard.length} selecionadas`;
     }
+  }
+
+  if(resumoTipos){
+    if(tiposSelecionadosDashboard.length === 0){
+      resumoTipos.innerText = "Todos";
+    }else if(tiposSelecionadosDashboard.length === 1){
+      resumoTipos.innerText = tiposSelecionadosDashboard[0];
+    }else{
+      resumoTipos.innerText = `${tiposSelecionadosDashboard.length} selecionados`;
+    }
+  }
+
+  if(modo){
+    modo.innerText = modoDashboard === "ATUAL" ? "Modo: Atual" : "Modo: Cadastros";
+    modo.classList.toggle("periodo", modoDashboard !== "ATUAL");
+  }
+}
+
+function abrirModalObras(event){
+  if(event) event.stopPropagation();
+  renderizarModalObras();
+  document.getElementById("modalObrasFiltro")?.classList.add("ativo");
+}
+
+function fecharModalObras(){
+  document.getElementById("modalObrasFiltro")?.classList.remove("ativo");
+}
+
+function abrirModalTipos(event){
+  if(event) event.stopPropagation();
+  renderizarModalTipos();
+  document.getElementById("modalTiposFiltro")?.classList.add("ativo");
+}
+
+function fecharModalTipos(){
+  document.getElementById("modalTiposFiltro")?.classList.remove("ativo");
+}
+
+function limparObrasSelecionadas(){
+  obrasSelecionadasDashboard = [];
+  renderizarModalObras();
+  renderizarModalTipos();
+  aplicarFiltros();
+}
+
+function limparTiposSelecionados(){
+  tiposSelecionadosDashboard = [];
+  renderizarModalTipos();
+  aplicarFiltros();
+}
+
+function selecionarTodasObras(){
+  limparObrasSelecionadas();
+}
+
+function selecionarTodosTipos(){
+  limparTiposSelecionados();
+}
+
+function alternarObraDashboard(id){
+  id = String(id);
+
+  if(obrasSelecionadasDashboard.includes(id)){
+    obrasSelecionadasDashboard = obrasSelecionadasDashboard.filter(x => x !== id);
+  }else{
+    obrasSelecionadasDashboard.push(id);
+  }
+
+  renderizarModalObras();
+  renderizarModalTipos();
+  aplicarFiltros();
+}
+
+function alternarTipoDashboard(tipo){
+  tipo = String(tipo || "SEM TIPO");
+
+  if(tiposSelecionadosDashboard.includes(tipo)){
+    tiposSelecionadosDashboard = tiposSelecionadosDashboard.filter(x => x !== tipo);
+  }else{
+    tiposSelecionadosDashboard.push(tipo);
+  }
+
+  renderizarModalTipos();
+  aplicarFiltros();
+}
+
+function renderizarModalObras(){
+  const lista = document.getElementById("listaObrasModal");
+  if(!lista) return;
+
+  const busca = normalizarBusca(document.getElementById("buscaObraModal")?.value || "");
+  const baseContagem = basePatrimoniosDashboard();
+  const baseTotal = patrimonios.filter(p => p.ativo !== false);
+
+  const obrasComQtd = obras
+    .map(o => ({
+      ...o,
+      qtd: baseContagem.filter(p => String(p.obra_id) === String(o.id)).length,
+      total: baseTotal.filter(p => String(p.obra_id) === String(o.id)).length
+    }))
+    .filter(o => o.total > 0)
+    .filter(o => {
+      const txt = normalizarBusca(`${o.codigo_obra || ""} ${o.nome || ""}`);
+      return !busca || txt.includes(busca);
+    })
+    .sort((a,b) => String(a.codigo_obra || a.nome || "").localeCompare(String(b.codigo_obra || b.nome || "")));
+
+  lista.innerHTML = `
+    <div class="bdr-filter-option ${obrasSelecionadasDashboard.length === 0 ? "ativo" : ""}" onclick="selecionarTodasObras()">
+      <strong>🏢 TODAS</strong>
+      <span>${baseContagem.length}</span>
+    </div>
+  `;
+
+  obrasComQtd.forEach(o => {
+    const ativo = obrasSelecionadasDashboard.includes(String(o.id)) ? "ativo" : "";
+    const label = `${o.codigo_obra || ""} - ${o.nome || "-"}`.replace(/^ - /,"").trim();
+
+    lista.innerHTML += `
+      <div class="bdr-filter-option ${ativo}" onclick="alternarObraDashboard('${o.id}')">
+        <strong>${escapeHtmlBDR(label)}</strong>
+        <span>${o.qtd}</span>
+      </div>
+    `;
   });
+
+  atualizarResumoFiltrosPremium();
+}
+
+function renderizarModalTipos(){
+  const lista = document.getElementById("listaTiposModal");
+  if(!lista) return;
+
+  const busca = normalizarBusca(document.getElementById("buscaTipoModal")?.value || "");
+  const base = basePatrimoniosDashboard().filter(p => {
+    return obrasSelecionadasDashboard.length === 0 ||
+      obrasSelecionadasDashboard.includes(String(p.obra_id));
+  });
+
+  const tipos = [...new Set(base.map(p => p.tipo_item || "SEM TIPO"))]
+    .sort()
+    .filter(t => !busca || normalizarBusca(t).includes(busca))
+    .map(t => ({
+      tipo:t,
+      qtd:base.filter(p => (p.tipo_item || "SEM TIPO") === t).length
+    }));
+
+  lista.innerHTML = `
+    <div class="bdr-filter-option ${tiposSelecionadosDashboard.length === 0 ? "ativo" : ""}" onclick="selecionarTodosTipos()">
+      <strong>🧩 TODOS</strong>
+      <span>${base.length}</span>
+    </div>
+  `;
+
+  tipos.forEach(t => {
+    const ativo = tiposSelecionadosDashboard.includes(String(t.tipo)) ? "ativo" : "";
+    lista.innerHTML += `
+      <div class="bdr-filter-option ${ativo}" onclick="alternarTipoDashboard('${escapeJsBDR(t.tipo)}')">
+        <strong>${escapeHtmlBDR(t.tipo)}</strong>
+        <span>${t.qtd}</span>
+      </div>
+    `;
+  });
+
+  atualizarResumoFiltrosPremium();
+}
+
+function normalizarBusca(txt){
+  return String(txt || "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeHtmlBDR(str){
+  return String(str || "").replace(/[&<>'"]/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
+  }[c]));
+}
+
+function escapeJsBDR(str){
+  return String(str || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 function aplicarFiltroKPI(tipo){
@@ -1504,31 +2037,28 @@ function aplicarFiltroKPI(tipo){
   document.querySelector(`.kpi-card[data-kpi="${tipo}"]`)?.classList.add("active");
 
   aplicarFiltros();
+
+  if(tipo === "SEM_VALOR"){
+    setTimeout(() => mostrarItensAlerta("SEM_VALOR"), 120);
+  }
+
+  if(tipo === "ESTOQUE"){
+    setTimeout(() => mostrarItensAlerta("ESTOQUE"), 120);
+  }
+
+  if(tipo === "MANUTENCAO"){
+    setTimeout(() => mostrarItensAlerta("MANUTENCAO"), 120);
+  }
+
+  if(tipo === "BAIXADO"){
+    setTimeout(() => mostrarItensAlerta("BAIXADO"), 120);
+  }
 }
 
 function aplicarFiltros(){
-  const obra = valor("filtroObra");
-  const tipo = valor("filtroTipo");
-
-  const basePeriodo = filtroKPIAtual === "ESTOQUE"
-    ? patrimonios.filter(p => p.status === "ESTOQUE")
-    : basePatrimoniosDashboard();
-
-  filtrados = basePeriodo.filter(p => {
-    let passaKPI = true;
-
-    if(filtroKPIAtual === "EM_USO") passaKPI = p.status === "EM_USO";
-    if(filtroKPIAtual === "ESTOQUE") passaKPI = p.status === "ESTOQUE";
-    if(filtroKPIAtual === "MANUTENCAO") passaKPI = p.status === "MANUTENCAO";
-    if(filtroKPIAtual === "BAIXADO") passaKPI = p.status === "BAIXADO";
-    if(filtroKPIAtual === "VALOR") passaKPI = Number(p.valor_bem || 0) > 0;
-    if(filtroKPIAtual === "SEM_VALOR") passaKPI = !Number(p.valor_bem || 0);
-
-    return (!obra || String(p.obra_id) === String(obra))
-      && (!tipo || p.tipo_item === tipo)
-      && passaKPI;
-  });
-
+  const base = patrimonioPorFiltrosTela();
+  filtrados = aplicarFiltroKPILista(base);
+  atualizarResumoFiltrosPremium();
   atualizarTudo();
 }
 
@@ -1545,24 +2075,17 @@ function atualizarTudo(){
 }
 
 function atualizarKPIs(){
-  const base = basePatrimoniosDashboard();
+  const base = patrimonioPorFiltrosTela();
 
   const total = base.length || 1;
   const totalReal = base.length;
 
   const uso = base.filter(p => p.status === "EM_USO").length;
-
-  /*
-    ESTOQUE GERAL:
-    Conta tudo que está com status ESTOQUE no sistema,
-    independente do período, obra ou filtro.
-  */
-  const estoque = patrimonios.filter(p => p.status === "ESTOQUE").length;
-
+  const estoque = base.filter(p => p.status === "ESTOQUE").length;
   const manut = base.filter(p => p.status === "MANUTENCAO").length;
   const baixado = base.filter(p => p.status === "BAIXADO").length;
-  const semValor = base.filter(p => !Number(p.valor_bem || 0)).length;
-  const valorTotal = base.reduce((s,p) => s + Number(p.valor_bem || 0), 0);
+  const semValor = base.filter(p => valorPatrimonio(p) <= 0).length;
+  const valorTotal = base.reduce((s,p) => s + valorPatrimonio(p), 0);
 
   document.getElementById("kpiTotal").innerText = totalReal;
   document.getElementById("kpiUso").innerText = uso;
@@ -1572,11 +2095,11 @@ function atualizarKPIs(){
   document.getElementById("kpiSemValor").innerText = semValor;
   document.getElementById("kpiValor").innerText = moedaCurta(valorTotal);
 
-  document.getElementById("percUso").innerText = ((uso/total)*100).toFixed(1).replace(".",",") + "% do período";
-  document.getElementById("percEstoque").innerText = "Disponíveis no sistema";
-  document.getElementById("percManutencao").innerText = ((manut/total)*100).toFixed(1).replace(".",",") + "% do período";
-  document.getElementById("percBaixado").innerText = ((baixado/total)*100).toFixed(1).replace(".",",") + "% do período";
-  document.getElementById("percSemValor").innerText = ((semValor/total)*100).toFixed(1).replace(".",",") + "% do período";
+  document.getElementById("percUso").innerText = ((uso/total)*100).toFixed(1).replace(".",",") + "% da seleção";
+  document.getElementById("percEstoque").innerText = ((estoque/total)*100).toFixed(1).replace(".",",") + "% da seleção";
+  document.getElementById("percManutencao").innerText = ((manut/total)*100).toFixed(1).replace(".",",") + "% da seleção";
+  document.getElementById("percBaixado").innerText = ((baixado/total)*100).toFixed(1).replace(".",",") + "% da seleção";
+  document.getElementById("percSemValor").innerText = ((semValor/total)*100).toFixed(1).replace(".",",") + "% da seleção";
 }
 
 function contarPor(lista, fn){
@@ -1651,7 +2174,7 @@ function gerarGraficos(){
   const porStatus = contarPor(filtrados, p => p.status || "-");
   doughnut("graficoStatus", Object.keys(porStatus), Object.values(porStatus));
 
-  const valorObra = somarPor(filtrados, p => nomeObraCurto(p.obra_id), p => p.valor_bem);
+  const valorObra = somarPor(filtrados, p => nomeObraCurto(p.obra_id), p => valorPatrimonio(p));
   bar("graficoValorObra", Object.keys(valorObra), Object.values(valorObra), false, "#7c3aed");
 
   const tipos = contarPor(filtrados, p => p.tipo_item || "Sem tipo");
@@ -1660,10 +2183,10 @@ function gerarGraficos(){
 
 function gerarIA(){
   const total = filtrados.length;
-  const valorTotal = filtrados.reduce((s,p) => s + Number(p.valor_bem || 0), 0);
+  const valorTotal = filtrados.reduce((s,p) => s + valorPatrimonio(p), 0);
   const estoque = itensEmEstoqueGeral().length;
   const manut = filtrados.filter(p => p.status === "MANUTENCAO").length;
-  const semValor = filtrados.filter(p => !Number(p.valor_bem || 0)).length;
+  const semValor = filtrados.filter(p => !valorPatrimonio(p)).length;
   const semSerie = filtrados.filter(p => !p.numero_serie && !p.placa).length;
 
   document.getElementById("analiseIA").innerHTML = `
@@ -1695,8 +2218,8 @@ function gerarIA(){
 }
 
 function gerarAlertas(){
-  const base = basePatrimoniosDashboard();
-  const semValor = base.filter(p => !Number(p.valor_bem || 0)).length;
+  const base = patrimonioPorFiltrosTela();
+  const semValor = base.filter(p => !valorPatrimonio(p)).length;
   const semSerie = base.filter(p => !p.numero_serie && !p.placa).length;
   const manut = base.filter(p => p.status === "MANUTENCAO").length;
   const baixado = base.filter(p => p.status === "BAIXADO").length;
@@ -1722,7 +2245,7 @@ function mostrarItensAlerta(tipo){
   let titulo = "📋 Itens filtrados";
 
   if(tipo === "TODOS"){
-    lista = filtrados.length ? filtrados : basePatrimoniosDashboard();
+    lista = filtrados.length ? filtrados : patrimonioPorFiltrosTela();
     titulo = "📊 Patrimônios da análise atual";
   }
 
@@ -1743,28 +2266,28 @@ function mostrarItensAlerta(tipo){
   }
 
   if(tipo === "SEM_VALOR"){
-    lista = basePatrimoniosDashboard().filter(p => !Number(p.valor_bem || 0));
+    lista = patrimonioPorFiltrosTela().filter(p => !valorPatrimonio(p));
     titulo = "⚠️ Patrimônios sem valor informado";
   }
 
   if(tipo === "SEM_SERIE"){
-    lista = basePatrimoniosDashboard().filter(p => !p.numero_serie && !p.placa);
+    lista = patrimonioPorFiltrosTela().filter(p => !p.numero_serie && !p.placa);
     titulo = "📊 Patrimônios sem número de série ou placa";
   }
 
   if(tipo === "MANUTENCAO"){
-    lista = basePatrimoniosDashboard().filter(p => p.status === "MANUTENCAO");
+    lista = patrimonioPorFiltrosTela().filter(p => p.status === "MANUTENCAO");
     titulo = "🛠 Patrimônios em manutenção";
   }
 
   if(tipo === "BAIXADO"){
-    lista = basePatrimoniosDashboard().filter(p => p.status === "BAIXADO");
+    lista = patrimonioPorFiltrosTela().filter(p => p.status === "BAIXADO");
     titulo = "🗑 Patrimônios baixados";
   }
 
   if(tipo === "RISCO"){
     lista = basePatrimoniosDashboard().filter(p =>
-      !Number(p.valor_bem || 0) ||
+      !valorPatrimonio(p) ||
       (!p.numero_serie && !p.placa) ||
       p.status === "MANUTENCAO"
     );
@@ -1786,7 +2309,7 @@ function mostrarItensAlerta(tipo){
         <td>${p.status || "-"}</td>
         <td>${p.tipo_item || "-"}</td>
         <td>${nomeObraCurto(p.obra_id)}</td>
-        <td>${moeda(p.valor_bem)}</td>
+        <td>${moeda(valorPatrimonio(p))}</td>
       </tr>
     `).join("");
   }
@@ -1796,7 +2319,7 @@ function mostrarItensAlerta(tipo){
 }
 
 function itensEmEstoqueGeral(){
-  return patrimonios.filter(p => p.status === "ESTOQUE");
+  return patrimonioPorFiltrosTela().filter(p => p.status === "ESTOQUE");
 }
 
 function chaveAgrupamentoEstoque(p){
@@ -1892,9 +2415,9 @@ function gerarUltimasMov(){
 }
 
 function gerarTopValores(){
-  const top = [...basePatrimoniosDashboard()]
-    .filter(p => Number(p.valor_bem || 0) > 0)
-    .sort((a,b) => Number(b.valor_bem || 0) - Number(a.valor_bem || 0))
+  const top = [...patrimonioPorFiltrosTela()]
+    .filter(p => valorPatrimonio(p) > 0)
+    .sort((a,b) => valorPatrimonio(b) - valorPatrimonio(a))
     .slice(0,5);
 
   if(top.length === 0){
@@ -1905,7 +2428,7 @@ function gerarTopValores(){
   document.getElementById("topValores").innerHTML = top.map((p,i) => `
     <div class="info-row">
       <span>${i+1}. ${p.nome_bem || "-"}</span>
-      <b>${moedaCurta(p.valor_bem)}</b>
+      <b>${moedaCurta(valorPatrimonio(p))}</b>
     </div>
   `).join("");
 }

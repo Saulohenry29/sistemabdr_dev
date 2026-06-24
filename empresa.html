@@ -639,7 +639,7 @@ button,
 
         <div>
           <label>Nome da Empresa</label>
-          <input id="nome" placeholder="Ex: METALURGICA BWP">
+          <input id="nome" placeholder="Digite BDR ou outra empresa" oninput="aplicarPadraoBDR()">
         </div>
 
         <div>
@@ -655,8 +655,8 @@ button,
         <div>
           <label>Tabela de Insumo</label>
           <select id="tabela_insumo">
+            <option value="2" selected>Tabela 2 (Padrão atual)</option>
             <option value="3">Tabela 3 (Nova)</option>
-            <option value="2">Tabela 2 (Antiga)</option>
           </select>
         </div>
 
@@ -715,7 +715,7 @@ button,
 
         <div>
           <label>Nome da Empresa</label>
-          <input id="edit_nome">
+          <input id="edit_nome" oninput="aplicarPadraoBDREdicao()">
         </div>
 
         <div>
@@ -731,8 +731,8 @@ button,
         <div>
           <label>Tabela de Insumo</label>
           <select id="edit_tabela_insumo">
+            <option value="2">Tabela 2 (Padrão atual)</option>
             <option value="3">Tabela 3 (Nova)</option>
-            <option value="2">Tabela 2 (Antiga)</option>
           </select>
         </div>
 
@@ -829,6 +829,145 @@ let empresas = [];
 let obrasEmpresas = [];
 let movimentacoesEmpresas = [];
 
+const EMPRESA_PADRAO_BDR = {
+  id: 17,
+  nome: "BDR CONSTRUART",
+  razao_social: "CONSTRUART LTDA",
+  codigo_empresa: "10011",
+  cnpj: "09.338.459/0001-74",
+  endereco: "RUA COLÔMBIA, Nº 1802 - BAIRRO ALVORADA",
+  cep: "78455-000",
+  cidade: "LUCAS DO RIO VERDE",
+  estado: "MT",
+  tabela_insumo: 2
+};
+
+function normalizarTexto(txt){
+  return String(txt || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function ehEmpresaBDR(nome){
+  const t = normalizarTexto(nome);
+  return t.includes("BDR") || t.includes("CONSTRUART");
+}
+
+function preencherDadosBDR(prefixo=""){
+  const mapa = {
+    nome: EMPRESA_PADRAO_BDR.nome,
+    codigo_empresa: EMPRESA_PADRAO_BDR.codigo_empresa,
+    cnpj: EMPRESA_PADRAO_BDR.cnpj,
+    cidade: EMPRESA_PADRAO_BDR.cidade,
+    estado: EMPRESA_PADRAO_BDR.estado,
+    endereco: EMPRESA_PADRAO_BDR.endereco,
+    cep: EMPRESA_PADRAO_BDR.cep,
+    tabela_insumo: String(EMPRESA_PADRAO_BDR.tabela_insumo)
+  };
+
+  Object.entries(mapa).forEach(([id, valor]) => {
+    const el = document.getElementById(prefixo + id);
+    if(el) el.value = valor;
+  });
+}
+
+function aplicarPadraoBDR(){
+  const nome = document.getElementById("nome");
+  if(!nome) return;
+
+  if(ehEmpresaBDR(nome.value)){
+    preencherDadosBDR("");
+  }
+}
+
+function aplicarPadraoBDREdicao(){
+  const nome = document.getElementById("edit_nome");
+  if(!nome) return;
+
+  if(ehEmpresaBDR(nome.value)){
+    preencherDadosBDR("edit_");
+  }
+}
+
+async function buscarEmpresaPadraoBDR(){
+  const { data, error } = await db()
+    .from("empresas")
+    .select("*")
+    .eq("id", EMPRESA_PADRAO_BDR.id)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data;
+}
+
+async function atualizarEmpresaPadraoBDR(dados){
+  const payload = {
+    nome: EMPRESA_PADRAO_BDR.nome,
+    codigo_empresa: EMPRESA_PADRAO_BDR.codigo_empresa,
+    cnpj: EMPRESA_PADRAO_BDR.cnpj,
+    cidade: EMPRESA_PADRAO_BDR.cidade,
+    estado: EMPRESA_PADRAO_BDR.estado,
+    endereco: EMPRESA_PADRAO_BDR.endereco,
+    cep: EMPRESA_PADRAO_BDR.cep,
+    observacao: dados.observacao || null,
+    ativa: true
+  };
+
+  const { data, error } = await db()
+    .from("empresas")
+    .update(payload)
+    .eq("id", EMPRESA_PADRAO_BDR.id)
+    .select()
+    .single();
+
+  if(error) throw error;
+  return data;
+}
+
+async function salvarOuAtualizarObraDaEmpresa(empresaId, dados){
+  const nomeObra = dados.setor_obra;
+
+  const { data: obraAtual, error: erroBusca } = await db()
+    .from("obras")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .ilike("nome", nomeObra)
+    .maybeSingle();
+
+  if(erroBusca) throw erroBusca;
+
+  const payloadObra = {
+    empresa_id: empresaId,
+    nome: nomeObra,
+    codigo_obra: dados.codigo_sienge_obra || dados.codigo_empresa,
+    codigo_sienge: dados.codigo_sienge_obra || null,
+    tabela_insumo: Number(dados.tabela_insumo || EMPRESA_PADRAO_BDR.tabela_insumo),
+    ativa: true
+  };
+
+  if(obraAtual?.id){
+    const { error } = await db()
+      .from("obras")
+      .update(payloadObra)
+      .eq("id", obraAtual.id);
+
+    if(error) throw error;
+    return obraAtual.id;
+  }
+
+  const { data: obraNova, error } = await db()
+    .from("obras")
+    .insert([payloadObra])
+    .select()
+    .single();
+
+  if(error) throw error;
+  return obraNova?.id || null;
+}
+
+
 function ir(pagina){
   window.location.href = pagina;
 }
@@ -868,10 +1007,14 @@ function carregarUsuario(){
 
 async function salvarEmpresa(){
 
+  aplicarPadraoBDR();
+
   const empresa = {
     nome: campo("nome"),
     codigo_empresa: campo("codigo_empresa"),
     setor_obra: campo("setor_obra"),
+    codigo_sienge_obra: campo("codigo_sienge_obra"),
+    tabela_insumo: campo("tabela_insumo") || "2",
     cnpj: campo("cnpj"),
     cidade: campo("cidade"),
     estado: campo("estado"),
@@ -896,47 +1039,65 @@ async function salvarEmpresa(){
     return;
   }
 
-  const { data: empresaCriada, error } = await db()
-    .from("empresas")
-    .insert([empresa])
-    .select()
-    .single();
+  try{
+    if(ehEmpresaBDR(empresa.nome)){
+      const existeBDR = await buscarEmpresaPadraoBDR();
 
-  if(error){
-    alert(error.message);
-    return;
+      if(!existeBDR){
+        alert("Empresa padrão BDR CONSTRUART ID 17 não encontrada. Verifique no banco.");
+        return;
+      }
+
+      const empresaFinal = await atualizarEmpresaPadraoBDR(empresa);
+
+      await salvarOuAtualizarObraDaEmpresa(EMPRESA_PADRAO_BDR.id, empresa);
+
+      await registrarMovimentacaoEmpresa(
+        "CADASTRO_OBRA_SETOR",
+        empresaFinal,
+        `Obra/setor vinculado à BDR oficial ID ${EMPRESA_PADRAO_BDR.id}: ${empresa.setor_obra || "-"} | Código da obra: ${empresa.codigo_sienge_obra || "-"} | Tabela: ${empresa.tabela_insumo || "2"}`
+      );
+
+      alert("Obra/setor cadastrado na empresa padrão BDR CONSTRUART.");
+    }else{
+      const { data: empresaCriada, error } = await db()
+        .from("empresas")
+        .insert([{
+          nome: empresa.nome,
+          codigo_empresa: empresa.codigo_empresa,
+          setor_obra: empresa.setor_obra,
+          cnpj: empresa.cnpj,
+          cidade: empresa.cidade,
+          estado: empresa.estado,
+          endereco: empresa.endereco,
+          cep: empresa.cep,
+          observacao: empresa.observacao,
+          ativa: true
+        }])
+        .select()
+        .single();
+
+      if(error) throw error;
+
+      await salvarOuAtualizarObraDaEmpresa(empresaCriada.id, empresa);
+
+      await registrarMovimentacaoEmpresa(
+        "CADASTRO_EMPRESA",
+        empresaCriada,
+        `Empresa cadastrada: ${empresa.nome || "-"} | Código: ${empresa.codigo_empresa || "-"} | Setor/Obra: ${empresa.setor_obra || "-"}`
+      );
+
+      alert("Empresa e obra/setor cadastrados com sucesso!");
+    }
+
+    limparFormulario();
+    carregarEmpresas();
+
+  }catch(e){
+    console.error(e);
+    alert(e.message || "Erro ao salvar empresa/obra.");
   }
-
-  const obra = {
-    empresa_id: empresaCriada.id,
-    nome: empresa.setor_obra,
-    codigo_obra: empresa.codigo_empresa,
-    codigo_sienge: campo("codigo_sienge_obra"),
-    tabela_insumo: Number(campo("tabela_insumo") || 3),
-    ativa: true
-  };
-
-  const { error: erroObra } = await db()
-    .from("obras")
-    .insert([obra]);
-
-  if(erroObra){
-    alert("Empresa cadastrada, mas erro ao criar obra: " + erroObra.message);
-    return;
-  }
-
-  await registrarMovimentacaoEmpresa(
-    "CADASTRO_EMPRESA",
-    empresaCriada,
-    `Empresa cadastrada: ${empresa.nome || "-"} | Código: ${empresa.codigo_empresa || "-"} | Setor/Obra: ${empresa.setor_obra || "-"}`
-  );
-
-  alert("Empresa e obra/setor cadastrados com sucesso!");
-
-  limparFormulario();
-  carregarEmpresas();
 }
-
 async function carregarEmpresas(){
 
   const { data, error } = await db()
@@ -1358,7 +1519,7 @@ function limparFormulario(){
   document.getElementById("endereco").value = "";
   document.getElementById("cep").value = "";
   document.getElementById("codigo_sienge_obra").value = "";
-  document.getElementById("tabela_insumo").value = "3";
+  document.getElementById("tabela_insumo").value = "2";
   document.getElementById("observacao").value = "";
 }
 
