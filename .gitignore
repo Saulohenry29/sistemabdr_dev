@@ -1,0 +1,5 @@
+*.stackdump
+node_modules/
+.env
+*.log
+*.stackdump

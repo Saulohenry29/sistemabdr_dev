@@ -325,7 +325,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   <h3>🔎 Buscar / Filtrar Patrimônios</h3>
 
   <div class="grid">
-    <input id="busca" placeholder="Buscar por nome, código, obra, marca..." oninput="renderizarPatrimonios()">
+    <input id="busca" placeholder="Buscar por nome, código, placa, chassi, série, obra, marca..." oninput="renderizarPatrimonios()">
 
     <select id="filtroStatus" onchange="renderizarPatrimonios()">
       <option value="">Todos os status</option>
@@ -1001,13 +1001,11 @@ const patrimonio = {
     modelo: valor("modelo") || null,
     numero_serie: valor("numero_serie") || null,
 
-  placa: valor("placa") || null,
-cor: valor("cor") || null,
-combustivel: valor("combustivel") || null,
-potencia: valor("potencia") || null,
-
-numero_serie: valor("numero_serie") || null,
-chassi: valor("chassi") || null,
+    placa: valor("placa") || null,
+    cor: valor("cor") || null,
+    combustivel: valor("combustivel") || null,
+    potencia: valor("potencia") || null,
+    chassi: valor("chassi") || null,
 
 horimetro: moedaParaNumero(valor("horimetro")),
 quilometragem: moedaParaNumero(valor("quilometragem")),
@@ -1133,9 +1131,54 @@ async function carregarPatrimonios(){
   }
 }
 
+
+function normalizarBuscaPatrimonio(txt){
+  return String(txt || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function textoBuscaPatrimonio(p){
+  return `
+    ${p.nome_bem || ""}
+    ${p.codigo_qr || ""}
+    ${p.codigo_antigo || ""}
+    ${p.codigo_bem || ""}
+    ${p.patrimonio || ""}
+    ${p.localizacao || ""}
+    ${p.obra_nome || ""}
+    ${p.codigo_obra || ""}
+    ${p.marca || ""}
+    ${p.modelo || ""}
+    ${p.tipo_item || ""}
+    ${p.tipo_outro || ""}
+    ${p.status || ""}
+    ${p.placa || ""}
+    ${p.chassi || ""}
+    ${p.numero_serie || ""}
+    ${p.serie || ""}
+    ${p.numero_chassi || ""}
+    ${p.cor || ""}
+    ${p.combustivel || ""}
+    ${p.ano_fabricacao || ""}
+    ${p.ano_modelo || ""}
+    ${p.horimetro || ""}
+    ${p.quilometragem || ""}
+    ${p.estado_conservacao || ""}
+    ${p.observacao || ""}
+    ${p.usuario_cadastro || ""}
+    ${p.origem_cadastro || ""}
+    ${p.valor_bem || ""}
+  `;
+}
+
+
 function renderizarPatrimonios(){
 
-  const busca = valor("busca").toLowerCase();
+  const buscaOriginal = valor("busca");
+  const busca = normalizarBuscaPatrimonio(buscaOriginal);
   const filtroStatus = valor("filtroStatus");
   const filtroTipo = valor("filtroTipo");
 
@@ -1143,26 +1186,18 @@ function renderizarPatrimonios(){
   lista.innerHTML = "";
 
   const filtrados = patrimonios.filter(p => {
+    const textoBusca = normalizarBuscaPatrimonio(textoBuscaPatrimonio(p));
 
-    const texto = `
-      ${p.nome_bem || ""}
-      ${p.codigo_qr || ""}
-      ${p.codigo_antigo || ""}
-      ${p.localizacao || ""}
-      ${p.marca || ""}
-      ${p.modelo || ""}
-      ${p.tipo_item || ""}
-      ${p.tipo_outro || ""}
-      ${p.status || ""}
-    `.toLowerCase();
-
-    return texto.includes(busca) &&
+    return (!busca || textoBusca.includes(busca)) &&
       (!filtroStatus || p.status === filtroStatus) &&
       (!filtroTipo || p.tipo_item === filtroTipo);
   });
 
   if(filtrados.length === 0){
-    lista.innerHTML = "<p>Nenhum patrimônio encontrado.</p>";
+    lista.innerHTML = `
+      <p>Nenhum patrimônio encontrado.</p>
+      ${buscaOriginal ? `<p style="color:#6b7280;font-size:12px;">Busca feita por: <b>${buscaOriginal}</b></p>` : ""}
+    `;
     return;
   }
 
@@ -1185,15 +1220,23 @@ function renderizarPatrimonios(){
       .replaceAll("Ç", "C")
       .replaceAll("Ã", "A");
 
+    const infoExtra = [
+      p.placa ? "Placa: " + p.placa : "",
+      p.chassi ? "Chassi: " + p.chassi : "",
+      p.numero_serie ? "Série: " + p.numero_serie : "",
+      p.ano_modelo ? "Ano mod: " + p.ano_modelo : ""
+    ].filter(Boolean).join(" | ");
+
     lista.innerHTML += `
-      <div class="linha-patrimonio" onclick="abrirModal(${p.id})">
+      <div class="linha-patrimonio" onclick="abrirModal('${p.id}')">
 
         <div class="pat-codigo" title="${p.codigo_qr || "-"}">
           ${p.codigo_qr || "-"} ${p.__offline_pendente ? '<span class="bdr-pendente-offline">OFFLINE</span>' : ''}
         </div>
 
-        <div class="pat-nome" title="${p.nome_bem || "-"}">
+        <div class="pat-nome" title="${p.nome_bem || "-"} ${infoExtra}">
           ${p.nome_bem || "-"}
+          ${infoExtra ? `<br><small style="color:#6b7280;font-weight:700;">${infoExtra}</small>` : ""}
         </div>
 
         <div class="pat-local" title="${p.localizacao || "SEM OBRA"}">
@@ -1220,7 +1263,7 @@ function renderizarPatrimonios(){
 function abrirModal(id){
 
   const p = patrimonios.find(
-    x => Number(x.id) === Number(id)
+    x => String(x.id) === String(id) || Number(x.id) === Number(id)
   );
 
   if(!p){
@@ -1244,7 +1287,13 @@ function abrirModal(id){
     <strong>Marca:</strong> ${p.marca || "-"}<br>
     <strong>Modelo:</strong> ${p.modelo || "-"}<br>
     <strong>Nº Série:</strong> ${p.numero_serie || "-"}<br>
+    <strong>Chassi:</strong> ${p.chassi || "-"}<br>
     <strong>Placa:</strong> ${p.placa || "-"}<br>
+    <strong>Cor:</strong> ${p.cor || "-"}<br>
+    <strong>Combustível:</strong> ${p.combustivel || "-"}<br>
+    <strong>Ano fabricação:</strong> ${p.ano_fabricacao || "-"}<br>
+    <strong>Ano modelo:</strong> ${p.ano_modelo || "-"}<br>
+    <strong>KM/Horímetro:</strong> ${p.horimetro || p.quilometragem || "-"}<br>
     <strong>Valor:</strong> ${formatarMoeda(p.valor_bem)}<br>
     <strong>Estado:</strong> ${p.estado_conservacao || "-"}<br>
     <strong>Observação:</strong> ${p.observacao || "-"}
