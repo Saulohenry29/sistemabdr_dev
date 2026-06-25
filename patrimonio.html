@@ -308,11 +308,10 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
     </select>
 
     <select id="estado_conservacao">
-      <option value="2" selected>Estado: Bom</option>
-      <option value="1">Estado: Novo</option>
-      <option value="3">Estado: Regular</option>
-      <option value="4">Estado: Ruim</option>
-      <option value="5">Estado: Inservível</option>
+      <option value="OTIMO">Estado: Ótimo</option>
+      <option value="BOM" selected>Estado: Bom</option>
+      <option value="REGULAR">Estado: Regular</option>
+      <option value="RUIM">Estado: Ruim</option>
     </select>
 
     <input id="valor_bem" type="text" placeholder="Valor do bem Ex: 1.350,00" oninput="mascaraMoeda(this)">
@@ -363,7 +362,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
       <option value="ELETRODOMESTICO">Eletrodoméstico</option>
       <option value="VEICULO">Veículo</option>
       <option value="FERRAMENTA">Ferramenta</option>
-      <option value="MAQUINA">Máquina agrícola</option>
+      <option value="MAQUINA">Máquina</option>
       <option value="MOBILIARIO">Mobiliário</option>
       <option value="INFORMATICA">Informática</option>
       <option value="EQUIPAMENTO">Equipamento</option>
@@ -427,18 +426,37 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   <div class="modal">
     <button class="fechar" onclick="fecharEdicao()">X</button>
 
-    <h2>✏️ Correção Cadastral</h2>
+    <h2>✏️ Correção Cadastral Completa</h2>
 
     <div class="grid">
       <input id="edit_nome_bem" placeholder="Nome do patrimônio">
+
+      <select id="edit_tipo_item" onchange="montarCamposEdicaoPorTipo()">
+        <option value="">Tipo de ativo</option>
+        <option value="ELETRONICO">Eletrônico</option>
+        <option value="ELETRODOMESTICO">Eletrodoméstico</option>
+        <option value="VEICULO">Veículo</option>
+        <option value="FERRAMENTA">Ferramenta</option>
+        <option value="MAQUINA">Máquina</option>
+        <option value="MOBILIARIO">Mobiliário</option>
+        <option value="INFORMATICA">Informática</option>
+        <option value="EQUIPAMENTO">Equipamento</option>
+        <option value="MATERIAL_APOIO">Material de apoio</option>
+        <option value="OUTRO">Outro</option>
+      </select>
+
+      <select id="edit_estado_conservacao">
+        <option value="OTIMO">Estado: Ótimo</option>
+        <option value="BOM">Estado: Bom</option>
+        <option value="REGULAR">Estado: Regular</option>
+        <option value="RUIM">Estado: Ruim</option>
+      </select>
+
       <input id="edit_valor_bem" placeholder="Valor do bem Ex: 1.350,00" oninput="mascaraMoeda(this)">
-      <input id="edit_marca" placeholder="Marca">
-      <input id="edit_modelo" placeholder="Modelo">
-      <input id="edit_placa" placeholder="Placa">
-      <input id="edit_renavam" placeholder="RENAVAM">
-      <input id="edit_chassi" placeholder="Chassi">
       <input id="edit_codigo_antigo" placeholder="Código antigo">
     </div>
+
+    <div id="editCamposExtras" class="grid" style="margin-top:8px;"></div>
 
     <br>
 
@@ -537,43 +555,54 @@ function patrimonioErroInternet(err){
 let BDR_PATRIMONIO_ONLINE_REAL = null;
 
 async function patrimonioOnlineReal(){
-  if(navigator.onLine === false) return false;
-  if(!db()) return false;
+  if(navigator.onLine === false){
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    return false;
+  }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 1800);
+  if(!db()){
+    BDR_PATRIMONIO_ONLINE_REAL = false;
+    return false;
+  }
 
   try{
     const { error } = await db()
       .from("obras")
       .select("id")
-      .limit(1)
-      .abortSignal(controller.signal);
+      .limit(1);
 
-    clearTimeout(timer);
-
-    if(error) return false;
+    if(error){
+      console.warn("Teste online Supabase falhou, mas navegador está online:", error.message);
+      BDR_PATRIMONIO_ONLINE_REAL = true;
+      return true;
+    }
 
     BDR_PATRIMONIO_ONLINE_REAL = true;
     return true;
+
   }catch(e){
-    clearTimeout(timer);
-    BDR_PATRIMONIO_ONLINE_REAL = false;
-    return false;
+    console.warn("Internet parece online, mas Supabase falhou:", e);
+    BDR_PATRIMONIO_ONLINE_REAL = navigator.onLine !== false;
+    return BDR_PATRIMONIO_ONLINE_REAL;
   }
 }
 
 function patrimonioOffline(){
   return BDR_PATRIMONIO_ONLINE_REAL === false ||
          navigator.onLine === false ||
-         (typeof estaOnline === "function" && !estaOnline()) ||
          !db();
 }
 
 function mostrarAvisoModoOffline(){
   const topo = document.getElementById("obraAtivaTexto");
-  if(topo && BDR_PATRIMONIO_ONLINE_REAL === false){
+  if(!topo) return;
+
+  if(BDR_PATRIMONIO_ONLINE_REAL === false){
     topo.innerText = "📴 MODO OFFLINE - usando cache local";
+  }else{
+    topo.innerText = window.obraTravada && window.obraAtiva
+      ? "🔒 TRAVADO: " + (window.obraAtiva.codigo_obra || "-") + " - " + (window.obraAtiva.nome || "-")
+      : "🔓 Lançamento livre";
   }
 }
 
@@ -1118,9 +1147,10 @@ if(tipo === "VEICULO"){
     <input id="marca" placeholder="Marca">
     <input id="modelo" placeholder="Modelo">
     <input id="potencia" placeholder="Potência">
+    <input id="horimetro" placeholder="KM / Horímetro">
     <input id="combustivel" placeholder="Combustível">
     <input id="ano_fabricacao" placeholder="Ano fabricação">
-    
+    <input id="ano_modelo" placeholder="Ano modelo">
   `;
 }
 
@@ -1427,7 +1457,7 @@ ano_modelo: valor("ano_modelo")
 
     valor_bem: moedaParaNumero(valor("valor_bem")),
     codigo_antigo: valor("codigo_antigo") || null,
-    estado_conservacao: valor("estado_conservacao") || "2",
+    estado_conservacao: valor("estado_conservacao") || "BOM",
     observacao: valor("observacao") || null,
 
     origem_cadastro:
@@ -1487,7 +1517,7 @@ function limparFormularioCadastro(){
 
   const campoEstado = document.getElementById("estado_conservacao");
   if(campoEstado){
-    campoEstado.value = "2";
+    campoEstado.value = "BOM";
   }
 
   document.getElementById("checkLegado").checked = false;
@@ -1676,6 +1706,98 @@ function renderizarPatrimonios(){
   });
 }
 
+function bdrLabelTipo(tipo, tipoOutro=""){
+  const mapa = {
+    ELETRONICO:"Eletrônico",
+    ELETRODOMESTICO:"Eletrodoméstico",
+    VEICULO:"Veículo",
+    FERRAMENTA:"Ferramenta",
+    MAQUINA:"Máquina",
+    MOBILIARIO:"Mobiliário",
+    INFORMATICA:"Informática",
+    EQUIPAMENTO:"Equipamento",
+    MATERIAL_APOIO:"Material de apoio",
+    OUTRO:"Outro"
+  };
+  const base = mapa[String(tipo || "").toUpperCase()] || tipo || "-";
+  return tipoOutro ? `${base} - ${tipoOutro}` : base;
+}
+
+function bdrLabelEstado(estado){
+  const v = String(estado || "").toUpperCase().trim();
+
+  const mapa = {
+    "1":"Ótimo",
+    "2":"Bom",
+    "3":"Regular",
+    "4":"Ruim",
+    "5":"Ruim",
+    "NOVO":"Ótimo",
+    "OTIMO":"Ótimo",
+    "ÓTIMO":"Ótimo",
+    "BOM":"Bom",
+    "REGULAR":"Regular",
+    "RUIM":"Ruim",
+    "INSERVIVEL":"Ruim",
+    "INSERVÍVEL":"Ruim"
+  };
+
+  return mapa[v] || (estado ? String(estado) : "-");
+}
+
+function bdrTemValor(v){
+  const txt = String(v ?? "").trim();
+  if(!txt) return false;
+  return !["-", "NULL", "null", "undefined"].includes(txt);
+}
+
+function bdrLinhaInfo(label, valor){
+  if(!bdrTemValor(valor)) return "";
+  return `<strong>${label}:</strong> ${valor}<br>`;
+}
+
+function bdrLinhasTipoPatrimonio(p){
+  const tipo = String(p.tipo_item || "").toUpperCase();
+  let html = "";
+
+  html += bdrLinhaInfo("Marca", p.marca);
+  html += bdrLinhaInfo("Modelo", p.modelo);
+
+  if(tipo === "VEICULO"){
+    html += bdrLinhaInfo("Placa", p.placa);
+    html += bdrLinhaInfo("RENAVAM", p.renavam);
+    html += bdrLinhaInfo("Chassi", p.chassi);
+    html += bdrLinhaInfo("Cor", p.cor);
+    html += bdrLinhaInfo("Combustível", p.combustivel);
+    html += bdrLinhaInfo("Ano fabricação", p.ano_fabricacao);
+    html += bdrLinhaInfo("Ano modelo", p.ano_modelo);
+    html += bdrLinhaInfo("KM/Horímetro", p.horimetro || p.quilometragem);
+    return html;
+  }
+
+  if(tipo === "MAQUINA"){
+    html += bdrLinhaInfo("Potência", p.potencia);
+    html += bdrLinhaInfo("Combustível", p.combustivel);
+    html += bdrLinhaInfo("Ano fabricação", p.ano_fabricacao);
+    html += bdrLinhaInfo("Ano modelo", p.ano_modelo);
+    html += bdrLinhaInfo("Horímetro", p.horimetro || p.quilometragem);
+    html += bdrLinhaInfo("Nº Série", p.numero_serie);
+    return html;
+  }
+
+  if(["ELETRONICO","ELETRODOMESTICO","FERRAMENTA","INFORMATICA","EQUIPAMENTO"].includes(tipo)){
+    html += bdrLinhaInfo("Nº Série", p.numero_serie);
+    return html;
+  }
+
+  if(["MOBILIARIO","MATERIAL_APOIO"].includes(tipo)){
+    return html;
+  }
+
+  html += bdrLinhaInfo("Nº Série", p.numero_serie);
+  return html;
+}
+
 function abrirModal(id){
 
   const p = patrimonios.find(
@@ -1693,27 +1815,17 @@ function abrirModal(id){
     p.nome_bem || "Patrimônio";
 
   document.getElementById("modalInfo").innerHTML = `
-    <strong>Código:</strong> ${p.codigo_qr || "-"}<br>
-    <strong>Código Antigo:</strong> ${p.codigo_antigo || "-"}<br>
-    <strong>Origem:</strong> ${p.origem_cadastro || "-"}<br>
-    <strong>Cadastrado por:</strong> ${p.usuario_cadastro || "-"}<br>
-    <strong>Status:</strong> ${p.status || "-"}<br>
-    <strong>Obra:</strong> ${p.localizacao || "-"}<br>
-    <strong>Tipo:</strong> ${p.tipo_item || "-"} ${p.tipo_outro ? "- " + p.tipo_outro : ""}<br>
-    <strong>Marca:</strong> ${p.marca || "-"}<br>
-    <strong>Modelo:</strong> ${p.modelo || "-"}<br>
-    <strong>Nº Série:</strong> ${p.numero_serie || "-"}<br>
-    <strong>Chassi:</strong> ${p.chassi || "-"}<br>
-    <strong>RENAVAM:</strong> ${p.renavam || "-"}<br>
-    <strong>Placa:</strong> ${p.placa || "-"}<br>
-    <strong>Cor:</strong> ${p.cor || "-"}<br>
-    <strong>Combustível:</strong> ${p.combustivel || "-"}<br>
-    <strong>Ano fabricação:</strong> ${p.ano_fabricacao || "-"}<br>
-    <strong>Ano modelo:</strong> ${p.ano_modelo || "-"}<br>
-    <strong>KM/Horímetro:</strong> ${p.horimetro || p.quilometragem || "-"}<br>
-    <strong>Valor:</strong> ${formatarMoeda(p.valor_bem)}<br>
-    <strong>Estado:</strong> ${p.estado_conservacao || "-"}<br>
-    <strong>Observação:</strong> ${p.observacao || "-"}
+    ${bdrLinhaInfo("Código", p.codigo_qr)}
+    ${bdrLinhaInfo("Código antigo", p.codigo_antigo)}
+    ${bdrLinhaInfo("Origem", p.origem_cadastro)}
+    ${bdrLinhaInfo("Cadastrado por", p.usuario_cadastro)}
+    ${bdrLinhaInfo("Status", p.status)}
+    ${bdrLinhaInfo("Obra", p.localizacao)}
+    ${bdrLinhaInfo("Tipo", bdrLabelTipo(p.tipo_item, p.tipo_outro))}
+    ${bdrLinhasTipoPatrimonio(p)}
+    ${bdrLinhaInfo("Valor", formatarMoeda(p.valor_bem))}
+    ${bdrLinhaInfo("Estado de conservação", bdrLabelEstado(p.estado_conservacao))}
+    ${bdrLinhaInfo("Observação", p.observacao)}
   `;
 
   document.getElementById("observacaoMov").value = "";
@@ -2368,6 +2480,85 @@ function imprimirEtiqueta(){
     "_blank"
   );
 }
+function montarCamposEdicaoPorTipo(){
+  const tipo = valor("edit_tipo_item") || String(patrimonioSelecionado?.tipo_item || "");
+  const box = document.getElementById("editCamposExtras");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  if(
+    tipo === "ELETRONICO" ||
+    tipo === "FERRAMENTA" ||
+    tipo === "ELETRODOMESTICO" ||
+    tipo === "INFORMATICA" ||
+    tipo === "EQUIPAMENTO"
+  ){
+    box.innerHTML = `
+      <input id="edit_marca" placeholder="Marca">
+      <input id="edit_modelo" placeholder="Modelo">
+      <input id="edit_numero_serie" placeholder="Número de série">
+    `;
+  }
+
+  if(tipo === "VEICULO"){
+    box.innerHTML = `
+      <input id="edit_placa" placeholder="Placa">
+      <input id="edit_renavam" placeholder="RENAVAM">
+      <input id="edit_chassi" placeholder="Chassi">
+      <input id="edit_marca" placeholder="Marca">
+      <input id="edit_modelo" placeholder="Modelo">
+      <input id="edit_cor" placeholder="Cor">
+      <input id="edit_ano_fabricacao" placeholder="Ano fabricação">
+      <input id="edit_ano_modelo" placeholder="Ano modelo">
+      <input id="edit_combustivel" placeholder="Combustível">
+      <input id="edit_horimetro" placeholder="KM / Horímetro">
+    `;
+  }
+
+  if(tipo === "MAQUINA"){
+    box.innerHTML = `
+      <input id="edit_marca" placeholder="Marca">
+      <input id="edit_modelo" placeholder="Modelo">
+      <input id="edit_numero_serie" placeholder="Número de série">
+      <input id="edit_potencia" placeholder="Potência">
+      <input id="edit_horimetro" placeholder="Horímetro">
+      <input id="edit_combustivel" placeholder="Combustível">
+      <input id="edit_ano_fabricacao" placeholder="Ano fabricação">
+      <input id="edit_ano_modelo" placeholder="Ano modelo">
+    `;
+  }
+
+  if(tipo === "MOBILIARIO" || tipo === "MATERIAL_APOIO"){
+    box.innerHTML = `
+      <input id="edit_marca" placeholder="Marca/Fabricante">
+      <input id="edit_modelo" placeholder="Modelo/Descrição">
+    `;
+  }
+
+  if(tipo === "OUTRO"){
+    box.innerHTML = `
+      <input id="edit_tipo_outro" placeholder="Descreva o tipo do ativo">
+      <input id="edit_marca" placeholder="Marca/Fabricante">
+      <input id="edit_modelo" placeholder="Modelo/Descrição">
+      <input id="edit_numero_serie" placeholder="Número de série">
+    `;
+  }
+}
+
+function bdrSetValorCampo(id, valorCampo){
+  const el = document.getElementById(id);
+  if(el) el.value = valorCampo || "";
+}
+
+function bdrEstadoParaSelect(estado){
+  const v = String(estado || "").toUpperCase().trim();
+  if(["1","NOVO","OTIMO","ÓTIMO"].includes(v)) return "OTIMO";
+  if(["3","REGULAR"].includes(v)) return "REGULAR";
+  if(["4","5","RUIM","INSERVIVEL","INSERVÍVEL"].includes(v)) return "RUIM";
+  return "BOM";
+}
+
 function abrirEdicao(){
 
   if(!usuarioTemPermissao("PATRIMONIO_EDITAR")){
@@ -2375,45 +2566,43 @@ function abrirEdicao(){
     return;
   }
 
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
     return;
   }
 
-  document.getElementById("edit_nome_bem").value =
-    patrimonioSelecionado.nome_bem || "";
+  bdrSetValorCampo("edit_nome_bem", patrimonioSelecionado.nome_bem || "");
+  bdrSetValorCampo("edit_tipo_item", patrimonioSelecionado.tipo_item || "");
+  bdrSetValorCampo("edit_estado_conservacao", bdrEstadoParaSelect(patrimonioSelecionado.estado_conservacao));
 
-  document.getElementById("edit_valor_bem").value =
+  bdrSetValorCampo("edit_valor_bem",
     patrimonioSelecionado.valor_bem
       ? Number(patrimonioSelecionado.valor_bem).toLocaleString("pt-BR", {
           minimumFractionDigits:2,
           maximumFractionDigits:2
         })
-      : "";
+      : ""
+  );
 
-  document.getElementById("edit_marca").value =
-    patrimonioSelecionado.marca || "";
+  bdrSetValorCampo("edit_codigo_antigo", patrimonioSelecionado.codigo_antigo || "");
+  bdrSetValorCampo("edit_observacao", patrimonioSelecionado.observacao || "");
+  bdrSetValorCampo("motivo_correcao", "");
 
-  document.getElementById("edit_modelo").value =
-    patrimonioSelecionado.modelo || "";
+  montarCamposEdicaoPorTipo();
 
-  document.getElementById("edit_placa").value =
-    patrimonioSelecionado.placa || "";
-
-  document.getElementById("edit_renavam").value =
-    patrimonioSelecionado.renavam || "";
-
-  document.getElementById("edit_chassi").value =
-    patrimonioSelecionado.chassi || "";
-
-  document.getElementById("edit_codigo_antigo").value =
-    patrimonioSelecionado.codigo_antigo || "";
-
-  document.getElementById("edit_observacao").value =
-    patrimonioSelecionado.observacao || "";
-
-  document.getElementById("motivo_correcao").value = "";
+  bdrSetValorCampo("edit_tipo_outro", patrimonioSelecionado.tipo_outro || "");
+  bdrSetValorCampo("edit_marca", patrimonioSelecionado.marca || "");
+  bdrSetValorCampo("edit_modelo", patrimonioSelecionado.modelo || "");
+  bdrSetValorCampo("edit_numero_serie", patrimonioSelecionado.numero_serie || "");
+  bdrSetValorCampo("edit_placa", patrimonioSelecionado.placa || "");
+  bdrSetValorCampo("edit_renavam", patrimonioSelecionado.renavam || "");
+  bdrSetValorCampo("edit_chassi", patrimonioSelecionado.chassi || "");
+  bdrSetValorCampo("edit_cor", patrimonioSelecionado.cor || "");
+  bdrSetValorCampo("edit_combustivel", patrimonioSelecionado.combustivel || "");
+  bdrSetValorCampo("edit_potencia", patrimonioSelecionado.potencia || "");
+  bdrSetValorCampo("edit_ano_fabricacao", patrimonioSelecionado.ano_fabricacao || "");
+  bdrSetValorCampo("edit_ano_modelo", patrimonioSelecionado.ano_modelo || "");
+  bdrSetValorCampo("edit_horimetro", patrimonioSelecionado.horimetro || patrimonioSelecionado.quilometragem || "");
 
   document.getElementById("modalEdicaoBg").style.display = "flex";
 }
@@ -2429,7 +2618,6 @@ async function salvarEdicaoPatrimonio(){
     return;
   }
 
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
     return;
@@ -2442,22 +2630,35 @@ async function salvarEdicaoPatrimonio(){
     return;
   }
 
+  const tipoEditado = valor("edit_tipo_item") || patrimonioSelecionado.tipo_item;
+
   const dadosAtualizados = {
     nome_bem: valor("edit_nome_bem"),
+    tipo_item: tipoEditado || null,
+    tipo_outro: valor("edit_tipo_outro") || null,
     valor_bem: moedaParaNumero(valor("edit_valor_bem")),
-    marca: valor("edit_marca"),
-    modelo: valor("edit_modelo"),
+    estado_conservacao: valor("edit_estado_conservacao") || "BOM",
+    marca: valor("edit_marca") || null,
+    modelo: valor("edit_modelo") || null,
+    numero_serie: valor("edit_numero_serie") || null,
     placa: valor("edit_placa") || null,
     renavam: valor("edit_renavam") || null,
     chassi: valor("edit_chassi") || null,
-    codigo_antigo: valor("edit_codigo_antigo"),
-    observacao: valor("edit_observacao")
+    cor: valor("edit_cor") || null,
+    combustivel: valor("edit_combustivel") || null,
+    potencia: valor("edit_potencia") || null,
+    ano_fabricacao: valor("edit_ano_fabricacao") ? parseInt(valor("edit_ano_fabricacao")) : null,
+    ano_modelo: valor("edit_ano_modelo") ? parseInt(valor("edit_ano_modelo")) : null,
+    horimetro: moedaParaNumero(valor("edit_horimetro")),
+    quilometragem: moedaParaNumero(valor("edit_horimetro")),
+    codigo_antigo: valor("edit_codigo_antigo") || null,
+    observacao: valor("edit_observacao") || null
   };
 
   const podeContinuarDuplicidadeEdicao = await bdrVerificarDuplicidadePatrimonio({
     id: patrimonioSelecionado.id,
     nome_bem: dadosAtualizados.nome_bem,
-    tipo_item: patrimonioSelecionado.tipo_item,
+    tipo_item: dadosAtualizados.tipo_item,
     placa: dadosAtualizados.placa,
     renavam: dadosAtualizados.renavam,
     chassi: dadosAtualizados.chassi,
@@ -2469,9 +2670,6 @@ async function salvarEdicaoPatrimonio(){
 
   if(!podeContinuarDuplicidadeEdicao) return;
 
-  /* =========================================================
-     OFFLINE: salva correção cadastral na fila.
-  ========================================================= */
   if(patrimonioOffline()){
     await salvarOperacaoPatrimonioOffline("update", "patrimonio", dadosAtualizados, {
       filtro:{ id: patrimonioSelecionado.id }
@@ -2492,7 +2690,7 @@ async function salvarEdicaoPatrimonio(){
 
     patrimonios = patrimonios.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
-        ? {...p, ...dadosAtualizados, __offline_pendente:!!respEdicao.offlineFirst}
+        ? {...p, ...dadosAtualizados, __offline_pendente:true}
         : p
     );
 
@@ -2534,12 +2732,15 @@ async function salvarEdicaoPatrimonio(){
     observacao: motivo
   });
 
-  if(respEdicao.offlineFirst){ bdrAvisoSalvoTablet("Correção cadastral salva offline. Será sincronizada automaticamente quando a internet voltar."); }
+  if(respEdicao.offlineFirst){
+    bdrAvisoSalvoTablet("Correção cadastral salva offline. Será sincronizada automaticamente quando a internet voltar.");
+  }
 
   fecharEdicao();
   fecharModal();
   renderizarPatrimonios();
 }
+
 async function iniciar(){
   if(!bloquearPatrimonioSemPermissaoBDR()) return;
   aplicarMenuPorPermissaoBDR();
