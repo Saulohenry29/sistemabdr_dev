@@ -1,111 +1,168 @@
 /* =========================================================
-   BDR ERP - RESPONSIVO GLOBAL PREMIUM
+   BDR ERP - RESPONSIVO GLOBAL PREMIUM FINAL
    Arquivo: CSS/responsivo-bdr.css
    Use depois do layout-bdr.css
 
-   REGRA OFICIAL:
-   - Desktop/notebook: menu lateral esquerdo.
-   - Tablet/celular/PWA até 1200px: menu inferior centralizado tipo dock.
-   - Sem conflito com layout-bdr.css.
+   CORREÇÃO:
+   - PC/notebook: menu lateral esquerdo
+   - Tablet/celular em pé: menu inferior com ícones centralizados
+   - Tablet/celular deitado: menu inferior centralizado também
+   - PWA: scroll liberado
 ========================================================= */
 
-/* BASE SEGURA */
 html{
   width:100%;
   max-width:100%;
   overflow-x:hidden;
+  zoom:1 !important;
   -webkit-text-size-adjust:100%;
+  min-height:100%;
+  height:auto !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
 }
 
 body{
   width:100%;
   max-width:100%;
-  min-height:100vh;
-  overflow-x:hidden;
-  overflow-y:auto;
-  touch-action:manipulation;
+  min-height:100%;
+  height:auto !important;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  overscroll-behavior-y:auto !important;
+  touch-action:pan-y;
 }
 
 *{box-sizing:border-box}
-
 img,canvas,svg,video{max-width:100%}
 
 .bdr-main,.content,.card,.card-light,.hero,.bdr-topbar,.relatorio-topbar{
   max-width:100%;
 }
 
-table{
-  width:100%;
-  max-width:100%;
-  border-collapse:collapse;
-}
-
-.table-wrap,
-.tabela-wrap,
-div[style*="overflow:auto"]{
+table{width:100%;max-width:100%;border-collapse:collapse}
+.table-wrap,.tabela-wrap,div[style*="overflow:auto"]{
   width:100%;
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
 }
 
-/* DESKTOP */
-@media(min-width:1201px){
-  .bdr-sidebar{
-    position:fixed !important;
-    left:0 !important;
-    top:0 !important;
-    bottom:0 !important;
-    transform:none !important;
-  }
-
-  .bdr-main,
-  .content{
-    margin-left:var(--sidebar-width,72px) !important;
-    width:calc(100% - var(--sidebar-width,72px)) !important;
-  }
+.bdr-main,main,.content,.app-layout,.bdr-app{
+  min-height:100vh;
+  height:auto !important;
+  overflow:visible !important;
 }
 
-/* TABLET / CELULAR / PWA - DOCK CENTRAL */
-@media(max-width:1200px){
-  :root{--sidebar-width:0px}
+.card,.dashboard-grid,.left-stack,.right-stack{overflow:visible !important}
 
-  html{
-    zoom:1 !important;
-    width:100% !important;
-    max-width:100% !important;
-    overflow-x:hidden !important;
-  }
+input,select,textarea{font-size:16px}
 
-  body{
-    width:100% !important;
-    max-width:100% !important;
-    overflow-x:hidden !important;
-    overflow-y:auto !important;
-    padding-bottom:92px !important;
-  }
+/* DESKTOP */
+@media(min-width:901px){
+  :root{--sidebar-width:72px}
 
   .app-layout,.bdr-app{
-    display:block !important;
+    display:flex !important;
     min-height:100vh !important;
   }
 
   .bdr-sidebar{
     position:fixed !important;
-    left:50% !important;
-    right:auto !important;
-    bottom:12px !important;
-    top:auto !important;
-    transform:translateX(-50%) !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:0 !important;
+    width:var(--sidebar-width,72px) !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    max-height:100vh !important;
+    flex-direction:column !important;
+    justify-content:flex-start !important;
+    align-items:center !important;
+    padding:40px 0 6px 0 !important;
+    overflow:visible !important;
+    border-radius:0 !important;
+    z-index:999999 !important;
+  }
 
+  .bdr-menu{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:12px !important;
     width:auto !important;
-    min-width:auto !important;
-    max-width:calc(100vw - 20px) !important;
+    min-width:0 !important;
+    margin-top:10px !important;
+    padding:0 !important;
+  }
 
+  .bdr-main,.content{
+    margin-left:var(--sidebar-width,72px) !important;
+    width:calc(100% - var(--sidebar-width,72px)) !important;
+  }
+
+  .bdr-menu-btn::after{
+    content:attr(data-tip) !important;
+    position:absolute !important;
+    left:58px !important;
+    top:50% !important;
+    transform:translate(0,-50%) !important;
+    background:#111827 !important;
+    color:#fff !important;
+    padding:7px 11px !important;
+    border-radius:8px !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    transition:.18s ease !important;
+    box-shadow:0 8px 18px rgba(0,0,0,.35) !important;
+    z-index:1000000 !important;
+  }
+
+  .bdr-menu-btn:hover::after{
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:translate(8px,-50%) !important;
+  }
+}
+
+/* TABLET/CELULAR - MENU INFERIOR CENTRALIZADO */
+@media(max-width:900px){
+  :root{--sidebar-width:0px}
+
+  html,body{
+    width:100% !important;
+    max-width:100% !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    zoom:1 !important;
+  }
+
+  .app-layout,.bdr-app{
+    display:block !important;
+    min-height:100vh !important;
+    height:auto !important;
+    overflow:visible !important;
+  }
+
+  /* Barra ocupa a largura, mas o conteúdo fica no CENTRO */
+  .bdr-sidebar{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    top:auto !important;
+
+    width:100% !important;
     height:76px !important;
     min-height:76px !important;
     max-height:76px !important;
 
-    padding:8px 12px calc(8px + env(safe-area-inset-bottom)) !important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom)) !important;
+    display:flex !important;
     flex-direction:row !important;
     justify-content:center !important;
     align-items:center !important;
@@ -113,27 +170,26 @@ div[style*="overflow:auto"]{
     overflow-x:auto !important;
     overflow-y:hidden !important;
 
-    z-index:99999 !important;
-    border-radius:22px !important;
-    box-shadow:0 12px 35px rgba(0,0,0,.28) !important;
-  }
-
-  .bdr-sidebar::-webkit-scrollbar{
-    display:none !important;
-    height:0 !important;
+    z-index:999999 !important;
+    border-radius:18px 18px 0 0 !important;
+    box-shadow:0 -10px 28px rgba(15,23,42,.24) !important;
   }
 
   .bdr-brand,.bdr-menu-footer{display:none !important}
 
+  /* ESTE É O PONTO PRINCIPAL: centraliza os ícones */
   .bdr-menu{
-    width:max-content !important;
-    min-width:max-content !important;
-    max-width:none !important;
+    display:flex !important;
     flex-direction:row !important;
     align-items:center !important;
     justify-content:center !important;
     gap:8px !important;
-    margin:0 !important;
+
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+
+    margin:0 auto !important;
     padding:0 !important;
   }
 
@@ -143,6 +199,7 @@ div[style*="overflow:auto"]{
     min-width:48px !important;
     border-radius:15px !important;
     transform:none !important;
+    flex:0 0 auto !important;
   }
 
   .bdr-menu-btn:hover{transform:none !important}
@@ -152,93 +209,73 @@ div[style*="overflow:auto"]{
   .bdr-main,.content{
     margin-left:0 !important;
     width:100% !important;
-    padding:10px 10px calc(110px + env(safe-area-inset-bottom)) !important;
+    padding:10px 10px calc(104px + env(safe-area-inset-bottom)) !important;
+    min-height:100vh !important;
+    height:auto !important;
     overflow:visible !important;
   }
 
   .bdr-topbar,.hero,.relatorio-topbar{
     flex-direction:column !important;
     align-items:flex-start !important;
-    gap:10px !important;
+    gap:8px !important;
+    width:100% !important;
     border-radius:14px !important;
     padding:12px !important;
     margin-bottom:10px !important;
   }
 
-  .bdr-top-actions,
-  .dash-user,
-  .hero-right,
-  .relatorio-actions{
+  .bdr-top-actions,.dash-user,.hero-right,.relatorio-actions{
     width:100% !important;
     justify-content:space-between !important;
     text-align:left !important;
     flex-wrap:wrap !important;
   }
 
-  .dashboard-grid,
-  .chart-grid,
-  .chart-grid-3,
-  .grid,
-  .filter-grid,
-  .usuario-form-grid,
-  .usuario-filtro-grid,
-  .empresa-form-grid,
-  .empresa-filtro-grid,
-  .premium-perm-top,
-  .premium-perm-bottom,
-  .sienge-grid{
+  .bdr-topbar-title,.hero-title,.relatorio-title{
+    font-size:17px !important;
+    line-height:1.25 !important;
+  }
+
+  .bdr-topbar-sub,.hero-sub,.relatorio-sub{
+    font-size:11px !important;
+    line-height:1.35 !important;
+  }
+
+  .notif-dropdown,.user-dropdown,.dropdown-user{
+    position:fixed !important;
+    left:10px !important;
+    right:10px !important;
+    top:75px !important;
+    width:auto !important;
+    max-width:none !important;
+  }
+
+  .dashboard-grid,.chart-grid,.chart-grid-3,.grid,.filter-grid,
+  .usuario-form-grid,.usuario-filtro-grid,.empresa-form-grid,.empresa-filtro-grid,
+  .quick-filters,.sienge-grid{
     grid-template-columns:1fr !important;
+    gap:8px !important;
   }
 
-  .kpi-grid,
-  .kpi-row,
-  .resumo-grid,
-  .usuario-master-resumo,
-  .kpi-relatorio-grid,
-  .money-grid{
-    grid-template-columns:repeat(2,1fr) !important;
+  .kpi-grid,.kpi-row,.resumo-grid,.usuario-master-resumo,.money-grid,
+  .estoque-niveis,.kpi-relatorio-grid{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
   }
 
-  .card,.card-light{
-    border-radius:14px !important;
-    padding:10px !important;
-    margin-bottom:10px !important;
-    transform:none !important;
-  }
+  .lista-header,.mov-header,.usuario-header,.empresa-header{display:none !important}
 
-  .card:hover,.card-light:hover{transform:none !important}
-
-  .lista-header,.mov-header,.usuario-header,.empresa-header{
-    display:none !important;
-  }
-
-  .linha-patrimonio,
-  .mov-linha,
-  .usuario-linha,
-  .empresa-linha,
-  .pedido-top,
-  .cart-item,
-  .sienge-row,
-  .row,
-  .row-pat,
-  .row-mov,
-  .row-top{
+  .linha-patrimonio,.mov-linha,.usuario-linha,.empresa-linha,.pedido-top,
+  .cart-item,.sienge-row,.row,.row-pat,.row-mov,.row-top{
     grid-template-columns:1fr !important;
     gap:6px !important;
     padding:12px !important;
     min-height:auto !important;
   }
 
-  .pat-nome,
-  .pat-local,
-  .pat-tipo,
-  .mov-info,
-  .mov-patrimonio,
-  .usuario-info,
-  .usuario-nome,
-  .empresa-nome,
-  .empresa-info,
-  .row span{
+  .pat-nome,.pat-local,.pat-tipo,.mov-info,.mov-patrimonio,
+  .usuario-info,.usuario-nome,.empresa-nome,.empresa-info,.row span{
     white-space:normal !important;
     overflow:visible !important;
     text-overflow:unset !important;
@@ -250,96 +287,55 @@ div[style*="overflow:auto"]{
     white-space:normal !important;
   }
 
-  .chart-box,
-  .chart-box.small,
-  .chart-box.mini,
-  .chart-card canvas,
-  .chart-card.big canvas{
-    height:230px !important;
-  }
-
   input,select,textarea,button{
-    min-height:40px !important;
-    font-size:13px !important;
+    min-height:42px !important;
+    font-size:16px !important;
   }
 
-  .notif-dropdown,.user-dropdown,.dropdown-user{
-    position:fixed !important;
-    left:10px !important;
-    right:10px !important;
-    top:75px !important;
-    width:auto !important;
-    max-width:none !important;
+  .card,.card-light{
+    border-radius:14px !important;
+    padding:10px !important;
+    margin-bottom:10px !important;
+    transform:none !important;
+  }
+
+  .card:hover,.card-light:hover{transform:none !important}
+
+  .chart-box,.chart-box.small,.chart-box.mini,
+  .chart-card canvas,.chart-card.big canvas{
+    height:230px !important;
   }
 }
 
-/* CELULAR PEQUENO */
+/* Telas muito estreitas: se não couber, permite rolagem horizontal mas mantém no centro quando couber */
 @media(max-width:520px){
-  .kpi-grid,
-  .kpi-row,
-  .resumo-grid,
-  .usuario-master-resumo,
-  .money-grid,
-  .estoque-niveis,
-  .kpi-relatorio-grid{
-    grid-template-columns:1fr !important;
+  .bdr-sidebar{
+    justify-content:flex-start !important;
+  }
+
+  .bdr-menu{
+    width:max-content !important;
+    min-width:100% !important;
+    justify-content:center !important;
   }
 
   .bdr-menu-btn{
-    width:46px !important;
-    height:46px !important;
-    min-width:46px !important;
-  }
-
-  .bdr-main,.content{
-    padding-left:8px !important;
-    padding-right:8px !important;
-  }
-
-  .kpi-value,.kpi h2{
-    font-size:21px !important;
-  }
-
-  .card h3,.card-light h3{
-    font-size:14px !important;
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
   }
 }
 
-/* PWA INSTALADO */
 @media(display-mode:standalone){
-  body{
-    overscroll-behavior-y:auto !important;
-  }
-
-  .bdr-main,.content{
-    min-height:100vh;
-  }
+  body{overscroll-behavior-y:auto !important}
+  .bdr-main,.content{min-height:100vh}
 }
 
-/* IMPRESSÃO */
 @media print{
-  .bdr-sidebar,
-  .bdr-topbar,
-  .hero,
-  .relatorio-topbar,
-  .notif-wrap,
-  .dash-user,
-  .bdr-menu,
-  .form-actions,
-  button{
+  .bdr-sidebar,.bdr-topbar,.hero,.relatorio-topbar,.notif-wrap,.dash-user,.bdr-menu,.form-actions,button{
     display:none !important;
   }
-
-  .bdr-main,.content{
-    margin:0 !important;
-    width:100% !important;
-    padding:0 !important;
-  }
-
+  .bdr-main,.content{margin:0 !important;width:100% !important;padding:0 !important}
   body{background:#fff !important}
-
-  .card,.card-light{
-    box-shadow:none !important;
-    border:1px solid #000 !important;
-  }
+  .card,.card-light{box-shadow:none !important;border:1px solid #000 !important}
 }
