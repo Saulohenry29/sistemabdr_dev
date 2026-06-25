@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <!-- =========================================================
@@ -98,6 +98,28 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   .pat-codigo,.pat-nome,.pat-local,.pat-tipo,.pat-valor,.pat-status{max-width:100%}
 }
 
+
+
+/* =========================================================
+   BDR PATRIMÔNIO 6B/6C - MANUTENÇÃO INTELIGENTE + ANALYTICS
+========================================================= */
+.bdr-manutencao-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.bdr-manutencao-kpi{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #f97316;border-radius:14px;padding:11px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.bdr-manutencao-kpi strong{display:block;font-size:22px;color:#111827}
+.bdr-manutencao-kpi span{display:block;color:#6b7280;font-size:11px;font-weight:900;margin-top:3px}
+.bdr-manutencao-lista{margin-top:10px;display:grid;gap:7px}
+.bdr-manutencao-item{background:#f8fafc;border-left:4px solid #f97316;border-radius:10px;padding:8px 10px;font-size:12px;color:#374151;line-height:1.45}
+.bdr-manutencao-item b{color:#111827}
+.bdr-manutencao-item small{color:#6b7280}
+.bdr-manutencao-status{display:inline-flex;padding:3px 8px;border-radius:999px;color:#fff;font-size:10px;font-weight:900;background:#f97316}
+.bdr-manutencao-status.FECHADA{background:#16a34a}
+.manut-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.manut-modal-grid .wide{grid-column:1/-1}
+.manut-modal-grid input,.manut-modal-grid textarea{width:100%}
+.bdr-btn-danger{background:#dc2626!important;color:#fff!important}
+.bdr-btn-warn{background:#f97316!important;color:#fff!important}
+@media(max-width:800px){.manut-modal-grid{grid-template-columns:1fr}}
+
 </style>
 
 </head>
@@ -131,42 +153,42 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button data-permissao="ESTOQUE" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO" class="bdr-menu-btn active" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn active" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -174,21 +196,21 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 
   
   <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -234,7 +256,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
       <div class="avatar"><i class="fa-solid fa-user"></i></div>
 
       <div id="dropdownUser" class="dropdown-user">
-        <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+        <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
           <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
         </button>
         <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
@@ -351,6 +373,19 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   </div>
 </div>
 
+
+
+<div class="card" id="cardAnalyticsManutencao" data-permissao="PATRIMONIO_VER">
+  <h3>🛠 Analytics de Manutenção</h3>
+  <div class="bdr-manutencao-kpis">
+    <div class="bdr-manutencao-kpi"><strong id="kpiManutAbertas">0</strong><span>Manutenções abertas</span></div>
+    <div class="bdr-manutencao-kpi"><strong id="kpiManutFechadas">0</strong><span>Manutenções fechadas</span></div>
+    <div class="bdr-manutencao-kpi"><strong id="kpiManutDiasMedios">0</strong><span>Média de dias parado</span></div>
+    <div class="bdr-manutencao-kpi"><strong id="kpiManutCusto">R$ 0,00</strong><span>Custo/orçamento total</span></div>
+  </div>
+  <div id="listaAnalyticsManutencao" class="bdr-manutencao-lista"></div>
+</div>
+
 <div class="card">
   <h3>🏷 Patrimônios cadastrados</h3>
   <div id="lista"></div>
@@ -379,11 +414,12 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
     <div class="acoes">
       <button class="btn-ok acao-movimentar" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
       <button class="btn-blue acao-movimentar" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
-      <button class="btn-orange acao-movimentar" onclick="alterarStatus('MANUTENCAO')">🛠 Manutenção</button>
+      <button class="btn-orange acao-movimentar acao-manutencao" onclick="alterarStatus('MANUTENCAO')">🛠 Manutenção</button>
       <button class="acao-movimentar" onclick="trocarObra()">🔁 Trocar Setor</button>
       <button class="btn-gray acao-movimentar" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
-      <button class="btn-dark" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
+      <button class="btn-dark acao-imprimir" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
       <button class="acao-editar" onclick="abrirEdicao()">✏️ Editar Dados</button>
+      <button class="bdr-btn-danger acao-excluir" onclick="excluirPatrimonio()">🗑 Excluir/Inativar</button>
     </div>
   </div>
 </div>
@@ -417,6 +453,46 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   </div>
 </div>
 
+<div class="modal-bg" id="modalManutencaoBg">
+  <div class="modal">
+    <button class="fechar" onclick="fecharModalManutencao()">X</button>
+    <h2>🛠 Entrada em Manutenção</h2>
+    <div class="modal-info" id="manutInfoAbertura">Informe o motivo para abrir a manutenção.</div>
+    <label><strong>Motivo obrigatório</strong></label>
+    <textarea id="manut_motivo" placeholder="Ex: motor travando, cabo rompido, defeito elétrico, vazamento..."></textarea>
+    <br><br>
+    <button class="btn-orange" onclick="confirmarEntradaManutencao()">🛠 Confirmar manutenção</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalFecharManutencaoBg">
+  <div class="modal">
+    <button class="fechar" onclick="fecharModalFecharManutencao()">X</button>
+    <h2>✅ Fechar Manutenção</h2>
+    <div class="modal-info" id="manutInfoFechamento">Para sair da manutenção, informe no mínimo um orçamento.</div>
+    <div class="manut-modal-grid">
+      <div>
+        <label><strong>Fornecedor / Oficina</strong></label>
+        <input id="manut_fornecedor" placeholder="Ex: Oficina Central, Elétrica X...">
+      </div>
+      <div>
+        <label><strong>Valor do orçamento</strong></label>
+        <input id="manut_valor_orcamento" placeholder="Ex: 350,00" oninput="mascaraMoeda(this)">
+      </div>
+      <div class="wide">
+        <label><strong>Descrição do orçamento</strong></label>
+        <textarea id="manut_descricao_orcamento" placeholder="Descreva o orçamento, peças, serviço previsto..."></textarea>
+      </div>
+      <div class="wide">
+        <label><strong>Solução / Resultado</strong></label>
+        <textarea id="manut_solucao" placeholder="Ex: peça trocada, reparo realizado, item sem conserto..."></textarea>
+      </div>
+    </div>
+    <br>
+    <button class="btn-ok" onclick="confirmarFechamentoManutencao()">✅ Fechar manutenção e alterar status</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
@@ -433,6 +509,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
 let obras = [];
 let patrimonios = [];
 let patrimonioSelecionado = null;
+let manutencoesPatrimonio = [];
+let statusDestinoDepoisManutencao = null;
 window.obraAtiva = null;
 window.obraTravada = false;
 
@@ -577,22 +655,79 @@ function fecharMenusTopo(){
 }
 document.addEventListener("click", fecharMenusTopo);
 
-function usuarioEhGestao(){
-  const u = usuarioAtual();
-  return u && (u.perfil === "MASTER" || u.perfil === "ADMIN");
+function permissoesUsuarioBDR(usuario = usuarioAtual()){
+  if(!usuario) return [];
+  if(Array.isArray(usuario.permissoes)){
+    return usuario.permissoes.map(p => String(p).trim().toUpperCase()).filter(Boolean);
+  }
+  return String(usuario.permissoes || "")
+    .split(",")
+    .map(p => p.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function usuarioOwnerBDR(usuario = usuarioAtual()){
+  return Number(usuario?.id) === 1;
 }
 
 function usuarioTemPermissao(permissao){
   const u = usuarioAtual();
-
   if(!u) return false;
-  if(u.perfil === "MASTER") return true;
 
-  const permissoes = String(u.permissoes || "")
-    .split(",")
-    .map(p => p.trim());
+  if(window.BDRMenuPermissoes && typeof window.BDRMenuPermissoes.temPermissao === "function"){
+    return window.BDRMenuPermissoes.temPermissao(permissao, u);
+  }
 
-  return permissoes.includes(permissao);
+  if(usuarioOwnerBDR(u)) return true;
+
+  const p = String(permissao || "").toUpperCase();
+  const ps = permissoesUsuarioBDR(u);
+
+  const aliases = {
+    "PATRIMONIO":"PATRIMONIO_VER",
+    "DASHBOARD":"DASHBOARD_VER",
+    "RELATORIOS":"RELATORIOS_VER",
+    "EMPRESAS":"EMPRESAS_VER",
+    "USUARIOS":"USUARIOS_VER",
+    "VER_VALORES":"VALORES_VER",
+    "VER_TODAS_OBRAS":"TODAS_OBRAS_VER",
+    "VER_ESTOQUE_PROPRIA_OBRA":"PROPRIA_OBRA_VER",
+    "CADASTRAR_PATRIMONIO":"PATRIMONIO_CRIAR",
+    "EDITAR_PATRIMONIO":"PATRIMONIO_EDITAR",
+    "ALTERAR_STATUS":"PATRIMONIO_MOVIMENTAR",
+    "MOVIMENTAR_PATRIMONIO":"PATRIMONIO_MOVIMENTAR",
+    "PATRIMONIO_MOVER":"PATRIMONIO_MOVIMENTAR"
+  };
+
+  if(ps.includes(p)) return true;
+  if(aliases[p] && ps.includes(aliases[p])) return true;
+
+  const legado = Object.entries(aliases).find(([,novo]) => novo === p)?.[0];
+  if(legado && ps.includes(legado)) return true;
+
+  return false;
+}
+
+function usuarioEhGestao(){
+  return usuarioTemPermissao("USUARIOS") || usuarioTemPermissao("EMPRESAS");
+}
+
+function usuarioPodeVerTodasObras(){
+  return usuarioTemPermissao("VER_TODAS_OBRAS");
+}
+
+function bloquearPatrimonioSemPermissaoBDR(){
+  if(usuarioTemPermissao("PATRIMONIO_VER")) return true;
+  alert("Você não tem permissão para acessar Patrimônio.");
+  window.location.href = "dashboard.html";
+  return false;
+}
+
+function aplicarMenuPorPermissaoBDR(){
+  document.querySelectorAll("[data-permissao]").forEach(el => {
+    const permissao = el.getAttribute("data-permissao");
+    el.style.display = usuarioTemPermissao(permissao) ? "" : "none";
+  });
 }
 
 function valor(id){
@@ -735,7 +870,7 @@ async function carregarObras(){
 
     const usuario = usuarioAtual();
 
-    if(usuario && !usuarioEhGestao()){
+    if(usuario && !usuarioPodeVerTodasObras()){
       if(usuario.obra_id){
         select.value = usuario.obra_id;
         select.disabled = true;
@@ -788,6 +923,12 @@ async function carregarObras(){
 }
 
 function alternarTravaObra(){
+
+  if(!usuarioTemPermissao("PATRIMONIO_CRIAR")){
+    alert("Você não tem permissão para alterar obra de lançamento.");
+    return;
+  }
+
 
   if(window.obraTravada){
     destravarObra();
@@ -949,6 +1090,12 @@ if(tipo === "VEICULO"){
 
 async function gerarPatrimonio(){
 
+  if(!usuarioTemPermissao("PATRIMONIO_CRIAR")){
+    alert("Você não tem permissão para cadastrar patrimônio.");
+    return;
+  }
+
+
   const obra = obterObraParaLancamento();
 
   if(!obra){
@@ -1105,7 +1252,7 @@ async function carregarPatrimonios(){
     let dados = data || [];
     const usuario = usuarioAtual();
 
-    if(usuario && !usuarioEhGestao()){
+    if(usuario && !usuarioPodeVerTodasObras()){
       if(usuario.obra_id){
         dados = dados.filter(p =>
           String(p.obra_id) === String(usuario.obra_id)
@@ -1319,39 +1466,68 @@ function aplicarPermissoesTela(){
   if(!usuario) return;
 
   const podeCadastrar =
-    usuarioEhGestao() || usuarioTemPermissao("CADASTRAR_PATRIMONIO");
+    usuarioEhGestao() ||
+    usuarioTemPermissao("PATRIMONIO_CRIAR");
 
   const podeMovimentar =
-    usuarioEhGestao() || usuarioTemPermissao("ALTERAR_STATUS");
+    usuarioEhGestao() ||
+    usuarioTemPermissao("PATRIMONIO_MOVIMENTAR");
 
   const podeEditar =
-    usuarioEhGestao() || usuarioTemPermissao("CADASTRAR_PATRIMONIO");
+    usuarioEhGestao() ||
+    usuarioTemPermissao("PATRIMONIO_EDITAR") ||
+    usuarioTemPermissao("PATRIMONIO_CRIAR");
+
+  const podeImprimir =
+    usuarioEhGestao() ||
+    usuarioTemPermissao("PATRIMONIO_IMPRIMIR");
+
+  const podeExcluir =
+    usuarioOwnerBDR(usuario) ||
+    usuarioTemPermissao("PATRIMONIO_EXCLUIR");
 
   const cardEntrada = document.getElementById("cardEntradaPatrimonio");
   const cardObra = document.getElementById("cardObraLancamento");
 
-  if(cardEntrada && !podeCadastrar){
-    cardEntrada.style.display = "none";
+  if(cardEntrada){
+    cardEntrada.style.display = podeCadastrar ? "" : "none";
   }
 
-  if(cardObra && !podeCadastrar){
-    cardObra.style.display = "none";
+  if(cardObra){
+    cardObra.style.display = podeCadastrar ? "" : "none";
   }
 
   document.querySelectorAll(".acao-movimentar").forEach(btn => {
     btn.style.display = podeMovimentar ? "" : "none";
+    btn.disabled = !podeMovimentar;
   });
 
   document.querySelectorAll(".acao-editar").forEach(btn => {
     btn.style.display = podeEditar ? "" : "none";
+    btn.disabled = !podeEditar;
+  });
+
+  document.querySelectorAll(".acao-imprimir").forEach(btn => {
+    btn.style.display = podeImprimir ? "" : "none";
+    btn.disabled = !podeImprimir;
+  });
+
+  document.querySelectorAll(".acao-excluir").forEach(btn => {
+    btn.style.display = podeExcluir ? "" : "none";
+    btn.disabled = !podeExcluir;
   });
 
   const observacaoMov = document.getElementById("observacaoMov");
   const novaObraSelect = document.getElementById("novaObraSelect");
 
-  if(!podeMovimentar){
-    if(observacaoMov) observacaoMov.style.display = "none";
-    if(novaObraSelect) novaObraSelect.style.display = "none";
+  if(observacaoMov){
+    observacaoMov.style.display = podeMovimentar ? "" : "none";
+    observacaoMov.disabled = !podeMovimentar;
+  }
+
+  if(novaObraSelect){
+    novaObraSelect.style.display = podeMovimentar ? "" : "none";
+    novaObraSelect.disabled = !podeMovimentar;
   }
 }
 
@@ -1390,14 +1566,268 @@ const usuarioLogado = JSON.parse(
 
   return true;
 }
+
+
+/* =========================================================
+   BDR 6B/6C - MANUTENÇÃO INTELIGENTE
+========================================================= */
+function diasEntreDatasBDR(inicio, fim){
+  if(!inicio) return 0;
+  const a = new Date(String(inicio).replace(" ", "T"));
+  const b = fim ? new Date(String(fim).replace(" ", "T")) : new Date();
+  if(isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
+  return Math.max(0, Math.ceil((b.getTime() - a.getTime()) / 86400000));
+}
+
+async function carregarManutencoesPatrimonio(){
+  try{
+    if(!db()) return;
+    const { data, error } = await db()
+      .from("manutencoes_patrimonio")
+      .select("*")
+      .order("id", { ascending:false })
+      .limit(500);
+
+    if(error){
+      console.warn("Não foi possível carregar manutenções:", error.message);
+      manutencoesPatrimonio = [];
+      return;
+    }
+
+    manutencoesPatrimonio = data || [];
+    renderizarAnalyticsManutencao();
+  }catch(e){
+    console.warn("Analytics manutenção indisponível:", e);
+  }
+}
+
+function renderizarAnalyticsManutencao(){
+  const abertas = manutencoesPatrimonio.filter(m => String(m.status || "ABERTA").toUpperCase() !== "FECHADA");
+  const fechadas = manutencoesPatrimonio.filter(m => String(m.status || "").toUpperCase() === "FECHADA");
+  const diasLista = manutencoesPatrimonio.map(m => Number(m.dias_parado || diasEntreDatasBDR(m.data_entrada, m.data_saida))).filter(n => n > 0);
+  const mediaDias = diasLista.length ? Math.round(diasLista.reduce((s,n)=>s+n,0) / diasLista.length) : 0;
+  const custo = manutencoesPatrimonio.reduce((s,m) => s + Number(m.valor_orcamento || 0), 0);
+
+  const set = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
+  set("kpiManutAbertas", abertas.length);
+  set("kpiManutFechadas", fechadas.length);
+  set("kpiManutDiasMedios", mediaDias);
+  set("kpiManutCusto", formatarMoeda(custo));
+
+  const ranking = {};
+  manutencoesPatrimonio.forEach(m => {
+    const chave = m.nome_patrimonio || m.codigo_patrimonio || ("ID " + m.patrimonio_id);
+    if(!ranking[chave]) ranking[chave] = {qtd:0, dias:0, custo:0};
+    ranking[chave].qtd++;
+    ranking[chave].dias += Number(m.dias_parado || diasEntreDatasBDR(m.data_entrada, m.data_saida));
+    ranking[chave].custo += Number(m.valor_orcamento || 0);
+  });
+
+  const top = Object.entries(ranking)
+    .sort((a,b) => b[1].qtd - a[1].qtd || b[1].dias - a[1].dias)
+    .slice(0,5);
+
+  const box = document.getElementById("listaAnalyticsManutencao");
+  if(!box) return;
+
+  if(!manutencoesPatrimonio.length){
+    box.innerHTML = `<div class="bdr-manutencao-item">Nenhuma manutenção registrada ainda.</div>`;
+    return;
+  }
+
+  box.innerHTML = top.map(([nome, r]) => `
+    <div class="bdr-manutencao-item">
+      <b>${nome}</b><br>
+      Ocorrências: <b>${r.qtd}</b> • Dias parado: <b>${r.dias}</b> • Orçamentos: <b>${formatarMoeda(r.custo)}</b>
+    </div>
+  `).join("");
+}
+
+function manutencaoAbertaDoPatrimonio(id){
+  return manutencoesPatrimonio.find(m =>
+    String(m.patrimonio_id) === String(id) &&
+    String(m.status || "ABERTA").toUpperCase() !== "FECHADA"
+  );
+}
+
+function abrirModalManutencao(){
+  if(!patrimonioSelecionado) return;
+  const info = document.getElementById("manutInfoAbertura");
+  if(info){
+    info.innerHTML = `<b>${patrimonioSelecionado.codigo_qr || "-"}</b> • ${patrimonioSelecionado.nome_bem || "-"}<br>Informe o motivo para enviar este patrimônio à manutenção.`;
+  }
+  document.getElementById("manut_motivo").value = valor("observacaoMov") || "";
+  document.getElementById("modalManutencaoBg").style.display = "flex";
+}
+
+function fecharModalManutencao(){
+  document.getElementById("modalManutencaoBg").style.display = "none";
+}
+
+function abrirModalFecharManutencao(novoStatus){
+  if(!patrimonioSelecionado) return;
+  statusDestinoDepoisManutencao = novoStatus || "ESTOQUE";
+  const aberta = manutencaoAbertaDoPatrimonio(patrimonioSelecionado.id);
+  const info = document.getElementById("manutInfoFechamento");
+  if(info){
+    info.innerHTML = `
+      <b>${patrimonioSelecionado.codigo_qr || "-"}</b> • ${patrimonioSelecionado.nome_bem || "-"}<br>
+      Aberta há <b>${diasEntreDatasBDR(aberta?.data_entrada)} dia(s)</b>. Para sair da manutenção informe orçamento/solução.
+    `;
+  }
+  document.getElementById("manut_fornecedor").value = "";
+  document.getElementById("manut_valor_orcamento").value = "";
+  document.getElementById("manut_descricao_orcamento").value = "";
+  document.getElementById("manut_solucao").value = "";
+  document.getElementById("modalFecharManutencaoBg").style.display = "flex";
+}
+
+function fecharModalFecharManutencao(){
+  document.getElementById("modalFecharManutencaoBg").style.display = "none";
+  statusDestinoDepoisManutencao = null;
+}
+
+async function registrarEntradaManutencaoBDR(motivo){
+  const usuario = usuarioAtual();
+  const payload = {
+    patrimonio_id: patrimonioSelecionado.id,
+    codigo_patrimonio: patrimonioSelecionado.codigo_qr || patrimonioSelecionado.codigo_antigo || null,
+    nome_patrimonio: patrimonioSelecionado.nome_bem || null,
+    obra_id: patrimonioSelecionado.obra_id || null,
+    status: "ABERTA",
+    motivo,
+    usuario_abertura: usuario?.nome || "Usuário não identificado"
+  };
+
+  const { error } = await db().from("manutencoes_patrimonio").insert([payload]);
+  if(error) throw error;
+}
+
+async function fecharManutencaoBDR(dados){
+  const aberta = manutencaoAbertaDoPatrimonio(patrimonioSelecionado.id);
+  if(!aberta){
+    throw new Error("Não encontrei manutenção aberta para este patrimônio.");
+  }
+
+  const usuario = usuarioAtual();
+  const dias = diasEntreDatasBDR(aberta.data_entrada, new Date().toISOString());
+
+  const { error } = await db()
+    .from("manutencoes_patrimonio")
+    .update({
+      status: "FECHADA",
+      data_saida: new Date().toISOString(),
+      dias_parado: dias,
+      fornecedor: dados.fornecedor,
+      valor_orcamento: dados.valor_orcamento,
+      descricao_orcamento: dados.descricao_orcamento,
+      solucao: dados.solucao,
+      usuario_fechamento: usuario?.nome || "Usuário não identificado"
+    })
+    .eq("id", aberta.id);
+
+  if(error) throw error;
+}
+
+async function confirmarEntradaManutencao(){
+  const motivo = valor("manut_motivo");
+  if(!motivo || motivo.length < 5){
+    alert("Informe o motivo da manutenção com pelo menos 5 caracteres.");
+    return;
+  }
+  document.getElementById("observacaoMov").value = motivo;
+
+  try{
+    if(patrimonioOffline()){
+      alert("Para registrar manutenção inteligente, é necessário estar online.");
+      return;
+    }
+    await registrarEntradaManutencaoBDR(motivo);
+    fecharModalManutencao();
+    await alterarStatusBaseBDR("MANUTENCAO", motivo);
+    await carregarManutencoesPatrimonio();
+  }catch(e){
+    console.error(e);
+    alert(e.message || "Erro ao abrir manutenção.");
+  }
+}
+
+async function confirmarFechamentoManutencao(){
+  const fornecedor = valor("manut_fornecedor");
+  const valorOrcamento = moedaParaNumero(valor("manut_valor_orcamento"));
+  const descricao = valor("manut_descricao_orcamento");
+  const solucao = valor("manut_solucao");
+
+  if(!fornecedor || fornecedor.length < 2){ alert("Informe o fornecedor/oficina."); return; }
+  if(!valorOrcamento || valorOrcamento <= 0){ alert("Informe o valor do orçamento."); return; }
+  if(!descricao || descricao.length < 5){ alert("Informe a descrição do orçamento."); return; }
+  if(!solucao || solucao.length < 5){ alert("Informe a solução/resultado da manutenção."); return; }
+
+  const obs = `Saída da manutenção | Fornecedor: ${fornecedor} | Orçamento: ${formatarMoeda(valorOrcamento)} | ${descricao} | Solução: ${solucao}`;
+  document.getElementById("observacaoMov").value = obs;
+
+  try{
+    if(patrimonioOffline()){
+      alert("Para fechar manutenção inteligente, é necessário estar online.");
+      return;
+    }
+    await fecharManutencaoBDR({
+      fornecedor,
+      valor_orcamento: valorOrcamento,
+      descricao_orcamento: descricao,
+      solucao
+    });
+    const destino = statusDestinoDepoisManutencao || "ESTOQUE";
+    fecharModalFecharManutencao();
+    await alterarStatusBaseBDR(destino, obs);
+    await carregarManutencoesPatrimonio();
+  }catch(e){
+    console.error(e);
+    alert(e.message || "Erro ao fechar manutenção.");
+  }
+}
+
+
 async function alterarStatus(novoStatus){
+  if(!usuarioTemPermissao("PATRIMONIO_MOVIMENTAR")){
+    alert("Você não tem permissão para movimentar patrimônio.");
+    return;
+  }
 
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
     return;
   }
 
-  const obs = valor("observacaoMov");
+  const statusAtual = String(patrimonioSelecionado.status || "").toUpperCase();
+
+  if(novoStatus === "MANUTENCAO"){
+    abrirModalManutencao();
+    return;
+  }
+
+  if(statusAtual === "MANUTENCAO" && novoStatus !== "MANUTENCAO"){
+    abrirModalFecharManutencao(novoStatus);
+    return;
+  }
+
+  return alterarStatusBaseBDR(novoStatus);
+}
+
+async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
+
+  if(!usuarioTemPermissao("PATRIMONIO_MOVIMENTAR")){
+    alert("Você não tem permissão para movimentar patrimônio.");
+    return;
+  }
+
+
+  if(!patrimonioSelecionado){
+    alert("Selecione um patrimônio.");
+    return;
+  }
+
+  const obs = observacaoForcada || valor("observacaoMov");
 
   if(!obs || obs.length < 5){
     alert("Informe uma justificativa da movimentação.");
@@ -1480,6 +1910,12 @@ async function alterarStatus(novoStatus){
 }
 
 async function trocarObra(){
+
+  if(!usuarioTemPermissao("PATRIMONIO_MOVIMENTAR")){
+    alert("Você não tem permissão para trocar obra/setor.");
+    return;
+  }
+
 
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
@@ -1589,7 +2025,65 @@ async function trocarObra(){
   renderizarPatrimonios();
 }
 
+
+async function excluirPatrimonio(){
+  if(!usuarioTemPermissao("PATRIMONIO_EXCLUIR")){
+    alert("Você não tem permissão para excluir patrimônio.");
+    return;
+  }
+
+  if(!patrimonioSelecionado){
+    alert("Selecione um patrimônio.");
+    return;
+  }
+
+  const confirma = confirm(`Confirma inativar/excluir o patrimônio ${patrimonioSelecionado.codigo_qr || "-"}?
+
+Ele sairá das consultas normais, mas o histórico fica preservado.`);
+  if(!confirma) return;
+
+  const motivo = valor("observacaoMov");
+  if(!motivo || motivo.length < 5){
+    alert("Informe uma justificativa no campo de movimentação antes de excluir/inativar.");
+    return;
+  }
+
+  const resp = await bdrAtualizarPrimeiroNoTablet(
+    "patrimonio",
+    { id: patrimonioSelecionado.id },
+    { ativo:false, status:"BAIXADO" },
+    { acao:"EXCLUSAO_INATIVACAO_PATRIMONIO", motivo }
+  );
+
+  if(resp.error){
+    alert(resp.error.message || "Erro ao excluir/inativar patrimônio.");
+    return;
+  }
+
+  await gravarMovimentacao({
+    patrimonio_id: patrimonioSelecionado.id,
+    empresa_id: patrimonioSelecionado.empresa_id,
+    obra_origem_id: patrimonioSelecionado.obra_id,
+    obra_destino_id: patrimonioSelecionado.obra_id,
+    tipo: "EXCLUSAO_INATIVACAO",
+    status_anterior: patrimonioSelecionado.status,
+    status_novo: "BAIXADO",
+    observacao: motivo
+  });
+
+  patrimonios = patrimonios.filter(p => String(p.id) !== String(patrimonioSelecionado.id));
+  alert("Patrimônio inativado com sucesso.");
+  fecharModal();
+  renderizarPatrimonios();
+}
+
 function imprimirEtiqueta(){
+
+  if(!usuarioTemPermissao("PATRIMONIO_IMPRIMIR")){
+    alert("Você não tem permissão para imprimir etiqueta.");
+    return;
+  }
+
 
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
@@ -1606,6 +2100,12 @@ function imprimirEtiqueta(){
   );
 }
 function abrirEdicao(){
+
+  if(!usuarioTemPermissao("PATRIMONIO_EDITAR")){
+    alert("Você não tem permissão para editar patrimônio.");
+    return;
+  }
+
 
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
@@ -1645,6 +2145,12 @@ function fecharEdicao(){
 }
 
 async function salvarEdicaoPatrimonio(){
+
+  if(!usuarioTemPermissao("PATRIMONIO_EDITAR")){
+    alert("Você não tem permissão para salvar edição de patrimônio.");
+    return;
+  }
+
 
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
@@ -1739,6 +2245,8 @@ async function salvarEdicaoPatrimonio(){
   renderizarPatrimonios();
 }
 async function iniciar(){
+  if(!bloquearPatrimonioSemPermissaoBDR()) return;
+  aplicarMenuPorPermissaoBDR();
 
   carregarUsuarioTopo();
 
@@ -1772,9 +2280,13 @@ async function iniciar(){
 
   atualizarVisualTrava();
   aplicarPermissoesTela();
+  aplicarMenuPorPermissaoBDR();
 
   await carregarPatrimonios();
+  await carregarManutencoesPatrimonio();
+  aplicarPermissoesTela();
 }
+
 
 setInterval(async () => {
   await patrimonioOnlineReal();
@@ -1786,5 +2298,20 @@ iniciar();
 </script>
 
 <script src="./JS/bdrUppercase.js"></script>
+<script>
+/* =========================================================
+   BDR PATCH FINAL - PATRIMÔNIO SOMENTE CONSULTA
+   - Mantém busca/filtros funcionando.
+   - Quem não tem PATRIMONIO_CRIAR não vê card de cadastro.
+   - Quem não tem PATRIMONIO_MOVIMENTAR não movimenta.
+   - Quem não tem PATRIMONIO_EDITAR não edita cadastro.
+========================================================= */
+setTimeout(() => {
+  if(typeof aplicarPermissoesTela === "function") aplicarPermissoesTela();
+}, 300);
+setTimeout(() => {
+  if(typeof aplicarPermissoesTela === "function") aplicarPermissoesTela();
+}, 1200);
+</script>
 </body>
 </html>

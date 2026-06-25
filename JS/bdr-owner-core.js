@@ -11,8 +11,7 @@ console.log("🛡️ BDR OWNER CORE V8 carregado - busca automática + reativar"
 /* ALTERE AQUI */
 const BDR_OWNER_LOGIN = "saulo";
 const BDR_OWNER_SENHA = "852410";
-const BDR_OWNER_SENHA_APAGAR = "8524110"; // segunda senha só para apagar definitivo
-const BDR_OWNER_CLIQUES = 10;
+const BDR_OWNER_CLIQUES = 5;
 const BDR_OWNER_TEMPO = 6000;
 
 let bdrOwnerCliques = 0;
@@ -92,6 +91,16 @@ const BDR_OWNER_AREAS = {
     busca: ["acao", "tabela", "usuario", "motivo", "descricao"],
     campos: ["id", "acao", "tabela", "usuario", "motivo", "created_at"],
     destaque: "acao"
+  },
+  perfis: {
+    titulo: "Perfis rápidos",
+    icone: "fa-user-shield",
+    tabela: "perfis_rapidos",
+    ordem: "id",
+    exemplo: "CONFERENCIA, ADMIN, FINANCEIRO",
+    busca: ["nome", "descricao", "permissoes"],
+    campos: ["id", "nome", "descricao", "permissoes", "ativo", "created_at"],
+    destaque: "nome"
   }
 };
 
@@ -113,7 +122,8 @@ function bdrOwnerLoginAtual(){
 }
 
 function bdrOwnerEhOwner(){
-  return bdrOwnerLoginAtual() === String(BDR_OWNER_LOGIN).trim().toLowerCase();
+  const u = bdrOwnerUsuarioLocal();
+  return Number(u?.id) === 1;
 }
 
 function bdrOwnerEsc(v){
@@ -692,28 +702,33 @@ window.bdrOwnerApagarSelecionado = bdrOwnerApagarSelecionado;
 async function bdrOwnerApagar(id){
   const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
 
-  const senha1 = prompt("Senha BDR CORE:");
-  if(senha1 !== BDR_OWNER_SENHA){
-    alert("Primeira senha incorreta.");
+  const senha = prompt("Digite sua senha master:");
+  if(senha !== BDR_OWNER_SENHA){
+    alert("Senha incorreta. Nada foi apagado.");
     return;
   }
 
-  const senha2 = prompt("Segunda senha para APAGAR DEFINITIVO:");
-  if(senha2 !== BDR_OWNER_SENHA_APAGAR){
-    alert("Segunda senha incorreta.");
+  const resp = await bdrOwnerDB()
+    .from(cfg.tabela)
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if(resp.error){
+    alert(
+      "Erro ao apagar: " +
+      resp.error.message +
+      "\n\nPode existir vínculo com outra tabela. Nesse caso, use DESATIVAR."
+    );
     return;
   }
 
-  const txt = prompt(`Digite exatamente: APAGAR ${id}`);
-  if(String(txt || "").trim().toUpperCase() !== `APAGAR ${id}`){
-    alert("Confirmação cancelada. Nada foi apagado.");
-    return;
-  }
-
-  const { error } = await bdrOwnerDB().from(cfg.tabela).delete().eq("id", id);
-
-  if(error){
-    alert("Erro ao apagar: " + error.message + "\n\nPode existir vínculo com outra tabela. Nesse caso, use DESATIVAR.");
+  if(!resp.data || resp.data.length === 0){
+    alert(
+      "O Supabase não apagou nenhuma linha.\n\n" +
+      "Provável bloqueio de RLS/policy ou vínculo no banco.\n" +
+      "Nada foi apagado."
+    );
     return;
   }
 

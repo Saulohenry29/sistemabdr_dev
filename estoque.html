@@ -548,42 +548,42 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button data-permissao="ESTOQUE" class="bdr-menu-btn active" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn active" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -591,21 +591,21 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 
   
   <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -637,7 +637,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
         <div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div>
         <div class="avatar"><i class="fa-solid fa-user"></i></div>
         <div id="dropdownUser" class="dropdown-user">
-          <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+          <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
           <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
         </div>
       </div>
@@ -661,7 +661,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
       <div class="resumo-card" onclick="filtrarResumo('DISPONIVEL')"><strong id="resumoDisponiveis">0</strong><span>estoque</span></div>
       <div class="resumo-card" onclick="filtrarResumo('EM_USO')"><strong id="resumoEmUso">0</strong><span>Em uso</span></div>
       <div class="resumo-card" onclick="filtrarResumo('PATRIMONIO')"><strong id="resumoBaixo">0</strong><span>Patrimônios</span></div>
-      <div class="resumo-card" onclick="abrirResumoValor()"><strong id="resumoValor">R$ 0,00</strong><span>Valor estimado</span></div>
+      <div class="resumo-card" data-acao-permissao="VALORES_VER" onclick="if(!bdrPodeAcaoEstoque('VALORES_VER','ver valores')) return; abrirResumoValor()"><strong id="resumoValor">R$ 0,00</strong><span>Valor estimado</span></div>
     </div>
   </section>
 
@@ -669,19 +669,19 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   <section class="card">
     <h3>⚡ Ações rápidas</h3>
     <div class="acoes-estoque-grid">
-      <div class="acao-estoque-card" onclick="ir('prateleiras-3d.html')">
+      <div class="acao-estoque-card" data-acao-permissao="ESTOQUE_TRANSFERIR" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_TRANSFERIR','acessar o endereçamento 3D')) return; ir('prateleiras-3d.html')">
         <strong>🏗 Endereçamento 3D</strong>
         <span>Simular, editar e cadastrar endereços físicos.</span>
       </div>
-      <div class="acao-estoque-card" onclick="abrirCentralEtiquetas()">
+      <div class="acao-estoque-card" data-acao-permissao="ESTOQUE_EXPORTAR" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_EXPORTAR','gerar etiquetas')) return; abrirCentralEtiquetas()">
         <strong>🏷 Central QR BDR</strong>
         <span>Gerar etiquetas de endereço, produto e patrimônio.</span>
       </div>
-      <div class="acao-estoque-card" onclick="alert('Em breve: Guardar por bipagem')">
+      <div class="acao-estoque-card" data-acao-permissao="ESTOQUE_ENTRADA" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_ENTRADA','guardar por bipagem')) return; alert('Em breve: Guardar por bipagem')">
         <strong>📥 Guardar por bipagem</strong>
         <span>Bipar produto + endereço e confirmar local real.</span>
       </div>
-      <div class="acao-estoque-card" onclick="ir('expedicao.html')">
+      <div class="acao-estoque-card" data-acao-permissao="ESTOQUE_SAIDA" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_SAIDA','abrir separação/expedição')) return; ir('expedicao.html')">
         <strong>🚚 Separação / Expedição</strong>
         <span>Pedidos, reserva, retirada e transferência.</span>
       </div>
@@ -734,9 +734,9 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
     <div id="modalMovimentacoes" class="mov-lista"></div>
 
     <div class="modal-acoes">
-      <button data-permissao="EXPEDICAO" class="btn btn-blue" onclick="ir('expedicao.html')">📋 Solicitar</button>
-      <button data-permissao="EXPEDICAO" class="btn btn-green" onclick="ir('expedicao.html')">🚚 Expedição</button>
-      <button data-permissao="EXPEDICAO" class="btn btn-orange" onclick="ir('expedicao.html')">📦 Catálogo</button>
+      <button data-acao-permissao="ESTOQUE_SAIDA" class="btn btn-blue" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_SAIDA','solicitar material')) return; ir('expedicao.html')">📋 Solicitar</button>
+      <button data-acao-permissao="ESTOQUE_SAIDA" class="btn btn-green" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_SAIDA','abrir expedição')) return; ir('expedicao.html')">🚚 Expedição</button>
+      <button data-acao-permissao="ESTOQUE_VER" class="btn btn-orange" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_VER','abrir catálogo')) return; ir('expedicao.html')">📦 Catálogo</button>
       <button class="btn btn-gray" onclick="fecharModalProduto()">Fechar</button>
     </div>
   </div>
@@ -811,8 +811,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
           </div>
 
           <div class="btn-line-3d">
-            <button class="btn-green" onclick="cadastrarEnderecos3D()">Cadastrar endereços</button>
-            <button class="btn-blue" onclick="abrirCentralEtiquetas()">Gerar etiquetas</button>
+            <button data-acao-permissao="ESTOQUE_ENTRADA" class="btn-green" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_ENTRADA','cadastrar endereços')) return; cadastrarEnderecos3D()">Cadastrar endereços</button>
+            <button data-acao-permissao="ESTOQUE_EXPORTAR" class="btn-blue" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_EXPORTAR','gerar etiquetas')) return; abrirCentralEtiquetas()">Gerar etiquetas</button>
           </div>
 
           <h3 style="margin-top:12px;">Primeiros endereços</h3>
@@ -848,8 +848,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
           <option value="50x30">50x30 mm</option>
         </select>
         <br><br>
-        <button class="btn-red" onclick="gerarPreviewEtiquetas()">Gerar etiquetas</button>
-        <button class="btn-gray" onclick="window.print()">Imprimir</button>
+        <button data-acao-permissao="ESTOQUE_EXPORTAR" class="btn-red" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_EXPORTAR','gerar etiquetas')) return; gerarPreviewEtiquetas()">Gerar etiquetas</button>
+        <button data-acao-permissao="ESTOQUE_EXPORTAR" class="btn-gray" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_EXPORTAR','imprimir etiquetas')) return; window.print()">Imprimir</button>
       </section>
       <section class="card">
         <h3>Prévia das etiquetas</h3>
@@ -858,6 +858,71 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
     </div>
   </div>
 </div>
+
+
+<script>
+/* =========================================================
+   BDR ESTOQUE - PERMISSÕES NOVAS POR AÇÃO
+   Tela: estoque.html
+   Permissões usadas:
+   ESTOQUE_VER, ESTOQUE_ENTRADA, ESTOQUE_SAIDA,
+   ESTOQUE_TRANSFERIR, ESTOQUE_EXPORTAR, VALORES_VER
+========================================================= */
+function bdrUsuarioEstoqueAtual(){
+  try{
+    const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+function bdrPermissoesEstoque(){
+  const u = bdrUsuarioEstoqueAtual();
+  return String(u?.permissoes || "")
+    .split(",")
+    .map(p => String(p || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function bdrEhOwnerEstoque(){
+  return Number(bdrUsuarioEstoqueAtual()?.id) === 1;
+}
+
+function bdrPodeEstoque(perm){
+  if(bdrEhOwnerEstoque()) return true;
+  return bdrPermissoesEstoque().includes(String(perm || "").toUpperCase());
+}
+
+function bdrPodeAcaoEstoque(perm, acao){
+  if(bdrPodeEstoque(perm)) return true;
+  alert("Você não tem permissão para " + (acao || "executar esta ação") + ".");
+  return false;
+}
+
+function bdrAplicarPermissoesEstoque(){
+  if(!bdrPodeEstoque("ESTOQUE_VER")){
+    alert("Você não tem permissão para acessar esta tela.");
+    location.href = "dashboard.html";
+    return;
+  }
+
+  document.querySelectorAll("[data-acao-permissao]").forEach(el => {
+    const p = el.getAttribute("data-acao-permissao");
+    el.style.display = bdrPodeEstoque(p) ? "" : "none";
+  });
+
+  if(!bdrPodeEstoque("VALORES_VER")){
+    document.getElementById("resumoValor")?.closest(".resumo-card")?.style.setProperty("display","none");
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  bdrAplicarPermissoesEstoque();
+  setTimeout(bdrAplicarPermissoesEstoque, 500);
+  setTimeout(bdrAplicarPermissoesEstoque, 1200);
+});
+</script>
 
 <script src="./JS/offlineDB.js"></script>
 <script src="./JS/offlineSync.js"></script>

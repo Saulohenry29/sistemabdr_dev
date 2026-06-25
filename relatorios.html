@@ -818,6 +818,11 @@ button,
 }
 </style>
 
+
+<style>
+/* BDR permissões relatórios: sem permissão = não aparece */
+[data-bdr-sem-permissao="SIM"]{display:none!important;}
+</style>
 </head>
 
 <body>
@@ -850,42 +855,42 @@ button,
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')" data-permissao="DASHBOARD_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')" data-permissao="ENTRADA_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')" data-permissao="TRIAGEM_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')" data-permissao="ESTOQUE_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')" data-permissao="PATRIMONIO_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')" data-permissao="EXPEDICAO_VER">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -893,21 +898,21 @@ button,
 
   
   <!-- RELATÓRIOS -->
-  <button class="bdr-menu-btn active" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button class="bdr-menu-btn active" data-tip="Relatórios" onclick="ir('relatorios.html')" data-permissao="RELATORIOS_VER">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')" data-permissao="EMPRESAS_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')" data-permissao="USUARIOS_VER">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -920,11 +925,11 @@ button,
 <div class="layout">
 
 <div class="sidebar">
-  <button class="menu-btn" onclick="ir('dashboard.html')">📊 Torre de Controle</button>
-  <button class="menu-btn" onclick="ir('patrimonio.html')">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="ir('empresa.html')">🏢 Empresas</button>
-  <button class="menu-btn" onclick="ir('movimentacoes.html')">🔁 Movimentações</button>
-  <button class="menu-btn" onclick="ir('relatorios.html')">📄 Relatórios</button>
+  <button class="menu-btn" onclick="ir('dashboard.html')" data-permissao="DASHBOARD_VER">📊 Torre de Controle</button>
+  <button class="menu-btn" onclick="ir('patrimonio.html')" data-permissao="PATRIMONIO_VER">📦 Patrimônio</button>
+  <button class="menu-btn" onclick="ir('empresa.html')" data-permissao="EMPRESAS_VER">🏢 Empresas</button>
+  <button class="menu-btn" onclick="ir('movimentacoes.html')" data-permissao="RELATORIOS_VER">🔁 Movimentações</button>
+  <button class="menu-btn" onclick="ir('relatorios.html')" data-permissao="RELATORIOS_VER">📄 Relatórios</button>
   <button class="menu-btn" onclick="logout()">🚪 Sair</button>
 </div>
 
@@ -1043,15 +1048,15 @@ button,
 
   <div class="botoes relatorio-actions">
     <button class="btn-relatorio btn-limpar" onclick="limparFiltros()">🧹 Limpar filtros</button>
-    <button class="btn-relatorio btn-print" onclick="imprimirRelatorio()">🖨 Imprimir</button>
-    <button class="btn-relatorio btn-excel" onclick="exportarCSV()">📊 Exportar Excel/CSV</button>
-    <button class="btn-relatorio btn-blue" onclick="exportarSiengeCSV()">🏗 Exportar CSV Sienge</button>
-    <button class="btn-relatorio btn-print" onclick="abrirModalSienge()">⚙️ Códigos Sienge</button>
+    <button class="btn-relatorio btn-print" data-permissao="RELATORIOS_EXPORTAR" onclick="imprimirRelatorio()">🖨 Imprimir</button>
+    <button class="btn-relatorio btn-excel" data-permissao="RELATORIOS_EXPORTAR" onclick="exportarCSV()">📊 Exportar Excel/CSV</button>
+    <button class="btn-relatorio btn-blue" data-permissao="SIENGE_EXPORTAR" onclick="exportarSiengeCSV()">🏗 Exportar CSV Sienge</button>
+    <button class="btn-relatorio btn-print" data-permissao="SIENGE_EXPORTAR" onclick="abrirModalSienge()">⚙️ Códigos Sienge</button>
   </div>
 
 </div>
 
-<div class="card">
+<div class="card" data-permissao="SIENGE_EXPORTAR">
   <h3>🏗 Seleção de obras/setores para exportação</h3>
   <p style="font-size:13px;color:#374151;margin-top:0;">
     Marque uma ou mais obras/setores para exportar somente o que você quiser. Se nenhuma obra estiver marcada, o relatório usa o filtro normal acima.
@@ -1065,7 +1070,7 @@ button,
   <div id="listaObrasSienge" class="obras-check-wrap"></div>
 </div>
 
-<div class="card">
+<div class="card" data-permissao="SIENGE_EXPORTAR">
   <h3>🏗 Exportação para Sienge</h3>
   <p style="font-size:13px;color:#374151;margin-top:0;">
     Gera um CSV no padrão de importação de bens do Sienge. Use os filtros acima para exportar somente os bens desejados.
@@ -1123,7 +1128,7 @@ button,
 
 
 <!-- MODAL CÓDIGOS SIENGE -->
-<div id="modalSiengeCodigos" class="sienge-modal-bg">
+<div id="modalSiengeCodigos" class="sienge-modal-bg" data-permissao="SIENGE_EXPORTAR">
   <div class="sienge-modal">
     <div class="sienge-modal-top">
       <div>
@@ -1276,6 +1281,70 @@ let siengeInsumos = [];
 let movimentacoes = [];
 let filtradosAtuais = [];
 
+/* =========================================================
+   BDR RELATÓRIOS - PERMISSÕES NOVAS
+   Regra: sem permissão = não aparece; função também bloqueia.
+========================================================= */
+function usuarioAtualRelatoriosBDR(){
+  try{
+    const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+function listaPermissoesRelatoriosBDR(usuario = usuarioAtualRelatoriosBDR()){
+  return String(usuario?.permissoes || "")
+    .split(",")
+    .map(p => String(p || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function temPermissaoRelatoriosBDR(permissao, usuario = usuarioAtualRelatoriosBDR()){
+  if(!usuario) return false;
+  if(Number(usuario.id) === 1) return true;
+
+  const perfil = String(usuario.perfil || "").toUpperCase();
+  const ps = listaPermissoesRelatoriosBDR(usuario);
+
+  if((perfil === "MASTER" || perfil === "ADMIN") && ps.length === 0) return true;
+
+  permissao = String(permissao || "").toUpperCase();
+  return ps.includes(permissao);
+}
+
+function exigirPermissaoRelatoriosBDR(permissao, mensagem){
+  if(temPermissaoRelatoriosBDR(permissao)) return true;
+  alert(mensagem || "Você não tem permissão para esta ação.");
+  return false;
+}
+
+function aplicarPermissoesRelatoriosBDR(){
+  document.querySelectorAll("[data-permissao]").forEach(el => {
+    const permissao = el.getAttribute("data-permissao");
+    const pode = temPermissaoRelatoriosBDR(permissao);
+    el.hidden = !pode;
+    el.style.display = pode ? "" : "none";
+    el.dataset.bdrSemPermissao = pode ? "NAO" : "SIM";
+  });
+
+  if(!temPermissaoRelatoriosBDR("RELATORIOS_VER")){
+    alert("Você não tem permissão para acessar relatórios.");
+    location.href = "dashboard.html";
+    return false;
+  }
+
+  return true;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  aplicarPermissoesRelatoriosBDR();
+  setTimeout(aplicarPermissoesRelatoriosBDR, 400);
+  setTimeout(aplicarPermissoesRelatoriosBDR, 1200);
+});
+
+
 function ir(pagina){
   window.location.href = pagina;
 }
@@ -1300,6 +1369,8 @@ function nomePatrimonio(id){
 }
 
 async function carregarDados(){
+
+  if(!aplicarPermissoesRelatoriosBDR()) return;
 
   document.getElementById("dataAtual").innerText =
     new Date().toLocaleDateString("pt-BR");
@@ -1369,15 +1440,17 @@ async function carregarDados(){
     console.error(movResp.error);
   }
 
-const usuario = JSON.parse(localStorage.getItem("usuario_logado"));
+const usuario = usuarioAtualRelatoriosBDR();
 
 let dadosPatrimonios = patResp.data || [];
 let dadosMovimentacoes = movResp.data || [];
 
-if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN"){
+/* DADOS: filtra por permissão nova, não por perfil. */
+const podeTodasObras = temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
+const podePropriaObra = temPermissaoRelatoriosBDR("PROPRIA_OBRA_VER", usuario);
 
-  if(usuario.obra_id){
-
+if(usuario && !podeTodasObras){
+  if(podePropriaObra && usuario.obra_id){
     dadosPatrimonios = dadosPatrimonios.filter(p =>
       String(p.obra_id) === String(usuario.obra_id)
     );
@@ -1387,6 +1460,10 @@ if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN"){
       String(m.obra_destino_id) === String(usuario.obra_id)
     );
 
+    document.getElementById("filtroObra").style.display = "none";
+  }else{
+    dadosPatrimonios = [];
+    dadosMovimentacoes = [];
     document.getElementById("filtroObra").style.display = "none";
   }
 }
@@ -1689,6 +1766,7 @@ function limparFiltros(){
 }
 
 function imprimirRelatorio(){
+  if(!exigirPermissaoRelatoriosBDR("RELATORIOS_EXPORTAR", "Você não tem permissão para imprimir/exportar relatórios.")) return;
   window.print();
 }
 
@@ -1710,6 +1788,8 @@ function atualizarKPIsRelatorio(){
 }
 
 function exportarCSV(){
+
+  if(!exigirPermissaoRelatoriosBDR("RELATORIOS_EXPORTAR", "Você não tem permissão para exportar Excel/CSV.")) return;
 
   if(filtradosAtuais.length === 0){
     alert("Nenhum dado para exportar.");
@@ -2647,6 +2727,8 @@ function prefixoSienge(p){
 
 function exportarSiengeCSV(){
 
+  if(!exigirPermissaoRelatoriosBDR("SIENGE_EXPORTAR", "Você não tem permissão para exportar Sienge.")) return;
+
   if(filtradosAtuais.length === 0){
     alert("Nenhum bem filtrado para exportar ao Sienge.");
     return;
@@ -2877,6 +2959,7 @@ document.addEventListener("click", function(e){
 });
 
 function abrirModalSienge(){
+  if(!exigirPermissaoRelatoriosBDR("SIENGE_EXPORTAR", "Você não tem permissão para acessar Códigos Sienge.")) return;
   document.getElementById("modalSiengeCodigos")?.classList.add("ativo");
   setTimeout(() => {
     if(typeof renderizarMontagemDetalhamentoSienge === "function"){
@@ -3042,5 +3125,11 @@ carregarDados();
 <script src="./JS/sienge-insumos-fallback.js"></script>
 <script src="./JS/sienge.js"></script>
 <script src="./JS/bdrSininhoDashboard.js"></script>
+
+<script>
+window.addEventListener("load", () => {
+  aplicarPermissoesRelatoriosBDR();
+});
+</script>
 </body>
 </html>

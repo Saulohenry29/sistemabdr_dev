@@ -736,42 +736,42 @@
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button data-permissao="ESTOQUE" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO" class="bdr-menu-btn active" data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn active" data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -779,21 +779,21 @@
 
   
   <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -805,8 +805,8 @@
     <div class="bdr-topbar">
       <div><div class="bdr-topbar-title">📦 BDR ERP - Expedição</div><div class="bdr-topbar-sub">Catálogo interno, solicitações, reservas, retirada e transferência entre obras/setores.</div></div>
       <div class="bdr-top-actions">
-        <div class="notif-wrap"><button class="notif-btn" onclick="toggleNotificacoes(event)"><i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span></button><div id="notifDropdown" class="notif-dropdown"><div class="notif-head">🔔 Central de notificações</div><div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação.</div></div></div></div>
-        <div class="user-menu" onclick="toggleMenuUsuario(event)"><div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div><div class="avatar"><i class="fa-solid fa-user"></i></div><div id="dropdownUser" class="dropdown-user"><button data-permissao="USUARIOS" onclick="ir('usuarios.html');event.stopPropagation()"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button><button class="logout-btn" onclick="logout();event.stopPropagation()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button></div></div>
+        <div class="notif-wrap" data-permissao="RECEBER_NOTIFICACOES"><button class="notif-btn" onclick="toggleNotificacoes(event)"><i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span></button><div id="notifDropdown" class="notif-dropdown"><div class="notif-head">🔔 Central de notificações</div><div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação.</div></div></div></div>
+        <div class="user-menu" onclick="toggleMenuUsuario(event)"><div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div><div class="avatar"><i class="fa-solid fa-user"></i></div><div id="dropdownUser" class="dropdown-user"><button data-permissao="USUARIOS_VER" onclick="ir('usuarios.html');event.stopPropagation()"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button><button class="logout-btn" onclick="logout();event.stopPropagation()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button></div></div>
       </div>
     </div>
 
@@ -820,20 +820,20 @@
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="abrirAba('catalogo',this)">🛒 Catálogo</button>
-      <button class="tab-btn" onclick="abrirAba('solicitacoes',this)">📋 Solicitações</button>
-      <button class="tab-btn" onclick="abrirAba('separacao',this)">📦 Separação</button>
-      <button class="tab-btn" onclick="abrirAba('reservados',this)">🔒 Reservados</button>
-      <button class="tab-btn" onclick="abrirAba('retirada',this)">🚚 Retirada</button>
-      <button class="tab-btn" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
-      <button class="tab-btn" onclick="abrirAba('historico',this)">📜 Histórico</button>
+      <button class="tab-btn active" data-permissao="EXPEDICAO_VER" onclick="abrirAba('catalogo',this)">🛒 Catálogo</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_APROVAR" onclick="abrirAba('solicitacoes',this)">📋 Solicitações</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_SEPARAR" onclick="abrirAba('separacao',this)">📦 Separação</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_SEPARAR" onclick="abrirAba('reservados',this)">🔒 Reservados</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('retirada',this)">🚚 Retirada</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_VER" onclick="abrirAba('historico',this)">📜 Histórico</button>
     </div>
 
-    <section id="tab-catalogo" class="tab active">
+    <section id="tab-catalogo" class="tab active" data-permissao="EXPEDICAO_VER">
       <div class="exp-layout">
         <div>
           <div class="card">
-            <div class="exp-head"><div class="exp-title"><h2>Catálogo de itens</h2><p>Solicite materiais entre obras/setores da rede BDR.</p></div><button class="btn-dark" onclick="carregarTudo()"><i class="fa-solid fa-rotate"></i> Atualizar</button></div>
+            <div class="exp-head"><div class="exp-title"><h2>Catálogo de itens</h2><p>Solicite materiais entre obras/setores da rede BDR.</p></div><button class="btn-dark" data-permissao="EXPEDICAO_VER" onclick="carregarTudo()"><i class="fa-solid fa-rotate"></i> Atualizar</button></div>
             <div class="searchbar"><input id="buscaCatalogo" placeholder="Buscar produto, patrimônio, código, obra..." oninput="renderizarCatalogo()"><button onclick="renderizarCatalogo()"><i class="fa-solid fa-search"></i> Buscar</button></div>
             <div class="chips">
               <button class="chip-exp active" data-filtro="TODOS" onclick="filtrarStatus('TODOS',this)">Todos <span class="num" id="chipTodos">0</span></button>
@@ -849,24 +849,24 @@
           <div class="cart-head"><span><i class="fa-solid fa-cart-shopping"></i> Meu carrinho</span><span id="cartQtd">0</span></div>
           <div id="cartItens"></div>
           <textarea id="obsSolicitacao" placeholder="Observação da solicitação..." style="margin-top:8px;min-height:60px"></textarea>
-          <button class="btn-submit" onclick="enviarSolicitacao()"><i class="fa-regular fa-paper-plane"></i> Enviar solicitação</button>
+          <button class="btn-submit" data-permissao="EXPEDICAO_VER" onclick="enviarSolicitacao()"><i class="fa-regular fa-paper-plane"></i> Enviar solicitação</button>
           <div class="mini-summary"><div class="mini-box"><strong id="cartResumoItens">0</strong>Itens</div><div class="mini-box"><strong id="cartResumoObras">0</strong>Origens</div></div>
           <div class="info-box">A solicitação será enviada aos responsáveis pela obra/setor de origem. Itens em uso entram como interesse, não como retirada direta.</div>
         </aside>
       </div>
     </section>
 
-    <section id="tab-solicitacoes" class="tab"><div class="card"><h3>📋 Solicitações aguardando autorização</h3><div id="listaSolicitacoes" class="pedido-lista"></div></div></section>
-    <section id="tab-separacao" class="tab"><div class="card"><h3>📦 Separação</h3><div id="listaSeparacao" class="pedido-lista"></div></div></section>
-    <section id="tab-reservados" class="tab"><div class="card"><h3>🔒 Reservados</h3><div id="listaReservados" class="pedido-lista"></div></div></section>
-    <section id="tab-retirada" class="tab"><div class="card"><h3>🚚 Retirada</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
-    <section id="tab-transito" class="tab"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
-    <section id="tab-historico" class="tab"><div class="card"><h3>📜 Histórico</h3><div id="listaHistorico" class="pedido-lista"></div></div></section>
+    <section id="tab-solicitacoes" class="tab" data-permissao="EXPEDICAO_APROVAR"><div class="card"><h3>📋 Solicitações aguardando autorização</h3><div id="listaSolicitacoes" class="pedido-lista"></div></div></section>
+    <section id="tab-separacao" class="tab" data-permissao="EXPEDICAO_SEPARAR"><div class="card"><h3>📦 Separação</h3><div id="listaSeparacao" class="pedido-lista"></div></div></section>
+    <section id="tab-reservados" class="tab" data-permissao="EXPEDICAO_SEPARAR"><div class="card"><h3>🔒 Reservados</h3><div id="listaReservados" class="pedido-lista"></div></div></section>
+    <section id="tab-retirada" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>🚚 Retirada</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
+    <section id="tab-transito" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
+    <section id="tab-historico" class="tab" data-permissao="EXPEDICAO_VER"><div class="card"><h3>📜 Histórico</h3><div id="listaHistorico" class="pedido-lista"></div></div></section>
   </main>
 </div>
 
 <div id="modalDetalhe" class="modal-bg"><div class="modal"><div class="modal-head"><span id="modalTitulo">Detalhes</span><button class="fechar-modal" onclick="fecharModalDetalhe()">X</button></div><div class="modal-body" id="modalConteudo"></div></div></div>
-<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
+<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" data-permissao="EXPEDICAO_ENTREGAR" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
 
 <script>
 /* PATCH BDR - abre expedição direto na aba certa via URL
@@ -910,6 +910,173 @@
 ========================================================= -->
 <script src="./JS/bdrSininhoDashboard.js"></script>
 <script src="./JS/offlineQueue.js"></script>
+
+
+<script>
+/* =========================================================
+   BDR EXPEDIÇÃO - PERMISSÕES FASE 5
+   Regra: sem permissão = botão/aba some.
+========================================================= */
+(function(){
+  function usuarioBDR(){
+    try{
+      return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");
+    }catch(e){ return null; }
+  }
+
+  function listaPermissoesBDR(){
+    const u = usuarioBDR();
+    return String(u?.permissoes || "")
+      .split(",")
+      .map(p => p.trim().toUpperCase())
+      .filter(Boolean);
+  }
+
+  function temPermissaoBDR(permissao){
+    const u = usuarioBDR();
+    if(!u) return false;
+    if(Number(u.id) === 1) return true;
+    const ps = listaPermissoesBDR();
+    return ps.includes(String(permissao || "").toUpperCase());
+  }
+
+  function bloquearAcaoBDR(permissao, mensagem){
+    if(temPermissaoBDR(permissao)) return false;
+    alert(mensagem || "Você não tem permissão para executar esta ação.");
+    return true;
+  }
+
+  function aplicarPermissoesEstaticasBDR(){
+    document.querySelectorAll("[data-permissao]").forEach(el => {
+      const permissao = el.getAttribute("data-permissao");
+      const pode = temPermissaoBDR(permissao);
+      el.hidden = !pode;
+      el.style.display = pode ? "" : "none";
+      el.dataset.bloqueado = pode ? "NAO" : "SIM";
+    });
+
+    if(!temPermissaoBDR("EXPEDICAO_VER")){
+      alert("Você não tem permissão para acessar Expedição.");
+      location.replace("dashboard.html");
+      return;
+    }
+
+    const abaAtiva = document.querySelector(".tab.active");
+    if(abaAtiva && abaAtiva.dataset.bloqueado === "SIM"){
+      const primeiraAba = Array.from(document.querySelectorAll(".tab"))
+        .find(x => x.dataset.bloqueado !== "SIM");
+      const primeiroBotao = Array.from(document.querySelectorAll(".tab-btn"))
+        .find(x => x.dataset.bloqueado !== "SIM");
+
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(x => x.classList.remove("active"));
+
+      if(primeiraAba) primeiraAba.classList.add("active");
+      if(primeiroBotao) primeiroBotao.classList.add("active");
+    }
+  }
+
+  function permissaoPorTextoOuOnclickBDR(el){
+    const txt = String(el.innerText || el.textContent || "").toUpperCase();
+    const on = String(el.getAttribute("onclick") || "").toUpperCase();
+    const geral = txt + " " + on;
+
+    if(geral.includes("AUTORIZ") || geral.includes("APROV") || geral.includes("REJEIT")) return "EXPEDICAO_APROVAR";
+    if(geral.includes("SEPAR") || geral.includes("RESERV")) return "EXPEDICAO_SEPARAR";
+    if(geral.includes("RETIR") || geral.includes("ENTREG") || geral.includes("TRÂNS") || geral.includes("TRANSIT") || geral.includes("CONFER")) return "EXPEDICAO_ENTREGAR";
+    if(geral.includes("ENVIAR SOLICITA") || geral.includes("SOLICITAR") || geral.includes("CARRINHO")) return "EXPEDICAO_VER";
+    return "";
+  }
+
+  function aplicarPermissoesDinamicasBDR(){
+    document.querySelectorAll("#listaSolicitacoes button, #listaSeparacao button, #listaReservados button, #listaRetirada button, #listaTransito button, #listaHistorico button, .pedido-card button, .modal button, .btn-card-action").forEach(btn => {
+      if(btn.classList.contains("fechar-modal")) return;
+      if(!btn.getAttribute("data-permissao")){
+        const p = permissaoPorTextoOuOnclickBDR(btn);
+        if(p) btn.setAttribute("data-permissao", p);
+      }
+
+      const p = btn.getAttribute("data-permissao");
+      if(p){
+        const pode = temPermissaoBDR(p);
+        btn.hidden = !pode;
+        btn.style.display = pode ? "" : "none";
+        btn.dataset.bloqueado = pode ? "NAO" : "SIM";
+      }
+    });
+  }
+
+  function protegerFuncoesBDR(){
+    const tentar = () => {
+      if(typeof window.enviarSolicitacao === "function" && !window.enviarSolicitacao.__bdrProtegida){
+        const original = window.enviarSolicitacao;
+        window.enviarSolicitacao = function(){
+          if(bloquearAcaoBDR("EXPEDICAO_VER", "Você não tem permissão para enviar solicitação.")) return;
+          return original.apply(this, arguments);
+        };
+        window.enviarSolicitacao.__bdrProtegida = true;
+      }
+
+      if(typeof window.confirmarRetiradaModal === "function" && !window.confirmarRetiradaModal.__bdrProtegida){
+        const original = window.confirmarRetiradaModal;
+        window.confirmarRetiradaModal = function(){
+          if(bloquearAcaoBDR("EXPEDICAO_ENTREGAR", "Você não tem permissão para confirmar retirada/entrega.")) return;
+          return original.apply(this, arguments);
+        };
+        window.confirmarRetiradaModal.__bdrProtegida = true;
+      }
+
+      if(typeof window.abrirAba === "function" && !window.abrirAba.__bdrProtegida){
+        const original = window.abrirAba;
+        window.abrirAba = function(aba, botao){
+          const mapa = {
+            catalogo:"EXPEDICAO_VER",
+            solicitacoes:"EXPEDICAO_APROVAR",
+            separacao:"EXPEDICAO_SEPARAR",
+            reservados:"EXPEDICAO_SEPARAR",
+            retirada:"EXPEDICAO_ENTREGAR",
+            transito:"EXPEDICAO_ENTREGAR",
+            historico:"EXPEDICAO_VER"
+          };
+          const precisa = mapa[String(aba || "").toLowerCase()] || "EXPEDICAO_VER";
+          if(bloquearAcaoBDR(precisa, "Você não tem permissão para abrir esta aba.")) return;
+          return original.apply(this, arguments);
+        };
+        window.abrirAba.__bdrProtegida = true;
+      }
+    };
+
+    tentar();
+    setTimeout(tentar, 400);
+    setTimeout(tentar, 1200);
+  }
+
+  function iniciarPermissoesExpedicaoBDR(){
+    aplicarPermissoesEstaticasBDR();
+    aplicarPermissoesDinamicasBDR();
+    protegerFuncoesBDR();
+
+    const observer = new MutationObserver(() => aplicarPermissoesDinamicasBDR());
+    observer.observe(document.body, {childList:true, subtree:true});
+
+    setTimeout(aplicarPermissoesEstaticasBDR, 300);
+    setTimeout(aplicarPermissoesDinamicasBDR, 900);
+  }
+
+  window.BDRExpedicaoPermissoes = {
+    temPermissaoBDR,
+    aplicarPermissoesEstaticasBDR,
+    aplicarPermissoesDinamicasBDR
+  };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", iniciarPermissoesExpedicaoBDR);
+  }else{
+    iniciarPermissoesExpedicaoBDR();
+  }
+})();
+</script>
+
 <script defer src="./JS/expedicao.js"></script>
 <script src="./JS/bdrUppercase.js"></script>
 </body>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDR ERP - Alterar senha</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<meta name="theme-color" content="#a4161a">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#0b1220,#1f2937);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:18px;
+}
+.card{
+  width:460px;
+  max-width:100%;
+  background:#fff;
+  border-radius:18px;
+  padding:32px;
+  box-shadow:0 15px 35px rgba(0,0,0,.3);
+  border-top:5px solid #a4161a;
+}
+.logo{text-align:center;margin-bottom:18px}
+.logo img{width:150px;max-width:80%}
+h1{color:#a4161a;font-size:24px;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:#555;font-size:13px;line-height:1.45;margin-bottom:20px}
+label{display:block;margin-top:14px;margin-bottom:5px;font-weight:bold}
+input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:15px}
+.btn{
+  width:100%;margin-top:20px;padding:14px;background:#a4161a;color:white;
+  border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;
+}
+.btn:hover{background:#7d1013}
+.btn-sec{
+  width:100%;margin-top:8px;padding:12px;background:#f3f4f6;color:#111827;
+  border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;
+}
+#mensagem{text-align:center;color:red;margin-top:14px;font-weight:800;font-size:13px}
+.info{
+  background:#fff7ed;
+  border-left:4px solid #f97316;
+  border-radius:10px;
+  padding:10px;
+  color:#7c2d12;
+  font-size:12px;
+  line-height:1.45;
+}
+.usuario-box{
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:12px;
+  color:#374151;
+  font-size:13px;
+}
+.usuario-box b{color:#111827}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <img src="imagens/logo.png" alt="BDR ERP">
+  </div>
+
+  <h1>Alterar senha</h1>
+  <div class="sub">
+    Por segurança, no primeiro acesso você precisa criar sua própria senha.
+  </div>
+
+  <div class="usuario-box">
+    Usuário: <b id="nomeUsuario">-</b><br>
+    Perfil: <b id="perfilUsuario">-</b>
+  </div>
+
+  <div class="info">
+    Digite a senha provisória recebida, depois crie uma nova senha. Depois disso, somente você saberá sua senha.
+  </div>
+
+  <form id="formAlterarSenha">
+    <label>Senha atual</label>
+    <input type="password" id="senhaAtual" placeholder="Digite a senha provisória" required autocomplete="current-password">
+
+    <label>Nova senha</label>
+    <input type="password" id="novaSenha" placeholder="Digite a nova senha" required autocomplete="new-password">
+
+    <label>Confirmar nova senha</label>
+    <input type="password" id="confirmarSenha" placeholder="Confirme a nova senha" required autocomplete="new-password">
+
+    <button class="btn" type="submit">Salvar nova senha</button>
+    <button class="btn-sec" type="button" onclick="sair()">Sair</button>
+
+    <div id="mensagem"></div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="JS/supabaseClient.js"></script>
+
+<script>
+function bancoBDR(){
+  return window.client || window.supabaseClient || window.clientSupabase || null;
+}
+
+function usuarioLocalBDR(){
+  try{
+    return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");
+  }catch(e){
+    return null;
+  }
+}
+
+function msg(txt, cor="red"){
+  const el = document.getElementById("mensagem");
+  if(el){
+    el.style.color = cor;
+    el.innerText = txt || "";
+  }
+}
+
+function destinoPadraoBDR(usuario){
+  const perms = String(usuario?.permissoes || "").toUpperCase();
+  if(perms.includes("DASHBOARD_VER")) return "dashboard.html";
+  if(perms.includes("PATRIMONIO_VER")) return "patrimonio.html";
+  if(perms.includes("ESTOQUE_VER")) return "estoque.html";
+  if(perms.includes("EXPEDICAO_VER")) return "expedicao.html";
+  if(perms.includes("RELATORIOS_VER")) return "relatorios.html";
+  return "dashboard.html";
+}
+
+function sair(){
+  localStorage.removeItem("usuario_logado");
+  localStorage.removeItem("usuarioLogado");
+  location.href = "login.html";
+}
+
+async function salvarNovaSenha(){
+  const banco = bancoBDR();
+  const usuario = usuarioLocalBDR();
+
+  const senhaAtual = document.getElementById("senhaAtual").value.trim();
+  const novaSenha = document.getElementById("novaSenha").value.trim();
+  const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
+
+  msg("");
+
+  if(!banco){
+    msg("Supabase não carregou.");
+    return;
+  }
+
+  if(!usuario || !usuario.id){
+    msg("Sessão expirada. Faça login novamente.");
+    setTimeout(() => location.href = "login.html", 1200);
+    return;
+  }
+
+  if(String(usuario.senha || "") !== String(senhaAtual)){
+    msg("Senha atual incorreta.");
+    return;
+  }
+
+  if(novaSenha.length < 6){
+    msg("A nova senha precisa ter no mínimo 6 caracteres.");
+    return;
+  }
+
+  if(novaSenha === senhaAtual){
+    msg("A nova senha precisa ser diferente da senha provisória.");
+    return;
+  }
+
+  if(novaSenha !== confirmarSenha){
+    msg("A confirmação da senha não confere.");
+    return;
+  }
+
+  const { data, error } = await banco
+    .from("usuarios_sistema")
+    .update({
+      senha:novaSenha,
+      senha_temporaria:false,
+      senha_provisoria:false,
+      trocar_senha:false,
+      updated_at:new Date().toISOString()
+    })
+    .eq("id", usuario.id)
+    .select("*")
+    .single();
+
+  if(error){
+    console.error(error);
+    msg("Erro ao alterar senha: " + error.message);
+    return;
+  }
+
+  const atualizado = {...usuario, ...data};
+  localStorage.setItem("usuario_logado", JSON.stringify(atualizado));
+  localStorage.setItem("usuarioLogado", JSON.stringify(atualizado));
+
+  msg("Senha alterada com sucesso. Entrando no sistema...", "green");
+
+  setTimeout(() => {
+    location.href = destinoPadraoBDR(atualizado);
+  }, 900);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const usuario = usuarioLocalBDR();
+
+  if(!usuario){
+    location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("nomeUsuario").innerText = usuario.nome || usuario.usuario || "-";
+  document.getElementById("perfilUsuario").innerText = usuario.perfil || "-";
+});
+
+document.getElementById("formAlterarSenha").addEventListener("submit", e => {
+  e.preventDefault();
+  salvarNovaSenha();
+});
+</script>
+
+</body>
+</html>

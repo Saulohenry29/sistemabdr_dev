@@ -1,1062 +1,776 @@
 /* =========================================================
-   ATUALIZADO: USUÁRIOS COM OFFLINE BDR
-========================================================= */
-console.log("✅ BDR USUÁRIOS PREMIUM V5 carregado - arquivo correto");
-/* =========================================================
-   BDR ERP 9.0 - USUÁRIOS MASTER PREMIUM
-   Arquivo: JS/usuarios-master-premium.js
-
-   OBJETIVO:
-   - Buscar usuários reais no banco
-   - Mostrar no layout premium
-   - Salvar permissões
-   - Salvar obras liberadas
-   - Manter código separado por blocos para facilitar leitura
+   BDR OWNER CORE V8 - MODAL PREMIUM COMPACTO
+   - abre com 10 cliques no escudo do card Atenção Master
+   - lista registros automaticamente por aba
+   - busca em um campo só
+   - editar / desativar / apagar com confirmação
 ========================================================= */
 
+console.log("🛡️ BDR OWNER CORE V8 carregado - busca automática + reativar");
 
-/* =========================================================
-   1) VARIÁVEIS GLOBAIS
-========================================================= */
+/* ALTERE AQUI */
+const BDR_OWNER_LOGIN = "saulo";
+const BDR_OWNER_SENHA = "1234";
+const BDR_OWNER_SENHA_APAGAR = "1234"; // segunda senha só para apagar definitivo
+const BDR_OWNER_CLIQUES = 5;
+const BDR_OWNER_TEMPO = 6000;
 
-let usuarios = [];
-let empresas = [];
-let obras = [];
-let usuarioSelecionado = null;
-let TABELA_USUARIOS = "usuarios_sistema";
+let bdrOwnerCliques = 0;
+let bdrOwnerTimer = null;
+let bdrOwnerAreaAtual = "patrimonio";
+let bdrOwnerRegistros = [];
+let bdrOwnerSelecionado = null;
+let bdrOwnerBuscaTimer = null;
 
-
-/* =========================================================
-   2) PERMISSÕES POR GRUPO
-========================================================= */
-
-const P_VIS = [
-  "VER_ESTOQUE_CD",
-  "VER_ESTOQUE_PROPRIA_OBRA",
-  "VER_ESTOQUE_OUTRAS_OBRAS",
-  "VER_EM_USO_OUTRAS_OBRAS",
-  "VER_VALORES"
-];
-
-const P_SOL = [
-  "SOLICITAR_MATERIAL",
-  "SOLICITAR_OUTRAS_OBRAS",
-  "SOLICITAR_EM_USO",
-  "SOLICITAR_TRANSFERENCIA",
-  "RECEBER_NOTIFICACOES"
-];
-
-const P_OP = [
-  "CONFERIR_MERCADORIA",
-  "SEPARAR_PEDIDO",
-  "ENTREGAR_MATERIAL",
-  "APROVAR_PEDIDO_ORIGEM",
-  "USUARIOS",
-  "CONFIGURACOES"
-];
-
-
-/* =========================================================
-   3) PERFIS RÁPIDOS
-========================================================= */
-
-const PERFIS = {
-  MASTER: [
-    ...P_VIS,
-    ...P_SOL,
-    ...P_OP,
-    "RELATORIOS",
-    "EMPRESAS",
-    "VER_TODAS_OBRAS",
-    "CADASTRAR_PATRIMONIO",
-    "ALTERAR_STATUS",
-    "RECEBER_NOTIFICACOES_GESTAO"
-  ],
-
-  GESTOR: [
-    "VER_ESTOQUE_CD",
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "VER_ESTOQUE_OUTRAS_OBRAS",
-    "SOLICITAR_MATERIAL",
-    "SOLICITAR_OUTRAS_OBRAS",
-    "RECEBER_NOTIFICACOES",
-    "CONFERIR_MERCADORIA",
-    "SEPARAR_PEDIDO",
-    "ENTREGAR_MATERIAL",
-    "APROVAR_PEDIDO_ORIGEM",
-    "RELATORIOS"
-  ],
-
-  ALMOXARIFE: [
-    "VER_ESTOQUE_CD",
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES",
-    "CONFERIR_MERCADORIA",
-    "SEPARAR_PEDIDO",
-    "ENTREGAR_MATERIAL"
-  ],
-
-  ALMOXARIFADO: [
-    "VER_ESTOQUE_CD",
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES",
-    "CONFERIR_MERCADORIA",
-    "SEPARAR_PEDIDO",
-    "ENTREGAR_MATERIAL"
-  ],
-
-  OPERADOR: [
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES"
-  ],
-
-  ADMIN: [
-    ...P_VIS,
-    ...P_SOL,
-    ...P_OP,
-    "RELATORIOS",
-    "EMPRESAS"
-  ],
-
-  OBRA: [
-    "VER_ESTOQUE_CD",
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES"
-  ],
-
-  CONSULTA: [
-    "VER_ESTOQUE_CD",
-    "VER_ESTOQUE_PROPRIA_OBRA"
-  ]
+const BDR_OWNER_AREAS = {
+  patrimonio: {
+    titulo: "Patrimônios",
+    icone: "fa-tags",
+    tabela: "patrimonio",
+    ordem: "id",
+    exemplo: "PAT-100130014",
+    busca: ["codigo_qr", "nome_bem", "modelo", "marca", "localizacao", "status"],
+    campos: ["id", "codigo_qr", "nome_bem", "modelo", "localizacao", "status"],
+    destaque: "codigo_qr"
+  },
+  produtos: {
+    titulo: "Produtos / Insumos",
+    icone: "fa-box-open",
+    tabela: "produtos",
+    ordem: "id",
+    exemplo: "FURADEIRA ou 505",
+    busca: ["codigo", "descricao", "nome", "categoria", "unidade"],
+    campos: ["id", "codigo", "descricao", "nome", "categoria", "unidade"],
+    destaque: "descricao"
+  },
+  empresas: {
+    titulo: "Empresas",
+    icone: "fa-building",
+    tabela: "empresas",
+    ordem: "id",
+    exemplo: "BDR CONSTRUART",
+    busca: ["nome", "razao_social", "cnpj", "codigo_empresa"],
+    campos: ["id", "nome", "razao_social", "cnpj", "codigo_empresa", "ativo"],
+    destaque: "nome"
+  },
+  obras: {
+    titulo: "Obras / Setores",
+    icone: "fa-city",
+    tabela: "obras",
+    ordem: "id",
+    exemplo: "10013 - CD CENTRO DE DISTRIBUIÇÃO",
+    busca: ["codigo_obra", "nome", "tipo", "codigo_sienge"],
+    campos: ["id", "codigo_obra", "nome", "tipo", "codigo_sienge", "ativo"],
+    destaque: "nome"
+  },
+  movimentacoes: {
+    titulo: "Movimentações",
+    icone: "fa-right-left",
+    tabela: "movimentacoes",
+    ordem: "id",
+    exemplo: "PAT-100130014",
+    busca: ["codigo_qr", "tipo", "status_anterior", "status_novo", "observacao"],
+    campos: ["id", "codigo_qr", "tipo", "status_anterior", "status_novo", "observacao"],
+    destaque: "codigo_qr"
+  },
+  relatorios: {
+    titulo: "Relatórios / Analytics",
+    icone: "fa-chart-line",
+    tabela: "analytics_patrimonio",
+    ordem: "id",
+    exemplo: "PAT-100130014 ou MOVIMENTACAO",
+    busca: ["tipo_evento", "status_anterior", "status_novo", "observacao", "local_novo"],
+    campos: ["id", "tipo_evento", "status_anterior", "status_novo", "local_novo", "observacao"],
+    destaque: "tipo_evento"
+  },
+  logs: {
+    titulo: "Logs / Auditoria",
+    icone: "fa-clipboard-list",
+    tabela: "logs_sistema",
+    ordem: "id",
+    exemplo: "Saulo, edição, exclusão",
+    busca: ["acao", "tabela", "usuario", "motivo", "descricao"],
+    campos: ["id", "acao", "tabela", "usuario", "motivo", "created_at"],
+    destaque: "acao"
+  },
+  perfis: {
+    titulo: "Perfis rápidos",
+    icone: "fa-user-shield",
+    tabela: "perfis_rapidos",
+    ordem: "id",
+    exemplo: "CONFERENCIA, ADMIN, FINANCEIRO",
+    busca: ["nome", "descricao", "permissoes"],
+    campos: ["id", "nome", "descricao", "permissoes", "ativo", "created_at"],
+    destaque: "nome"
+  }
 };
 
-
-/* =========================================================
-   4) FUNÇÕES BÁSICAS
-========================================================= */
-
-function ir(pagina){
-  window.location.href = pagina;
-}
-window.ir = ir;
-
-function db(){
-  return (
-    window.client ||
-    window.supabaseClient ||
-    window.clientSupabase ||
-    null
-  );
+function bdrOwnerDB(){
+  return window.client || window.supabaseClient || window.clientSupabase || null;
 }
 
-function esc(valor){
-  return String(valor ?? "").replace(/[&<>'"]/g, c => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    "'":"&#39;",
-    '"':"&quot;"
+function bdrOwnerUsuarioLocal(){
+  try{
+    return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "{}");
+  }catch(e){
+    return {};
+  }
+}
+
+function bdrOwnerLoginAtual(){
+  const u = bdrOwnerUsuarioLocal();
+  return String(u.usuario || u.email || u.nome || "").trim().toLowerCase();
+}
+
+function bdrOwnerEhOwner(){
+  const u = bdrOwnerUsuarioLocal();
+  return Number(u?.id) === 1;
+}
+
+function bdrOwnerEsc(v){
+  return String(v ?? "").replace(/[&<>'"]/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
   }[c]));
 }
 
-function normalizar(valor){
-  return String(valor || "").trim().toUpperCase();
+function bdrOwnerNormalizar(v){
+  return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-function iniciais(nome){
-  return String(nome || "U")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0,2)
-    .map(p => p[0])
-    .join("")
-    .toUpperCase() || "U";
-}
+function bdrCliqueSecretoOwner(e){
+  if(e) e.stopPropagation();
 
-function dataBR(valor){
-  if(!valor) return "-";
+  bdrOwnerCliques++;
+  console.log("BDR CORE cliques:", bdrOwnerCliques);
 
-  const data = new Date(String(valor).replace(" ","T"));
+  clearTimeout(bdrOwnerTimer);
+  bdrOwnerTimer = setTimeout(() => bdrOwnerCliques = 0, BDR_OWNER_TEMPO);
 
-  return isNaN(data.getTime())
-    ? String(valor)
-    : data.toLocaleString("pt-BR");
-}
+  if(bdrOwnerCliques >= BDR_OWNER_CLIQUES){
+    bdrOwnerCliques = 0;
 
-function usuarioLocal(){
-  try{
-    const raw =
-      localStorage.getItem("usuario_logado") ||
-      localStorage.getItem("usuarioLogado");
+    if(!bdrOwnerEhOwner()){
+      alert("Acesso negado.");
+      return;
+    }
 
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){
-    return null;
+    const senha = prompt("Senha BDR CORE:");
+    if(senha !== BDR_OWNER_SENHA){
+      alert("Senha incorreta.");
+      return;
+    }
+
+    bdrOwnerAbrir();
   }
 }
+window.bdrCliqueSecretoOwner = bdrCliqueSecretoOwner;
 
-function logoutSeguro(){
-  if(typeof logout === "function"){
-    return logout();
-  }
-
-  localStorage.removeItem("usuario_logado");
-  localStorage.removeItem("usuarioLogado");
-  location.href = "login.html";
+function bdrOwnerAbrir(){
+  bdrOwnerCriarModal();
+  document.getElementById("bdrOwnerModalV6").classList.add("ativo");
+  bdrOwnerTrocarArea(bdrOwnerAreaAtual || "patrimonio");
 }
-window.logoutSeguro = logoutSeguro;
+window.bdrOwnerAbrir = bdrOwnerAbrir;
 
-
-/* =========================================================
-   5) TOPO DA TELA
-========================================================= */
-
-
-/* =========================================================
-   PATCH V5 - COMPATIBILIDADE COM TOPO PADRÃO PATRIMÔNIO
-========================================================= */
-
-function toggleMenuUsuario(event){
-  if(event) event.stopPropagation();
-  document.getElementById("dropdownUser")?.classList.toggle("ativo");
-  document.getElementById("notifDropdown")?.classList.remove("ativo");
+function bdrOwnerFechar(){
+  document.getElementById("bdrOwnerModalV6")?.classList.remove("ativo");
 }
-window.toggleMenuUsuario = toggleMenuUsuario;
+window.bdrOwnerFechar = bdrOwnerFechar;
 
-function fecharMenusTopo(){
-  document.getElementById("dropdownUser")?.classList.remove("ativo");
-  document.getElementById("notifDropdown")?.classList.remove("ativo");
-}
+function bdrOwnerCriarModal(){
+  if(document.getElementById("bdrOwnerModalV6")) return;
 
-document.addEventListener("click", fecharMenusTopo);
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="bdrOwnerModalV6" class="bdr-owner-v6-bg">
+      <div class="bdr-owner-v6-modal">
 
-function atualizarNotificacoes(lista){
-  const badge = document.getElementById("notifBadge");
-  const box = document.getElementById("notifLista");
+        <div class="bdr-owner-v6-top">
+          <div class="bdr-owner-v6-titlebox">
+            <div class="bdr-owner-v6-shield"><i class="fa-solid fa-shield-halved"></i></div>
+            <div>
+              <h2>BDR CORE <span>Correção segura do sistema</span></h2>
+              <p>Área exclusiva para corrigir registros sem acessar o Supabase.</p>
+            </div>
+          </div>
+          <div class="bdr-owner-v6-top-actions">
+            <button class="v6-btn dark" onclick="bdrOwnerCarregarArea()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+            <button class="v6-btn light" onclick="bdrOwnerFechar()"><i class="fa-solid fa-xmark"></i> Fechar</button>
+          </div>
+        </div>
 
-  if(!badge || !box) return;
+        <div class="bdr-owner-v6-tabs" id="bdrOwnerTabsV6"></div>
 
-  const total = Array.isArray(lista) ? lista.length : 0;
+        <div class="bdr-owner-v6-info">
+          <i class="fa-solid fa-circle-info"></i>
+          Use <b>Editar</b>, <b>Desativar/Reativar</b> ou <b>Apagar definitivo</b>. A busca acontece enquanto você digita.
+        </div>
 
-  badge.innerText = total > 9 ? "9+" : String(total);
-  badge.style.display = total > 0 ? "inline-flex" : "none";
+        <div class="bdr-owner-v6-search-card">
+          <div>
+            <h3 id="bdrOwnerTituloBusca">Consultar registros</h3>
+            <p id="bdrOwnerSubBusca">Busque por código, ID ou nome.</p>
+          </div>
+          <div class="bdr-owner-v6-search-line">
+            <input id="bdrOwnerBuscaV6" placeholder="Digite aqui..." oninput="bdrOwnerBuscaAutomatica()" onkeydown="if(event.key==='Enter') bdrOwnerBuscar()">
+            <button class="v6-btn dark" onclick="bdrOwnerCarregarArea()"><i class="fa-solid fa-list"></i> Últimos</button>
+          </div>
+        </div>
 
-  if(total === 0){
-    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
-    return;
-  }
+        <div class="bdr-owner-v6-main">
+          <section class="bdr-owner-v6-list-card">
+            <div class="bdr-owner-v6-list-head">
+              <h3 id="bdrOwnerTituloLista">Lista</h3>
+              <div class="bdr-owner-v6-filter-mini">
+                <select id="bdrOwnerFiltroStatus" onchange="bdrOwnerRenderizarLista()">
+                  <option value="">Todos</option>
+                  <option value="ATIVO">Ativos</option>
+                  <option value="INATIVO">Desativados</option>
+                </select>
+                <select id="bdrOwnerQtd" onchange="bdrOwnerCarregarArea()">
+                  <option value="10">10 registros</option>
+                  <option value="25" selected>25 registros</option>
+                  <option value="50">50 registros</option>
+                </select>
+              </div>
+            </div>
+            <div id="bdrOwnerListaV6" class="bdr-owner-v6-lista"></div>
+          </section>
 
-  box.innerHTML = lista.map(n => `
-    <div class="notif-item" onclick="${n.acao || ''}">
-      <strong>${n.titulo || "Notificação"}</strong>
-      <span>${n.texto || ""}</span>
+          <aside class="bdr-owner-v6-side">
+            <section class="bdr-owner-v6-actions-card">
+              <h3><i class="fa-solid fa-bolt"></i> Ações rápidas</h3>
+              <button class="v6-action blue" onclick="bdrOwnerEditarSelecionado()"><i class="fa-solid fa-pen-to-square"></i><span><b>Editar registro</b><small>Alterar dados do item selecionado.</small></span></button>
+              <button class="v6-action orange" onclick="bdrOwnerAlternarAtivoSelecionado()"><i class="fa-solid fa-toggle-on"></i><span><b>Desativar / Reativar</b><small>Ocultar ou trazer de volta o registro.</small></span></button>
+              <button class="v6-action red" onclick="bdrOwnerApagarSelecionado()"><i class="fa-solid fa-trash-can"></i><span><b>Apagar definitivo</b><small>Remove permanentemente.</small></span></button>
+            </section>
+
+            <section class="bdr-owner-v6-security">
+              <h3><i class="fa-solid fa-triangle-exclamation"></i> Segurança</h3>
+              <p>Desativar é mais seguro que apagar. Apague apenas registros fake/teste ou correções autorizadas.</p>
+            </section>
+
+            <section class="bdr-owner-v6-summary">
+              <h3><i class="fa-solid fa-chart-pie"></i> Resumo</h3>
+              <div id="bdrOwnerResumoV6">Carregando...</div>
+            </section>
+          </aside>
+        </div>
+      </div>
     </div>
+  `);
+
+  bdrOwnerMontarTabs();
+}
+
+function bdrOwnerMontarTabs(){
+  const box = document.getElementById("bdrOwnerTabsV6");
+  if(!box) return;
+
+  box.innerHTML = Object.entries(BDR_OWNER_AREAS).map(([key, area]) => `
+    <button class="bdr-owner-v6-tab ${key === bdrOwnerAreaAtual ? "active" : ""}" onclick="bdrOwnerTrocarArea('${key}')">
+      <i class="fa-solid ${area.icone}"></i> ${area.titulo}
+    </button>
   `).join("");
 }
 
-function toggleNotificacoes(event){
-  if(event) event.stopPropagation();
-  document.getElementById("notifDropdown")?.classList.toggle("ativo");
-  document.getElementById("dropdownUser")?.classList.remove("ativo");
-  atualizarNotificacoes([]);
+function bdrOwnerTrocarArea(area){
+  bdrOwnerAreaAtual = area;
+  bdrOwnerSelecionado = null;
+  bdrOwnerMontarTabs();
+
+  const cfg = BDR_OWNER_AREAS[area];
+  document.getElementById("bdrOwnerTituloBusca").innerText = `Consultar ${cfg.titulo}`;
+  document.getElementById("bdrOwnerSubBusca").innerText = `Exemplo real: ${cfg.exemplo}`;
+  document.getElementById("bdrOwnerBuscaV6").placeholder = `Digite código, ID ou nome... Ex: ${cfg.exemplo}`;
+  document.getElementById("bdrOwnerTituloLista").innerText = `Lista de ${cfg.titulo}`;
+
+  bdrOwnerCarregarArea();
 }
-window.toggleNotificacoes = toggleNotificacoes;
+window.bdrOwnerTrocarArea = bdrOwnerTrocarArea;
 
-function preencherTopoPatrimonio(){
-  const u = usuarioLocal ? usuarioLocal() : null;
-  const nome = document.getElementById("usuarioNome");
-  const perfil = document.getElementById("usuarioPerfil");
+async function bdrOwnerCarregarArea(){
+  const db = bdrOwnerDB();
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const limit = Number(document.getElementById("bdrOwnerQtd")?.value || 25);
 
-  if(nome) nome.innerText = "Olá, " + (u?.nome || "usuário");
-  if(perfil) perfil.innerText = u?.perfil || "-";
-}
-
-function carregarTopo(){
-  const u = usuarioLocal();
-
-  const nomeNovo = document.getElementById("usuarioNomeTopo");
-  const perfilNovo = document.getElementById("usuarioPerfilTopo");
-
-  const nomePadrao = document.getElementById("usuarioNome");
-  const perfilPadrao = document.getElementById("usuarioPerfil");
-
-  if(nomeNovo) nomeNovo.innerText = "Olá, " + (u?.nome || "Master");
-  if(perfilNovo) perfilNovo.innerText = u?.perfil || "MASTER";
-
-  if(nomePadrao) nomePadrao.innerText = "Olá, " + (u?.nome || "usuário");
-  if(perfilPadrao) perfilPadrao.innerText = u?.perfil || "-";
-}
-
-
-/* =========================================================
-   6) BUSCA NO BANCO COM FALLBACK
-   Primeiro tenta usuarios_sistema.
-   Se não existir ou vier vazio, tenta usuarios.
-========================================================= */
-
-async function buscarUsuariosComFallback(){
-  const banco = db();
-
-  const tentativas = ["usuarios_sistema", "usuarios"];
-
-  for(const tabela of tentativas){
-    try{
-      const resp = await banco
-        .from(tabela)
-        .select("*")
-        .order("nome");
-
-      if(!resp.error && Array.isArray(resp.data) && resp.data.length > 0){
-        TABELA_USUARIOS = tabela;
-        console.log("✅ Usuários carregados da tabela:", tabela, resp.data.length);
-        return resp.data;
-      }
-
-      if(!resp.error && Array.isArray(resp.data)){
-        console.log("⚠️ Tabela existe, mas sem usuários:", tabela);
-      }
-
-      if(resp.error){
-        console.warn("⚠️ Não carregou tabela:", tabela, resp.error.message);
-      }
-
-    }catch(e){
-      console.warn("⚠️ Erro ao tentar tabela:", tabela, e);
-    }
-  }
-
-  return [];
-}
-
-async function buscarTabelaSegura(nomeTabela, ordem){
-  const banco = db();
-
-  try{
-    const resp = await banco
-      .from(nomeTabela)
-      .select("*")
-      .order(ordem || "nome");
-
-    if(resp.error){
-      console.warn("⚠️ Erro ao carregar", nomeTabela, resp.error.message);
-      return [];
-    }
-
-    return resp.data || [];
-  }catch(e){
-    console.warn("⚠️ Erro inesperado ao carregar", nomeTabela, e);
-    return [];
-  }
-}
-
-
-/* =========================================================
-   7) CARREGAR TUDO
-========================================================= */
-
-async function carregarTudo(){
-  carregarTopo();
-
-  const banco = db();
-
-  if(!banco){
-    alert("Supabase não carregado. Confira JS/supabaseClient.js.");
-    return;
-  }
-
-  empresas = await buscarTabelaSegura("empresas", "nome");
-  obras = await buscarTabelaSegura("obras", "nome");
-  usuarios = await buscarUsuariosComFallback();
-
-  carregarSelects();
-  renderizarUsuarios();
-  renderizarObrasLiberadas();
-
-  if(usuarios.length && !usuarioSelecionado){
-    selecionarUsuario(usuarios[0].id);
-  }
-
-  if(!usuarios.length){
-    console.warn("Nenhum usuário encontrado nas tabelas usuarios_sistema e usuarios.");
-  }
-}
-window.carregarTudo = carregarTudo;
-
-
-/* =========================================================
-   8) SELECTS DE EMPRESA E OBRA
-========================================================= */
-
-function carregarSelects(){
-  carregarSelectEmpresa("filtroEmpresa", "Todas as empresas");
-  carregarSelectEmpresa("formEmpresa", "Empresa opcional");
-
-  carregarSelectObra("filtroObra", "Todas as obras");
-  carregarSelectObra("formObra", "Obra opcional");
-}
-
-function carregarSelectEmpresa(id, textoInicial){
-  const sel = document.getElementById(id);
-  if(!sel) return;
-
-  sel.innerHTML = `
-    <option value="">${textoInicial}</option>
-    ${empresas.map(e => `
-      <option value="${e.id}">
-        ${esc(e.nome || e.razao_social || "-")}
-      </option>
-    `).join("")}
-  `;
-}
-
-function carregarSelectObra(id, textoInicial){
-  const sel = document.getElementById(id);
-  if(!sel) return;
-
-  sel.innerHTML = `
-    <option value="">${textoInicial}</option>
-    ${obras.map(o => `
-      <option value="${o.id}">
-        ${esc(o.codigo_obra || o.codigo || "-")} - ${esc(o.nome || "-")}
-      </option>
-    `).join("")}
-  `;
-}
-
-
-/* =========================================================
-   9) NOMES DE EMPRESA E OBRA
-========================================================= */
-
-function nomeEmpresa(id){
-  const e = empresas.find(x => String(x.id) === String(id));
-
-  return e
-    ? (e.nome || e.razao_social || "BDR CONSTRUART")
-    : "BDR CONSTRUART";
-}
-
-function nomeObra(id){
-  const o = obras.find(x => String(x.id) === String(id));
-
-  if(!o) return "-";
-
-  return `${o.codigo_obra || o.codigo || "-"} - ${o.nome || "-"}`;
-}
-
-
-/* =========================================================
-   10) FILTRAR E RENDERIZAR USUÁRIOS
-========================================================= */
-
-function filtrarUsuarios(){
-  const perfil = normalizar(document.getElementById("filtroPerfil")?.value);
-  const empresa = document.getElementById("filtroEmpresa")?.value || "";
-  const obra = document.getElementById("filtroObra")?.value || "";
-  const status = document.getElementById("filtroStatus")?.value || "";
-  const busca = normalizar(document.getElementById("buscaUsuario")?.value);
-
-  return usuarios.filter(u => {
-    const st = u.ativo === false ? "INATIVO" : "ATIVO";
-
-    const texto = normalizar(`
-      ${u.nome || ""}
-      ${u.usuario || ""}
-      ${u.email || ""}
-      ${u.perfil || ""}
-      ${nomeEmpresa(u.empresa_id)}
-      ${nomeObra(u.obra_id)}
-    `);
-
-    return (!perfil || normalizar(u.perfil) === perfil)
-      && (!empresa || String(u.empresa_id) === String(empresa))
-      && (!obra || String(u.obra_id) === String(obra))
-      && (!status || st === status)
-      && (!busca || texto.includes(busca));
-  });
-}
-
-function renderizarUsuarios(){
-  const box = document.getElementById("listaUsuarios");
-  if(!box) return;
-
-  const dados = filtrarUsuarios();
-
-  if(!dados.length){
-    box.innerHTML = `
-      <div style="padding:28px;text-align:center;color:#667085;">
-        Nenhum usuário encontrado.<br>
-        <small>Confira se a tabela correta é usuarios_sistema ou usuarios.</small>
-      </div>
-    `;
-    return;
-  }
-
-  box.innerHTML = dados.map(u => criarLinhaUsuario(u)).join("");
-}
-window.renderizarUsuarios = renderizarUsuarios;
-
-function criarLinhaUsuario(u){
-  const status = u.ativo === false ? "INATIVO" : "ATIVO";
-  const perfil = u.perfil || "-";
-
-  const foto = u.foto_url
-    ? `<img src="${esc(u.foto_url)}" onerror="this.remove()">`
-    : iniciais(u.nome);
-
-  return `
-    <div class="tr" onclick="selecionarUsuario(${u.id})">
-      <div class="user-cell">
-        <div class="user-avatar" style="background:#d71920">${foto}</div>
-        <div>
-          <b>${esc(u.nome || "-")}</b>
-          <span>${esc(u.email || u.usuario || "-")}</span>
-        </div>
-      </div>
-
-      <div>${badgePerfil(perfil)}</div>
-      <div>${esc(nomeEmpresa(u.empresa_id))}</div>
-      <div>${esc(nomeObra(u.obra_id))}</div>
-
-      <div>
-        <span class="badge ${status === "ATIVO" ? "badge-green" : "badge-red"}">
-          ${status}
-        </span>
-      </div>
-
-      <div>${dataBR(u.ultimo_acesso || u.ultimo_login || u.updated_at || u.created_at)}</div>
-
-      <div class="actions" onclick="event.stopPropagation()">
-        <button class="icon-btn icon-blue" title="Editar" onclick="abrirModalUsuario(${u.id})">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-
-        <button class="icon-btn icon-yellow" title="Aplicar permissões" onclick="selecionarUsuario(${u.id})">
-          <i class="fa-solid fa-key"></i>
-        </button>
-
-        <button class="icon-btn icon-red" title="Bloquear/Ativar" onclick="alternarStatus(${u.id})">
-          <i class="fa-solid fa-lock"></i>
-        </button>
-
-        <button class="icon-btn icon-more" title="Mais">
-          <i class="fa-solid fa-ellipsis"></i>
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-function badgePerfil(perfil){
-  const p = normalizar(perfil);
-
-  let cls = "badge-gray";
-
-  if(p === "MASTER") cls = "badge-red";
-  if(p === "ADMIN" || p === "GESTOR") cls = "badge-orange";
-  if(p === "ALMOXARIFE" || p === "ALMOXARIFADO") cls = "badge-blue";
-  if(p === "OPERADOR" || p === "OBRA") cls = "badge-green";
-
-  return `<span class="badge ${cls}">${esc(perfil || "-")}</span>`;
-}
-
-
-/* =========================================================
-   11) SELECIONAR USUÁRIO
-========================================================= */
-
-function selecionarUsuario(id){
-  usuarioSelecionado = usuarios.find(u => Number(u.id) === Number(id));
-
-  if(!usuarioSelecionado) return;
-
-  marcarPermissoes(usuarioSelecionado.permissoes || "");
-  aplicarPerfilVisual(usuarioSelecionado.perfil || "");
-  renderizarObrasLiberadas();
-  atualizarResumo();
-}
-window.selecionarUsuario = selecionarUsuario;
-
-
-/* =========================================================
-   12) PERMISSÕES
-========================================================= */
-
-function permissoesMarcadas(){
-  return [...document.querySelectorAll(".perm:checked")].map(x => x.value);
-}
-
-function marcarPermissoes(permissoesTexto){
-  const set = new Set(
-    String(permissoesTexto || "")
-      .split(",")
-      .map(x => x.trim())
-      .filter(Boolean)
-  );
-
-  document.querySelectorAll(".perm").forEach(c => {
-    c.checked = set.has(c.value);
-  });
-
-  atualizarResumo();
-}
-
-function setPermissoes(lista){
-  const set = new Set(lista || []);
-
-  document.querySelectorAll(".perm").forEach(c => {
-    c.checked = set.has(c.value);
-  });
-
-  atualizarResumo();
-}
-
-document.addEventListener("change", e => {
-  if(e.target.classList.contains("perm")){
-    atualizarResumo();
-    salvarPermissoesSelecionado(false);
-  }
-});
-
-
-/* =========================================================
-   13) RESUMO DE PERMISSÕES
-========================================================= */
-
-function atualizarResumo(){
-  const p = permissoesMarcadas();
-
-  const vis = p.filter(x => P_VIS.includes(x)).length;
-  const sol = p.filter(x => P_SOL.includes(x)).length;
-  const op = p.filter(x => P_OP.includes(x)).length;
-
-  setText("sumVis", vis);
-  setText("sumSol", sol);
-  setText("sumOp", op);
-
-  setWidth("barVis", (vis / 5) * 100);
-  setWidth("barSol", (sol / 5) * 100);
-  setWidth("barOp", (op / 6) * 100);
-
-  const perfil = usuarioSelecionado?.perfil || "-";
-
-  setText("perfilAtualResumo", perfil);
-  setText("resumoNotif", p.includes("RECEBER_NOTIFICACOES") ? "Ativas" : "Desativadas");
-
-  const acesso = document.getElementById("resumoAcessoAtual");
-
-  if(acesso){
-    acesso.innerHTML = `
-      ${linhaAcesso("CD", p.includes("VER_ESTOQUE_CD"))}
-      ${linhaAcesso("Obra própria", p.includes("VER_ESTOQUE_PROPRIA_OBRA"))}
-      ${linhaAcesso("Outras obras", p.includes("VER_ESTOQUE_OUTRAS_OBRAS"))}
-      ${linhaAcesso("Itens em uso", p.includes("VER_EM_USO_OUTRAS_OBRAS"))}
-    `;
-  }
-}
-
-function linhaAcesso(nome, ok){
-  return `
-    <div class="access-line ${ok ? "ok" : "no"}">
-      <i class="fa-solid ${ok ? "fa-check-circle" : "fa-xmark-circle"}"></i>
-      ${nome}: ${ok ? "PERMITIDO" : "BLOQUEADO"}
-    </div>
-  `;
-}
-
-function setText(id, valor){
-  const el = document.getElementById(id);
-  if(el) el.innerText = valor;
-}
-
-function setWidth(id, valor){
-  const el = document.getElementById(id);
-  if(el){
-    el.style.width = `${Math.min(100, Math.max(0, valor))}%`;
-  }
-}
-
-
-/* =========================================================
-   14) PERFIS RÁPIDOS
-========================================================= */
-
-function aplicarPerfilRapido(perfil){
-  const p = normalizar(perfil);
-  const lista = PERFIS[p] || [];
-
-  setPermissoes(lista);
-  aplicarPerfilVisual(p);
-
-  if(usuarioSelecionado){
-    usuarioSelecionado.perfil = p === "ALMOXARIFE" ? "ALMOXARIFE" : p;
-    salvarPermissoesSelecionado(true);
-  }
-}
-window.aplicarPerfilRapido = aplicarPerfilRapido;
-
-function aplicarPerfilVisual(perfil){
-  const p = normalizar(perfil);
-
-  document.querySelectorAll(".profile-card").forEach(card => {
-    card.classList.remove("active");
-
-    const nomeCard = normalizar(card.querySelector("b")?.innerText || "");
-
-    const igual =
-      nomeCard === p ||
-      (p === "ALMOXARIFADO" && nomeCard === "ALMOXARIFE");
-
-    if(igual){
-      card.classList.add("active");
-
-      const btn = card.querySelector("button");
-      if(btn) btn.innerText = "Ativo";
-    }else{
-      const btn = card.querySelector("button");
-      if(btn) btn.innerText = "Aplicar";
-    }
-  });
-}
-
-
-/* =========================================================
-   15) BOTÕES MASTER
-========================================================= */
-
-function liberarTudo(){
-  document.querySelectorAll(".perm").forEach(c => c.checked = true);
-  atualizarResumo();
-  salvarPermissoesSelecionado(true);
-}
-window.liberarTudo = liberarTudo;
-
-function aplicarSomenteCD(){
-  setPermissoes([
-    "VER_ESTOQUE_CD",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES"
-  ]);
-
-  salvarPermissoesSelecionado(true);
-}
-window.aplicarSomenteCD = aplicarSomenteCD;
-
-function aplicarPropriaObra(){
-  setPermissoes([
-    "VER_ESTOQUE_PROPRIA_OBRA",
-    "SOLICITAR_MATERIAL",
-    "RECEBER_NOTIFICACOES"
-  ]);
-
-  salvarPermissoesSelecionado(true);
-}
-window.aplicarPropriaObra = aplicarPropriaObra;
-
-function bloquearExterno(){
-  const remover = [
-    "VER_ESTOQUE_OUTRAS_OBRAS",
-    "VER_EM_USO_OUTRAS_OBRAS",
-    "SOLICITAR_OUTRAS_OBRAS",
-    "SOLICITAR_EM_USO"
-  ];
-
-  const atual = permissoesMarcadas().filter(p => !remover.includes(p));
-
-  setPermissoes(atual);
-  salvarPermissoesSelecionado(true);
-}
-window.bloquearExterno = bloquearExterno;
-
-
-/* =========================================================
-   16) SALVAR PERMISSÕES
-========================================================= */
-
-async function salvarPermissoesSelecionado(mostrarMsg){
-  if(!usuarioSelecionado || !db()) return;
-
-  const payload = {
-    permissoes: permissoesMarcadas().join(","),
-    perfil: usuarioSelecionado.perfil || "OPERADOR",
-    updated_at: new Date().toISOString()
-  };
-
-  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id:usuarioSelecionado.id});
-
-  if(resp.error){
-    alert("Erro ao salvar permissões: " + resp.error.message);
-    return;
-  }
-
-  const alvo = usuarios.find(u => Number(u.id) === Number(usuarioSelecionado.id));
-
-  if(alvo){
-    alvo.permissoes = payload.permissoes;
-    alvo.perfil = payload.perfil;
-  }
-
-  if(mostrarMsg){
-    console.log("Permissões atualizadas.");
-  }
-
-  renderizarUsuarios();
-}
-
-
-/* =========================================================
-   17) OBRAS LIBERADAS
-========================================================= */
-
-function renderizarObrasLiberadas(){
-  const box = document.getElementById("listaObrasLiberadas");
-  if(!box) return;
-
-  const termo = normalizar(document.getElementById("buscaObraLiberada")?.value || "");
-
-  const lista = obras.filter(o => {
-    return normalizar(`${o.codigo_obra || o.codigo || ""} ${o.nome || ""}`).includes(termo);
-  });
-
-  if(!lista.length){
-    box.innerHTML = `
-      <div style="padding:18px;text-align:center;color:#667085;">
-        Nenhuma obra encontrada.
-      </div>
-    `;
-    return;
-  }
-
-  const liberadas = new Set(
-    String(usuarioSelecionado?.obras_liberadas || "")
-      .split(",")
-      .map(x => x.trim())
-      .filter(Boolean)
-  );
-
-  box.innerHTML = lista.map(o => {
-    const id = String(o.id);
-    const checked = liberadas.has(id);
-    const nome = `${o.codigo_obra || o.codigo || "-"} - ${o.nome || "-"}`;
-    const tag = tipoObra(o);
-
-    return `
-      <label class="obra-row">
-        <input class="chk obra-check" type="checkbox" value="${id}" ${checked ? "checked" : ""}>
-        <span>${esc(nome)}</span>
-        <span class="tag ${tag.cls}">${tag.txt}</span>
-      </label>
-    `;
-  }).join("");
-}
-window.renderizarObrasLiberadas = renderizarObrasLiberadas;
-
-function tipoObra(o){
-  const txt = normalizar(`${o.nome || ""} ${o.tipo || ""}`);
-
-  if(txt.includes("CD") || txt.includes("CENTRO")) return {txt:"CD", cls:"tag-cd"};
-  if(txt.includes("FAZENDA")) return {txt:"FAZENDA", cls:"tag-fazenda"};
-  if(txt.includes("APOIO")) return {txt:"APOIO", cls:"tag-apoio"};
-
-  return {txt:"OBRA", cls:"tag-obra"};
-}
-
-function marcarTodasObras(marcar){
-  document.querySelectorAll(".obra-check").forEach(c => {
-    c.checked = marcar;
-  });
-}
-window.marcarTodasObras = marcarTodasObras;
-
-async function salvarLiberacoesObras(){
-  if(!usuarioSelecionado || !db()){
-    alert("Selecione um usuário.");
-    return;
-  }
-
-  const lista = [...document.querySelectorAll(".obra-check:checked")]
-    .map(c => c.value)
-    .join(",");
-
-  const payload = {
-    obras_liberadas: lista,
-    updated_at:new Date().toISOString()
-  };
-
-  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id:usuarioSelecionado.id});
-
-  if(resp.error){
-    alert("Erro ao salvar obras liberadas: " + resp.error.message);
-    return;
-  }
-
-  usuarioSelecionado.obras_liberadas = lista;
-
-  const alvo = usuarios.find(u => Number(u.id) === Number(usuarioSelecionado.id));
-  if(alvo) alvo.obras_liberadas = lista;
-
-  alert(typeof estaOnline === "function" && !estaOnline() ? "📦 Obras liberadas salvas offline." : "Obras/setores liberados com sucesso!");
-}
-window.salvarLiberacoesObras = salvarLiberacoesObras;
-
-
-/* =========================================================
-   18) MODAL DE USUÁRIO
-========================================================= */
-
-function abrirModalUsuario(id){
-  const modal = document.getElementById("modalUsuario");
-  modal.classList.add("ativo");
-
-  const u = id ? usuarios.find(x => Number(x.id) === Number(id)) : null;
-
-  document.getElementById("modalTitulo").innerText = u ? "Editar usuário" : "Novo usuário";
-  document.getElementById("usuarioId").value = u?.id || "";
-  document.getElementById("formNome").value = u?.nome || "";
-  document.getElementById("formUsuario").value = u?.usuario || "";
-  document.getElementById("formEmail").value = u?.email || "";
-  document.getElementById("formSenha").value = "";
-  document.getElementById("formPerfil").value = u?.perfil || "OPERADOR";
-  document.getElementById("formAtivo").value = String(u?.ativo !== false);
-  document.getElementById("formEmpresa").value = u?.empresa_id || "";
-  document.getElementById("formObra").value = u?.obra_id || "";
-  document.getElementById("formFoto").value = u?.foto_url || "";
-}
-window.abrirModalUsuario = abrirModalUsuario;
-
-function fecharModalUsuario(){
-  document.getElementById("modalUsuario").classList.remove("ativo");
-}
-window.fecharModalUsuario = fecharModalUsuario;
-
-async function salvarUsuario(){
-  const banco = db();
-
-  if(!banco){
+  if(!db){
     alert("Supabase não carregado.");
     return;
   }
 
-  const id = document.getElementById("usuarioId").value;
-  const nome = document.getElementById("formNome").value.trim();
-  const usuario = document.getElementById("formUsuario").value.trim();
-  const senha = document.getElementById("formSenha").value.trim();
-  const perfil = document.getElementById("formPerfil").value;
+  const box = document.getElementById("bdrOwnerListaV6");
+  if(box) box.innerHTML = `<div class="v6-loading">Carregando ${cfg.titulo}...</div>`;
 
-  if(!nome || !usuario || !perfil){
-    alert("Preencha nome, usuário e perfil.");
+  let query = db.from(cfg.tabela).select("*").limit(limit);
+  try{ query = query.order(cfg.ordem, { ascending:false }); }catch(e){}
+
+  const { data, error } = await query;
+
+  if(error){
+    bdrOwnerRegistros = [];
+    box.innerHTML = `<div class="v6-empty">Erro ao carregar tabela <b>${cfg.tabela}</b>: ${bdrOwnerEsc(error.message)}</div>`;
+    bdrOwnerAtualizarResumo();
     return;
   }
 
-  const payload = {
-    nome,
-    usuario,
-    perfil,
-    email: document.getElementById("formEmail").value.trim() || null,
-    empresa_id: document.getElementById("formEmpresa").value ? Number(document.getElementById("formEmpresa").value) : null,
-    obra_id: document.getElementById("formObra").value ? Number(document.getElementById("formObra").value) : null,
-    foto_url: document.getElementById("formFoto").value.trim() || null,
-    ativo: document.getElementById("formAtivo").value === "true",
-    updated_at: new Date().toISOString()
-  };
+  bdrOwnerRegistros = data || [];
+  bdrOwnerRenderizarLista();
+}
+window.bdrOwnerCarregarArea = bdrOwnerCarregarArea;
 
-  if(senha){
-    payload.senha = senha;
-    payload.senha_provisoria = true;
-    payload.trocar_senha = true;
+async function bdrOwnerBuscar(){
+  const db = bdrOwnerDB();
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const termo = document.getElementById("bdrOwnerBuscaV6")?.value.trim();
+  const limit = Number(document.getElementById("bdrOwnerQtd")?.value || 25);
+
+  if(!termo){
+    bdrOwnerCarregarArea();
+    return;
   }
 
-  let resp;
+  if(!db){
+    alert("Supabase não carregado.");
+    return;
+  }
 
-  if(id){
-    resp = await bdrSalvarUpdate(TABELA_USUARIOS, payload, {id});
-  }else{
-    if(!senha){
-      alert("Informe uma senha para novo usuário.");
-      return;
+  const box = document.getElementById("bdrOwnerListaV6");
+  box.innerHTML = `<div class="v6-loading">Buscando "${bdrOwnerEsc(termo)}"...</div>`;
+
+  let query = db.from(cfg.tabela).select("*").limit(80);
+  try{ query = query.order(cfg.ordem, { ascending:false }); }catch(e){}
+
+  const { data, error } = await query;
+  if(error){
+    box.innerHTML = `<div class="v6-empty">Erro na busca: ${bdrOwnerEsc(error.message)}</div>`;
+    return;
+  }
+
+  const t = bdrOwnerNormalizar(termo);
+  bdrOwnerRegistros = (data || []).filter(r => {
+    if(String(r.id || "") === termo) return true;
+    return cfg.busca.some(c => bdrOwnerNormalizar(r[c]).includes(t));
+  });
+
+  bdrOwnerRenderizarLista();
+}
+window.bdrOwnerBuscar = bdrOwnerBuscar;
+
+function bdrOwnerBuscaAutomatica(){
+  clearTimeout(bdrOwnerBuscaTimer);
+  bdrOwnerBuscaTimer = setTimeout(() => {
+    const termo = document.getElementById("bdrOwnerBuscaV6")?.value.trim();
+    if(termo){
+      bdrOwnerBuscar();
+    }else{
+      bdrOwnerCarregarArea();
+    }
+  }, 350);
+}
+window.bdrOwnerBuscaAutomatica = bdrOwnerBuscaAutomatica;
+
+function bdrOwnerAtivoValor(r){
+  if(r.ativo === false) return false;
+  if(String(r.status || "").toUpperCase() === "INATIVO") return false;
+  return true;
+}
+
+function bdrOwnerRenderizarLista(){
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const box = document.getElementById("bdrOwnerListaV6");
+  const filtro = document.getElementById("bdrOwnerFiltroStatus")?.value || "";
+
+  let lista = [...bdrOwnerRegistros];
+  if(filtro === "ATIVO") lista = lista.filter(bdrOwnerAtivoValor);
+  if(filtro === "INATIVO") lista = lista.filter(r => !bdrOwnerAtivoValor(r));
+
+  if(!lista.length){
+    box.innerHTML = `<div class="v6-empty">Nenhum registro encontrado em ${cfg.titulo}.</div>`;
+    bdrOwnerAtualizarResumo();
+    return;
+  }
+
+  box.innerHTML = lista.map(r => bdrOwnerCardRegistro(r, cfg)).join("");
+  bdrOwnerAtualizarResumo(lista);
+}
+window.bdrOwnerRenderizarLista = bdrOwnerRenderizarLista;
+
+function bdrOwnerCardRegistro(r, cfg){
+  const ativo = bdrOwnerAtivoValor(r);
+  const titulo = r[cfg.destaque] || r.nome_bem || r.nome || r.descricao || r.codigo_qr || `ID ${r.id}`;
+
+  const campos = cfg.campos
+    .filter(c => r[c] !== undefined && r[c] !== null && String(r[c]) !== "")
+    .slice(0, 6)
+    .map(c => `
+      <div class="v6-field-mini">
+        <small>${bdrOwnerEsc(c)}</small>
+        <b>${bdrOwnerEsc(r[c])}</b>
+      </div>
+    `).join("");
+
+  return `
+    <div class="v6-registro ${bdrOwnerSelecionado?.id === r.id ? "selected" : ""}" onclick="bdrOwnerSelecionar(${Number(r.id)})">
+      <div class="v6-reg-main">
+        <div class="v6-reg-title">
+          <span>#${bdrOwnerEsc(r.id)}</span>
+          <b>${bdrOwnerEsc(titulo)}</b>
+          <em class="${ativo ? "ok" : "off"}">${ativo ? "ATIVO" : "DESATIVADO"}</em>
+        </div>
+        <div class="v6-reg-fields">${campos}</div>
+      </div>
+      <div class="v6-reg-actions" onclick="event.stopPropagation()">
+        <button class="mini blue" onclick="bdrOwnerEditar(${Number(r.id)})"><i class="fa-solid fa-pen"></i></button>
+        <button class="mini orange" onclick="bdrOwnerAlternarAtivo(${Number(r.id)})"><i class="fa-solid fa-toggle-on"></i></button>
+        <button class="mini red" onclick="bdrOwnerApagar(${Number(r.id)})"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+  `;
+}
+
+function bdrOwnerSelecionar(id){
+  bdrOwnerSelecionado = bdrOwnerRegistros.find(r => Number(r.id) === Number(id));
+  bdrOwnerRenderizarLista();
+}
+window.bdrOwnerSelecionar = bdrOwnerSelecionar;
+
+function bdrOwnerRegistroPorId(id){
+  return bdrOwnerRegistros.find(r => Number(r.id) === Number(id));
+}
+
+function bdrOwnerEditarSelecionado(){
+  if(!bdrOwnerSelecionado){ alert("Selecione um registro na lista."); return; }
+  bdrOwnerEditar(bdrOwnerSelecionado.id);
+}
+window.bdrOwnerEditarSelecionado = bdrOwnerEditarSelecionado;
+
+async function bdrOwnerEditar(id){
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const r = bdrOwnerRegistroPorId(id);
+  if(!r) return;
+
+  bdrOwnerCriarEditorModal();
+  bdrOwnerMontarEditorCampos(cfg, r);
+  document.getElementById("bdrOwnerEditModal").classList.add("ativo");
+}
+window.bdrOwnerEditar = bdrOwnerEditar;
+
+function bdrOwnerCriarEditorModal(){
+  if(document.getElementById("bdrOwnerEditModal")) return;
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="bdrOwnerEditModal" class="bdr-owner-edit-bg">
+      <div class="bdr-owner-edit-modal">
+        <div class="bdr-owner-edit-top">
+          <div>
+            <h2 id="bdrOwnerEditTitulo">Editar registro</h2>
+            <p id="bdrOwnerEditSub">Altere os campos necessários e salve tudo de uma vez.</p>
+          </div>
+          <button class="v6-btn light" onclick="bdrOwnerFecharEditor()"><i class="fa-solid fa-xmark"></i> Fechar</button>
+        </div>
+
+        <div class="bdr-owner-edit-alert">
+          <i class="fa-solid fa-circle-info"></i>
+          O campo <b>ID</b> fica bloqueado. Campos vazios serão salvos como vazio/nulo conforme o tipo original.
+        </div>
+
+        <div id="bdrOwnerEditCampos" class="bdr-owner-edit-grid"></div>
+
+        <div class="bdr-owner-edit-footer">
+          <button class="v6-btn light" onclick="bdrOwnerFecharEditor()">Cancelar</button>
+          <button class="v6-btn red" onclick="bdrOwnerSalvarEditor()"><i class="fa-solid fa-floppy-disk"></i> Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function bdrOwnerFecharEditor(){
+  document.getElementById("bdrOwnerEditModal")?.classList.remove("ativo");
+}
+window.bdrOwnerFecharEditor = bdrOwnerFecharEditor;
+
+function bdrOwnerTipoCampo(valor){
+  if(typeof valor === "boolean") return "boolean";
+  if(typeof valor === "number") return "number";
+  if(valor === null || valor === undefined) return "text";
+  const txt = String(valor);
+  if(/^\d{4}-\d{2}-\d{2}T/.test(txt) || /^\d{4}-\d{2}-\d{2}/.test(txt)) return "date";
+  if(txt.length > 90 || txt.includes("\n")) return "textarea";
+  return "text";
+}
+
+function bdrOwnerCampoBloqueado(campo){
+  return ["id"].includes(String(campo).toLowerCase());
+}
+
+function bdrOwnerMontarEditorCampos(cfg, r){
+  bdrOwnerSelecionado = r;
+  const box = document.getElementById("bdrOwnerEditCampos");
+  document.getElementById("bdrOwnerEditTitulo").innerText = `Editar ${cfg.titulo} #${r.id}`;
+  document.getElementById("bdrOwnerEditSub").innerText = `Tabela: ${cfg.tabela} • Você pode corrigir os campos deste registro.`;
+
+  const prioridade = [
+    "id", "codigo_qr", "codigo", "nome_bem", "nome", "descricao", "razao_social", "cnpj",
+    "empresa_id", "obra_id", "localizacao", "status", "ativo", "tipo_item", "marca", "modelo",
+    "numero_serie", "placa", "valor_bem", "observacao", "created_at", "updated_at"
+  ];
+
+  const chaves = Object.keys(r).sort((a,b) => {
+    const ia = prioridade.indexOf(a);
+    const ib = prioridade.indexOf(b);
+    if(ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    return a.localeCompare(b);
+  });
+
+  box.innerHTML = chaves.map(campo => {
+    const valor = r[campo];
+    const tipo = bdrOwnerTipoCampo(valor);
+    const bloqueado = bdrOwnerCampoBloqueado(campo) ? "disabled" : "";
+    const dataTipo = tipo;
+    const valorEsc = bdrOwnerEsc(valor ?? "");
+
+    if(tipo === "boolean"){
+      return `
+        <label class="bdr-owner-edit-field">
+          <span>${bdrOwnerEsc(campo)}</span>
+          <select data-campo="${bdrOwnerEsc(campo)}" data-tipo="boolean" ${bloqueado}>
+            <option value="true" ${valor === true ? "selected" : ""}>true / sim</option>
+            <option value="false" ${valor === false ? "selected" : ""}>false / não</option>
+          </select>
+        </label>
+      `;
     }
 
-    payload.permissoes = (PERFIS[normalizar(perfil)] || []).join(",");
-    resp = await bdrSalvarInsert(TABELA_USUARIOS, [payload]);
-  }
+    if(tipo === "textarea"){
+      return `
+        <label class="bdr-owner-edit-field wide">
+          <span>${bdrOwnerEsc(campo)}</span>
+          <textarea data-campo="${bdrOwnerEsc(campo)}" data-tipo="textarea" ${bloqueado}>${valorEsc}</textarea>
+        </label>
+      `;
+    }
 
-  if(resp.error){
-    alert("Erro ao salvar usuário: " + resp.error.message);
-    return;
-  }
-
-  fecharModalUsuario();
-
-  if(typeof estaOnline === "function" && !estaOnline()){
-    alert("📦 Usuário salvo offline. Será sincronizado quando a internet voltar.");
-    return;
-  }
-
-  await carregarTudo();
-
-  if(resp.data?.id){
-    selecionarUsuario(resp.data.id);
-  }else if(Array.isArray(resp.data) && resp.data[0]?.id){
-    selecionarUsuario(resp.data[0].id);
-  }
-
-  alert("Usuário salvo com sucesso!");
+    return `
+      <label class="bdr-owner-edit-field">
+        <span>${bdrOwnerEsc(campo)}</span>
+        <input data-campo="${bdrOwnerEsc(campo)}" data-tipo="${dataTipo}" value="${valorEsc}" ${bloqueado}>
+      </label>
+    `;
+  }).join("");
 }
-window.salvarUsuario = salvarUsuario;
 
-
-/* =========================================================
-   19) ATIVAR / BLOQUEAR USUÁRIO
-========================================================= */
-
-async function alternarStatus(id){
-  const u = usuarios.find(x => Number(x.id) === Number(id));
-
-  if(!u) return;
-
-  const novo = !(u.ativo !== false);
-
-  const resp = await bdrSalvarUpdate(TABELA_USUARIOS, {
-    ativo: novo,
-    updated_at: new Date().toISOString()
-  }, {id});
-
-  if(resp.error){
-    alert("Erro: " + resp.error.message);
-    return;
+function bdrOwnerConverterValor(valor, tipo, original){
+  if(tipo === "boolean") return String(valor) === "true";
+  if(valor === "" && (original === null || original === undefined)) return null;
+  if(typeof original === "number"){
+    const n = Number(String(valor).replace(",", "."));
+    return Number.isFinite(n) ? n : original;
   }
-
-  if(typeof estaOnline === "function" && !estaOnline()){
-    u.ativo = novo;
-    renderizarUsuarios();
-    alert("📦 Status salvo offline.");
-    return;
-  }
-
-  await carregarTudo();
+  return valor;
 }
-window.alternarStatus = alternarStatus;
 
+async function bdrOwnerSalvarEditor(){
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const original = bdrOwnerSelecionado;
+  if(!original){ alert("Nenhum registro selecionado."); return; }
 
-/* =========================================================
-   20) NOTIFICAÇÕES
-========================================================= */
+  const inputs = [...document.querySelectorAll("#bdrOwnerEditCampos [data-campo]")];
+  const payload = {};
+  const alterados = [];
 
+  inputs.forEach(el => {
+    const campo = el.dataset.campo;
+    if(!campo || bdrOwnerCampoBloqueado(campo)) return;
 
+    const tipo = el.dataset.tipo || "text";
+    const novo = bdrOwnerConverterValor(el.value, tipo, original[campo]);
+    const antigo = original[campo];
 
+    if(String(novo ?? "") !== String(antigo ?? "")){
+      payload[campo] = novo;
+      alterados.push(`${campo}: ${antigo ?? ""} → ${novo ?? ""}`);
+    }
+  });
 
-/* =========================================================
-   21) INICIAR
-========================================================= */
+  if(Object.keys(payload).length === 0){
+    alert("Nenhuma alteração para salvar.");
+    return;
+  }
 
-document.addEventListener("DOMContentLoaded", () => {
-  carregarTudo();
-});
+  const motivo = prompt("Motivo da correção:", "Correção via BDR CORE");
+  if(!motivo || motivo.trim().length < 3){
+    alert("Informe um motivo para salvar.");
+    return;
+  }
 
+  const confirmar = confirm(
+    `Salvar alterações em ${cfg.titulo} #${original.id}?\n\n` +
+    alterados.slice(0, 12).join("\n") +
+    (alterados.length > 12 ? `\n... +${alterados.length - 12} campo(s)` : "")
+  );
 
-/* compatibilidade caso algum botão antigo chame carregarDados */
-window.carregarDados = window.carregarTudo || carregarTudo;
+  if(!confirmar) return;
+
+  const { error } = await bdrOwnerDB().from(cfg.tabela).update(payload).eq("id", original.id);
+
+  if(error){
+    alert("Erro ao salvar alterações: " + error.message);
+    return;
+  }
+
+  await bdrOwnerTentarLog({
+    acao:"EDICAO_OWNER",
+    tabela: cfg.tabela,
+    registro_id: original.id,
+    motivo,
+    descricao: alterados.join(" | ")
+  });
+
+  alert("Alterações salvas com sucesso.");
+  bdrOwnerFecharEditor();
+  bdrOwnerCarregarArea();
+}
+window.bdrOwnerSalvarEditor = bdrOwnerSalvarEditor;
+
+async function bdrOwnerTentarLog(info){
+  try{
+    const db = bdrOwnerDB();
+    if(!db) return;
+    const usuario = bdrOwnerUsuarioLocal();
+    await db.from("logs_sistema").insert([{
+      acao: info.acao,
+      tabela: info.tabela,
+      registro_id: info.registro_id,
+      usuario: usuario?.nome || usuario?.usuario || BDR_OWNER_LOGIN,
+      motivo: info.motivo || null,
+      descricao: info.descricao || null,
+      created_at: new Date().toISOString()
+    }]);
+  }catch(e){
+    console.warn("Log não gravado. Talvez logs_sistema não exista ainda.", e);
+  }
+}
+window.bdrOwnerTentarLog = bdrOwnerTentarLog;
+
+function bdrOwnerAlternarAtivoSelecionado(){
+  if(!bdrOwnerSelecionado){ alert("Selecione um registro na lista."); return; }
+  bdrOwnerAlternarAtivo(bdrOwnerSelecionado.id);
+}
+window.bdrOwnerAlternarAtivoSelecionado = bdrOwnerAlternarAtivoSelecionado;
+
+async function bdrOwnerAlternarAtivo(id){
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+  const r = bdrOwnerRegistroPorId(id);
+  if(!r) return;
+
+  const estaAtivo = bdrOwnerAtivoValor(r);
+  const acao = estaAtivo ? "DESATIVAR" : "REATIVAR";
+  const novoAtivo = !estaAtivo;
+
+  const msgConfirmar = `${acao} registro #${id} em ${cfg.titulo}?\n\n${estaAtivo ? "Ele ficará oculto, mas não será apagado." : "Ele voltará a aparecer no sistema."}`;
+
+  if(!confirm(msgConfirmar)) return;
+
+  const payload = { ativo: novoAtivo };
+
+  const { error } = await bdrOwnerDB().from(cfg.tabela).update(payload).eq("id", id);
+
+  if(error){
+    const msgErro =
+      `Erro ao ${estaAtivo ? "desativar" : "reativar"}: ${error.message}` +
+      "\n\nProvável causa: a tabela ainda não tem a coluna ativo." +
+      `\n\nRode no Supabase:\nALTER TABLE ${cfg.tabela} ADD COLUMN IF NOT EXISTS ativo boolean DEFAULT true;`;
+
+    alert(msgErro);
+    return;
+  }
+
+  alert(estaAtivo ? "Registro desativado com segurança." : "Registro reativado com sucesso.");
+  bdrOwnerCarregarArea();
+}
+window.bdrOwnerAlternarAtivo = bdrOwnerAlternarAtivo;
+// compatibilidade com versões antigas
+window.bdrOwnerDesativar = bdrOwnerAlternarAtivo;
+window.bdrOwnerDesativarSelecionado = bdrOwnerAlternarAtivoSelecionado;
+
+function bdrOwnerApagarSelecionado(){
+  if(!bdrOwnerSelecionado){ alert("Selecione um registro na lista."); return; }
+  bdrOwnerApagar(bdrOwnerSelecionado.id);
+}
+window.bdrOwnerApagarSelecionado = bdrOwnerApagarSelecionado;
+
+async function bdrOwnerApagar(id){
+  const cfg = BDR_OWNER_AREAS[bdrOwnerAreaAtual];
+
+  const senha1 = prompt("Senha BDR CORE:");
+  if(senha1 !== BDR_OWNER_SENHA){
+    alert("Primeira senha incorreta.");
+    return;
+  }
+
+  const senha2 = prompt("Segunda senha para APAGAR DEFINITIVO:");
+  if(senha2 !== BDR_OWNER_SENHA_APAGAR){
+    alert("Segunda senha incorreta.");
+    return;
+  }
+
+  const txt = prompt(`Digite exatamente: APAGAR ${id}`);
+  if(String(txt || "").trim().toUpperCase() !== `APAGAR ${id}`){
+    alert("Confirmação cancelada. Nada foi apagado.");
+    return;
+  }
+
+  const { error } = await bdrOwnerDB().from(cfg.tabela).delete().eq("id", id);
+
+  if(error){
+    alert("Erro ao apagar: " + error.message + "\n\nPode existir vínculo com outra tabela. Nesse caso, use DESATIVAR.");
+    return;
+  }
+
+  alert("Registro apagado definitivamente.");
+  bdrOwnerCarregarArea();
+}
+window.bdrOwnerApagar = bdrOwnerApagar;
+
+function bdrOwnerAtualizarResumo(lista = null){
+  const box = document.getElementById("bdrOwnerResumoV6");
+  if(!box) return;
+
+  const dados = lista || bdrOwnerRegistros || [];
+  const total = dados.length;
+  const ativos = dados.filter(bdrOwnerAtivoValor).length;
+  const desativados = total - ativos;
+
+  box.innerHTML = `
+    <div class="v6-res-line" onclick="bdrOwnerSetFiltroStatus('')" title="Mostrar todos"><span>Total listado</span><b>${total}</b></div>
+    <div class="v6-res-line" onclick="bdrOwnerSetFiltroStatus('ATIVO')" title="Filtrar ativos"><span>Ativos</span><b class="green">${ativos}</b></div>
+    <div class="v6-res-line" onclick="bdrOwnerSetFiltroStatus('INATIVO')" title="Filtrar desativados"><span>Desativados</span><b class="orange">${desativados}</b></div>
+    <div class="v6-res-line"><span>Área atual</span><b>${BDR_OWNER_AREAS[bdrOwnerAreaAtual]?.titulo || "-"}</b></div>
+  `;
+}
+
+function bdrOwnerSetFiltroStatus(valor){
+  const sel = document.getElementById("bdrOwnerFiltroStatus");
+  if(sel) sel.value = valor;
+  bdrOwnerRenderizarLista();
+}
+window.bdrOwnerSetFiltroStatus = bdrOwnerSetFiltroStatus;
+
+/* Proteção visual do usuário owner nos botões do usuários.js, se existir */
+(function bdrOwnerProtecaoUsuario(){
+  const oldAlternar = window.alternarStatus;
+  if(typeof oldAlternar === "function"){
+    window.alternarStatus = function(id){
+      try{
+        const u = (window.usuarios || usuarios || []).find(x => Number(x.id) === Number(id));
+        const login = String(u?.usuario || u?.email || "").toLowerCase();
+        if(login === String(BDR_OWNER_LOGIN).toLowerCase() && !bdrOwnerEhOwner()){
+          alert("Este usuário é protegido pelo sistema.");
+          return;
+        }
+      }catch(e){}
+      return oldAlternar(id);
+    };
+  }
+})();

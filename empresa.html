@@ -517,42 +517,42 @@ button,
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button data-permissao="ESTOQUE" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -560,21 +560,21 @@ button,
 
   
   <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS" class="bdr-menu-btn active" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn active" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -619,7 +619,7 @@ button,
           <div class="avatar"><i class="fa-solid fa-user"></i></div>
 
           <div id="dropdownUser" class="dropdown-user">
-            <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+            <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
               <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
             </button>
             <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
@@ -630,7 +630,7 @@ button,
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-acao-permissao="EMPRESAS_CRIAR">
       <h3>➕ Cadastro de Empresa / Obra / Setor</h3>
 
       <div class="empresa-form-grid">
@@ -694,12 +694,12 @@ button,
       <textarea id="observacao" placeholder="Observações da empresa, obra ou setor..."></textarea>
 
       <div class="form-actions">
-        <button class="btn-salvar" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
+        <button class="btn-salvar" data-acao-permissao="EMPRESAS_CRIAR" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
         <button class="btn-limpar" onclick="limparFormulario()">🧹 Limpar</button>
       </div>
     </section>
 
-    <section class="card edicao-card" id="cardEdicaoEmpresa">
+    <section class="card edicao-card" id="cardEdicaoEmpresa" data-acao-permissao="EMPRESAS_EDITAR">
       <h3>✏️ Editar Empresa / Obra / Setor</h3>
 
       <div class="edicao-aviso">
@@ -770,7 +770,7 @@ button,
       <textarea id="edit_observacao"></textarea>
 
       <div class="form-actions">
-        <button class="btn-salvar" onclick="salvarEdicaoEmpresa()">💾 Salvar alterações</button>
+        <button class="btn-salvar" data-acao-permissao="EMPRESAS_EDITAR" onclick="salvarEdicaoEmpresa()">💾 Salvar alterações</button>
         <button class="btn-limpar" onclick="cancelarEdicaoEmpresa()">Cancelar edição</button>
       </div>
     </section>
@@ -978,6 +978,49 @@ function db(){
   return window.client || window.supabaseClient;
 }
 
+/* =========================================================
+   BDR PERMISSÕES - EMPRESAS
+   Modelo novo: EMPRESAS_VER / CRIAR / EDITAR / INATIVAR / EXCLUIR
+========================================================= */
+function permissoesEmpresaBDR(usuario = usuarioAtual()){
+  return String(usuario?.permissoes || "")
+    .split(",")
+    .map(p => String(p || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function usuarioOwnerEmpresaBDR(usuario = usuarioAtual()){
+  return Number(usuario?.id) === 1;
+}
+
+function usuarioTemPermissaoEmpresaBDR(permissao, usuario = usuarioAtual()){
+  if(!usuario) return false;
+  if(usuarioOwnerEmpresaBDR(usuario)) return true;
+  return permissoesEmpresaBDR(usuario).includes(String(permissao || "").toUpperCase());
+}
+
+function exigirPermissaoEmpresaBDR(permissao, mensagem){
+  if(usuarioTemPermissaoEmpresaBDR(permissao)) return true;
+  alert(mensagem || "Você não tem permissão para executar esta ação.");
+  return false;
+}
+
+function aplicarAcoesEmpresaPorPermissao(){
+  document.querySelectorAll("[data-acao-permissao]").forEach(el => {
+    const p = el.getAttribute("data-acao-permissao");
+    const pode = usuarioTemPermissaoEmpresaBDR(p);
+    el.style.display = pode ? "" : "none";
+    el.hidden = !pode;
+  });
+}
+
+function bloquearTelaEmpresaSemPermissao(){
+  if(usuarioTemPermissaoEmpresaBDR("EMPRESAS_VER")) return true;
+  alert("Você não tem permissão para acessar Empresas.");
+  location.href = "dashboard.html";
+  return false;
+}
+
 function campo(id){
   const el = document.getElementById(id);
   return el ? String(el.value || "").trim() : "";
@@ -1008,6 +1051,8 @@ function carregarUsuario(){
 }
 
 async function salvarEmpresa(){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_CRIAR", "Você não tem permissão para cadastrar empresa/obra.")) return;
 
   aplicarPadraoBDR();
 
@@ -1130,6 +1175,7 @@ async function carregarEmpresas(){
 
   carregarFiltroEstados();
   renderizarEmpresas();
+  aplicarAcoesEmpresaPorPermissao();
   renderizarMovimentacoesEmpresas();
 }
 
@@ -1217,13 +1263,21 @@ function renderizarEmpresas(){
         <div class="empresa-acoes">
           <button class="btn-mini" title="Ver detalhes" onclick="toggleDetalhes(${e.id})">📂 Detalhes</button>
 
-          <button class="btn-mini btn-editar" title="Editar empresa" onclick="editarEmpresa(${e.id})">✏️ Editar</button>
+          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EDITAR") ? `
+            <button class="btn-mini btn-editar" title="Editar empresa" onclick="editarEmpresa(${e.id})">✏️ Editar</button>
+          ` : ``}
 
-          <button class="btn-mini ${e.ativa === false ? "btn-status" : "btn-status-danger"}"
-            title="${e.ativa === false ? "Reativar empresa" : "Inativar empresa"}"
-            onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
-            ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
-          </button>
+          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_INATIVAR") ? `
+            <button class="btn-mini ${e.ativa === false ? "btn-status" : "btn-status-danger"}"
+              title="${e.ativa === false ? "Reativar empresa" : "Inativar empresa"}"
+              onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
+              ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
+            </button>
+          ` : ``}
+
+          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EXCLUIR") ? `
+            <button class="btn-mini btn-status-danger" title="Excluir definitivamente" onclick="excluirEmpresa(${e.id})">🗑 Excluir</button>
+          ` : ``}
         </div>
 
         <div class="empresa-detalhes">
@@ -1264,7 +1318,7 @@ async function carregarMovimentacoesEmpresas(){
   const { data, error } = await db()
     .from("movimentacoes")
     .select("*")
-    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA"])
+    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA", "EXCLUSAO_EMPRESA"])
     .order("id", { ascending:false })
     .limit(10);
 
@@ -1305,22 +1359,53 @@ function formatarData(data){
 
 async function alterarStatusEmpresa(id, status){
 
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR", "Você não tem permissão para inativar ou reativar empresas.")) return;
+
   const empresaAntes = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresaAntes){
+    alert("Empresa não encontrada.");
+    return;
+  }
 
   const statusAtual = empresaAntes?.ativa === false ? "INATIVA" : "ATIVA";
   const statusNovo = status === true ? "ATIVA" : "INATIVA";
 
-  const confirma = confirm(`Confirma ${statusNovo === "ATIVA" ? "REATIVAR" : "INATIVAR"} a empresa "${empresaAntes?.nome || "-"}"?`);
+  const confirma = confirm(
+    `Confirma ${statusNovo === "ATIVA" ? "REATIVAR" : "INATIVAR"} a empresa "${empresaAntes?.nome || "-"}"?`
+  );
 
   if(!confirma) return;
 
-  const { error } = await db()
+  const respEmpresa = await db()
     .from("empresas")
-    .update({ ativa: status })
-    .eq("id", id);
+    .update({
+      ativa: status,
+      ativo: status
+    })
+    .eq("id", id)
+    .select();
 
-  if(error){
-    alert(error.message);
+  if(respEmpresa.error){
+    alert("Erro ao alterar empresa: " + respEmpresa.error.message);
+    return;
+  }
+
+  if(!respEmpresa.data || respEmpresa.data.length === 0){
+    alert("Nenhuma linha foi alterada no banco.");
+    return;
+  }
+
+  const respObras = await db()
+    .from("obras")
+    .update({
+      ativa: status,
+      ativo: status
+    })
+    .eq("empresa_id", id);
+
+  if(respObras.error){
+    alert("Erro ao alterar obras: " + respObras.error.message);
     return;
   }
 
@@ -1331,10 +1416,13 @@ async function alterarStatusEmpresa(id, status){
   );
 
   alert("Status alterado com sucesso.");
-  carregarEmpresas();
+
+  await carregarEmpresas();
 }
 
 function editarEmpresa(id){
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para editar empresas.")) return;
+
   const empresa = empresas.find(e => String(e.id) === String(id));
 
   if(!empresa){
@@ -1400,6 +1488,8 @@ function compararAlteracoesEmpresa(antes, depois){
 }
 
 async function salvarEdicaoEmpresa(){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para salvar edição de empresas.")) return;
 
   const id = campo("edit_id");
 
@@ -1509,6 +1599,70 @@ async function salvarEdicaoEmpresa(){
 
   cancelarEdicaoEmpresa();
   carregarEmpresas();
+}
+
+async function excluirEmpresa(id){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EXCLUIR", "Você não tem permissão para excluir empresas.")) return;
+
+  const empresa = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresa){
+    alert("Empresa não encontrada.");
+    return;
+  }
+
+  const confirma = confirm(
+    `APAGAR DEFINITIVAMENTE a empresa "${empresa.nome || "-"}"?\n\n` +
+    "Use esta opção somente para cadastro fake/teste. Empresa real é melhor INATIVAR."
+  );
+
+  if(!confirma) return;
+
+  const senha = prompt("Digite sua senha para confirmar a exclusão:");
+  if(!senha){
+    alert("Exclusão cancelada.");
+    return;
+  }
+
+  const usuario = usuarioAtual();
+  const senhaLocal = String(usuario?.senha || usuario?.senha_master || "");
+
+  if(senhaLocal && senha !== senhaLocal){
+    alert("Senha incorreta. Nada foi apagado.");
+    return;
+  }
+
+  const resp = await db()
+    .from("empresas")
+    .delete()
+    .eq("id", id)
+    .select("id,nome");
+
+  if(resp.error){
+    alert(
+      "Erro ao excluir: " + resp.error.message +
+      "\n\nProvável vínculo com obras, localizações, patrimônios ou movimentações. Nesse caso use INATIVAR."
+    );
+    return;
+  }
+
+  if(!resp.data || resp.data.length === 0){
+    alert(
+      "O Supabase não apagou nenhuma linha.\n\n" +
+      "Pode ser bloqueio de RLS/policy ou vínculo no banco. Nada foi apagado."
+    );
+    return;
+  }
+
+  await registrarMovimentacaoEmpresa(
+    "EXCLUSAO_EMPRESA",
+    empresa,
+    `Empresa excluída definitivamente: ${empresa.nome || "-"} | ID: ${empresa.id}`
+  );
+
+  alert("Empresa excluída definitivamente.");
+  await carregarEmpresas();
 }
 
 function limparFormulario(){
@@ -1758,6 +1912,8 @@ function iniciarTopoPadraoBDR(){
 
 window.addEventListener("load", () => {
   iniciarTopoPadraoBDR();
+  if(!bloquearTelaEmpresaSemPermissao()) return;
+  aplicarAcoesEmpresaPorPermissao();
   carregarEmpresas();
 });
 </script>

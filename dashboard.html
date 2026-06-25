@@ -1182,42 +1182,42 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
  <nav class="bdr-menu">
 
   <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD" class="bdr-menu-btn active" data-tip="Dashboard" onclick="ir('dashboard.html')">
+  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn active" data-tip="Dashboard" onclick="ir('dashboard.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-chart-simple"></i>
     </span>
   </button>
 
   <!-- ENTRADA -->
-  <button data-permissao="ENTRADA" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
+  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-arrow-down-wide-short"></i>
     </span>
   </button>
 
   <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
+  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-vials"></i>
     </span>
   </button>
 
   <!-- Estoque -->
-  <button data-permissao="ESTOQUE" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
+  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-boxes-stacked"></i>
     </span>
   </button>
 
   <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
+  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-tags"></i>
     </span>
   </button>
 
   <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
+   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
      <span class="bdr-menu-icon">
        <i class="fa-solid fa-truck-fast"></i>
       </span>
@@ -1225,21 +1225,21 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
   
   <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
+  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-regular fa-file-lines"></i>
     </span>
   </button>
 
   <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
+  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-building"></i>
     </span>
   </button>
 
   <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
+  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
     <span class="bdr-menu-icon">
       <i class="fa-solid fa-users"></i>
     </span>
@@ -1288,7 +1288,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
               <span id="usuarioPerfilMenu">-</span>
             </div>
 
-            <button data-permissao="USUARIOS" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
+            <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
               <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
             </button>
 
@@ -1442,7 +1442,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
                 </thead>
                 <tbody id="ultimasMov"></tbody>
               </table>
-              <button data-permissao="RELATORIOS" class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
+              <button data-permissao="RELATORIOS_VER" class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
             </div>
           </section>
         </div>
@@ -1544,7 +1544,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
             </thead>
             <tbody id="listaItensAlerta"></tbody>
           </table>
-          <button data-permissao="PATRIMONIO" class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
+          <button data-permissao="PATRIMONIO_VER" class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
         </div>
       </section>
 
@@ -1574,7 +1574,94 @@ let charts = {};
 function ir(pagina){ window.location.href = pagina; }
 function db(){ return window.client || window.supabaseClient; }
 function valor(id){ const el = document.getElementById(id); return el ? String(el.value || "").trim() : ""; }
-function usuarioAtual(){ const u = localStorage.getItem("usuario_logado"); return u ? JSON.parse(u) : null; }
+function usuarioAtual(){
+  try{
+    const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+/* =========================================================
+   BDR PATCH SEGURO - PERMISSÕES SEPARADAS
+   MENU: DASHBOARD, PATRIMONIO, USUARIOS...
+   DADOS: TODAS_OBRAS_VER, PROPRIA_OBRA_VER, VALORES_VER
+========================================================= */
+function permissoesUsuarioBDR(usuario = usuarioAtual()){
+  if(!usuario) return [];
+  if(Array.isArray(usuario.permissoes)){
+    return usuario.permissoes.map(p => String(p).trim().toUpperCase()).filter(Boolean);
+  }
+  return String(usuario.permissoes || "")
+    .split(",")
+    .map(p => p.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function usuarioOwnerBDR(usuario = usuarioAtual()){
+  return Number(usuario?.id) === 1;
+}
+
+function usuarioTemPermissaoBDR(permissao, usuario = usuarioAtual()){
+  if(!usuario) return false;
+  if(usuarioOwnerBDR(usuario)) return true;
+
+  const ps = permissoesUsuarioBDR(usuario);
+  const p = String(permissao || "").toUpperCase();
+
+  const aliases = {
+    DASHBOARD: "DASHBOARD_VER",
+    ENTRADA: "ENTRADA_VER",
+    TRIAGEM: "TRIAGEM_VER",
+    ESTOQUE: "ESTOQUE_VER",
+    PATRIMONIO: "PATRIMONIO_VER",
+    EXPEDICAO: "EXPEDICAO_VER",
+    RELATORIOS: "RELATORIOS_VER",
+    EMPRESAS: "EMPRESAS_VER",
+    USUARIOS: "USUARIOS_VER",
+    CONFIGURACOES: "CONFIGURACOES_VER",
+    VER_TODAS_OBRAS: "TODAS_OBRAS_VER",
+    VER_ESTOQUE_PROPRIA_OBRA: "PROPRIA_OBRA_VER",
+    VER_VALORES: "VALORES_VER"
+  };
+
+  return ps.includes(p) || (aliases[p] && ps.includes(aliases[p]));
+}
+
+function bloquearPaginaSemPermissaoBDR(permissao){
+  if(usuarioTemPermissaoBDR(permissao)) return true;
+  alert("Você não tem permissão para acessar esta tela.");
+  window.location.href = "login.html";
+  return false;
+}
+
+function aplicarMenuPorPermissaoBDR(){
+  document.querySelectorAll("[data-permissao]").forEach(el => {
+    const permissao = el.getAttribute("data-permissao");
+    el.style.display = usuarioTemPermissaoBDR(permissao) ? "" : "none";
+  });
+}
+
+function usuarioPodeVerTodasObrasBDR(usuario = usuarioAtual()){
+  return usuarioTemPermissaoBDR("TODAS_OBRAS_VER", usuario);
+}
+
+function usuarioPodeVerPropriaObraBDR(usuario = usuarioAtual()){
+  return usuarioTemPermissaoBDR("PROPRIA_OBRA_VER", usuario);
+}
+
+function usuarioPodeVerValoresBDR(usuario = usuarioAtual()){
+  return usuarioTemPermissaoBDR("VALORES_VER", usuario);
+}
+
+function aplicarVisibilidadeValoresBDR(){
+  const pode = usuarioPodeVerValoresBDR();
+  document.querySelector('[data-kpi="VALOR"]')?.style.setProperty("display", pode ? "" : "none");
+  document.querySelector(".valor-principal")?.style.setProperty("display", pode ? "" : "none");
+  const topValor = document.getElementById("topObrasValor")?.closest("section");
+  if(topValor) topValor.style.display = pode ? "" : "none";
+}
 function toggleUserMenu(event){
   if(event) event.stopPropagation();
 
@@ -1850,13 +1937,31 @@ async function carregarDados(){
   obras = obrasResp.data || [];
   movimentacoes = movResp.data || [];
 
-  if(usuario && usuario.perfil !== "MASTER" && usuario.perfil !== "ADMIN" && usuario.obra_id){
-    patrimonios = patrimonios.filter(p => String(p.obra_id) === String(usuario.obra_id));
-    movimentacoes = movimentacoes.filter(m =>
-      String(m.obra_origem_id) === String(usuario.obra_id) ||
-      String(m.obra_destino_id) === String(usuario.obra_id)
-    );
+  /* DADOS: filtra por permissão, nunca por perfil.
+     Owner id=1 vê tudo. Quem tem TODAS_OBRAS_VER vê tudo.
+     Quem tem PROPRIA_OBRA_VER vê apenas a própria obra.
+     Quem não tem nenhuma permissão de dados fica sem dados. */
+  const podeVerTodas = usuarioPodeVerTodasObrasBDR(usuario);
+  const podeVerPropria = usuarioPodeVerPropriaObraBDR(usuario);
+
+  if(usuario && !podeVerTodas){
+    if(podeVerPropria && usuario.obra_id){
+      patrimonios = patrimonios.filter(p =>
+        String(p.obra_id) === String(usuario.obra_id)
+      );
+
+      movimentacoes = movimentacoes.filter(m =>
+        String(m.obra_origem_id) === String(usuario.obra_id) ||
+        String(m.obra_destino_id) === String(usuario.obra_id)
+      );
+    }else{
+      patrimonios = [];
+      movimentacoes = [];
+    }
   }
+
+  aplicarMenuPorPermissaoBDR();
+  aplicarVisibilidadeValoresBDR();
 
   carregarFiltros();
   aplicarFiltros();
@@ -2137,7 +2242,7 @@ function atualizarKPIs(){
   document.getElementById("kpiManutencao").innerText = manut;
   document.getElementById("kpiBaixado").innerText = baixado;
   document.getElementById("kpiSemValor").innerText = semValor;
-  document.getElementById("kpiValor").innerText = moedaCurta(valorTotal);
+  document.getElementById("kpiValor").innerText = usuarioPodeVerValoresBDR() ? moedaCurta(valorTotal) : "R$ •••";
 
   document.getElementById("percUso").innerText = ((uso/total)*100).toFixed(1).replace(".",",") + "% da seleção";
   document.getElementById("percEstoque").innerText = ((estoque/total)*100).toFixed(1).replace(".",",") + "% da seleção";
@@ -2257,7 +2362,7 @@ function gerarIA(){
   document.getElementById("analiseIA").innerHTML = `
     <div class="ai-line" onclick="mostrarItensAlerta('TODOS')">
       <span>📊</span>
-      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor patrimonial de <b>${moedaCurta(valorTotal)}</b>. Valor patrimonial é a visão principal; quantidade fica separada para conferência.</div>
+      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor patrimonial de <b>${usuarioPodeVerValoresBDR() ? moedaCurta(valorTotal) : "R$ •••"}</b>. Valor patrimonial é a visão principal; quantidade fica separada para conferência.</div>
     </div>
 
     <div class="ai-line" onclick="mostrarItensAlerta('MANUTENCAO')">
@@ -2374,7 +2479,7 @@ function mostrarItensAlerta(tipo){
         <td>${p.status || "-"}</td>
         <td>${p.tipo_item || "-"}</td>
         <td>${nomeObraCurto(p.obra_id)}</td>
-        <td>${moeda(valorPatrimonio(p))}</td>
+        <td>${usuarioPodeVerValoresBDR() ? moeda(valorPatrimonio(p)) : "R$ •••"}</td>
       </tr>
     `).join("");
   }
@@ -2522,7 +2627,7 @@ function gerarTopObrasValor(){
   el.innerHTML = lista.map((o,i) => `
     <div class="info-row" onclick="mostrarItensObraRanking('${o.obra_id}','VALOR')" style="cursor:pointer;">
       <span title="${escapeHtmlBDR(o.nome)}">${i+1}. ${escapeHtmlBDR(o.nome)}</span>
-      <b>${moedaCurta(o.valor)}</b>
+      <b>${usuarioPodeVerValoresBDR() ? moedaCurta(o.valor) : "R$ •••"}</b>
     </div>
   `).join("");
 }
@@ -2558,7 +2663,7 @@ function mostrarItensObraRanking(obraId, modo){
   });
 
   const titulo = modo === "VALOR"
-    ? `💰 ${obra.nome} - ${moeda(obra.valor)} em patrimônio (${obra.qtd} item(ns))`
+    ? `💰 ${obra.nome} - ${usuarioPodeVerValoresBDR() ? moeda(obra.valor) : "R$ •••"} em patrimônio (${obra.qtd} item(ns))`
     : `📦 ${obra.nome} - ${obra.qtd} patrimônio(s)`;
 
   renderizarListaItensDashboard(lista, titulo);
@@ -2583,7 +2688,7 @@ function renderizarListaItensDashboard(lista, titulo){
         <td>${p.status || "-"}</td>
         <td>${p.tipo_item || "-"}</td>
         <td>${nomeObraCurto(p.obra_id)}</td>
-        <td>${moeda(valorPatrimonio(p))}</td>
+        <td>${usuarioPodeVerValoresBDR() ? moeda(valorPatrimonio(p)) : "R$ •••"}</td>
       </tr>
     `).join("");
   }
@@ -2593,7 +2698,11 @@ function renderizarListaItensDashboard(lista, titulo){
 }
 
 /* Dashboard */
-carregarDados();
+if(bloquearPaginaSemPermissaoBDR("DASHBOARD_VER")){
+  aplicarMenuPorPermissaoBDR();
+  aplicarVisibilidadeValoresBDR();
+  carregarDados();
+}
 </script>
 
 <script src="./JS/bdrSininhoDashboard.js"></script>

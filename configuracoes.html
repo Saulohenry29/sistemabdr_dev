@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>BDR ERP - Configurações</title>
+
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
+
+<style>
+/* =========================================================
+   BDR CONFIGURAÇÕES - PAINEL PROFISSIONAL
+========================================================= */
+:root{
+  --cfg-red:#a4161a;
+  --cfg-dark:#111827;
+  --cfg-muted:#6b7280;
+  --cfg-border:#e5e7eb;
+  --cfg-bg:#eef2f7;
+  --cfg-green:#16a34a;
+  --cfg-blue:#2563eb;
+  --cfg-orange:#f97316;
+  --cfg-purple:#7c3aed;
+}
+
+body{background:var(--cfg-bg)!important;}
+
+.bdr-topbar-title{color:var(--cfg-red)!important;font-weight:900;}
+.bdr-topbar-sub{color:#6b7280;font-size:12px;margin-top:3px;font-weight:500;}
+.bdr-top-actions{display:flex;align-items:center;gap:12px;margin-left:auto;}
+
+/* topo usuário / notificações */
+.notif-wrap{position:relative;}
+.notif-btn{width:38px;height:38px;border:none;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:0;box-shadow:none!important;}
+.notif-btn:hover{background:#fff1f2;color:var(--cfg-red);transform:translateY(-1px);}
+.notif-badge{position:absolute;top:1px;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:white;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center;}
+.notif-dropdown{position:absolute;top:48px;right:0;width:340px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);overflow:hidden;display:none;z-index:999999;}
+.notif-dropdown.ativo{display:block;}
+.notif-head{padding:12px 14px;font-weight:900;color:var(--cfg-red);background:#fff5f5;border-bottom:1px solid #fecaca;}
+.notif-list{max-height:300px;overflow:auto;}
+.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151;}
+
+.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;transition:.22s ease;outline:none!important;user-select:none!important;caret-color:transparent!important;}
+.user-menu:hover{background:rgba(255,255,255,.55);transform:translateX(4px) scale(1.02);}
+.user-mini{text-align:right;font-size:13px;pointer-events:none;}.user-mini b{display:block;}.user-mini small{color:var(--cfg-red);font-weight:900;}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--cfg-red);font-size:18px;pointer-events:none;}
+.dropdown-user{position:absolute;top:55px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 18px 35px rgba(15,23,42,.18);padding:8px;display:none;min-width:220px;z-index:999999;}
+.dropdown-user.ativo{display:block;}
+.dropdown-user button{width:100%;border:none;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;cursor:pointer;font-weight:900;text-align:left;display:flex;align-items:center;gap:9px;}
+.dropdown-user button:hover{background:#fff1f2;color:var(--cfg-red);}.dropdown-user .logout-btn{color:#dc2626;}
+
+/* hero */
+.cfg-hero{
+  background:radial-gradient(circle at right top,rgba(164,22,26,.16),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);
+  border:1px solid #fee2e2;
+  border-left:5px solid var(--cfg-red);
+  border-radius:18px;
+  padding:16px;
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:14px;
+  margin-bottom:12px;
+  box-shadow:0 4px 14px rgba(15,23,42,.08);
+}
+.cfg-hero h2{margin:0;color:#111827;font-size:22px;font-weight:1000;}
+.cfg-hero p{margin:5px 0 0;color:#6b7280;font-size:13px;font-weight:700;line-height:1.45;}
+.cfg-status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-self:center;}
+.cfg-status{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:10px;text-align:center;}
+.cfg-status strong{display:block;font-size:18px;color:#111827;}
+.cfg-status span{display:block;font-size:10px;color:#6b7280;font-weight:900;margin-top:3px;text-transform:uppercase;}
+
+/* grid principal */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start;}
+.cfg-card{background:#fff;border:1px solid #e7ebf0;border-left:4px solid var(--cfg-red);border-radius:18px;box-shadow:0 4px 14px rgba(15,23,42,.07);overflow:hidden;}
+.cfg-head{height:46px;padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;font-weight:1000;color:#111827;}
+.cfg-head i{color:var(--cfg-red);font-size:18px;}
+.cfg-body{padding:12px;}
+.cfg-row{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;border:1px solid #edf0f5;border-radius:14px;padding:9px;margin-bottom:8px;background:#fff;}
+.cfg-row:hover{background:#fffafa;border-color:#fecaca;}
+.cfg-ico{width:34px;height:34px;border-radius:11px;background:#fff1f2;color:var(--cfg-red);display:flex;align-items:center;justify-content:center;}
+.cfg-row b{display:block;font-size:13px;color:#111827;}
+.cfg-row span{display:block;font-size:11px;color:#6b7280;margin-top:2px;line-height:1.3;}
+.cfg-btn{border:none;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:900;color:#fff;cursor:pointer;white-space:nowrap;}
+.cfg-btn.red{background:var(--cfg-red);}.cfg-btn.dark{background:#111827}.cfg-btn.green{background:#16a34a}.cfg-btn.blue{background:#2563eb}.cfg-btn.gray{background:#6b7280}.cfg-btn.orange{background:#f97316}.cfg-btn.purple{background:#7c3aed}
+.cfg-btn.light{background:#fff;color:#111827;border:1px solid #e5e7eb;}
+
+.cfg-wide{grid-column:1 / -1;}
+.cfg-log{background:#0f172a;color:#d1d5db;border-radius:14px;padding:12px;min-height:170px;max-height:260px;overflow:auto;font-family:Consolas,monospace;font-size:12px;line-height:1.55;}
+.cfg-log b{color:#fca5a5;}
+
+.owner-box{display:none;background:linear-gradient(135deg,#111827,#0f172a);color:white;border-radius:18px;padding:14px;border:1px solid #374151;}
+.owner-box.ativo{display:block;}
+.owner-box h3{margin:0 0 8px;color:#fff;font-size:16px;}
+.owner-box p{margin:0 0 10px;color:#cbd5e1;font-size:12px;line-height:1.45;}
+.owner-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.cfg-input{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:9px;font-size:12px;margin-bottom:8px;}
+.cfg-note{background:#eff6ff;border-left:4px solid #2563eb;border-radius:12px;padding:10px;color:#1e40af;font-size:12px;line-height:1.45;margin-top:8px;}
+
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none!important;box-shadow:none!important;}
+
+@media(max-width:1200px){.cfg-grid{grid-template-columns:1fr 1fr}.cfg-hero{grid-template-columns:1fr}.cfg-status-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.cfg-grid{grid-template-columns:1fr}.cfg-status-grid{grid-template-columns:1fr}.cfg-row{grid-template-columns:34px 1fr}.cfg-row button{grid-column:1/-1;width:100%;}.cfg-hero h2{font-size:19px}}
+</style>
+</head>
+<body>
+<script>verificarLogin();</script>
+
+<div class="app-layout">
+  <aside class="bdr-sidebar">
+    <div class="bdr-brand"><div class="bdr-brand-icon"><i class="fa-solid fa-cube"></i></div></div>
+    <nav class="bdr-menu">
+      <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span></button>
+      <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-arrow-down-wide-short"></i></span></button>
+      <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-vials"></i></span></button>
+      <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span></button>
+      <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-tags"></i></span></button>
+      <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn" data-tip="Expedição" onclick="ir('expedicao.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-truck-fast"></i></span></button>
+      <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')"><span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span></button>
+      <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-building"></i></span></button>
+      <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span></button>
+      <button data-permissao="CONFIGURACOES_VER" class="bdr-menu-btn active" data-tip="Configurações" onclick="ir('configuracoes.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-gear"></i></span></button>
+    </nav>
+  </aside>
+
+  <main class="bdr-main">
+    <div class="bdr-topbar">
+      <div>
+        <div class="bdr-topbar-title" id="tituloOwnerClick">⚙️ BDR Configurações</div>
+        <div class="bdr-topbar-sub">Painel profissional de manutenção, backup, PWA, segurança e recursos avançados.</div>
+      </div>
+
+      <div class="bdr-top-actions">
+        <div class="notif-wrap" data-permissao="RECEBER_NOTIFICACOES">
+          <button class="notif-btn" type="button" onclick="toggleNotificacoes(event)"><i class="fa-regular fa-bell"></i><span id="notifBadge" class="notif-badge">0</span></button>
+          <div id="notifDropdown" class="notif-dropdown"><div class="notif-head">🔔 Central de notificações</div><div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div></div>
+        </div>
+
+        <div class="user-menu" onclick="toggleMenuUsuario(event)">
+          <div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div>
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+          <div id="dropdownUser" class="dropdown-user">
+            <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
+            <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="cfg-hero">
+      <div>
+        <h2>Centro de Controle BDR</h2>
+        <p>Use esta tela para tarefas seguras: backup, limpeza de cache, atualização do PWA, diagnóstico de conexão, sessão e manutenção controlada do sistema.</p>
+        <div class="cfg-note">Dica: o Owner Core é secreto. Clique 5 vezes no título “BDR Configurações” para abrir recursos avançados.</div>
+      </div>
+      <div class="cfg-status-grid">
+        <div class="cfg-status"><strong id="stOnline">-</strong><span>Conexão</span></div>
+        <div class="cfg-status"><strong id="stUsuario">-</strong><span>Usuário</span></div>
+        <div class="cfg-status"><strong id="stPwa">-</strong><span>PWA</span></div>
+      </div>
+    </section>
+
+    <section class="cfg-grid">
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-shield-halved"></i> Segurança e sessão</div>
+        <div class="cfg-body">
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-user-lock"></i></div><div><b>Recarregar usuário logado</b><span>Atualiza localStorage com dados do banco.</span></div><button class="cfg-btn blue" onclick="recarregarUsuarioLogado()">Recarregar</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-key"></i></div><div><b>Trocar minha senha</b><span>Abre a tela segura de alteração de senha.</span></div><button class="cfg-btn dark" onclick="ir('alterar-senha.html')">Abrir</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-right-from-bracket"></i></div><div><b>Encerrar sessão</b><span>Sai do sistema e limpa dados locais de login.</span></div><button class="cfg-btn red" onclick="logout()">Sair</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-mobile-screen-button"></i> PWA e cache</div>
+        <div class="cfg-body">
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-rotate"></i></div><div><b>Atualizar versão</b><span>Força atualização da aplicação instalada.</span></div><button class="cfg-btn green" onclick="atualizarPWA()">Atualizar</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-broom"></i></div><div><b>Limpar cache local</b><span>Remove caches do navegador/PWA sem apagar banco.</span></div><button class="cfg-btn orange" onclick="limparCachePWA()">Limpar</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-database"></i></div><div><b>Limpar localStorage</b><span>Use se permissões antigas ficarem presas.</span></div><button class="cfg-btn gray" onclick="limparLocalStorageSeguro()">Limpar</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-cloud-arrow-down"></i> Backup e exportação</div>
+        <div class="cfg-body">
+          <div class="cfg-row" data-permissao="CONFIGURACOES_BACKUP"><div class="cfg-ico"><i class="fa-solid fa-users"></i></div><div><b>Backup usuários</b><span>Exporta usuários e permissões em JSON.</span></div><button class="cfg-btn blue" onclick="backupTabela('usuarios_sistema')">Backup</button></div>
+          <div class="cfg-row" data-permissao="CONFIGURACOES_BACKUP"><div class="cfg-ico"><i class="fa-solid fa-boxes-stacked"></i></div><div><b>Backup patrimônio</b><span>Exporta patrimônios cadastrados.</span></div><button class="cfg-btn purple" onclick="backupTabela('patrimonio')">Backup</button></div>
+          <div class="cfg-row" data-permissao="CONFIGURACOES_BACKUP"><div class="cfg-ico"><i class="fa-solid fa-building"></i></div><div><b>Backup empresas/obras</b><span>Exporta empresas e obras em pacote único.</span></div><button class="cfg-btn green" onclick="backupEmpresasObras()">Backup</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-sliders"></i> Preferências visuais</div>
+        <div class="cfg-body">
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-magnifying-glass-minus"></i></div><div><b>Zoom compacto</b><span>Salva preferência visual local.</span></div><button class="cfg-btn light" onclick="setZoomLocal('0.85')">85%</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-magnifying-glass"></i></div><div><b>Zoom normal</b><span>Volta para tamanho padrão.</span></div><button class="cfg-btn light" onclick="setZoomLocal('1')">100%</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-palette"></i></div><div><b>Personalizador visual</b><span>Futuro: arrastar cards, cores e temas.</span></div><button class="cfg-btn gray" onclick="alert('Em breve: BDR Personalizador Visual.')">Em breve</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-stethoscope"></i> Diagnóstico</div>
+        <div class="cfg-body">
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-wifi"></i></div><div><b>Testar Supabase</b><span>Verifica conexão com o banco.</span></div><button class="cfg-btn green" onclick="testarSupabase()">Testar</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-list-check"></i></div><div><b>Ver permissões locais</b><span>Mostra as permissões do usuário atual.</span></div><button class="cfg-btn blue" onclick="mostrarPermissoesLocais()">Ver</button></div>
+          <div class="cfg-row"><div class="cfg-ico"><i class="fa-solid fa-file-lines"></i></div><div><b>Exportar diagnóstico</b><span>Baixa log técnico simples.</span></div><button class="cfg-btn dark" onclick="exportarDiagnostico()">Baixar</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head"><i class="fa-solid fa-triangle-exclamation"></i> Manutenção segura</div>
+        <div class="cfg-body">
+          <div class="cfg-row" data-permissao="CONFIGURACOES_EDITAR"><div class="cfg-ico"><i class="fa-solid fa-user-shield"></i></div><div><b>Resetar senha temporária</b><span>Use pela tela de usuários para um usuário específico.</span></div><button class="cfg-btn orange" onclick="ir('usuarios.html')">Usuários</button></div>
+          <div class="cfg-row" data-permissao="CONFIGURACOES_EDITAR"><div class="cfg-ico"><i class="fa-solid fa-lock"></i></div><div><b>Modo manutenção</b><span>Reservado para futura trava geral do sistema.</span></div><button class="cfg-btn gray" onclick="alert('Modo manutenção global ainda não ativado.')">Reservado</button></div>
+          <div class="cfg-row" data-permissao="CONFIGURACOES_EDITAR"><div class="cfg-ico"><i class="fa-solid fa-clock-rotate-left"></i></div><div><b>Logs e auditoria</b><span>Consulta movimentações e alterações.</span></div><button class="cfg-btn blue" onclick="ir('relatorios.html')">Abrir</button></div>
+        </div>
+      </div>
+
+      <div class="cfg-card cfg-wide">
+        <div class="cfg-head"><i class="fa-solid fa-crown"></i> Owner Core secreto</div>
+        <div class="cfg-body">
+          <div id="ownerCoreBox" class="owner-box">
+            <h3>👑 Owner Core BDR</h3>
+            <p>Painel oculto do proprietário. Use com cuidado. Nada aqui deve aparecer para usuários comuns.</p>
+            <div class="owner-actions">
+              <button class="cfg-btn red" onclick="restaurarOwnerLocal()">Restaurar owner local</button>
+              <button class="cfg-btn blue" onclick="mostrarPermissoesLocais()">Ver permissões</button>
+              <button class="cfg-btn green" onclick="backupTabela('usuarios_sistema')">Backup usuários</button>
+              <button class="cfg-btn orange" onclick="localStorage.clear(); alert('LocalStorage limpo. Faça login novamente.'); location.href='login.html';">Limpar tudo local</button>
+            </div>
+          </div>
+          <div class="cfg-note">Clique 5x no título da página para abrir/fechar o Owner Core. Só o usuário id=1 consegue abrir.</div>
+        </div>
+      </div>
+
+      <div class="cfg-card cfg-wide">
+        <div class="cfg-head"><i class="fa-solid fa-terminal"></i> Console técnico</div>
+        <div class="cfg-body">
+          <div id="cfgLog" class="cfg-log">Aguardando ações...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+function ir(pagina){ window.location.href = pagina; }
+function db(){ return window.client || window.supabaseClient || null; }
+function usuarioAtual(){ try{return JSON.parse(localStorage.getItem('usuario_logado') || localStorage.getItem('usuarioLogado') || 'null')}catch(e){return null} }
+function permsUsuario(){ return String(usuarioAtual()?.permissoes || '').split(',').map(p=>p.trim()).filter(Boolean); }
+function owner(){ return Number(usuarioAtual()?.id) === 1; }
+function logCfg(txt){ const el=document.getElementById('cfgLog'); if(el){ el.innerHTML = `<div><b>${new Date().toLocaleString('pt-BR')}</b> — ${txt}</div>` + el.innerHTML; } }
+function esc(s){ return String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+function toggleMenuUsuario(event){ if(event) event.stopPropagation(); document.getElementById('dropdownUser')?.classList.toggle('ativo'); document.getElementById('notifDropdown')?.classList.remove('ativo'); }
+function toggleNotificacoes(event){ if(event) event.stopPropagation(); document.getElementById('notifDropdown')?.classList.toggle('ativo'); document.getElementById('dropdownUser')?.classList.remove('ativo'); }
+document.addEventListener('click',()=>{ document.getElementById('dropdownUser')?.classList.remove('ativo'); document.getElementById('notifDropdown')?.classList.remove('ativo'); });
+
+function preencherTopo(){ const u=usuarioAtual(); document.getElementById('usuarioNome').innerText='Olá, '+(u?.nome || 'usuário'); document.getElementById('usuarioPerfil').innerText=u?.perfil || '-'; document.getElementById('stUsuario').innerText=u?.perfil || '-'; document.getElementById('stOnline').innerText=navigator.onLine?'ONLINE':'OFFLINE'; document.getElementById('stPwa').innerText=window.matchMedia('(display-mode: standalone)').matches?'APP':'WEB'; }
+
+function verificarAcessoConfiguracoes(){
+  const u = usuarioAtual();
+  const ps = permsUsuario();
+  const livre = Number(u?.id) === 1 || ((String(u?.perfil||'').toUpperCase()==='MASTER' || String(u?.perfil||'').toUpperCase()==='ADMIN') && !String(u?.permissoes||'').trim());
+  if(livre || ps.includes('CONFIGURACOES_VER')) return true;
+  alert('Você não tem permissão para acessar Configurações.');
+  location.href='dashboard.html';
+  return false;
+}
+
+async function recarregarUsuarioLogado(){
+  const u = usuarioAtual();
+  if(!u || !db()){ alert('Usuário ou Supabase não encontrado.'); return; }
+  const {data,error} = await db().from('usuarios_sistema').select('*').eq('id',u.id).limit(1);
+  if(error || !data || !data[0]){ logCfg('Erro ao recarregar usuário: '+(error?.message || 'não encontrado')); return; }
+  localStorage.setItem('usuario_logado', JSON.stringify(data[0]));
+  localStorage.setItem('usuarioLogado', JSON.stringify(data[0]));
+  preencherTopo();
+  logCfg('Usuário local atualizado com sucesso.');
+}
+
+async function limparCachePWA(){
+  if(!confirm('Limpar cache do PWA/navegador?')) return;
+  if('caches' in window){ const nomes = await caches.keys(); await Promise.all(nomes.map(n=>caches.delete(n))); }
+  logCfg('Cache PWA limpo. Recarregando...');
+  setTimeout(()=>location.reload(true),600);
+}
+
+function limparLocalStorageSeguro(){
+  if(!confirm('Limpar localStorage? Você terá que fazer login novamente.')) return;
+  localStorage.clear();
+  location.href='login.html';
+}
+
+function atualizarPWA(){
+  if(typeof bdrAtualizarAgora === 'function') return bdrAtualizarAgora();
+  if(navigator.serviceWorker?.controller){ navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'}); }
+  logCfg('Pedido de atualização enviado. Recarregando...');
+  setTimeout(()=>location.reload(true),700);
+}
+
+async function backupTabela(tabela){
+  if(!db()){ alert('Supabase não carregado.'); return; }
+  const {data,error} = await db().from(tabela).select('*');
+  if(error){ logCfg('Erro no backup '+tabela+': '+error.message); alert(error.message); return; }
+  baixarJSON(`backup_${tabela}_${dataHoje()}.json`, data || []);
+  logCfg(`Backup da tabela ${tabela} gerado com ${data?.length || 0} registro(s).`);
+}
+
+async function backupEmpresasObras(){
+  if(!db()){ alert('Supabase não carregado.'); return; }
+  const emp = await db().from('empresas').select('*');
+  const obr = await db().from('obras').select('*');
+  if(emp.error || obr.error){ alert(emp.error?.message || obr.error?.message); return; }
+  baixarJSON(`backup_empresas_obras_${dataHoje()}.json`, {empresas:emp.data||[], obras:obr.data||[]});
+  logCfg('Backup de empresas e obras gerado.');
+}
+
+function baixarJSON(nome, dados){
+  const blob = new Blob([JSON.stringify(dados,null,2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome; a.click();
+  URL.revokeObjectURL(url);
+}
+function dataHoje(){ return new Date().toISOString().slice(0,10); }
+
+function setZoomLocal(v){ document.documentElement.style.setProperty('--screen-zoom', v); localStorage.setItem('bdr_zoom_preferido', v); logCfg('Zoom local definido para '+v); }
+function aplicarZoomLocal(){ const z=localStorage.getItem('bdr_zoom_preferido'); if(z) document.documentElement.style.setProperty('--screen-zoom', z); }
+
+async function testarSupabase(){
+  if(!db()){ logCfg('Supabase não encontrado.'); return; }
+  const {data,error} = await db().from('usuarios_sistema').select('id').limit(1);
+  if(error){ logCfg('Falha Supabase: '+error.message); return; }
+  logCfg('Supabase OK. Teste retornou '+(data?.length || 0)+' registro(s).');
+}
+
+function mostrarPermissoesLocais(){
+  const u=usuarioAtual();
+  logCfg('Usuário local: '+esc(u?.nome || '-')+' | Permissões: '+esc(permsUsuario().join(', ') || 'sem permissões'));
+}
+
+function exportarDiagnostico(){
+  const u=usuarioAtual();
+  const dados = {
+    data:new Date().toISOString(),
+    usuario:{id:u?.id,nome:u?.nome,perfil:u?.perfil,permissoes:u?.permissoes},
+    online:navigator.onLine,
+    pwa:window.matchMedia('(display-mode: standalone)').matches,
+    localStorageKeys:Object.keys(localStorage),
+    url:location.href
+  };
+  baixarJSON('diagnostico_bdr_'+dataHoje()+'.json', dados);
+  logCfg('Diagnóstico exportado.');
+}
+
+function restaurarOwnerLocal(){
+  if(!owner()){ alert('Apenas owner id=1.'); return; }
+  const u = usuarioAtual() || {};
+  u.id = 1;
+  u.perfil = 'MASTER';
+  u.permissoes = '';
+  localStorage.setItem('usuario_logado', JSON.stringify(u));
+  localStorage.setItem('usuarioLogado', JSON.stringify(u));
+  logCfg('Owner local restaurado como MASTER livre.');
+}
+
+let ownerClicks = 0;
+let ownerTimer = null;
+function prepararOwnerSecreto(){
+  const titulo = document.getElementById('tituloOwnerClick');
+  if(!titulo) return;
+  titulo.style.cursor = 'pointer';
+  titulo.addEventListener('click', () => {
+    ownerClicks++;
+    clearTimeout(ownerTimer);
+    ownerTimer = setTimeout(()=>ownerClicks=0,1800);
+    if(ownerClicks >= 5){
+      ownerClicks = 0;
+      if(!owner()){ alert('Owner Core protegido. Apenas usuário id=1.'); return; }
+      document.getElementById('ownerCoreBox')?.classList.toggle('ativo');
+      logCfg('Owner Core alternado.');
+    }
+  });
+}
+
+function iniciar(){
+  aplicarZoomLocal();
+  preencherTopo();
+  if(!verificarAcessoConfiguracoes()) return;
+  prepararOwnerSecreto();
+  logCfg('Configurações carregadas com sucesso.');
+}
+
+iniciar();
+</script>
+</body>
+</html>

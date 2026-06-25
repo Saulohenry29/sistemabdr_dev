@@ -1479,3 +1479,51 @@ button{
   }
 }
 
+/* =========================================================
+   BDR FIX SCROLL PWA / DASHBOARD
+   Corrige rolagem travada no PWA, navegador e touchpad
+========================================================= */
+
+html,
+body{
+  min-height:100%;
+  height:auto !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+}
+
+.bdr-main,
+main,
+.content{
+  min-height:100vh;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+.app-layout,
+.bdr-app{
+  min-height:100vh;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+/* Evita que cards/grids travem a rolagem */
+.card,
+.dashboard-grid,
+.left-stack,
+.right-stack{
+  overflow:visible !important;
+}
+
+/* Mobile/PWA: garante espaço para menu inferior */
+@media(max-width:900px){
+  body{
+    padding-bottom:90px !important;
+  }
+
+  .bdr-main{
+    padding-bottom:110px !important;
+  }
+}

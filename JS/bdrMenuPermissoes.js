@@ -1,12 +1,19 @@
 /* =========================================================
-   BDR MENU PERMISSÕES V6 - OFICIAL
+   BDR MENU PERMISSÕES V7 - NOVO PADRÃO OFICIAL
    Arquivo: JS/bdrMenuPermissoes.js
 
-   REGRA:
-   - MASTER/ADMIN com permissoes NULL ou vazias = vê tudo.
-   - Qualquer usuário com permissoes preenchidas = vê só o que tiver ali.
-   - Bloqueia acesso direto por URL.
-   - Esconde menu lateral e dropdown do usuário.
+   PADRÃO NOVO:
+   - MODULO_VER abre tela/menu
+   - MODULO_CRIAR cria registros
+   - MODULO_EDITAR edita registros
+   - MODULO_EXCLUIR apaga registros
+   - MODULO_EXPORTAR exporta
+   - MODULO_MOVIMENTAR movimenta
+
+   OBS:
+   - Owner id=1 vê tudo.
+   - MASTER/ADMIN sem permissoes preenchidas vê tudo.
+   - Se permissoes estiver preenchido, vale somente o que estiver marcado.
 ========================================================= */
 
 (function(){
@@ -25,33 +32,68 @@
   };
 
   const PERM_PAGINA = {
-    "dashboard.html": "DASHBOARD",
-    "entrada.html": "ENTRADA",
-    "triagem.html": "TRIAGEM",
-    "estoque.html": "ESTOQUE",
-    "patrimonio.html": "PATRIMONIO",
-    "expedicao.html": "EXPEDICAO",
-    "relatorios.html": "RELATORIOS",
-    "movimentacoes.html": "RELATORIOS",
-    "empresa.html": "EMPRESAS",
-    "usuarios.html": "USUARIOS",
-    "configuracoes.html": "CONFIGURACOES",
-    "pedidos.html": "EXPEDICAO",
-    "prateleiras-3d.html": "ESTOQUE"
+    "dashboard.html": "DASHBOARD_VER",
+    "entrada.html": "ENTRADA_VER",
+    "triagem.html": "TRIAGEM_VER",
+    "estoque.html": "ESTOQUE_VER",
+    "patrimonio.html": "PATRIMONIO_VER",
+    "expedicao.html": "EXPEDICAO_VER",
+    "relatorios.html": "RELATORIOS_VER",
+    "movimentacoes.html": "RELATORIOS_VER",
+    "empresa.html": "EMPRESAS_VER",
+    "usuarios.html": "USUARIOS_VER",
+    "configuracoes.html": "CONFIGURACOES_VER",
+    "pedidos.html": "EXPEDICAO_VER",
+    "prateleiras-3d.html": "ESTOQUE_VER"
+  };
+
+  const MENU_PARA_NOVO = {
+    DASHBOARD: "DASHBOARD_VER",
+    ENTRADA: "ENTRADA_VER",
+    TRIAGEM: "TRIAGEM_VER",
+    ESTOQUE: "ESTOQUE_VER",
+    PATRIMONIO: "PATRIMONIO_VER",
+    EXPEDICAO: "EXPEDICAO_VER",
+    RELATORIOS: "RELATORIOS_VER",
+    EMPRESAS: "EMPRESAS_VER",
+    USUARIOS: "USUARIOS_VER",
+    CONFIGURACOES: "CONFIGURACOES_VER"
   };
 
   const ORDEM = [
-    "DASHBOARD",
-    "PATRIMONIO",
-    "ESTOQUE",
-    "ENTRADA",
-    "TRIAGEM",
-    "EXPEDICAO",
-    "RELATORIOS",
-    "EMPRESAS",
-    "USUARIOS",
-    "CONFIGURACOES"
+    "DASHBOARD_VER",
+    "PATRIMONIO_VER",
+    "ESTOQUE_VER",
+    "ENTRADA_VER",
+    "TRIAGEM_VER",
+    "EXPEDICAO_VER",
+    "RELATORIOS_VER",
+    "EMPRESAS_VER",
+    "USUARIOS_VER",
+    "CONFIGURACOES_VER"
   ];
+
+  const LEGADO_PARA_NOVO = {
+    DASHBOARD: "DASHBOARD_VER",
+    ENTRADA: "ENTRADA_VER",
+    TRIAGEM: "TRIAGEM_VER",
+    ESTOQUE: "ESTOQUE_VER",
+    PATRIMONIO: "PATRIMONIO_VER",
+    EXPEDICAO: "EXPEDICAO_VER",
+    RELATORIOS: "RELATORIOS_VER",
+    EMPRESAS: "EMPRESAS_VER",
+    USUARIOS: "USUARIOS_VER",
+    CONFIGURACOES: "CONFIGURACOES_VER",
+
+    VER_VALORES: "VALORES_VER",
+    VER_TODAS_OBRAS: "TODAS_OBRAS_VER",
+    VER_ESTOQUE_PROPRIA_OBRA: "PROPRIA_OBRA_VER",
+
+    CADASTRAR_PATRIMONIO: "PATRIMONIO_CRIAR",
+    EDITAR_PATRIMONIO: "PATRIMONIO_EDITAR",
+    ALTERAR_STATUS: "PATRIMONIO_MOVIMENTAR",
+    MOVIMENTAR_PATRIMONIO: "PATRIMONIO_MOVIMENTAR"
+  };
 
   function norm(v){
     return String(v || "")
@@ -79,21 +121,39 @@
     localStorage.setItem("usuarioLogado", JSON.stringify(u));
   }
 
-  function permissoes(u){
+  function permissoesBrutas(u){
+    if(Array.isArray(u?.permissoes)){
+      return u.permissoes.map(norm).filter(Boolean);
+    }
     return String(u?.permissoes || "")
       .split(",")
       .map(norm)
       .filter(Boolean);
   }
 
+  function permissoes(u = usuarioLocal()){
+    const ps = permissoesBrutas(u);
+    const set = new Set(ps);
+
+    ps.forEach(p => {
+      if(LEGADO_PARA_NOVO[p]) set.add(LEGADO_PARA_NOVO[p]);
+    });
+
+    return [...set];
+  }
+
   function perfil(u){
     return norm(u?.perfil);
   }
 
-  function masterLivre(u){
+  function owner(u = usuarioLocal()){
+    return Number(u?.id) === 1;
+  }
+
+  function masterLivre(u = usuarioLocal()){
     const p = perfil(u);
-    const ps = permissoes(u);
-    return (p === "MASTER" || p === "ADMIN") && ps.length === 0;
+    const ps = permissoesBrutas(u);
+    return owner(u) || ((p === "MASTER" || p === "ADMIN") && ps.length === 0);
   }
 
   function paginaAtual(){
@@ -104,13 +164,32 @@
     return PERM_PAGINA[paginaAtual()] || "";
   }
 
+  function temPermissao(perm, u = usuarioLocal()){
+    if(!u) return false;
+    if(masterLivre(u)) return true;
+
+    const p = norm(perm);
+    const ps = permissoes(u);
+
+    if(ps.includes(p)) return true;
+
+    const novo = LEGADO_PARA_NOVO[p];
+    if(novo && ps.includes(novo)) return true;
+
+    const legado = Object.entries(LEGADO_PARA_NOVO).find(([,v]) => v === p)?.[0];
+    if(legado && ps.includes(legado)) return true;
+
+    return false;
+  }
+
   function primeiraPaginaPermitida(u){
     if(masterLivre(u)) return "dashboard.html";
 
     const ps = permissoes(u);
     const achou = ORDEM.find(p => ps.includes(p));
 
-    return PAGINAS[achou] || "dashboard.html";
+    const modulo = Object.entries(MENU_PARA_NOVO).find(([,novo]) => novo === achou)?.[0];
+    return PAGINAS[modulo] || "dashboard.html";
   }
 
   function temAcessoPagina(u){
@@ -120,7 +199,7 @@
     const precisa = permissaoDaPagina();
     if(!precisa) return true;
 
-    return permissoes(u).includes(precisa);
+    return temPermissao(precisa, u);
   }
 
   function esconderTelaSeBloqueada(){
@@ -136,41 +215,44 @@
 
   function inferirPermissaoDoBotao(btn){
     const marcada = btn.getAttribute("data-permissao");
-    if(marcada) return norm(marcada);
+    if(marcada){
+      const m = norm(marcada);
+      return MENU_PARA_NOVO[m] || LEGADO_PARA_NOVO[m] || m;
+    }
 
     const onclick = String(btn.getAttribute("onclick") || "").toLowerCase();
     const tip = norm(btn.getAttribute("data-tip") || btn.title || btn.innerText || btn.textContent || "");
 
     const alvos = [
-      ["dashboard.html", "DASHBOARD"],
-      ["entrada.html", "ENTRADA"],
-      ["triagem.html", "TRIAGEM"],
-      ["estoque.html", "ESTOQUE"],
-      ["patrimonio.html", "PATRIMONIO"],
-      ["expedicao.html", "EXPEDICAO"],
-      ["relatorios.html", "RELATORIOS"],
-      ["movimentacoes.html", "RELATORIOS"],
-      ["empresa.html", "EMPRESAS"],
-      ["usuarios.html", "USUARIOS"],
-      ["configuracoes.html", "CONFIGURACOES"],
-      ["pedidos.html", "EXPEDICAO"],
-      ["prateleiras-3d.html", "ESTOQUE"]
+      ["dashboard.html", "DASHBOARD_VER"],
+      ["entrada.html", "ENTRADA_VER"],
+      ["triagem.html", "TRIAGEM_VER"],
+      ["estoque.html", "ESTOQUE_VER"],
+      ["patrimonio.html", "PATRIMONIO_VER"],
+      ["expedicao.html", "EXPEDICAO_VER"],
+      ["relatorios.html", "RELATORIOS_VER"],
+      ["movimentacoes.html", "RELATORIOS_VER"],
+      ["empresa.html", "EMPRESAS_VER"],
+      ["usuarios.html", "USUARIOS_VER"],
+      ["configuracoes.html", "CONFIGURACOES_VER"],
+      ["pedidos.html", "EXPEDICAO_VER"],
+      ["prateleiras-3d.html", "ESTOQUE_VER"]
     ];
 
     for(const [html, perm] of alvos){
       if(onclick.includes(html)) return perm;
     }
 
-    if(tip.includes("DASHBOARD") || tip.includes("TORRE")) return "DASHBOARD";
-    if(tip.includes("ENTRADA")) return "ENTRADA";
-    if(tip.includes("TRIAGEM")) return "TRIAGEM";
-    if(tip.includes("ESTOQUE")) return "ESTOQUE";
-    if(tip.includes("PATRIMONIO")) return "PATRIMONIO";
-    if(tip.includes("EXPEDICAO")) return "EXPEDICAO";
-    if(tip.includes("RELATORIO")) return "RELATORIOS";
-    if(tip.includes("EMPRESA")) return "EMPRESAS";
-    if(tip.includes("USUARIO")) return "USUARIOS";
-    if(tip.includes("CONFIG")) return "CONFIGURACOES";
+    if(tip.includes("DASHBOARD") || tip.includes("TORRE")) return "DASHBOARD_VER";
+    if(tip.includes("ENTRADA")) return "ENTRADA_VER";
+    if(tip.includes("TRIAGEM")) return "TRIAGEM_VER";
+    if(tip.includes("ESTOQUE")) return "ESTOQUE_VER";
+    if(tip.includes("PATRIMONIO")) return "PATRIMONIO_VER";
+    if(tip.includes("EXPEDICAO")) return "EXPEDICAO_VER";
+    if(tip.includes("RELATORIO")) return "RELATORIOS_VER";
+    if(tip.includes("EMPRESA")) return "EMPRESAS_VER";
+    if(tip.includes("USUARIO")) return "USUARIOS_VER";
+    if(tip.includes("CONFIG")) return "CONFIGURACOES_VER";
 
     return "";
   }
@@ -180,7 +262,7 @@
       .querySelectorAll(".bdr-menu-btn, .side-btn, aside button, nav button, .dropdown-user button, .user-dropdown button, [data-tip]")
       .forEach(btn => {
         const p = inferirPermissaoDoBotao(btn);
-        if(p) btn.setAttribute("data-permissao", p);
+        if(p) btn.setAttribute("data-permissao-resolvida", p);
       });
   }
 
@@ -190,7 +272,7 @@
 
     prepararBotoes();
 
-    const botoes = document.querySelectorAll("[data-permissao]");
+    const botoes = document.querySelectorAll("[data-permissao], [data-permissao-resolvida]");
 
     if(masterLivre(u)){
       botoes.forEach(btn => {
@@ -198,19 +280,39 @@
         btn.style.display = "";
         btn.dataset.bloqueado = "NAO";
       });
+      aplicarAcoes(u);
       return;
     }
 
-    const ps = permissoes(u);
-
     botoes.forEach(btn => {
-      const p = norm(btn.getAttribute("data-permissao"));
-      const pode = ps.includes(p);
+      const p = norm(btn.getAttribute("data-permissao-resolvida") || btn.getAttribute("data-permissao"));
+      const pode = temPermissao(p, u);
 
       btn.hidden = !pode;
       btn.style.display = pode ? "" : "none";
       btn.dataset.bloqueado = pode ? "NAO" : "SIM";
     });
+
+    aplicarAcoes(u);
+  }
+
+  function aplicarAcoes(u){
+    u = u || usuarioLocal();
+
+    document.querySelectorAll("[data-acao-permissao]").forEach(el => {
+      const p = norm(el.getAttribute("data-acao-permissao"));
+      const pode = temPermissao(p, u);
+
+      el.hidden = !pode;
+      el.style.display = pode ? "" : "none";
+      if("disabled" in el) el.disabled = !pode;
+    });
+  }
+
+  function exigir(perm, mensagem){
+    if(temPermissao(perm)) return true;
+    alert(mensagem || "Você não tem permissão para executar esta ação.");
+    return false;
   }
 
   function redirecionarSeBloqueado(u){
@@ -281,10 +383,19 @@
   window.BDRMenuPermissoes = {
     iniciar,
     aplicarMenu,
+    aplicarAcoes,
     buscarUsuarioBanco,
     redirecionarSeBloqueado,
-    prepararBotoes
+    prepararBotoes,
+    temPermissao,
+    exigir,
+    permissoes,
+    masterLivre
   };
+
+  window.usuarioTemPermissaoBDR = temPermissao;
+  window.bdrExigirPermissao = exigir;
+  window.bdrAplicarPermissoesTela = aplicarAcoes;
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", iniciar);

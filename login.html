@@ -57,7 +57,7 @@ input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:
   border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;
 }
 .btn-login:hover{background:#7d1013}
-#mensagem{text-align:center;color:red;margin-top:15px}
+#mensagem{text-align:center;color:red;margin-top:15px;font-weight:800}
 .rodape{text-align:center;margin-top:20px;color:#777;font-size:12px}
 #bdrUpdateBar{
   position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
@@ -82,11 +82,11 @@ input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:
 
   <form id="formLogin">
     <label>Usuário</label>
-    <input type="text" id="usuario" placeholder="Digite seu usuário" required>
+    <input type="text" id="usuario" placeholder="Digite seu usuário" required autocomplete="username">
 
     <label>Senha</label>
     <div class="campo-senha">
-      <input type="password" id="senha" placeholder="Digite sua senha" required>
+      <input type="password" id="senha" placeholder="Digite sua senha" required autocomplete="current-password">
       <button type="button" class="btn-mostrar" id="btnOlho" onclick="mostrarSenha()" title="Mostrar senha">
         <svg id="iconeOlho" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
@@ -121,6 +121,119 @@ input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:
 <script src="./JS/pwa-update.js"></script>
 
 <script>
+function bancoBDR(){
+  return window.client || window.supabaseClient || window.clientSupabase || null;
+}
+
+function mostrarMensagem(txt, cor="red"){
+  const msg = document.getElementById("mensagem");
+  if(msg){
+    msg.style.color = cor;
+    msg.innerText = txt || "";
+  }
+}
+
+function senhaEhTemporariaBDR(usuario){
+  return usuario?.senha_temporaria === true ||
+         usuario?.senha_provisoria === true ||
+         usuario?.trocar_senha === true ||
+         String(usuario?.senha_temporaria).toLowerCase() === "true" ||
+         String(usuario?.senha_provisoria).toLowerCase() === "true" ||
+         String(usuario?.trocar_senha).toLowerCase() === "true";
+}
+
+function destinoPadraoBDR(usuario){
+  const perms = String(usuario?.permissoes || "").toUpperCase();
+  if(perms.includes("DASHBOARD_VER")) return "dashboard.html";
+  if(perms.includes("PATRIMONIO_VER")) return "patrimonio.html";
+  if(perms.includes("ESTOQUE_VER")) return "estoque.html";
+  if(perms.includes("EXPEDICAO_VER")) return "expedicao.html";
+  if(perms.includes("RELATORIOS_VER")) return "relatorios.html";
+  return "dashboard.html";
+}
+
+async function buscarUsuarioLoginBDR(login){
+  const banco = bancoBDR();
+  if(!banco) throw new Error("Supabase não carregado.");
+
+  let resp = await banco
+    .from("usuarios_sistema")
+    .select("*")
+    .eq("usuario", login)
+    .limit(1);
+
+  if(resp.error) throw resp.error;
+  if(resp.data && resp.data[0]) return resp.data[0];
+
+  resp = await banco
+    .from("usuarios_sistema")
+    .select("*")
+    .eq("email", login)
+    .limit(1);
+
+  if(resp.error) throw resp.error;
+  return resp.data?.[0] || null;
+}
+
+async function fazerLogin(){
+  const login = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+
+  mostrarMensagem("");
+
+  if(!login || !senha){
+    mostrarMensagem("Informe usuário e senha.");
+    return;
+  }
+
+  try{
+    const usuario = await buscarUsuarioLoginBDR(login);
+
+    if(!usuario){
+      mostrarMensagem("Usuário não encontrado.");
+      return;
+    }
+
+    if(usuario.ativo === false || String(usuario.ativo).toLowerCase() === "false"){
+      mostrarMensagem("Usuário inativo. Procure o administrador.");
+      return;
+    }
+
+    if(String(usuario.senha || "") !== String(senha)){
+      mostrarMensagem("Senha incorreta.");
+      return;
+    }
+
+    const usuarioSessao = {...usuario};
+    localStorage.setItem("usuario_logado", JSON.stringify(usuarioSessao));
+    localStorage.setItem("usuarioLogado", JSON.stringify(usuarioSessao));
+
+    if(document.getElementById("lembrar")?.checked){
+      localStorage.setItem("bdr_login_lembrado", login);
+    }else{
+      localStorage.removeItem("bdr_login_lembrado");
+    }
+
+    try{
+      await bancoBDR()
+        .from("usuarios_sistema")
+        .update({ ultimo_acesso:new Date().toISOString(), ultimo_login:new Date().toISOString() })
+        .eq("id", usuario.id);
+    }catch(e){}
+
+    if(senhaEhTemporariaBDR(usuarioSessao)){
+      location.href = "alterar-senha.html";
+      return;
+    }
+
+    location.href = destinoPadraoBDR(usuarioSessao);
+
+  }catch(e){
+    console.error(e);
+    mostrarMensagem(e.message || "Erro ao fazer login.");
+  }
+}
+
 function mostrarSenha(){
   const campo = document.getElementById("senha");
   const icone = document.getElementById("iconeOlho");
@@ -141,6 +254,14 @@ function mostrarSenha(){
     `;
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const lembrado = localStorage.getItem("bdr_login_lembrado");
+  if(lembrado){
+    document.getElementById("usuario").value = lembrado;
+    document.getElementById("lembrar").checked = true;
+  }
+});
 
 document.getElementById("formLogin").addEventListener("submit", function(e){
   e.preventDefault();
