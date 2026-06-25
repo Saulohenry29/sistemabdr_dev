@@ -292,7 +292,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
       <option value="ELETRODOMESTICO">Eletrodoméstico</option>
       <option value="VEICULO">Veículo</option>
       <option value="FERRAMENTA">Ferramenta</option>
-      <option value="MAQUINA">Máquina agrícola</option>
+      <option value="MAQUINA">Máquina</option>
       <option value="MOBILIARIO">Mobiliário</option>
       <option value="INFORMATICA">Informática</option>
       <option value="EQUIPAMENTO">Equipamento</option>
@@ -330,7 +330,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   </label>
 
 <div id="camposLegado" class="grid" style="display:none;margin-top:10px;grid-template-columns:minmax(220px,420px) !important;">
-  <input id="codigo_antigo" placeholder="Código antigo / placa antiga / tag antiga">
+  <input id="codigo_antigo" placeholder="Código antigo / placa antiga / tag antiga" onblur="validarDuplicidadeCampoPatrimonio('codigo_antigo')">
 </div>
   <br>
 
@@ -347,7 +347,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
   <h3>🔎 Buscar / Filtrar Patrimônios</h3>
 
   <div class="grid">
-    <input id="busca" placeholder="Buscar por nome, código, placa, chassi, série, obra, marca..." oninput="renderizarPatrimonios()">
+    <input id="busca" placeholder="Buscar por nome, código, placa, RENAVAM, chassi, obra, marca..." oninput="renderizarPatrimonios()">
 
     <select id="filtroStatus" onchange="renderizarPatrimonios()">
       <option value="">Todos os status</option>
@@ -434,6 +434,9 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active,.user-menu:f
       <input id="edit_valor_bem" placeholder="Valor do bem Ex: 1.350,00" oninput="mascaraMoeda(this)">
       <input id="edit_marca" placeholder="Marca">
       <input id="edit_modelo" placeholder="Modelo">
+      <input id="edit_placa" placeholder="Placa">
+      <input id="edit_renavam" placeholder="RENAVAM">
+      <input id="edit_chassi" placeholder="Chassi">
       <input id="edit_codigo_antigo" placeholder="Código antigo">
     </div>
 
@@ -1098,11 +1101,11 @@ function mostrarCampos(){
 
 if(tipo === "VEICULO"){
   div.innerHTML = `
-    <input id="placa" placeholder="Placa">
+    <input id="placa" placeholder="Placa" onblur="validarDuplicidadeCampoPatrimonio('placa')">
+    <input id="renavam" placeholder="RENAVAM" onblur="validarDuplicidadeCampoPatrimonio('renavam')">
+    <input id="chassi" placeholder="Chassi" onblur="validarDuplicidadeCampoPatrimonio('chassi')">
     <input id="marca" placeholder="Marca">
     <input id="modelo" placeholder="Modelo">
-    <input id="numero_serie" placeholder="Número de série">
-    <input id="chassi" placeholder="Chassi">
     <input id="cor" placeholder="Cor">
     <input id="ano_fabricacao" placeholder="Ano fabricação">
     <input id="ano_modelo" placeholder="Ano modelo">
@@ -1128,6 +1131,205 @@ if(tipo === "VEICULO"){
       <input id="modelo" placeholder="Modelo/Descrição">
     `;
   }
+}
+
+
+/* =========================================================
+   BDR ANTI-DUPLICIDADE INTELIGENTE
+   Regra oficial:
+   - CHASSI igual = bloqueia
+   - RENAVAM igual = bloqueia
+   - PLACA + NOME igual = bloqueia
+   - PLACA igual = alerta forte
+   - Código antigo igual = alerta
+   - Nome + Marca + Modelo + Obra iguais = alerta
+   OBS: Número de série NÃO bloqueia, porque pode repetir por lote/fabricante.
+========================================================= */
+function bdrNormalizarComparacao(valor){
+  return String(valor || "")
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9]/g, "")
+    .trim();
+}
+
+function bdrCampoVazioOuGenerico(valor){
+  const v = bdrNormalizarComparacao(valor);
+  return !v || ["SN", "SNN", "SEMNUMERO", "SEMNUMERACAO", "NA", "NAA", "NAOAPLICA", "NAOINFORMADO", "INFORMAR", "XXX", "000", "0000", "000000"].includes(v);
+}
+
+function bdrMesmoValor(a, b){
+  if(bdrCampoVazioOuGenerico(a) || bdrCampoVazioOuGenerico(b)) return false;
+  return bdrNormalizarComparacao(a) === bdrNormalizarComparacao(b);
+}
+
+function bdrResumoPatrimonioDuplicado(p){
+  return `${p.codigo_qr || "SEM CÓDIGO"} — ${p.nome_bem || "-"}\n` +
+    `Obra: ${p.localizacao || p.obra_nome || p.obra_id || "-"}\n` +
+    `Placa: ${p.placa || "-"} | RENAVAM: ${p.renavam || "-"} | Chassi: ${p.chassi || "-"}`;
+}
+
+async function bdrBaseDuplicidadePatrimonio(){
+  const campos = "id,codigo_qr,nome_bem,tipo_item,marca,modelo,placa,renavam,chassi,codigo_antigo,obra_id,localizacao,ativo";
+
+  try{
+    const onlineReal = await patrimonioOnlineReal();
+
+    if(onlineReal && db()){
+      const { data, error } = await db()
+        .from("patrimonio")
+        .select(campos)
+        .neq("ativo", false)
+        .limit(5000);
+
+      if(!error && Array.isArray(data)) return data;
+      console.warn("Anti-duplicidade: usando lista local porque o banco retornou erro:", error?.message || error);
+    }
+  }catch(e){
+    console.warn("Anti-duplicidade: falha ao consultar banco, usando lista local.", e);
+  }
+
+  try{
+    const cache = window.BDROfflineDB?.lerTabela
+      ? await BDROfflineDB.lerTabela("patrimonio")
+      : [];
+
+    return [ ...(patrimonios || []), ...(cache || []) ];
+  }catch(e){
+    return patrimonios || [];
+  }
+}
+
+async function bdrVerificarDuplicidadePatrimonio(dados, opcoes={}){
+  const lista = await bdrBaseDuplicidadePatrimonio();
+  const bloqueios = [];
+  const alertas = [];
+
+  const nomeNovo = bdrNormalizarComparacao(dados.nome_bem);
+  const marcaNova = bdrNormalizarComparacao(dados.marca);
+  const modeloNovo = bdrNormalizarComparacao(dados.modelo);
+
+  (lista || []).forEach(p => {
+    if(!p || p.ativo === false) return;
+
+    if(dados.id && String(p.id) === String(dados.id)) return;
+
+    if(bdrMesmoValor(dados.chassi, p.chassi)){
+      bloqueios.push({motivo:"CHASSI já cadastrado", patrimonio:p});
+      return;
+    }
+
+    if(bdrMesmoValor(dados.renavam, p.renavam)){
+      bloqueios.push({motivo:"RENAVAM já cadastrado", patrimonio:p});
+      return;
+    }
+
+    if(bdrMesmoValor(dados.placa, p.placa) && nomeNovo && nomeNovo === bdrNormalizarComparacao(p.nome_bem)){
+      bloqueios.push({motivo:"PLACA + NOME já cadastrados", patrimonio:p});
+      return;
+    }
+
+    if(bdrMesmoValor(dados.placa, p.placa)){
+      alertas.push({motivo:"Placa já encontrada", patrimonio:p});
+    }
+
+    if(bdrMesmoValor(dados.codigo_antigo, p.codigo_antigo)){
+      alertas.push({motivo:"Código antigo/legado já encontrado", patrimonio:p});
+    }
+
+    const mesmaObra = String(dados.obra_id || "") === String(p.obra_id || "");
+    const nomeIgual = nomeNovo && nomeNovo === bdrNormalizarComparacao(p.nome_bem);
+    const marcaIgual = marcaNova && marcaNova === bdrNormalizarComparacao(p.marca);
+    const modeloIgual = modeloNovo && modeloNovo === bdrNormalizarComparacao(p.modelo);
+
+    if(mesmaObra && nomeIgual && (marcaIgual || modeloIgual)){
+      alertas.push({motivo:"Nome + marca/modelo parecidos na mesma obra", patrimonio:p});
+    }
+  });
+
+  const unicosBloqueio = [];
+  const vistosBloqueio = new Set();
+  bloqueios.forEach(item => {
+    const chave = `${item.motivo}-${item.patrimonio?.id}`;
+    if(!vistosBloqueio.has(chave)){
+      vistosBloqueio.add(chave);
+      unicosBloqueio.push(item);
+    }
+  });
+
+  const unicosAlerta = [];
+  const vistosAlerta = new Set();
+  alertas.forEach(item => {
+    const chave = `${item.motivo}-${item.patrimonio?.id}`;
+    if(!vistosAlerta.has(chave)){
+      vistosAlerta.add(chave);
+      unicosAlerta.push(item);
+    }
+  });
+
+  if(unicosBloqueio.length){
+    const msg = unicosBloqueio.slice(0,5).map(item =>
+      `🚫 ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}`
+    ).join("\n\n");
+
+    alert("Patrimônio duplicado encontrado.\n\n" + msg + "\n\nCadastro bloqueado para evitar duplicidade.");
+    return false;
+  }
+
+  if(unicosAlerta.length && opcoes.confirmar !== false){
+    const msg = unicosAlerta.slice(0,5).map(item =>
+      `⚠️ ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}`
+    ).join("\n\n");
+
+    return confirm(
+      "Possível duplicidade encontrada:\n\n" +
+      msg +
+      "\n\nVocê está tentando lançar:\n" +
+      `${dados.nome_bem || "-"}\n` +
+      `Placa: ${dados.placa || "-"} | RENAVAM: ${dados.renavam || "-"} | Chassi: ${dados.chassi || "-"}\n\n` +
+      "Deseja continuar mesmo assim?"
+    );
+  }
+
+  return true;
+}
+
+async function validarDuplicidadeCampoPatrimonio(campo){
+  const v = valor(campo);
+  if(bdrCampoVazioOuGenerico(v)) return true;
+
+  const dados = {
+    nome_bem: valor("nome_bem"),
+    tipo_item: valor("tipo_item"),
+    placa: valor("placa"),
+    renavam: valor("renavam"),
+    chassi: valor("chassi"),
+    codigo_antigo: valor("codigo_antigo"),
+    marca: valor("marca"),
+    modelo: valor("modelo"),
+    obra_id: obterObraParaLancamento()?.id || null
+  };
+
+  const lista = await bdrBaseDuplicidadePatrimonio();
+  const achados = (lista || []).filter(p => {
+    if(!p || p.ativo === false) return false;
+    return bdrMesmoValor(v, p[campo]);
+  });
+
+  if(!achados.length) return true;
+
+  const msg = achados.slice(0,5).map(bdrResumoPatrimonioDuplicado).join("\n\n");
+
+  if(campo === "chassi" || campo === "renavam"){
+    alert(`🚫 ${campo.toUpperCase()} já cadastrado.\n\n${msg}\n\nEste campo bloqueia duplicidade.`);
+    const el = document.getElementById(campo);
+    if(el){ el.focus(); el.select?.(); }
+    return false;
+  }
+
+  alert(`⚠️ ${campo.toUpperCase()} já encontrado.\n\n${msg}\n\nConfira antes de continuar.`);
+  return true;
 }
 
 async function gerarPatrimonio(){
@@ -1158,6 +1360,21 @@ async function gerarPatrimonio(){
     alert("Descreva o tipo do ativo.");
     return;
   }
+
+  const dadosParaValidarDuplicidade = {
+    nome_bem,
+    tipo_item,
+    placa: valor("placa") || null,
+    renavam: valor("renavam") || null,
+    chassi: valor("chassi") || null,
+    codigo_antigo: valor("codigo_antigo") || null,
+    marca: valor("marca") || null,
+    modelo: valor("modelo") || null,
+    obra_id: obra.id ? Number(obra.id) : null
+  };
+
+  const podeContinuarDuplicidade = await bdrVerificarDuplicidadePatrimonio(dadosParaValidarDuplicidade, { confirmar:true });
+  if(!podeContinuarDuplicidade) return;
 
 let sequencial = 1;
 let codigo_qr = "";
@@ -1192,6 +1409,7 @@ const patrimonio = {
     numero_serie: valor("numero_serie") || null,
 
     placa: valor("placa") || null,
+    renavam: valor("renavam") || null,
     cor: valor("cor") || null,
     combustivel: valor("combustivel") || null,
     potencia: valor("potencia") || null,
@@ -1353,6 +1571,7 @@ function textoBuscaPatrimonio(p){
     ${p.tipo_outro || ""}
     ${p.status || ""}
     ${p.placa || ""}
+    ${p.renavam || ""}
     ${p.chassi || ""}
     ${p.numero_serie || ""}
     ${p.serie || ""}
@@ -1419,6 +1638,7 @@ function renderizarPatrimonios(){
 
     const infoExtra = [
       p.placa ? "Placa: " + p.placa : "",
+      p.renavam ? "RENAVAM: " + p.renavam : "",
       p.chassi ? "Chassi: " + p.chassi : "",
       p.numero_serie ? "Série: " + p.numero_serie : "",
       p.ano_modelo ? "Ano mod: " + p.ano_modelo : ""
@@ -1485,6 +1705,7 @@ function abrirModal(id){
     <strong>Modelo:</strong> ${p.modelo || "-"}<br>
     <strong>Nº Série:</strong> ${p.numero_serie || "-"}<br>
     <strong>Chassi:</strong> ${p.chassi || "-"}<br>
+    <strong>RENAVAM:</strong> ${p.renavam || "-"}<br>
     <strong>Placa:</strong> ${p.placa || "-"}<br>
     <strong>Cor:</strong> ${p.cor || "-"}<br>
     <strong>Combustível:</strong> ${p.combustivel || "-"}<br>
@@ -2178,6 +2399,15 @@ function abrirEdicao(){
   document.getElementById("edit_modelo").value =
     patrimonioSelecionado.modelo || "";
 
+  document.getElementById("edit_placa").value =
+    patrimonioSelecionado.placa || "";
+
+  document.getElementById("edit_renavam").value =
+    patrimonioSelecionado.renavam || "";
+
+  document.getElementById("edit_chassi").value =
+    patrimonioSelecionado.chassi || "";
+
   document.getElementById("edit_codigo_antigo").value =
     patrimonioSelecionado.codigo_antigo || "";
 
@@ -2218,9 +2448,27 @@ async function salvarEdicaoPatrimonio(){
     valor_bem: moedaParaNumero(valor("edit_valor_bem")),
     marca: valor("edit_marca"),
     modelo: valor("edit_modelo"),
+    placa: valor("edit_placa") || null,
+    renavam: valor("edit_renavam") || null,
+    chassi: valor("edit_chassi") || null,
     codigo_antigo: valor("edit_codigo_antigo"),
     observacao: valor("edit_observacao")
   };
+
+  const podeContinuarDuplicidadeEdicao = await bdrVerificarDuplicidadePatrimonio({
+    id: patrimonioSelecionado.id,
+    nome_bem: dadosAtualizados.nome_bem,
+    tipo_item: patrimonioSelecionado.tipo_item,
+    placa: dadosAtualizados.placa,
+    renavam: dadosAtualizados.renavam,
+    chassi: dadosAtualizados.chassi,
+    codigo_antigo: dadosAtualizados.codigo_antigo,
+    marca: dadosAtualizados.marca,
+    modelo: dadosAtualizados.modelo,
+    obra_id: patrimonioSelecionado.obra_id || null
+  }, { confirmar:true });
+
+  if(!podeContinuarDuplicidadeEdicao) return;
 
   /* =========================================================
      OFFLINE: salva correção cadastral na fila.
