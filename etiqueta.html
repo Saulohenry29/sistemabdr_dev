@@ -96,19 +96,45 @@ body{
 }
 
 /* RESPONSIVO */
-@media(max-width:600px){
+@media(max-width:900px){
 
   .card{
-    padding:108px;
+    width:100%;
+    max-width:100%;
+    padding:24px;
+    border-radius:14px;
+  }
+
+  .logo img{
+    height:80px;
+  }
+
+  .titulo{
+    font-size:30px;
+  }
+
+  .subtitulo{
+    font-size:16px;
+  }
+
+  #produto{
+    font-size:32px;
+    line-height:1.2;
   }
 
   .linha{
     flex-direction:column;
-    gap:4px;
+    gap:6px;
+    padding:14px 0;
   }
 
   .label{
     width:100%;
+    font-size:17px;
+  }
+
+  .valor{
+    font-size:18px;
   }
 
 }
