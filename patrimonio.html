@@ -596,35 +596,77 @@ async function salvarOperacaoPatrimonioOffline(tipo, tabela, dados, opcoes={}){
    - sincroniza automático pelo BDRSyncEngine
 ========================================================= */
 async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
+  /*
+    REGRA NOVA:
+    - Com internet real: grava direto no Supabase.
+    - Sem internet: grava na fila/local para sincronizar depois.
+
+    Antes esta função sempre usava BDRSync.criar quando ele existia,
+    mesmo online. Por isso o patrimônio ficava como pendente/fila.
+  */
+
+  const onlineReal = await patrimonioOnlineReal();
+
+  if(onlineReal && db()){
+    const { data, error } = await db()
+      .from(tabela)
+      .insert([payload])
+      .select();
+
+    return {
+      offlineFirst:false,
+      sincronizado:true,
+      data:data || null,
+      error
+    };
+  }
+
   if(window.BDRSync?.criar){
     await window.BDRSync.criar(tabela, payload, {
       origem:"patrimonio.html",
       ...meta
     });
-    return { offlineFirst:true, error:null };
+    return { offlineFirst:true, sincronizado:false, error:null };
   }
 
-  // Fallback antigo se o Sync Engine ainda não carregou
-  const { error } = await db().from(tabela).insert([payload]);
-  return { offlineFirst:false, error };
+  await salvarOperacaoPatrimonioOffline("insert", tabela, [payload], meta);
+  return { offlineFirst:true, sincronizado:false, error:null };
 }
 
 async function bdrAtualizarPrimeiroNoTablet(tabela, match, payload, meta={}){
+  const onlineReal = await patrimonioOnlineReal();
+
+  if(onlineReal && db()){
+    let query = db().from(tabela).update(payload);
+
+    Object.entries(match || {}).forEach(([campo, valor]) => {
+      query = query.eq(campo, valor);
+    });
+
+    const { data, error } = await query.select();
+
+    return {
+      offlineFirst:false,
+      sincronizado:true,
+      data:data || null,
+      error
+    };
+  }
+
   if(window.BDRSync?.atualizar){
     await window.BDRSync.atualizar(tabela, match, payload, {
       origem:"patrimonio.html",
       ...meta
     });
-    return { offlineFirst:true, error:null };
+    return { offlineFirst:true, sincronizado:false, error:null };
   }
 
-  let query = db().from(tabela).update(payload);
-  Object.entries(match || {}).forEach(([campo, valor]) => {
-    query = query.eq(campo, valor);
+  await salvarOperacaoPatrimonioOffline("update", tabela, payload, {
+    filtro:match,
+    ...meta
   });
 
-  const { error } = await query;
-  return { offlineFirst:false, error };
+  return { offlineFirst:true, sincronizado:false, error:null };
 }
 
 function bdrAvisoSalvoTablet(texto="Salvo no tablet. Está pendente de sincronização. Pode continuar trabalhando."){
@@ -1190,22 +1232,29 @@ usuario_cadastro:
     return;
   }
 
-  // Atualiza a tela na hora, mesmo antes da sincronização terminar
+  // Atualiza a tela na hora. Se gravou online, não marca como pendente.
+  const registroSalvo = Array.isArray(resp.data) && resp.data[0]
+    ? resp.data[0]
+    : {
+        ...patrimonio,
+        id: resp.offlineFirst ? "LOCAL-" + Date.now() : Date.now()
+      };
+
   patrimonios.unshift({
-    ...patrimonio,
-    id: "LOCAL-" + Date.now(),
-    __offline_pendente: true
+    ...registroSalvo,
+    __offline_pendente: !!resp.offlineFirst
   });
 
-  if (navigator.onLine && BDR_PATRIMONIO_ONLINE_REAL !== false) {
-  alert(`✅ Patrimônio cadastrado com sucesso.\nCódigo: ${codigo_qr}`);
-} else {
-  bdrAvisoSalvoTablet(
-    "Patrimônio criado offline: " +
-    codigo_qr +
-    "\nSerá sincronizado automaticamente quando a internet voltar."
-  );
-}
+  if(resp.offlineFirst){
+    bdrAvisoSalvoTablet(
+      "Patrimônio criado offline: " +
+      codigo_qr +
+      "\nSerá sincronizado automaticamente quando a internet voltar."
+    );
+  }else{
+    alert(`✅ Patrimônio cadastrado e sincronizado com sucesso.
+Código: ${codigo_qr}`);
+  }
   limparFormularioCadastro();
   renderizarPatrimonios();
 }
@@ -1862,7 +1911,7 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
 
     patrimonios = patrimonios.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
-        ? {...p, status:novoStatus, __offline_pendente:true}
+        ? {...p, status:novoStatus, __offline_pendente:!!respStatus.offlineFirst}
         : p
     );
 
@@ -1888,7 +1937,7 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
 
   patrimonios = patrimonios.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
-      ? {...p, status:novoStatus, __offline_pendente:true}
+      ? {...p, status:novoStatus, __offline_pendente:!!respStatus.offlineFirst}
       : p
   );
 
@@ -1903,7 +1952,7 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
     observacao: obs
   });
 
-  bdrAvisoSalvoTablet("Status alterado no tablet. Sincronização automática em andamento.");
+  if(respStatus.offlineFirst){ bdrAvisoSalvoTablet("Status alterado offline. Será sincronizado automaticamente quando a internet voltar."); }
 
   fecharModal();
   renderizarPatrimonios();
@@ -1978,7 +2027,7 @@ async function trocarObra(){
 
     patrimonios = patrimonios.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
-        ? {...p, ...payload, __offline_pendente:true}
+        ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
         : p
     );
 
@@ -2004,7 +2053,7 @@ async function trocarObra(){
 
   patrimonios = patrimonios.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
-      ? {...p, ...payload, __offline_pendente:true}
+      ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
       : p
   );
 
@@ -2019,7 +2068,7 @@ async function trocarObra(){
     observacao: obs
   });
 
-  bdrAvisoSalvoTablet("Transferência salva no tablet. Sincronização automática em andamento.");
+  if(respTroca.offlineFirst){ bdrAvisoSalvoTablet("Transferência salva offline. Será sincronizada automaticamente quando a internet voltar."); }
 
   fecharModal();
   renderizarPatrimonios();
@@ -2196,7 +2245,7 @@ async function salvarEdicaoPatrimonio(){
 
     patrimonios = patrimonios.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
-        ? {...p, ...dadosAtualizados, __offline_pendente:true}
+        ? {...p, ...dadosAtualizados, __offline_pendente:!!respEdicao.offlineFirst}
         : p
     );
 
@@ -2223,7 +2272,7 @@ async function salvarEdicaoPatrimonio(){
 
   patrimonios = patrimonios.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
-      ? {...p, ...dadosAtualizados, __offline_pendente:true}
+      ? {...p, ...dadosAtualizados, __offline_pendente:!!respEdicao.offlineFirst}
       : p
   );
 
@@ -2238,7 +2287,7 @@ async function salvarEdicaoPatrimonio(){
     observacao: motivo
   });
 
-  bdrAvisoSalvoTablet("Correção cadastral salva no tablet. Sincronização automática em andamento.");
+  if(respEdicao.offlineFirst){ bdrAvisoSalvoTablet("Correção cadastral salva offline. Será sincronizada automaticamente quando a internet voltar."); }
 
   fecharEdicao();
   fecharModal();
@@ -2288,12 +2337,43 @@ async function iniciar(){
 }
 
 
+async function bdrTentarSincronizarPendenciasPatrimonio(){
+  const onlineReal = await patrimonioOnlineReal();
+  if(!onlineReal) return;
+
+  try{
+    if(typeof BDRSyncCenter?.atualizar === "function"){
+      await BDRSyncCenter.atualizar();
+    }
+
+    if(typeof BDRSync?.sincronizar === "function"){
+      await BDRSync.sincronizar();
+    }
+
+    if(typeof sincronizarOffline === "function"){
+      await sincronizarOffline();
+    }
+
+    await carregarPatrimonios();
+    await carregarManutencoesPatrimonio();
+  }catch(e){
+    console.warn("Patrimônio: tentativa de sincronização automática falhou:", e);
+  }
+}
+
+window.addEventListener("online", () => {
+  setTimeout(bdrTentarSincronizarPendenciasPatrimonio, 1200);
+});
+
 setInterval(async () => {
   await patrimonioOnlineReal();
-  if(typeof BDRSyncCenter?.atualizar === "function"){
+  if(BDR_PATRIMONIO_ONLINE_REAL === true){
+    await bdrTentarSincronizarPendenciasPatrimonio();
+  }else if(typeof BDRSyncCenter?.atualizar === "function"){
     BDRSyncCenter.atualizar();
   }
 }, 30000);
+
 iniciar();
 </script>
 

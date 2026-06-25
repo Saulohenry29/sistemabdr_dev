@@ -1,5 +1,5 @@
 /* =========================================================
-   BDR MENU PERMISSÕES V7 - NOVO PADRÃO OFICIAL
+   BDR MENU PERMISSÕES V8 - OWNER FIX + MENU ESTÁVEL
    Arquivo: JS/bdrMenuPermissoes.js
 
    PADRÃO NOVO:
@@ -147,13 +147,50 @@
   }
 
   function owner(u = usuarioLocal()){
-    return Number(u?.id) === 1;
+    /*
+      OWNER ABSOLUTO:
+      - id=1 sempre vê tudo
+      - independente de permissoes preenchidas
+      - independente de perfil
+      - usado para evitar menu sumindo no PWA/cache/offline
+    */
+    return Number(u?.id) === 1 || norm(u?.perfil) === "OWNER";
   }
 
   function masterLivre(u = usuarioLocal()){
     const p = perfil(u);
     const ps = permissoesBrutas(u);
     return owner(u) || ((p === "MASTER" || p === "ADMIN") && ps.length === 0);
+  }
+
+  function mostrarElemento(el){
+    if(!el) return;
+    el.hidden = false;
+    el.dataset.bloqueado = "NAO";
+
+    /*
+      Menu lateral/dock precisa voltar como flex.
+      Outros elementos voltam para o CSS original.
+    */
+    if(
+      el.classList?.contains("bdr-menu-btn") ||
+      el.classList?.contains("side-btn") ||
+      el.closest?.(".bdr-menu")
+    ){
+      el.style.display = "flex";
+    }else{
+      el.style.display = "";
+    }
+
+    if("disabled" in el) el.disabled = false;
+  }
+
+  function ocultarElemento(el){
+    if(!el) return;
+    el.hidden = true;
+    el.style.display = "none";
+    el.dataset.bloqueado = "SIM";
+    if("disabled" in el) el.disabled = true;
   }
 
   function paginaAtual(){
@@ -166,6 +203,7 @@
 
   function temPermissao(perm, u = usuarioLocal()){
     if(!u) return false;
+    if(owner(u)) return true;
     if(masterLivre(u)) return true;
 
     const p = norm(perm);
@@ -274,12 +312,16 @@
 
     const botoes = document.querySelectorAll("[data-permissao], [data-permissao-resolvida]");
 
-    if(masterLivre(u)){
-      botoes.forEach(btn => {
-        btn.hidden = false;
-        btn.style.display = "";
-        btn.dataset.bloqueado = "NAO";
-      });
+    if(owner(u) || masterLivre(u)){
+      /*
+        Owner/Master livre:
+        força todos os botões e ações a reaparecerem.
+        Isso corrige menu sumindo quando o PWA/cache ou outro patch deixou display:none inline.
+      */
+      document
+        .querySelectorAll("[data-permissao], [data-permissao-resolvida], [data-acao-permissao], .bdr-menu-btn, .side-btn")
+        .forEach(mostrarElemento);
+
       aplicarAcoes(u);
       return;
     }
@@ -288,9 +330,8 @@
       const p = norm(btn.getAttribute("data-permissao-resolvida") || btn.getAttribute("data-permissao"));
       const pode = temPermissao(p, u);
 
-      btn.hidden = !pode;
-      btn.style.display = pode ? "" : "none";
-      btn.dataset.bloqueado = pode ? "NAO" : "SIM";
+      if(pode) mostrarElemento(btn);
+      else ocultarElemento(btn);
     });
 
     aplicarAcoes(u);
@@ -303,9 +344,8 @@
       const p = norm(el.getAttribute("data-acao-permissao"));
       const pode = temPermissao(p, u);
 
-      el.hidden = !pode;
-      el.style.display = pode ? "" : "none";
-      if("disabled" in el) el.disabled = !pode;
+      if(pode) mostrarElemento(el);
+      else ocultarElemento(el);
     });
   }
 
@@ -317,6 +357,7 @@
 
   function redirecionarSeBloqueado(u){
     if(!u) return false;
+    if(owner(u)) return false;
     if(temAcessoPagina(u)) return false;
 
     const destino = primeiraPaginaPermitida(u);
@@ -380,6 +421,21 @@
     }, 1500);
   }
 
+
+  function recuperarMenuOwner(){
+    const u = usuarioLocal();
+    if(!owner(u)) return;
+
+    document
+      .querySelectorAll("[data-permissao], [data-permissao-resolvida], [data-acao-permissao], .bdr-menu-btn, .side-btn")
+      .forEach(mostrarElemento);
+
+    document.documentElement.style.visibility = "visible";
+  }
+
+  // Segurança extra: se algum outro JS esconder o menu depois, Owner volta automaticamente.
+  setInterval(recuperarMenuOwner, 2000);
+
   window.BDRMenuPermissoes = {
     iniciar,
     aplicarMenu,
@@ -390,7 +446,11 @@
     temPermissao,
     exigir,
     permissoes,
-    masterLivre
+    masterLivre,
+    owner,
+    mostrarElemento,
+    ocultarElemento,
+    recuperarMenuOwner
   };
 
   window.usuarioTemPermissaoBDR = temPermissao;
@@ -403,4 +463,5 @@
     iniciar();
   }
 
+  console.log("✅ BDR MENU PERMISSÕES V8 carregado - Owner fix ativo");
 })();
