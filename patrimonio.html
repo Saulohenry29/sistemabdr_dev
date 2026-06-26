@@ -1272,8 +1272,15 @@ async function bdrVerificarDuplicidadePatrimonio(dados, opcoes={}){
     const marcaIgual = marcaNova && marcaNova === bdrNormalizarComparacao(p.marca);
     const modeloIgual = modeloNovo && modeloNovo === bdrNormalizarComparacao(p.modelo);
 
-    if(mesmaObra && nomeIgual && (marcaIgual || modeloIgual)){
-      alertas.push({motivo:"Nome + marca/modelo parecidos na mesma obra", patrimonio:p});
+    const tipoNovo = String(dados.tipo_item || "").toUpperCase();
+
+const tipoPodeRepetir =
+  tipoNovo === "FERRAMENTA" ||
+  tipoNovo === "EQUIPAMENTO" ||
+  tipoNovo === "MATERIAL_APOIO";
+
+if(!tipoPodeRepetir && mesmaObra && nomeIgual && (marcaIgual || modeloIgual)){
+  alertas.push({motivo:"Nome + marca/modelo parecidos na mesma obra", patrimonio:p});
     }
   });
 
