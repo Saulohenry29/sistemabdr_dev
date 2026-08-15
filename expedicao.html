@@ -836,6 +836,170 @@
   font-weight:900;
 }
 
+
+/* =========================================================
+   SKELETON DO CATÁLOGO
+   A estrutura aparece imediatamente enquanto o Supabase responde.
+========================================================= */
+.atlas-skeleton-card{
+  min-height:245px;
+  pointer-events:none;
+  cursor:default;
+  transform:none!important;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+
+.atlas-skeleton-card:hover{
+  transform:none;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+
+.atlas-skeleton-photo{
+  height:118px;
+  position:relative;
+  overflow:hidden;
+  background:#edf2f7;
+}
+
+.atlas-skeleton-info{
+  padding:10px;
+}
+
+.atlas-skeleton-line,
+.atlas-skeleton-pill{
+  position:relative;
+  overflow:hidden;
+  background:#e7edf4;
+}
+
+.atlas-skeleton-line{
+  height:11px;
+  margin-bottom:9px;
+  border-radius:6px;
+}
+
+.atlas-skeleton-line.title{
+  width:86%;
+  height:14px;
+}
+
+.atlas-skeleton-line.medium{width:68%;}
+.atlas-skeleton-line.short{width:46%;}
+
+.atlas-skeleton-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:10px;
+}
+
+.atlas-skeleton-pill{
+  width:82px;
+  height:22px;
+  border-radius:999px;
+}
+
+.atlas-skeleton-small{
+  width:44px;
+  height:10px;
+  border-radius:5px;
+  background:#e7edf4;
+  position:relative;
+  overflow:hidden;
+}
+
+.atlas-skeleton-photo::after,
+.atlas-skeleton-line::after,
+.atlas-skeleton-pill::after,
+.atlas-skeleton-small::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.72),
+    transparent
+  );
+  animation:atlasSkeletonMove 1.15s ease-in-out infinite;
+}
+
+@keyframes atlasSkeletonMove{
+  100%{transform:translateX(100%);}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .atlas-skeleton-photo::after,
+  .atlas-skeleton-line::after,
+  .atlas-skeleton-pill::after,
+  .atlas-skeleton-small::after{
+    animation:none;
+  }
+}
+
+
+/* =========================================================
+   LOADING DOS KPIs
+   Nunca mostra "0" antes do valor real chegar.
+========================================================= */
+.kpi strong.atlas-kpi-loading{
+  width:46px;
+  height:21px;
+  border-radius:7px;
+  color:transparent!important;
+  background:#e7edf4;
+  position:relative;
+  overflow:hidden;
+}
+
+.kpi strong.atlas-kpi-loading::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.78),
+    transparent
+  );
+  animation:atlasSkeletonMove 1.15s ease-in-out infinite;
+}
+
+/* O skeleton ocupa praticamente o mesmo espaço do card final. */
+.atlas-skeleton-card{
+  min-height:0;
+}
+
+.atlas-skeleton-info{
+  min-height:116px;
+}
+
+.atlas-skeleton-line.title{
+  height:48px;
+  width:88%;
+  border-radius:7px;
+}
+
+.atlas-skeleton-line.medium{
+  height:11px;
+  width:66%;
+  margin-top:7px;
+}
+
+.atlas-skeleton-line.short{
+  height:10px;
+  width:52%;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .kpi strong.atlas-kpi-loading::after{
+    animation:none;
+  }
+}
+
 </style>
 <link rel="stylesheet" href="./CSS/expedicao-nova.css">
 </head>
@@ -959,12 +1123,12 @@
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><strong id="kpiTotal">0</strong><span>Total itens</span></div>
-      <div class="kpi"><strong id="kpiEstoque">0</strong><span>Em estoque</span></div>
-      <div class="kpi"><strong id="kpiUso">0</strong><span>Em uso</span></div>
-      <div class="kpi"><strong id="kpiManutencao">0</strong><span>Manutenção</span></div>
-      <div class="kpi"><strong id="kpiReservado">0</strong><span>Reservados</span></div>
-      <div class="kpi"><strong id="kpiPedidos">0</strong><span>Solicitações</span></div>
+      <div class="kpi"><strong id="kpiTotal" class="atlas-kpi-loading" aria-label="Carregando total de itens"></strong><span>Total itens</span></div>
+      <div class="kpi"><strong id="kpiEstoque" class="atlas-kpi-loading" aria-label="Carregando itens em estoque"></strong><span>Em estoque</span></div>
+      <div class="kpi"><strong id="kpiUso" class="atlas-kpi-loading" aria-label="Carregando itens em uso"></strong><span>Em uso</span></div>
+      <div class="kpi"><strong id="kpiManutencao" class="atlas-kpi-loading" aria-label="Carregando itens em manutenção"></strong><span>Manutenção</span></div>
+      <div class="kpi"><strong id="kpiReservado" class="atlas-kpi-loading" aria-label="Carregando itens reservados"></strong><span>Reservados</span></div>
+      <div class="kpi"><strong id="kpiPedidos" class="atlas-kpi-loading" aria-label="Carregando solicitações"></strong><span>Solicitações</span></div>
     </div>
 
     <div class="tabs">
@@ -1008,9 +1172,9 @@
               <div class="atlas-campo-filtro">
                 <label for="itensPorPaginaCatalogo">Itens por página</label>
                 <select id="itensPorPaginaCatalogo" onchange="atlasAlterarItensPorPagina()">
-                  <option value="24" selected>24</option>
-                  <option value="48">48</option>
-                  <option value="72">72</option>
+                  <option value="30" selected>30</option>
+                  <option value="60">60</option>
+                  <option value="90">90</option>
                 </select>
               </div>
               <button type="button" class="atlas-btn-limpar" onclick="atlasLimparFiltrosCatalogo()">
@@ -1019,7 +1183,7 @@
             </div>
             <div class="atlas-resumo-catalogo">
               <div>
-                <span id="atlasResumoCatalogo">Mostrando 0 itens</span>
+                <span id="atlasResumoCatalogo">Preparando catálogo...</span>
                 <span id="atlasFiltrosAtivosCatalogo"></span>
               </div>
               </div>
@@ -1031,7 +1195,368 @@
               <button class="chip-exp" data-filtro="MANUTENCAO" onclick="filtrarStatus('MANUTENCAO',this)">🟠 Manutenção <span class="num" id="chipManutencao">0</span></button>
               <button class="chip-exp" data-filtro="RESERVADO" onclick="filtrarStatus('RESERVADO',this)">🟣 Reservados <span class="num" id="chipReservado">0</span></button>
             </div>
-            <div id="catalogoGrid" class="catalogo-grid"></div>
+            <div id="catalogoGrid" class="catalogo-grid">
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+</div>
             <div id="atlasPaginacaoCatalogo" class="atlas-pagination" aria-label="Paginação do catálogo"></div>
           </div>
         </div>

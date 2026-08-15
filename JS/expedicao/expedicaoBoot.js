@@ -192,6 +192,16 @@
       await carregarScript('./JS/expedicao/expedicaoPedidos.js');
       await carregarScript('./JS/expedicao/expedicaoCore.js');
 
+      // Fluxos especializados: substituem as antigas camadas empilhadas no Core.
+      await carregarScript('./JS/expedicao/fluxo/expedicaoAprovacao.js');
+      await carregarScript('./JS/expedicao/fluxo/expedicaoSolicitacoes.js');
+      await carregarScript('./JS/expedicao/fluxo/expedicaoLogistica.js');
+      await carregarScript('./JS/expedicao/fluxo/expedicaoFiscal.js');
+      await carregarScript('./JS/expedicao/fluxo/expedicaoPermissoes.js');
+
+      // Só agora a primeira consulta de dados é iniciada.
+      global.BDRExpedicao?.iniciar?.();
+
       instalarAbaLazy();
       instalarAcoesLazy();
       esconderLoading();

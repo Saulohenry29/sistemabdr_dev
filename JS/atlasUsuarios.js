@@ -2,7 +2,7 @@
   "use strict";
   if(global.AtlasUsuarios?.loaded) return;
 
-  const STATE={users:[],works:[],companies:[],profiles:[],selected:null,draft:null,page:1,pageSize:10,table:"usuarios_sistema",dirty:false,worksDraft:new Set()};
+  const STATE={users:[],works:[],companies:[],profiles:[],selected:null,draft:null,page:1,pageSize:10,table:"usuarios_sistema",dirty:false,worksDraft:new Set(),expeditionWorksDraft:new Set()};
   const OWNER_ID=1;
   const $=(s,c=document)=>c.querySelector(s); const $$=(s,c=document)=>[...c.querySelectorAll(s)];
   const db=()=>global.client||global.supabaseClient||null;
@@ -25,6 +25,25 @@
     CONFIGURACOES:"CONFIGURACOES_VER"
   };
   const LEGACY_MODULE_TOKENS=new Set(Object.keys(LEGACY_MODULE_MAP));
+
+  const EXPEDICAO_OBRA_PREFIX="EXPEDICAO_OBRA_";
+
+  function obraIdDaPermissaoExpedicao(token){
+    const texto=String(token||"").trim().toUpperCase();
+    if(!texto.startsWith(EXPEDICAO_OBRA_PREFIX)) return null;
+    const id=Number(texto.slice(EXPEDICAO_OBRA_PREFIX.length));
+    return Number.isFinite(id)&&id>0?id:null;
+  }
+
+  function permissoesObrasExpedicao(permissoes){
+    return new Set(
+      [...(permissoes||[])]
+        .map(obraIdDaPermissaoExpedicao)
+        .filter(Boolean)
+        .map(String)
+    );
+  }
+
 
   const permsOf=u=>new Set(
     String(u?.permissoes||"")
@@ -84,7 +103,7 @@
     {id:"GERAL",title:"🧭 Acesso geral",items:[["DASHBOARD_VER","Dashboard"],["RELATORIOS_VER","Relatórios"],["VALORES_VER","Ver valores"]]},
     {id:"PATRIMONIO",title:"📦 Patrimônio",items:[["PATRIMONIO_VER","Visualizar / consultar"],["PATRIMONIO_CRIAR","Cadastrar"],["PATRIMONIO_EDITAR","Editar dados"],["PATRIMONIO_MOVIMENTAR","Movimentar"],["PATRIMONIO_IMPRIMIR","Imprimir etiquetas"],["PATRIMONIO_EXCLUIR","Excluir/inativar"],["CONFIGURAR_ETIQUETAS","Configurar etiquetas"]]},
     {id:"MANUTENCAO",title:"🔧 Manutenção",items:[["MANUTENCAO_VER","Acessar manutenção"],["MANUTENCAO_CRIAR","Enviar para manutenção"],["MANUTENCAO_SAIDA","Registrar saída / gerar link"],["MANUTENCAO_ANALISAR_ORCAMENTO","Analisar orçamento / laudo"],["MANUTENCAO_APROVAR","Aprovar, recusar ou pedir ajuste"],["MANUTENCAO_RECEBER","Registrar recebimento"]] },
-    {id:"EXPEDICAO",title:"🚚 Expedição",items:[["EXPEDICAO_VER","Acessar expedição"],["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"]]},
+    {id:"EXPEDICAO",title:"🚚 Expedição",access:"EXPEDICAO_VER",items:[["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"]]},
     {id:"ESTOQUE",title:"📚 Estoque / Entrada",items:[["ESTOQUE_VER","Acessar estoque"],["ESTOQUE_ENTRADA","Entrada"],["ESTOQUE_SAIDA","Saída"],["ESTOQUE_TRANSFERIR","Transferir"],["ENTRADA_VER","Tela de entrada"],["TRIAGEM_VER","Triagem"]]},
     {id:"EMPRESAS",title:"🏢 Empresas / Obras",items:[["EMPRESAS_VER","Visualizar"],["EMPRESAS_CRIAR","Criar"],["EMPRESAS_EDITAR","Editar"],["EMPRESAS_INATIVAR","Inativar/reativar"],["EMPRESAS_EXCLUIR","Excluir"]]},
     {id:"USUARIOS",title:"👥 Usuários / Administração",items:[["USUARIOS_VER","Visualizar usuários"],["USUARIOS_CRIAR","Criar usuários"],["USUARIOS_EDITAR","Editar usuários"],["USUARIOS_BLOQUEAR","Bloquear usuários"],["USUARIOS_PERMISSOES","Gerenciar permissões"],["CONFIGURACOES_VER","Configurações"]]}
@@ -295,6 +314,14 @@
       STATE.worksDraft =
         new Set(STATE.draft.works);
 
+      STATE.expeditionWorksDraft =
+        permissoesObrasExpedicao(STATE.draft.permissions);
+
+      // A obra principal sempre faz parte do escopo da Expedição.
+      if(user.obra_id){
+        STATE.expeditionWorksDraft.add(String(user.obra_id));
+      }
+
       const emptyState = $("#semUsuario");
       const content = $("#conteudoUsuario");
 
@@ -442,7 +469,37 @@
 
   function moduleHtml(m){
     const bloqueado=!canManageSelectedAccess();
-    return `<section class="atlas-module-card"><h3><span>${m.title}</span><label class="atlas-switch"><input type="checkbox" class="module-master" data-module="${m.id}" ${bloqueado?"disabled":""}><span></span></label></h3>${m.items.map(([p,l])=>`<div class="atlas-permission-row"><label>${esc(l)}</label><label class="atlas-switch"><input type="checkbox" class="permission-toggle" value="${p}" ${STATE.draft.permissions.has(p)?"checked":""} ${bloqueado?"disabled":""}><span></span></label></div>`).join("")}</section>`;
+
+    const switchCabecalho=m.access
+      ? `<label class="atlas-switch"><input type="checkbox" class="module-access" data-module="${m.id}" value="${m.access}" ${STATE.draft.permissions.has(m.access)?"checked":""} ${bloqueado?"disabled":""}><span></span></label>`
+      : `<label class="atlas-switch"><input type="checkbox" class="module-master" data-module="${m.id}" ${bloqueado?"disabled":""}><span></span></label>`;
+
+    const linhas=m.items.map(([p,l])=>`
+      <div class="atlas-permission-row">
+        <label>${esc(l)}</label>
+        <label class="atlas-switch">
+          <input type="checkbox" class="permission-toggle" value="${p}" ${STATE.draft.permissions.has(p)?"checked":""} ${bloqueado?"disabled":""}>
+          <span></span>
+        </label>
+      </div>`).join("");
+
+    const obras=m.id==="EXPEDICAO"
+      ? `<div class="atlas-permission-row atlas-expedition-works-row">
+           <label>
+             Empresas / obras visíveis
+             <small>Controle exclusivo do catálogo, pedidos e movimentações da Expedição.</small>
+           </label>
+           <button type="button" class="atlas-btn light atlas-expedition-works-btn" data-config-expedition-works ${bloqueado?"disabled":""}>
+             <i class="fa-solid fa-building-circle-check"></i> Configurar
+           </button>
+         </div>`
+      : "";
+
+    return `<section class="atlas-module-card" data-permission-module="${m.id}">
+      <h3><span>${m.title}</span>${switchCabecalho}</h3>
+      ${linhas}
+      ${obras}
+    </section>`;
   }
 
   function renderPermissions(){
@@ -451,11 +508,273 @@
 
     const geral=$("#switchTodasPermissoes");
     if(geral){
-      geral.checked=$$(".permission-toggle").length>0&&$$(".permission-toggle").every(x=>x.checked);
+      const toggles=[...$$(".permission-toggle"),...$$(".module-access")];
+      geral.checked=toggles.length>0&&toggles.every(x=>x.checked);
       geral.disabled=!canManageSelectedAccess();
     }
   }
-  function syncModuleMasters(){PERMISSION_MODULES.forEach(m=>{const items=m.items.map(x=>x[0]);const master=$(`.module-master[data-module="${m.id}"]`);if(master)master.checked=items.every(p=>STATE.draft.permissions.has(p))})}
+  function syncModuleMasters(){
+    PERMISSION_MODULES.forEach(m=>{
+      if(m.access){
+        const access=$(`.module-access[data-module="${m.id}"]`);
+        if(access) access.checked=STATE.draft.permissions.has(m.access);
+        return;
+      }
+
+      const items=m.items.map(x=>x[0]);
+      const master=$(`.module-master[data-module="${m.id}"]`);
+      if(master) master.checked=items.every(p=>STATE.draft.permissions.has(p));
+    });
+  }
+
+
+  function expedicaoObraPrincipalId(){
+    return String(STATE.selected?.obra_id||"");
+  }
+
+  function expedicaoObrasTemporarias(){
+    const set=new Set(STATE.expeditionWorksDraft||[]);
+    const principal=expedicaoObraPrincipalId();
+    if(principal) set.add(principal);
+    return set;
+  }
+
+  function garantirModalObrasExpedicao(){
+    let bg=$("#modalExpedicaoObras");
+    if(bg) return bg;
+
+    bg=document.createElement("div");
+    bg.id="modalExpedicaoObras";
+    bg.className="modal-bg";
+    bg.hidden=true;
+
+    bg.innerHTML=`
+      <div class="modal atlas-expedition-works-modal"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="expWorksTitle">
+
+        <button type="button"
+                class="fechar"
+                id="btnFecharExpedicaoObras"
+                aria-label="Fechar"
+                title="Fechar">X</button>
+
+        <div class="atlas-expedition-works-head">
+          <h3 id="expWorksTitle">
+            <i class="fa-solid fa-building-circle-check"></i>
+            Empresas / obras visíveis
+          </h3>
+          <p>Defina quais locais este funcionário poderá consultar e operar dentro da Expedição.</p>
+        </div>
+
+        <div class="atlas-expedition-works-toolbar">
+          <div class="atlas-expedition-works-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="buscaExpedicaoObras"
+                   type="search"
+                   autocomplete="off"
+                   placeholder="Buscar empresa, código ou obra...">
+          </div>
+
+          <button type="button"
+                  class="atlas-btn light"
+                  id="btnSelecionarTodasExpedicaoObras">
+            Selecionar todas
+          </button>
+        </div>
+
+        <div id="listaExpedicaoObras"
+             class="atlas-expedition-works-list"></div>
+
+        <div class="atlas-expedition-works-actions">
+          <small id="resumoExpedicaoObras"></small>
+
+          <button type="button"
+                  class="atlas-btn primary"
+                  id="btnSalvarExpedicaoObras">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Salvar seleção
+          </button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(bg);
+
+    // Fecha pelo X.
+    $("#btnFecharExpedicaoObras").addEventListener("click",()=>{
+      fecharModalObrasExpedicao();
+    });
+
+    // Fecha ao clicar fora da caixa, igual aos demais modais.
+    bg.addEventListener("click",event=>{
+      if(event.target===bg) fecharModalObrasExpedicao();
+    });
+
+    return bg;
+  }
+
+  function fecharModalObrasExpedicao(){
+    const bg=$("#modalExpedicaoObras");
+    if(!bg) return;
+
+    // display:none é obrigatório; só hidden não vence style.display=flex.
+    bg.style.display="none";
+    bg.hidden=true;
+  }
+
+  function atualizarResumoExpedicaoObras(tempSet){
+    const resumo=$("#resumoExpedicaoObras");
+    if(!resumo) return;
+
+    const principal=expedicaoObraPrincipalId();
+    const ids=new Set(tempSet||[]);
+    if(principal) ids.add(principal);
+
+    resumo.textContent=`${ids.size} obra(s) selecionada(s)`;
+  }
+
+  function renderModalObrasExpedicao(tempSet){
+    const lista=$("#listaExpedicaoObras");
+    if(!lista) return;
+
+    const termo=norm($("#buscaExpedicaoObras")?.value||"");
+    const principal=expedicaoObraPrincipalId();
+
+    const obras=STATE.works
+      .filter(w=>{
+        const texto=`${w.codigo_obra||w.codigo||""} ${w.nome||""}`;
+        return !termo || norm(texto).includes(termo);
+      })
+      .sort((a,b)=>
+        String(a.codigo_obra||a.codigo||"")
+          .localeCompare(
+            String(b.codigo_obra||b.codigo||""),
+            "pt-BR",
+            {numeric:true}
+          )
+      );
+
+    lista.innerHTML=obras.map(w=>{
+      const id=String(w.id);
+      const obrigatoria=id===principal;
+      const selecionada=obrigatoria||tempSet.has(id);
+
+      return `
+        <button type="button"
+                class="atlas-expedition-work-item ${obrigatoria?"principal":""} ${selecionada?"selecionada":""}"
+                data-expedition-work-id="${esc(id)}"
+                aria-pressed="${selecionada?"true":"false"}"
+                ${obrigatoria?"disabled":""}>
+
+          <span class="atlas-expedition-work-checkmark" aria-hidden="true">
+            <i class="fa-solid fa-check"></i>
+          </span>
+
+          <span class="atlas-expedition-work-text">
+            <strong>${esc(w.codigo_obra||w.codigo||"-")} - ${esc(w.nome||"-")}</strong>
+            <small>${obrigatoria
+              ? "Obra principal — acesso obrigatório"
+              : "Disponível para a Expedição"}</small>
+          </span>
+        </button>`;
+    }).join("") || '<div class="atlas-empty">Nenhuma obra encontrada.</div>';
+
+    atualizarResumoExpedicaoObras(tempSet);
+  }
+
+  function abrirModalObrasExpedicao(){
+    if(!STATE.selected||!canManageSelectedAccess()) return;
+
+    const bg=garantirModalObrasExpedicao();
+    const tempSet=expedicaoObrasTemporarias();
+
+    const busca=$("#buscaExpedicaoObras");
+    const lista=$("#listaExpedicaoObras");
+    const selecionarTodas=$("#btnSelecionarTodasExpedicaoObras");
+    const salvar=$("#btnSalvarExpedicaoObras");
+
+    busca.value="";
+    renderModalObrasExpedicao(tempSet);
+
+    /*
+      Pesquisa pode reconstruir a lista porque muda os resultados exibidos.
+      A seleção de uma obra NÃO reconstrói a lista.
+    */
+    busca.oninput=()=>{
+      renderModalObrasExpedicao(tempSet);
+    };
+
+    /*
+      Seleção por botão de linha.
+      Evita a combinação label + checkbox + change que estava causando
+      o conteúdo branco/refluxo visual no navegador.
+    */
+    lista.onclick=event=>{
+      const linha=event.target.closest("[data-expedition-work-id]");
+      if(!linha || linha.disabled) return;
+
+      const id=String(linha.dataset.expeditionWorkId||"");
+      if(!id) return;
+
+      const selecionar=!tempSet.has(id);
+
+      if(selecionar) tempSet.add(id);
+      else tempSet.delete(id);
+
+      linha.classList.toggle("selecionada",selecionar);
+      linha.setAttribute("aria-pressed",selecionar?"true":"false");
+
+      atualizarResumoExpedicaoObras(tempSet);
+    };
+
+    selecionarTodas.onclick=()=>{
+      STATE.works.forEach(w=>tempSet.add(String(w.id)));
+      renderModalObrasExpedicao(tempSet);
+    };
+
+    salvar.onclick=()=>{
+      const principal=expedicaoObraPrincipalId();
+      if(principal) tempSet.add(principal);
+
+      STATE.expeditionWorksDraft=new Set(tempSet);
+
+      [...STATE.draft.permissions]
+        .filter(token=>obraIdDaPermissaoExpedicao(token))
+        .forEach(token=>STATE.draft.permissions.delete(token));
+
+      STATE.expeditionWorksDraft.forEach(id=>{
+        STATE.draft.permissions.add(`${EXPEDICAO_OBRA_PREFIX}${id}`);
+      });
+
+      setDirty();
+      fecharModalObrasExpedicao();
+      toast("Obras visíveis da Expedição atualizadas. Clique em Salvar alterações.");
+    };
+
+    bg.hidden=false;
+    bg.style.display="flex";
+
+    setTimeout(()=>busca?.focus(),30);
+  }
+
+  /*
+    ESC fecha o modal.
+    Instalado uma única vez para não acumular listeners a cada abertura.
+  */
+  if(!window.__atlasEscModalExpedicaoObras){
+    window.__atlasEscModalExpedicaoObras=true;
+
+    document.addEventListener("keydown",event=>{
+      if(event.key!=="Escape") return;
+
+      const bg=$("#modalExpedicaoObras");
+      if(!bg || bg.hidden || bg.style.display==="none") return;
+
+      event.preventDefault();
+      fecharModalObrasExpedicao();
+    });
+  }
 
   function operationalPermissions(){const ps=STATE.draft.permissions;return OPERATIONAL_NOTIFS.map(n=>({...n,active:n.perm.some(p=>ps.has(p))}))}
   function renderNotifications(){
@@ -654,6 +973,17 @@
     ];
     if(!modes.some(x=>p.has(x))) p.add("NOTIF_MODO_SOM");
 
+    [...p]
+      .filter(token=>obraIdDaPermissaoExpedicao(token))
+      .forEach(token=>p.delete(token));
+
+    const principalExpedicao=expedicaoObraPrincipalId();
+    if(principalExpedicao) STATE.expeditionWorksDraft.add(principalExpedicao);
+
+    STATE.expeditionWorksDraft.forEach(id=>{
+      p.add(`${EXPEDICAO_OBRA_PREFIX}${id}`);
+    });
+
     const payload={
       permissoes:[...p].join(","),
       perfil:STATE.draft.perfil||STATE.selected.perfil||"OPERADOR",
@@ -817,11 +1147,24 @@
       button.onclick=()=>activateTab(button.dataset.tab);
     });
 
+    $("#permissionModules")?.addEventListener("click",event=>{
+      const btn=event.target.closest("[data-config-expedition-works]");
+      if(btn){
+        event.preventDefault();
+        abrirModalObrasExpedicao();
+      }
+    });
+
     $("#permissionModules")?.addEventListener("change",event=>{
       if(!canManageSelectedAccess()) return;
 
       if(event.target.classList.contains("permission-toggle")){
         updatePerm(event.target.value,event.target.checked);
+      }
+
+      if(event.target.classList.contains("module-access")){
+        updatePerm(event.target.value,event.target.checked);
+        renderPermissions();
       }
 
       if(event.target.classList.contains("module-master")){
@@ -844,10 +1187,18 @@
     if($("#switchTodasPermissoes")){
       $("#switchTodasPermissoes").onchange=event=>{
         if(!canManageSelectedAccess()) return;
-        PERMISSION_MODULES.flatMap(modulo=>modulo.items).forEach(([permission])=>{
-          event.target.checked
-            ? STATE.draft.permissions.add(permission)
-            : STATE.draft.permissions.delete(permission);
+        PERMISSION_MODULES.forEach(modulo=>{
+          if(modulo.access){
+            event.target.checked
+              ? STATE.draft.permissions.add(modulo.access)
+              : STATE.draft.permissions.delete(modulo.access);
+          }
+
+          modulo.items.forEach(([permission])=>{
+            event.target.checked
+              ? STATE.draft.permissions.add(permission)
+              : STATE.draft.permissions.delete(permission);
+          });
         });
 
         renderPermissions();

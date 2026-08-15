@@ -1,10 +1,15 @@
-/* ATLAS EXPEDIÇÃO 3.2.0 - SEPARAÇÃO GUIADA POR QR */
 /* =========================================================
-   ATUALIZADO: EXPEDIÇÃO COM OFFLINE BDR
-========================================================= */
-/* =========================================================
-   BDR ERP - EXPEDIÇÃO MARKETPLACE INTERNO
-   Catálogo compacto + carrinho + aprovação + reserva + retirada
+   ATLAS / BDR — NÚCLEO DA EXPEDIÇÃO
+
+   Responsabilidade:
+   - estado principal da tela;
+   - catálogo e carrinho;
+   - carregamento progressivo;
+   - renderização base;
+   - integração com os módulos especializados em /fluxo.
+
+   Regras específicas de aprovação, solicitações, logística,
+   fiscal e permissões ficam fora deste arquivo.
 ========================================================= */
 var itensCatalogo = window.itensCatalogo || [];
 var carrinho = window.carrinho || [];
@@ -24,6 +29,8 @@ var pedidosTotalServidor = 0;
 var catalogoTotalServidor = 0;
 var catalogoTotalPaginas = 1;
 var pedidosBackgroundPromise = null;
+var catalogoKPIsProntos = false;
+var pedidosKPIsProntos = false;
 
 /* =========================================================
    OFFLINE BDR - Expedição
@@ -168,9 +175,35 @@ function limparCarrinhoExpedicaoSalvo(){
 }
 function perfil(){ return String(usuarioAtual()?.perfil || "").toUpperCase(); }
 function perms(){ return String(usuarioAtual()?.permissoes || "").toUpperCase(); }
-function podeTudo(){ return ["MASTER","ADMIN"].includes(perfil()) || perms().includes("VER_TODAS_OBRAS"); }
-function podeVerOutras(){ return podeTudo() || perms().includes("VER_ESTOQUE_OUTRAS_OBRAS"); }
-function podeSolicitarOutras(){ return podeTudo() || perms().includes("SOLICITAR_OUTRAS_OBRAS"); }
+
+function tokensPermissoes(){
+  return String(usuarioAtual()?.permissoes||"")
+    .split(",")
+    .map(x=>x.trim())
+    .filter(Boolean);
+}
+
+function expedicaoObrasLiberadas(){
+  const u=usuarioAtual()||{};
+  const ids=new Set();
+
+  if(u.obra_id) ids.add(Number(u.obra_id));
+
+  tokensPermissoes().forEach(token=>{
+    const m=String(token).toUpperCase().match(/^EXPEDICAO_OBRA_(\d+)$/);
+    if(m) ids.add(Number(m[1]));
+  });
+
+  return [...ids].filter(Number.isFinite);
+}
+
+function podeTudo(){
+  return Number(usuarioAtual()?.id||0)===1 ||
+         tokensPermissoes().some(p=>String(p).toUpperCase()==="VER_TODAS_OBRAS");
+}
+
+function podeVerOutras(){ return podeTudo() || expedicaoObrasLiberadas().length>1; }
+function podeSolicitarOutras(){ return podeTudo() || expedicaoObrasLiberadas().length>1; }
 function podeAlmoxarife(){ return ["MASTER","ADMIN","ALMOXARIFE","ALMOXARIFADO"].includes(perfil()); }
 function dataBR(d){ if(!d) return "-"; const x=new Date(String(d).replace(" ","T")); return isNaN(x.getTime()) ? String(d) : x.toLocaleString("pt-BR"); }
 function normalStatus(s){ s = String(s || "").toUpperCase().replaceAll(" ","_"); if(["DISPONIVEL","NO_ESTOQUE"].includes(s)) return "ESTOQUE"; return s; }
@@ -184,7 +217,10 @@ function preencherFiltroObrasCatalogo(){
   if(!select) return;
 
   const atual=String(select.value||"TODAS");
+  const idsPermitidos=podeTudo()?null:new Set(expedicaoObrasLiberadas().map(Number));
+
   const lista=(Array.isArray(obras)?obras:[])
+    .filter(o=>!idsPermitidos||idsPermitidos.has(Number(o.id)))
     .slice()
     .sort((a,b)=>{
       const ca=String(a.codigo_obra||"");
@@ -304,6 +340,8 @@ async function carregarTudo(){
 
     catalogoPagina=0;
     catalogoKPIs=null;
+    catalogoKPIsProntos=false;
+    pedidosKPIsProntos=false;
 
     // Carrinho e estrutura aparecem antes dos pedidos pesados.
     renderizarCarrinho();
@@ -325,6 +363,7 @@ async function carregarTudo(){
       pedidosBackgroundPromise=carregarPedidos()
         .then(()=>{
           window.pedidos=pedidos;
+          pedidosKPIsProntos=true;
           renderizarPedidos();
           atualizarKPIs();
           salvarCacheExpedicao();
@@ -355,6 +394,8 @@ async function carregarTudo(){
         itensCatalogo = cache.itensCatalogo || [];
         pedidos = cache.pedidos || [];
         obras = cache.obras || [];
+        catalogoKPIsProntos=true;
+        pedidosKPIsProntos=true;
         renderizarTudo();
         return;
       }
@@ -534,13 +575,9 @@ async function carregarCatalogo({acumular=false}={}){
   renderizarEstadoCarregandoCatalogo(acumular);
 
   try{
-    const escopoPermitido = podeVerOutras()
+    const escopoPermitido = podeTudo()
       ? null
-      : [...new Set([
-          Number(u?.obra_id||0),
-          1,
-          ...obras.filter(o=>String(o?.nome||"").toUpperCase().includes("CD")).map(o=>Number(o.id))
-        ].filter(Boolean))];
+      : expedicaoObrasLiberadas();
 
     const obraSelecionada=String(document.getElementById("filtroObraCatalogo")?.value||"TODAS");
     let obraIds=escopoPermitido;
@@ -557,7 +594,7 @@ async function carregarCatalogo({acumular=false}={}){
     }
 
     const busca=valor("buscaCatalogo");
-    const limitePagina=Number(document.getElementById("itensPorPaginaCatalogo")?.value || 24);
+    const limitePagina=Number(document.getElementById("itensPorPaginaCatalogo")?.value || 30);
 
     const resposta=await window.AtlasExpedicaoCatalogo.buscar({
       busca,
@@ -622,7 +659,11 @@ async function carregarCatalogo({acumular=false}={}){
     // Os KPIs são contagens leves no banco; não exigem baixar todo o catálogo.
     if(!catalogoKPIs){
       window.AtlasExpedicaoCatalogo.kpis({obraIds})
-        .then(k=>{ catalogoKPIs=k; atualizarKPIs(); })
+        .then(k=>{
+          catalogoKPIs=k;
+          catalogoKPIsProntos=true;
+          atualizarKPIs();
+        })
         .catch(e=>console.warn("Expedição: KPIs do catálogo",e?.message||e));
     }
   }finally{
@@ -630,11 +671,38 @@ async function carregarCatalogo({acumular=false}={}){
   }
 }
 
+function skeletonCatalogoHTML(quantidade){
+  const total=Math.max(1,Math.min(90,Number(quantidade)||30));
+
+  const card=()=>`
+    <div class="produto-card atlas-skeleton-card" aria-hidden="true">
+      <div class="atlas-skeleton-photo"></div>
+      <div class="atlas-skeleton-info">
+        <div class="atlas-skeleton-line title"></div>
+        <div class="atlas-skeleton-line medium"></div>
+        <div class="atlas-skeleton-line short"></div>
+        <div class="atlas-skeleton-footer">
+          <div class="atlas-skeleton-pill"></div>
+          <div class="atlas-skeleton-small"></div>
+        </div>
+      </div>
+    </div>`;
+
+  return Array.from({length:total},card).join("");
+}
+
 function renderizarEstadoCarregandoCatalogo(acumular){
   const grid=document.getElementById("catalogoGrid");
-  if(!grid) return;
-  if(acumular) return;
-  grid.innerHTML=`<div class="cart-empty" style="grid-column:1/-1">Carregando itens...</div>`;
+  if(!grid || acumular) return;
+
+  const quantidade=Number(
+    document.getElementById("itensPorPaginaCatalogo")?.value || 30
+  );
+
+  grid.innerHTML=skeletonCatalogoHTML(quantidade);
+
+  const resumo=document.getElementById("atlasResumoCatalogo");
+  if(resumo) resumo.textContent="Carregando catálogo...";
 }
 
 function agendarBuscaCatalogo(){
@@ -723,7 +791,7 @@ function atualizarPaginacaoCatalogoServidor(){
     if(!catalogoTotalServidor){
       resumo.textContent="Nenhum item encontrado";
     }else{
-      const porPagina=Number(document.getElementById("itensPorPaginaCatalogo")?.value||24);
+      const porPagina=Number(document.getElementById("itensPorPaginaCatalogo")?.value||30);
       const inicio=((atual-1)*porPagina)+1;
       const fim=Math.min(inicio+itensCatalogo.length-1,catalogoTotalServidor);
       resumo.textContent=`Mostrando ${inicio}–${fim} de ${catalogoTotalServidor} itens`;
@@ -740,11 +808,23 @@ async function atlasCarregarPaginaCatalogo(pagina){
   if(destino===catalogoPagina && itensCatalogo.length) return;
 
   catalogoPagina=destino;
+
+  const topoCatalogo =
+    document.getElementById("tab-catalogo") ||
+    document.getElementById("buscaCatalogo") ||
+    document.getElementById("catalogoGrid");
+
+  if(topoCatalogo){
+    const y = topoCatalogo.getBoundingClientRect().top + window.scrollY - 12;
+    window.scrollTo({
+      top: Math.max(0, y),
+      behavior: "smooth"
+    });
+  }
+
+  // O skeleton já ocupa a grade enquanto a nova página vem do banco.
+  renderizarEstadoCarregandoCatalogo(false);
   await carregarCatalogo({acumular:false});
-  document.getElementById("catalogoGrid")?.scrollIntoView({
-    behavior:"smooth",
-    block:"start"
-  });
 }
 
 window.atlasMudarPaginaCatalogo=async function(delta){
@@ -774,7 +854,7 @@ window.atlasLimparFiltrosCatalogo=async function(){
     filtroObraCatalogo:"TODAS",
     filtroCategoriaCatalogo:"TODAS",
     ordenacaoCatalogo:"RECENTES",
-    itensPorPaginaCatalogo:"24",
+    itensPorPaginaCatalogo:"30",
     buscaCatalogo:""
   };
   Object.entries(ids).forEach(([id,valor])=>{
@@ -804,20 +884,53 @@ async function carregarPedidos(){
   window.pedidos=pedidos;
 }
 
+function definirKpi(id,valor,pronto){
+  const el=document.getElementById(id);
+  if(!el) return;
+
+  if(!pronto){
+    el.textContent="";
+    el.classList.add("atlas-kpi-loading");
+    el.setAttribute("aria-busy","true");
+    return;
+  }
+
+  el.classList.remove("atlas-kpi-loading");
+  el.removeAttribute("aria-busy");
+  el.textContent=String(valor ?? 0);
+}
+
 function atualizarKPIs(){
-  const c = s => itensCatalogo.filter(i=>normalStatus(i.status)===s).length;
+  const c=s=>itensCatalogo.filter(i=>normalStatus(i.status)===s).length;
   const k=catalogoKPIs||{};
-  document.getElementById("kpiTotal").innerText = k.TODOS ?? itensCatalogo.length;
-  document.getElementById("kpiEstoque").innerText = k.ESTOQUE ?? c("ESTOQUE");
-  document.getElementById("kpiUso").innerText = k.EM_USO ?? c("EM_USO");
-  document.getElementById("kpiManutencao").innerText = k.MANUTENCAO ?? c("MANUTENCAO");
-  document.getElementById("kpiReservado").innerText = k.RESERVADO ?? c("RESERVADO");
-  document.getElementById("kpiPedidos").innerText = pedidosTotalServidor || pedidos.length;
-  document.getElementById("chipTodos").innerText = k.TODOS ?? itensCatalogo.length;
-  document.getElementById("chipEstoque").innerText = k.ESTOQUE ?? c("ESTOQUE");
-  document.getElementById("chipUso").innerText = k.EM_USO ?? c("EM_USO");
-  document.getElementById("chipManutencao").innerText = k.MANUTENCAO ?? c("MANUTENCAO");
-  document.getElementById("chipReservado").innerText = k.RESERVADO ?? c("RESERVADO");
+
+  definirKpi("kpiTotal",k.TODOS ?? itensCatalogo.length,catalogoKPIsProntos);
+  definirKpi("kpiEstoque",k.ESTOQUE ?? c("ESTOQUE"),catalogoKPIsProntos);
+  definirKpi("kpiUso",k.EM_USO ?? c("EM_USO"),catalogoKPIsProntos);
+  definirKpi("kpiManutencao",k.MANUTENCAO ?? c("MANUTENCAO"),catalogoKPIsProntos);
+  definirKpi("kpiReservado",k.RESERVADO ?? c("RESERVADO"),catalogoKPIsProntos);
+
+  definirKpi(
+    "kpiPedidos",
+    pedidosTotalServidor || pedidos.length,
+    pedidosKPIsProntos
+  );
+
+  /*
+    Os chips continuam utilizáveis durante a abertura.
+    Quando as contagens globais chegam, eles recebem os valores reais.
+  */
+  const chipTodos=document.getElementById("chipTodos");
+  const chipEstoque=document.getElementById("chipEstoque");
+  const chipUso=document.getElementById("chipUso");
+  const chipManutencao=document.getElementById("chipManutencao");
+  const chipReservado=document.getElementById("chipReservado");
+
+  if(chipTodos) chipTodos.innerText=catalogoKPIsProntos ? (k.TODOS ?? itensCatalogo.length) : "…";
+  if(chipEstoque) chipEstoque.innerText=catalogoKPIsProntos ? (k.ESTOQUE ?? c("ESTOQUE")) : "…";
+  if(chipUso) chipUso.innerText=catalogoKPIsProntos ? (k.EM_USO ?? c("EM_USO")) : "…";
+  if(chipManutencao) chipManutencao.innerText=catalogoKPIsProntos ? (k.MANUTENCAO ?? c("MANUTENCAO")) : "…";
+  if(chipReservado) chipReservado.innerText=catalogoKPIsProntos ? (k.RESERVADO ?? c("RESERVADO")) : "…";
 }
 
 function renderizarTudo(){ atualizarKPIs(); renderizarCatalogo(); renderizarCarrinho(); renderizarPedidos(); }
@@ -1914,6 +2027,7 @@ function fecharModalDetalhe(){ document.getElementById("modalDetalhe").classList
 window.carregarTudo = carregarTudo;
 window.BDRExpedicao = {
   carregarTudo,
+  iniciar: bdrExpedicaoIniciarSeguro,
   get itensCatalogo(){ return itensCatalogo; },
   get pedidos(){ return pedidos; },
   get obras(){ return obras; },
@@ -1927,11 +2041,11 @@ function bdrExpedicaoIniciarSeguro(){
   });
 }
 
-if(document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", bdrExpedicaoIniciarSeguro);
-}else{
-  bdrExpedicaoIniciarSeguro();
-}
+/*
+  A inicialização dos dados é coordenada por expedicaoBoot.js.
+  Isso garante que aprovação, solicitações, logística, fiscal e
+  permissões já estejam registrados antes da primeira consulta.
+*/
 
 window.addEventListener("online", async () => {
   try{ window.bdrResetOnlineReal?.(); }catch(e){}
@@ -1989,1576 +2103,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
 
 
 /* =========================================================
-   ATLAS SPRINT 2.3 - APROVAÇÃO PARCIAL POR ITEM
-   - Recusar todos
-   - Autorizar parcial
-   - Autorizar todos
-   - Notificação oficial via AtlasWorkflow
-========================================================= */
-(function(){
-  "use strict";
-
-  function isSolicitado(p){
-    return ["SOLICITADO","AGUARDANDO_AUTORIZACAO"].includes(String(p?.status || "").toUpperCase());
-  }
-
-  function pedidoLocal(id){
-    return (window.pedidos || pedidos || []).find(p => Number(p.id) === Number(id));
-  }
-
-  function itensDoPedidoLocal(p){
-    return Array.isArray(p?.itens_retirada) ? p.itens_retirada : [];
-  }
-
-  function quantidadeItemAtlas(i){
-    const qtd = Number(i?.quantidade || i?.quantidade_solicitada || 1);
-    return Number.isFinite(qtd) && qtd > 0 ? qtd : 1;
-  }
-
-  function badgeQuantidadeAtlas(i){
-    return `<span style="
-      display:inline-flex;
-      align-items:center;
-      gap:5px;
-      margin-top:6px;
-      padding:5px 9px;
-      border-radius:999px;
-      background:#dbeafe;
-      color:#1d4ed8;
-      font-size:11px;
-      font-weight:950;
-      white-space:nowrap;
-    ">📦 Qtd solicitada: ${quantidadeItemAtlas(i)}</span>`;
-  }
-
-  function itemTituloAtlas(i){
-    return esc(
-      i.patrimonio_codigo ||
-      i.codigo ||
-      i.produto_codigo ||
-      (i.produto_id ? "EST-" + i.produto_id : "") ||
-      ("ITEM-" + i.id)
-    );
-  }
-
-  renderizarPedidos = function(){
-    const todos = window.pedidos || pedidos || [];
-    const solicitados = todos.filter(p => isSolicitado(p));
-    lista("listaSolicitacoes", solicitados);
-    lista("listaSeparacao", todos.filter(p => ["EM_SEPARACAO"].includes(String(p.status||"").toUpperCase())));
-        lista("listaRetirada", todos.filter(p => String(p.status||"").toUpperCase()==="AGUARDANDO_RETIRADA"));
-    lista("listaTransito", todos.filter(p => String(p.status||"").toUpperCase()==="EM_TRANSITO"));
-    lista("listaHistorico", todos.filter(p => ["RECEBIDO","RECEBIDO_PARCIAL","RECUSADO","CANCELADO","ENTREGUE","NEGADO","RECEBIDO_COM_DIVERGENCIA"].includes(String(p.status||"").toUpperCase())));
-  };
-
-  acoesPedido = function(p){
-    const st = String(p.status || "").toUpperCase();
-
-    if(isSolicitado(p) && podeAlmoxarife()){
-      return `
-        <button class="btn-mini btn-red" onclick="recusarTodosAtlas(${p.id})">Recusar todos</button>
-        <button class="btn-mini btn-blue" onclick="abrirAprovacaoParcialAtlas(${p.id})">Autorizar parcial</button>
-        <button class="btn-mini btn-ok" onclick="autorizarTodosAtlas(${p.id})">Autorizar todos</button>`;
-    }
-
-
-    if(st === "EM_SEPARACAO" && podeAlmoxarife()){
-      return `<button class="btn-mini btn-ok" onclick="reservar(${p.id})">Concluir separação</button>`;
-    }
-
-    if(st==="AGUARDANDO_RETIRADA" && podeAlmoxarife()){
-      return `<button class="btn-mini btn-ok" onclick="abrirRetirada(${p.id})">Retirada</button>`;
-    }
-
-    if(st==="EM_TRANSITO"){
-      return `<button class="btn-mini btn-blue" onclick="alert('Recebimento pelo destino será a próxima etapa da Sprint.')">Acompanhar</button>`;
-    }
-
-    return `<button class="btn-mini btn-blue" onclick="abrirDetalhePedidoAtlas(${p.id})">Detalhes</button>`;
-  };
-
-  pedidoHTML = function(p){
-    const itens = itensDoPedidoLocal(p);
-    const resumoItens = itens.map(i => `${esc(i.patrimonio_codigo || i.patrimonio_nome || 'Item')} • Qtd solicitada: ${quantidadeItemAtlas(i)} • ${esc(i.status || '-')}`).join('<br>');
-    return `<div class="pedido-card">
-      <div class="pedido-top">
-        <div class="pedido-cod">${esc(p.codigo||"PED-"+p.id)}</div>
-        <div>
-          <b>${esc(p.obra_nome||"-")}</b>
-          <div class="pedido-small">Solicitante: ${esc(p.solicitante||"-")} • Origem: ${esc(nomeObra(p.obra_origem_id))}</div>
-          <div class="pedido-small" style="margin-top:4px">${resumoItens || 'Sem itens carregados'}</div>
-        </div>
-        <div><span class="badge-status ${statusClass(p.status)}">${esc(p.status)}</span><div class="pedido-small">${itens.length} item(ns)</div></div>
-        <div class="pedido-actions">${acoesPedido(p)}</div>
-      </div>
-    </div>`;
-  };
-
-  function atlasBtnProcessando(pedidoId, texto="Processando..."){
-    document.querySelectorAll(`button[onclick*="${pedidoId}"]`).forEach(btn => {
-      btn.dataset.txtOriginal = btn.dataset.txtOriginal || btn.innerText;
-      btn.innerText = texto;
-      btn.disabled = true;
-      btn.style.opacity = "0.65";
-      btn.style.cursor = "not-allowed";
-    });
-  }
-
-  function atlasBtnRestaurar(pedidoId){
-    document.querySelectorAll(`button[onclick*="${pedidoId}"]`).forEach(btn => {
-      btn.innerText = btn.dataset.txtOriginal || btn.innerText;
-      btn.disabled = false;
-      btn.style.opacity = "";
-      btn.style.cursor = "";
-    });
-  }
-
-  function atlasAtualizarPedidoLocal(pedidoId, status){
-    const p = pedidoLocal(pedidoId);
-    if(p){ p.status = status; }
-    try{ renderizarPedidos(); atualizarKPIs?.(); }catch(e){}
-  }
-
-  window.autorizarTodosAtlas = async function(pedidoId){
-    if(!window.AtlasWorkflow?.aprovarTodosItensPedido){ alert("AtlasWorkflow Sprint 2.3 não carregado."); return; }
-    atlasBtnProcessando(pedidoId, "Processando...");
-    atlasAtualizarPedidoLocal(pedidoId, "EM_SEPARACAO");
-    try{
-      const r = await AtlasWorkflow.aprovarTodosItensPedido(pedidoId);
-      atlasAtualizarPedidoLocal(pedidoId, r?.statusPedido || "EM_SEPARACAO");
-      fecharModalDetalhe?.();
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      atlasBtnRestaurar(pedidoId);
-      alert("Erro ao autorizar: " + (e?.message || e));
-    }
-  };
-
-  window.recusarTodosAtlas = async function(pedidoId){
-    const motivo = prompt("Motivo para recusar todos os itens:") || "Recusado pela origem.";
-    if(!window.AtlasWorkflow?.recusarTodosItensPedido){ alert("AtlasWorkflow Sprint 2.3 não carregado."); return; }
-    try{
-      await AtlasWorkflow.recusarTodosItensPedido(pedidoId, motivo);
-      alert("Pedido recusado. Notificação enviada ao solicitante.");
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      alert("Erro ao recusar: " + (e?.message || e));
-    }
-  };
-
-
-  window.atlasAlternarMotivoRecusa = function(selectEl, itemId){
-    const campo = document.getElementById("motivoItem_" + itemId);
-    if(!campo) return;
-
-    const recusando = String(selectEl?.value || "").toUpperCase() === "RECUSAR";
-    campo.style.display = recusando ? "block" : "none";
-    campo.required = recusando;
-    if(recusando){
-      setTimeout(() => campo.focus(), 30);
-    }else{
-      campo.value = "";
-    }
-  };
-
-  window.abrirAprovacaoParcialAtlas = function(pedidoId){
-    const p = pedidoLocal(pedidoId);
-    if(!p){ alert("Pedido não encontrado na tela. Atualize a página."); return; }
-    const itens = itensDoPedidoLocal(p);
-    if(!itens.length){ alert("Pedido sem itens carregados."); return; }
-
-    document.getElementById("modalTitulo").innerText = "Autorizar parcial - " + (p.codigo || ("PED-" + p.id));
-    document.getElementById("modalConteudo").innerHTML = `
-      <div class="info-box" style="margin-top:0">Escolha item por item. O Atlas vai definir o status geral automaticamente: APROVADO, RECUSADO ou APROVADO_PARCIAL.</div>
-      <div style="display:grid;gap:10px;margin-top:12px">
-        ${itens.map(i => `
-          <div style="
-            display:grid;
-            grid-template-columns:1fr;
-            gap:10px;
-            padding:13px;
-            border:1px solid #e2e8f0;
-            border-radius:14px;
-            background:#fff;
-          ">
-            <div style="min-width:0">
-              <div style="
-                color:#0f172a;
-                font-size:14px;
-                font-weight:950;
-                line-height:1.35;
-                white-space:normal;
-                overflow-wrap:anywhere;
-              ">${esc(i.patrimonio_nome || i.produto_nome || i.descricao || itemTituloAtlas(i))}</div>
-
-              <div style="
-                margin-top:5px;
-                color:#64748b;
-                font-size:11px;
-                font-weight:850;
-                line-height:1.35;
-                overflow-wrap:anywhere;
-              ">Código: ${itemTituloAtlas(i)}</div>
-
-              ${badgeQuantidadeAtlasGlobal(i)}
-            </div>
-
-            <select
-              id="decisaoItem_${i.id}"
-              onchange="atlasAlternarMotivoRecusa(this,${i.id})"
-              style="
-                width:100%;
-                height:42px;
-                border:1px solid #cbd5e1;
-                border-radius:11px;
-                padding:0 10px;
-                background:#fff;
-                color:#0f172a;
-                font-weight:950;
-                font-size:14px;
-              ">
-              <option value="APROVAR">✅ Autorizar item</option>
-              <option value="RECUSAR">❌ Recusar item</option>
-            </select>
-
-            <input
-              id="motivoItem_${i.id}"
-              placeholder="Informe o motivo da recusa"
-              style="
-                display:none;
-                width:100%;
-                min-height:42px;
-                border:1px solid #fca5a5;
-                border-radius:11px;
-                padding:0 10px;
-                background:#fff7f7;
-                color:#7f1d1d;
-                font-size:14px;
-                font-weight:750;
-              ">
-          </div>`).join('')}
-      </div>
-      <br>
-      <button class="btn-ok" onclick="confirmarAprovacaoParcialAtlas(${p.id})">Confirmar seleção</button>
-    `;
-    document.getElementById("modalDetalhe").classList.add("ativo");
-  };
-
-  window.confirmarAprovacaoParcialAtlas = async function(pedidoId){
-    const p = pedidoLocal(pedidoId);
-    const itens = itensDoPedidoLocal(p);
-    const decisoes = itens.map(i => ({
-      item_id: i.id,
-      acao: document.getElementById("decisaoItem_" + i.id)?.value || "APROVAR",
-      motivo: document.getElementById("motivoItem_" + i.id)?.value || ""
-    }));
-
-    const recusaSemMotivo = decisoes.find(d =>
-      String(d.acao).toUpperCase() === "RECUSAR" &&
-      !String(d.motivo || "").trim()
-    );
-
-    if(recusaSemMotivo){
-      atlasToast("⚠ Informe o motivo do item recusado.");
-      document.getElementById("motivoItem_" + recusaSemMotivo.item_id)?.focus();
-      return;
-    }
-
-    if(!window.AtlasWorkflow?.aprovarItensPedido){ alert("AtlasWorkflow Sprint 2.3 não carregado."); return; }
-
-    try{
-      atlasBtnProcessando(pedidoId, "Processando...");
-      const r = await AtlasWorkflow.aprovarItensPedido(pedidoId, decisoes);
-      atlasAtualizarPedidoLocal(pedidoId, r?.statusPedido || "EM_SEPARACAO");
-      fecharModalDetalhe();
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      alert("Erro ao salvar aprovação parcial: " + (e?.message || e));
-    }
-  };
-
-  window.abrirDetalhePedidoAtlas = function(pedidoId){
-    const p = pedidoLocal(pedidoId);
-    if(!p) return;
-    const itens = itensDoPedidoLocal(p);
-    document.getElementById("modalTitulo").innerText = "Detalhes - " + (p.codigo || ("PED-" + p.id));
-    document.getElementById("modalConteudo").innerHTML = `
-      <div class="det-line"><b>Status:</b> ${esc(p.status || '-')}</div>
-      <div class="det-line"><b>Solicitante:</b> ${esc(p.solicitante || '-')}</div>
-      <div class="det-line"><b>Origem:</b> ${esc(nomeObra(p.obra_origem_id))}</div>
-      <div class="det-line"><b>Destino:</b> ${esc(nomeObra(p.obra_destino_id || p.obra_id))}</div>
-      <br>
-      ${itens.map(i => `<div class="cart-item"><div class="cart-info"><strong>${itemTituloAtlas(i)}</strong>${badgeQuantidadeAtlasGlobal(i)}<span style="display:block;margin-top:5px">Status: ${esc(i.status || '-')} ${i.motivo_recusa ? '• Motivo: '+esc(i.motivo_recusa) : ''}</span></div></div>`).join('')}
-    `;
-    document.getElementById("modalDetalhe").classList.add("ativo");
-  };
-
-  // Compatibilidade com botões antigos, caso algum HTML cacheado ainda chame autorizar/negar.
-  window.autorizar = window.autorizarTodosAtlas;
-  window.negar = window.recusarTodosAtlas;
-
-  console.log("✅ ATLAS SPRINT 2.3 patch Expedição carregado - aprovação parcial");
-})();
-
-
-/* =========================================================
-   ATLAS SPRINT 2.7 - SOLICITAÇÕES COMPACTAS
-   - Lista estilo caixa de entrada
-   - Pedido visual PED-ID
-   - Modal/Drawer de detalhes com itens completos
-   - Mantém aprovação total/parcial/recusa pelo Workflow
-========================================================= */
-(function(){
-  "use strict";
-
-  function atlasEnsureSolicitacoesCss(){
-    if(document.getElementById("atlasSolicitacoesCompactasCss")) return;
-    const css = document.createElement("style");
-    css.id = "atlasSolicitacoesCompactasCss";
-    css.textContent = `
-      .atlas-pedido-compacto{
-        padding:0!important;
-        overflow:hidden;
-      }
-      .atlas-pedido-row{
-        display:grid;
-        grid-template-columns:110px minmax(0,1fr) 130px 96px;
-        gap:12px;
-        align-items:center;
-        padding:12px 14px;
-      }
-      .atlas-pedido-numero{
-        font-size:16px;
-        font-weight:950;
-        color:var(--bdr-red,#b91c1c);
-        line-height:1.1;
-      }
-      .atlas-pedido-codigo{
-        display:block;
-        font-size:10px;
-        color:#94a3b8;
-        font-weight:800;
-        margin-top:4px;
-        word-break:break-word;
-      }
-      .atlas-pedido-main{min-width:0;}
-      .atlas-pedido-destino{
-        font-size:13px;
-        font-weight:950;
-        color:#0f172a;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .atlas-pedido-meta,
-      .atlas-pedido-itens-resumo{
-        font-size:11px;
-        color:#64748b;
-        font-weight:800;
-        margin-top:4px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .atlas-pedido-itens-resumo{color:#334155;}
-      .atlas-pedido-status{text-align:right;}
-      .atlas-pedido-status .pedido-small{margin-top:4px;}
-      .atlas-pedido-actions{display:flex;justify-content:flex-end;}
-      .atlas-btn-abrir{
-        background:#2563eb!important;
-        color:#fff!important;
-        border:0!important;
-        border-radius:10px!important;
-        padding:9px 13px!important;
-        font-size:12px!important;
-        font-weight:950!important;
-        cursor:pointer;
-      }
-      .atlas-modal-pedido-head{
-        display:grid;
-        grid-template-columns:1fr auto;
-        gap:12px;
-        align-items:start;
-        margin-bottom:12px;
-      }
-      .atlas-modal-pedido-num{
-        font-size:22px;
-        font-weight:950;
-        color:#0f172a;
-      }
-      .atlas-modal-pedido-codigo{
-        font-size:11px;
-        color:#64748b;
-        font-weight:800;
-        margin-top:2px;
-      }
-      .atlas-modal-grid-info{
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:8px;
-        margin:12px 0;
-      }
-      .atlas-info-mini{
-        background:#f8fafc;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        padding:9px 10px;
-      }
-      .atlas-info-mini small{
-        display:block;
-        color:#64748b;
-        font-size:10px;
-        font-weight:950;
-        text-transform:uppercase;
-        margin-bottom:3px;
-      }
-      .atlas-info-mini b{
-        color:#0f172a;
-        font-size:12px;
-        line-height:1.25;
-      }
-      .atlas-itens-lista{
-        display:grid;
-        gap:8px;
-        max-height:340px;
-        overflow:auto;
-        padding-right:4px;
-      }
-      .atlas-item-pedido{
-        display:grid;
-        grid-template-columns:36px 1fr auto;
-        gap:10px;
-        align-items:center;
-        border:1px solid #e5e7eb;
-        border-radius:13px;
-        padding:10px;
-        background:#fff;
-      }
-      .atlas-item-ordem{
-        width:30px;
-        height:30px;
-        border-radius:10px;
-        background:#eff6ff;
-        color:#2563eb;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:950;
-        font-size:12px;
-      }
-      .atlas-item-codigo{
-        font-size:12px;
-        font-weight:950;
-        color:#0f172a;
-      }
-      .atlas-item-nome{
-        font-size:11px;
-        color:#64748b;
-        font-weight:800;
-        margin-top:3px;
-      }
-      .atlas-modal-acoes{
-        display:flex;
-        gap:8px;
-        flex-wrap:wrap;
-        margin-top:14px;
-        padding-top:12px;
-        border-top:1px solid #e5e7eb;
-      }
-      .atlas-modal-acoes button{
-        border:0;
-        border-radius:10px;
-        padding:10px 12px;
-        font-size:12px;
-        font-weight:950;
-        cursor:pointer;
-      }
-      @media(max-width:760px){
-        .atlas-pedido-row{grid-template-columns:1fr;gap:8px;}
-        .atlas-pedido-status{text-align:left;}
-        .atlas-pedido-actions{justify-content:flex-start;}
-        .atlas-modal-grid-info{grid-template-columns:1fr;}
-        .atlas-item-pedido{grid-template-columns:30px 1fr;}
-        .atlas-item-pedido .badge-status{grid-column:2;justify-self:start;}
-      }
-    `;
-    document.head.appendChild(css);
-  }
-
-  function pedidoCurtoAtlas(p){
-    return "PED-" + (p?.id || "-");
-  }
-
-  function obraLabelCurtaAtlas(id, fallback){
-    const txt = fallback || nomeObra(id) || "-";
-    return String(txt).replace(/^\d+\s*-\s*/, "").replace(/^999\s*-\s*/, "");
-  }
-
-  function codigoItemAtlas(i){
-    const cod = i?.patrimonio_codigo || i?.codigo || i?.codigo_bem;
-    if(cod) return String(cod);
-    if(i?.patrimonio_id) return "PAT-" + String(i.patrimonio_id).padStart(6,"0");
-    if(i?.produto_id) return "EST-" + String(i.produto_id).padStart(6,"0");
-    return "ITEM-" + String(i?.id || "-").padStart(6,"0");
-  }
-
-  function nomeItemAtlas(i){
-    return i?.patrimonio_nome || i?.produto_nome || i?.descricao || i?.nome || "Item solicitado";
-  }
-
-  function resumoItensAtlas(itens){
-    if(!itens || !itens.length) return "Sem itens carregados";
-    const primeiros = itens.slice(0,2).map(i => codigoItemAtlas(i) + " — " + nomeItemAtlas(i));
-    const resto = itens.length > 2 ? ` +${itens.length - 2} item(ns)` : "";
-    return primeiros.join(" • ") + resto;
-  }
-
-  function statusPedidoAtlas(p){
-    return String(p?.status || "-").toUpperCase();
-  }
-
-  const antigoRenderizarPedidos = window.renderizarPedidos || renderizarPedidos;
-
-  pedidoHTML = function(p){
-    atlasEnsureSolicitacoesCss();
-    const itens = Array.isArray(p?.itens_retirada) ? p.itens_retirada : [];
-    const destino = obraLabelCurtaAtlas(p?.obra_destino_id || p?.obra_id, p?.obra_nome);
-    const origem = obraLabelCurtaAtlas(p?.obra_origem_id);
-    const st = statusPedidoAtlas(p);
-    return `<div class="pedido-card atlas-pedido-compacto">
-      <div class="atlas-pedido-row">
-        <div>
-          <div class="atlas-pedido-numero">${esc(pedidoCurtoAtlas(p))}</div>
-          <span class="atlas-pedido-codigo">${esc(p.codigo || "")}</span>
-        </div>
-        <div class="atlas-pedido-main">
-          <div class="atlas-pedido-destino">${esc(destino)}</div>
-          <div class="atlas-pedido-meta">${esc(p.solicitante || "-")} • ${esc(origem)} → ${esc(destino)}</div>
-          <div class="atlas-pedido-itens-resumo">${esc(resumoItensAtlas(itens))}</div>
-        </div>
-        <div class="atlas-pedido-status">
-          <span class="badge-status ${statusClass(st)}">${esc(st)}</span>
-          <div class="pedido-small">${itens.length} item(ns)</div>
-        </div>
-        <div class="atlas-pedido-actions">
-          <button class="atlas-btn-abrir" onclick="abrirDetalhePedidoAtlas(${Number(p.id)})">Abrir</button>
-        </div>
-      </div>
-    </div>`;
-  };
-
-  acoesPedido = function(p){
-    return `<button class="atlas-btn-abrir" onclick="abrirDetalhePedidoAtlas(${Number(p.id)})">Abrir</button>`;
-  };
-
-  window.abrirDetalhePedidoAtlas = function(pedidoId){
-    atlasEnsureSolicitacoesCss();
-    const p = (window.pedidos || pedidos || []).find(x => Number(x.id) === Number(pedidoId));
-    if(!p){ alert("Pedido não encontrado na tela. Atualize a página."); return; }
-    const itens = Array.isArray(p.itens_retirada) ? p.itens_retirada : [];
-    const st = statusPedidoAtlas(p);
-    const destino = obraLabelCurtaAtlas(p.obra_destino_id || p.obra_id, p.obra_nome);
-    const origem = obraLabelCurtaAtlas(p.obra_origem_id);
-    const podeDecidir = ["SOLICITADO","AGUARDANDO_AUTORIZACAO"].includes(st) && podeAlmoxarife();
-    const podeConcluirSeparacao = st === "EM_SEPARACAO" && podeAlmoxarife();
-    const podeRetirar = st === "AGUARDANDO_RETIRADA" && podeAlmoxarife();
-
-    let botoes = `<button style="background:#2563eb;color:#fff" onclick="fecharModalDetalhe()">Fechar</button>`;
-    if(podeDecidir){
-      botoes = `
-        <button style="background:#16a34a;color:#fff" onclick="autorizarTodosAtlas(${Number(p.id)})">Autorizar todos</button>
-        <button style="background:#2563eb;color:#fff" onclick="abrirAprovacaoParcialAtlas(${Number(p.id)})">Autorizar parcial</button>
-        <button style="background:#b91c1c;color:#fff" onclick="recusarTodosAtlas(${Number(p.id)})">Recusar todos</button>
-        <button style="background:#e5e7eb;color:#0f172a" onclick="fecharModalDetalhe()">Fechar</button>`;
-    }else if(podeConcluirSeparacao){
-      botoes = `
-        <button style="background:#2563eb;color:#fff" onclick="AtlasSeparacaoQR.abrir(${Number(p.id)});fecharModalDetalhe()">📷 Iniciar separação guiada</button>
-        <button style="background:#e5e7eb;color:#0f172a" onclick="fecharModalDetalhe()">Fechar</button>`;
-    }else if(podeRetirar){
-      botoes = `
-        <button style="background:#16a34a;color:#fff" onclick="abrirRetirada(${Number(p.id)});fecharModalDetalhe()">Confirmar retirada</button>
-        <button style="background:#e5e7eb;color:#0f172a" onclick="fecharModalDetalhe()">Fechar</button>`;
-    }
-
-    document.getElementById("modalTitulo").innerText = "Detalhes do pedido";
-    document.getElementById("modalConteudo").innerHTML = `
-      <div class="atlas-modal-pedido-head">
-        <div>
-          <div class="atlas-modal-pedido-num">${esc(pedidoCurtoAtlas(p))}</div>
-          <div class="atlas-modal-pedido-codigo">Código completo: ${esc(p.codigo || "-")}</div>
-        </div>
-        <span class="badge-status ${statusClass(st)}">${esc(st)}</span>
-      </div>
-
-      <div class="atlas-modal-grid-info">
-        <div class="atlas-info-mini"><small>Solicitante</small><b>${esc(p.solicitante || "-")}</b></div>
-        <div class="atlas-info-mini"><small>Fluxo</small><b>${esc(origem)} → ${esc(destino)}</b></div>
-        <div class="atlas-info-mini"><small>Origem</small><b>${esc(nomeObra(p.obra_origem_id))}</b></div>
-        <div class="atlas-info-mini"><small>Destino</small><b>${esc(nomeObra(p.obra_destino_id || p.obra_id))}</b></div>
-      </div>
-
-      <h3 style="margin:12px 0 8px;color:#0f172a">Itens do pedido (${itens.length})</h3>
-      <div class="atlas-itens-lista">
-        ${itens.length ? itens.map((i,idx) => `
-          <div class="atlas-item-pedido">
-            <div class="atlas-item-ordem">${idx+1}</div>
-            <div>
-              <div class="atlas-item-codigo">${esc(codigoItemAtlas(i))}</div>
-              <div class="atlas-item-nome">${esc(nomeItemAtlas(i))}${i.motivo_recusa ? " • Motivo: " + esc(i.motivo_recusa) : ""}</div>
-              ${badgeQuantidadeAtlasGlobal(i)}
-            </div>
-            <span class="badge-status ${statusClass(i.status || 'PENDENTE')}">${esc(i.status || 'PENDENTE')}</span>
-          </div>`).join("") : `<div class="cart-empty">Nenhum item carregado.</div>`}
-      </div>
-      <div class="atlas-modal-acoes">${botoes}</div>
-    `;
-    document.getElementById("modalDetalhe").classList.add("ativo");
-  };
-
-  console.log("✅ ATLAS SOLICITAÇÕES COMPACTAS V1.0 carregado");
-})();
-
-/* =========================================================
-   ATLAS SPRINT 2.9 - LOGÍSTICA ORIGEM → DESTINO
-   - Separação finalizada via AtlasLogistica
-   - Saída com motorista / veículo / placa
-   - Recebimento pelo destino
-   - Patrimônio só muda para destino no recebimento OK
-========================================================= */
-(function(){
-  "use strict";
-
-  function usuarioAtualAtlasLog(){
-    try{return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");}
-    catch(e){return null;}
-  }
-
-  function pedidoLocalLogistica(id){
-    return (window.pedidos || pedidos || []).find(p => Number(p.id) === Number(id));
-  }
-
-  function stLog(p){ return String(p?.status || "").toUpperCase(); }
-  function escLog(v){ return typeof esc === "function" ? esc(v) : String(v ?? "").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-  function nomeObraLog(id){ return typeof nomeObra === "function" ? nomeObra(id) : String(id || "-"); }
-  function dataHoraBRLog(v){
-    if(!v) return "-";
-
-    try{
-      let textoData = String(v).trim();
-
-      /*
-       * A coluna data_saida_cd é timestamp sem timezone.
-       * Como o Atlas grava usando new Date().toISOString(), o banco pode
-       * devolver UTC sem o "Z". Nesse caso adicionamos o sufixo para impedir
-       * que o navegador interprete 03:37 como horário local.
-       */
-      const possuiFuso = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(textoData);
-
-      if(!possuiFuso){
-        textoData = textoData.replace(" ", "T") + "Z";
-      }
-
-      const data = new Date(textoData);
-
-      if(Number.isNaN(data.getTime())){
-        return String(v);
-      }
-
-      return data.toLocaleString("pt-BR", {
-        timeZone:"America/Cuiaba",
-        dateStyle:"short",
-        timeStyle:"short"
-      });
-    }catch(e){
-      return String(v);
-    }
-  }
-  function pedidoCurtoLog(p){ return "PED-" + (p?.id || "-"); }
-
-  function avisoAtlasLog(titulo, mensagem){
-    if(window.AtlasModal?.sucesso){
-      window.AtlasModal.sucesso(titulo || "Atlas", mensagem || "Operação concluída.");
-      return;
-    }
-    if(typeof window.atlasToast === "function"){
-      window.atlasToast("✔ " + escLog(mensagem || titulo || "Operação concluída."));
-    }
-  }
-
-  function erroAtlasLog(mensagem){
-    const texto = String(mensagem || "Não foi possível concluir a operação.");
-    if(window.AtlasModal?.erro){
-      window.AtlasModal.erro(texto);
-      return;
-    }
-    if(typeof window.atlasToast === "function"){
-      window.atlasToast("⚠ " + escLog(texto));
-    }
-  }
-
-  window.reservar = async function(id){
-    if(window.AtlasSeparacaoQR?.abrir){
-      window.AtlasSeparacaoQR.abrir(id);
-      return;
-    }
-    try{
-      document.querySelectorAll(`button[onclick*="${id}"]`).forEach(btn => { btn.disabled = true; btn.innerText = "Concluindo..."; });
-      if(window.AtlasLogistica?.finalizarSeparacao){
-        console.log("📦 Atlas Logística: finalizando separação", id);
-        await window.AtlasLogistica.finalizarSeparacao(id);
-      }else if(window.AtlasWorkflow?.finalizarSeparacao){
-        await window.AtlasWorkflow.finalizarSeparacao(id);
-      }else{
-        throw new Error("AtlasLogistica/AtlasWorkflow não carregado.");
-      }
-
-      fecharModalDetalhe?.();
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      erroAtlasLog("Erro ao finalizar separação: " + (e?.message || e));
-      console.error(e);
-    }
-  };
-
-  window.confirmarRetiradaModal = async function(){
-    const id = window.pedidoRetiradaAtual || pedidoRetiradaAtual;
-    if(!id) return;
-
-    if(!valor("retMotorista")){
-      erroAtlasLog("Informe o motorista/responsável.");
-      return;
-    }
-
-    const dados = {
-      motorista_nome: valor("retMotorista"),
-      transportadora: valor("retVeiculo"),
-      veiculo_placa: valor("retPlaca"),
-      observacao_transporte: valor("retObs")
-    };
-
-    try{
-      if(window.AtlasLogistica?.enviarPedido){
-        console.log("🚚 Atlas Logística: enviando pedido", id, dados);
-        await window.AtlasLogistica.enviarPedido(id, dados);
-      }else if(window.AtlasWorkflow?.enviarPedido){
-        await window.AtlasWorkflow.enviarPedido(id, dados);
-      }else{
-        throw new Error("AtlasLogistica/AtlasWorkflow não carregado.");
-      }
-
-      fecharModalRetirada();
-      avisoAtlasLog("🚚 Pedido em trânsito", "Pedido colocado em trânsito com sucesso.");
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      erroAtlasLog("Erro ao enviar pedido: " + (e?.message || e));
-      console.error(e);
-    }
-  };
-
-  window.confirmarRecebimentoAtlas = async function(pedidoId){
-    try{
-      const p = pedidoLocalLogistica(pedidoId) || pedidoLocal(pedidoId) || { id:pedidoId };
-      let dadosRecebimento = null;
-
-      if(window.AtlasModal && typeof window.AtlasModal.recebimento === "function"){
-        dadosRecebimento = await window.AtlasModal.recebimento(p);
-        if(!dadosRecebimento) return;
-      }else{
-        erroAtlasLog("O componente AtlasModal não foi carregado. Atualize a página e tente novamente.");
-        return;
-      }
-
-      if(!window.AtlasLogistica?.receberPedido){
-        throw new Error("AtlasLogistica.receberPedido não carregado.");
-      }
-
-      console.log("📥 Atlas Logística: recebendo pedido", pedidoId, dadosRecebimento);
-      await window.AtlasLogistica.receberPedido(pedidoId, dadosRecebimento);
-
-      if(window.AtlasModal?.sucesso){
-        window.AtlasModal.sucesso(
-          dadosRecebimento.divergencia ? "⚠ Divergência registrada" : "✔ Recebimento confirmado",
-          dadosRecebimento.divergencia
-            ? "A origem foi notificada e o pedido ficou aguardando conferência."
-            : "Patrimônio transferido para o destino e timeline registrada."
-        );
-      }else{
-        avisoAtlasLog(
-          dadosRecebimento.divergencia ? "⚠ Divergência registrada" : "✔ Recebimento confirmado",
-          dadosRecebimento.divergencia
-            ? "A origem foi notificada e o pedido ficou aguardando conferência."
-            : "Patrimônio transferido para o destino e timeline registrada."
-        );
-      }
-
-      await carregarTudo();
-      if(typeof window.bdrCarregarNotificacoes === "function") await window.bdrCarregarNotificacoes();
-    }catch(e){
-      erroAtlasLog("Erro ao confirmar recebimento: " + (e?.message || e));
-      console.error(e);
-    }
-  };
-
-  const abrirDetalheAnterior = window.abrirDetalhePedidoAtlas;
-  window.abrirDetalhePedidoAtlas = function(pedidoId){
-    if(typeof abrirDetalheAnterior === "function") abrirDetalheAnterior(pedidoId);
-
-    setTimeout(() => {
-      const p = pedidoLocalLogistica(pedidoId);
-      const box = document.getElementById("modalConteudo");
-      if(!p || !box) return;
-
-      const st = stLog(p);
-      const destinoId = p.obra_destino_id || p.obra_id;
-      const u = usuarioAtualAtlasLog() || {};
-      const usuarioDestino = String(u.obra_id || "") === String(destinoId || "");
-      const podeReceber = st === "EM_TRANSITO" && (usuarioDestino || ["MASTER","ADMIN"].includes(String(u.perfil || "").toUpperCase()));
-
-      let extra = "";
-      if(st === "EM_TRANSITO"){
-        extra += `
-          <div class="info-box" style="margin-top:12px">
-            <b>🚚 Em trânsito</b><br>
-            Saiu em: ${escLog(dataHoraBRLog(p.data_saida_cd))}<br>
-            Motorista: ${escLog(p.motorista_nome || "-")}<br>
-            Veículo/Transportadora: ${escLog(p.transportadora || "-")}<br>
-            Placa: ${escLog(p.veiculo_placa || "-")}<br>
-            Origem: ${escLog(nomeObraLog(p.obra_origem_id))}<br>
-            Destino: ${escLog(nomeObraLog(destinoId))}
-          </div>`;
-      }
-
-      if(p.observacao){
-        extra += `<div class="info-box" style="margin-top:12px"><b>📝 Observação do solicitante</b><br>${escLog(p.observacao)}</div>`;
-      }
-
-      if(podeReceber){
-        extra += `
-          <div class="atlas-modal-acoes" style="margin-top:12px">
-            <button class="atlas-btn success" style="background:#15803d!important;color:#fff!important" onclick="confirmarRecebimentoAtlas(${Number(p.id)});fecharModalDetalhe()">Confirmar recebimento</button>
-          </div>`;
-      }
-
-      if(extra){
-        box.insertAdjacentHTML("beforeend", extra);
-      }
-    }, 60);
-  };
-
-  console.log("✅ ATLAS EXPEDIÇÃO SPRINT 3.1.4 carregado - aprovação rápida e fluxo operacional corrigido");
-})();
-
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO SPRINT 3.3.0
-   • Pergunta se o pedido exige NF-e após a aprovação
-   • Registra NF-e emitida no portal externo
-   • Exibe AGUARDANDO_NFE junto ao fluxo operacional
-========================================================= */
-(function(){
-  "use strict";
-
-  /*
-   * Modal simples e interno do Atlas.
-   * Retorna:
-   * true  = exige NF-e
-   * false = não exige
-   * null  = usuário cancelou
-   */
-  function perguntarExigeNfeAtlas(){
-    return new Promise(resolve=>{
-      const fundo = document.createElement("div");
-      fundo.className = "modal-bg ativo";
-      fundo.style.zIndex = "10000001";
-
-      fundo.innerHTML = `
-        <div class="modal" style="max-width:520px">
-          <div class="modal-head">
-            <span>📄 Controle fiscal do pedido</span>
-            <button class="fechar-modal" id="atlasNfeCancelarX">X</button>
-          </div>
-          <div class="modal-body">
-            <div class="info-box" style="margin-top:0">
-              O almoxarifado pode iniciar a separação enquanto o administrativo prepara a nota.
-            </div>
-
-            <h3 style="margin:16px 0 8px;color:#0f172a">
-              Este pedido precisa de NF-e?
-            </h3>
-
-            <div style="display:grid;gap:10px">
-              <button class="btn-ok" id="atlasNfeSim" style="height:48px">
-                Sim, precisa de NF-e
-              </button>
-
-              <button class="btn-blue" id="atlasNfeNao" style="height:48px">
-                Não precisa de NF-e
-              </button>
-
-              <button class="btn-gray" id="atlasNfeCancelar">
-                Cancelar aprovação
-              </button>
-            </div>
-          </div>
-        </div>`;
-
-      document.body.appendChild(fundo);
-
-      function fechar(valor){
-        fundo.remove();
-        resolve(valor);
-      }
-
-      fundo.querySelector("#atlasNfeSim").onclick = ()=>fechar(true);
-      fundo.querySelector("#atlasNfeNao").onclick = ()=>fechar(false);
-      fundo.querySelector("#atlasNfeCancelar").onclick = ()=>fechar(null);
-      fundo.querySelector("#atlasNfeCancelarX").onclick = ()=>fechar(null);
-    });
-  }
-
-  /*
-   * CONFIRMAÇÃO LOCAL SEGURA
-   * Estas funções ficam no mesmo escopo da aprovação fiscal.
-   * Nunca deixam uma falha visual transformar uma operação concluída
-   * em mensagem de erro.
-   */
-  function mostrarSucessoAprovacaoAtlas(titulo, mensagem){
-    try{
-      if(window.AtlasModal?.sucesso){
-        window.AtlasModal.sucesso(
-          titulo || "✅ Operação concluída",
-          mensagem || "A operação foi realizada com sucesso."
-        );
-        return true;
-      }
-
-      if(typeof window.atlasToast === "function"){
-        window.atlasToast(
-          "✅ " + (mensagem || titulo || "Operação concluída.")
-        );
-        return true;
-      }
-    }catch(e){
-      console.warn(
-        "Atlas Expedição: aprovação concluída, mas a confirmação visual falhou:",
-        e?.message || e
-      );
-    }
-
-    return false;
-  }
-
-  function mostrarErroAprovacaoAtlas(mensagem){
-    const texto = String(
-      mensagem || "Não foi possível concluir a autorização."
-    );
-
-    try{
-      if(window.AtlasModal?.erro){
-        window.AtlasModal.erro(texto);
-        return true;
-      }
-
-      if(typeof window.atlasToast === "function"){
-        window.atlasToast("⚠ " + texto);
-        return true;
-      }
-    }catch(e){
-      console.error("Atlas Expedição:", texto, e);
-    }
-
-    return false;
-  }
-
-  async function salvarEscolhaNfeAtlas(pedidoId, exigeNfe){
-    if(!window.AtlasFiscal?.definirExigenciaNfe){
-      throw new Error("AtlasFiscal não carregado.");
-    }
-
-    let motivo = "";
-    if(exigeNfe === false){
-      motivo = "NF-e não exigida conforme decisão do responsável pela aprovação.";
-    }
-
-    return await window.AtlasFiscal.definirExigenciaNfe(
-      pedidoId,
-      exigeNfe,
-      motivo
-    );
-  }
-
-  /*
-   * Envolve a aprovação total já existente.
-   * Primeiro pergunta, depois aprova e registra a decisão fiscal.
-   */
-  const autorizarTodosAnterior330 = window.autorizarTodosAtlas;
-  if(typeof autorizarTodosAnterior330 === "function"){
-    window.autorizarTodosAtlas = async function(pedidoId){
-      const exigeNfe = await perguntarExigeNfeAtlas();
-      if(exigeNfe === null) return false;
-
-      try{
-        await autorizarTodosAnterior330(pedidoId);
-        await salvarEscolhaNfeAtlas(pedidoId, exigeNfe);
-        await window.carregarTudo?.();
-
-        mostrarSucessoAprovacaoAtlas(
-          "✅ Pedido aprovado",
-          "A autorização foi realizada com sucesso. O pedido foi encaminhado para separação."
-        );
-
-        return true;
-      }catch(e){
-        mostrarErroAprovacaoAtlas(
-          "Não foi possível concluir a autorização: " +
-          (e?.message || e)
-        );
-        return false;
-      }
-    };
-  }
-
-  /*
-   * Envolve a confirmação da aprovação parcial.
-   */
-  const confirmarParcialAnterior330 = window.confirmarAprovacaoParcialAtlas;
-  if(typeof confirmarParcialAnterior330 === "function"){
-    window.confirmarAprovacaoParcialAtlas = async function(pedidoId){
-      const exigeNfe = await perguntarExigeNfeAtlas();
-      if(exigeNfe === null) return false;
-
-      try{
-        await confirmarParcialAnterior330(pedidoId);
-        await salvarEscolhaNfeAtlas(pedidoId, exigeNfe);
-        await window.carregarTudo?.();
-
-        mostrarSucessoAprovacaoAtlas(
-          "✅ Aprovação parcial concluída",
-          "A decisão dos itens foi registrada e o pedido foi encaminhado para a próxima etapa."
-        );
-
-        return true;
-      }catch(e){
-        mostrarErroAprovacaoAtlas(
-          "Não foi possível concluir a aprovação parcial: " +
-          (e?.message || e)
-        );
-        return false;
-      }
-    };
-  }
-
-  /*
-   * Abre o formulário para registrar a nota feita no portal externo.
-   */
-  window.abrirRegistroNfeAtlas = function(pedidoId){
-    const p = (window.pedidos || []).find(x=>Number(x.id)===Number(pedidoId));
-    if(!p) return;
-
-    document.getElementById("modalTitulo").innerText =
-      "Registrar NF-e - " + (p.codigo || ("PED-" + p.id));
-
-    document.getElementById("modalConteudo").innerHTML = `
-      <div class="info-box" style="margin-top:0">
-        Emita a NF-e no portal utilizado pela empresa e registre os dados abaixo.
-      </div>
-
-      <div style="display:grid;gap:10px;margin-top:14px">
-        <label style="font-weight:900">
-          Número da NF-e
-          <input id="atlasNumeroNfe" value="${esc(p.numero_nfe || "")}" placeholder="Ex.: 12345">
-        </label>
-
-        <label style="font-weight:900">
-          Série
-          <input id="atlasSerieNfe" value="${esc(p.serie_nfe || "")}" placeholder="Ex.: 1">
-        </label>
-
-        <label style="font-weight:900">
-          Chave de acesso
-          <input id="atlasChaveNfe" value="${esc(p.chave_nfe || "")}" inputmode="numeric" maxlength="44" placeholder="44 números">
-        </label>
-
-        <button class="btn-ok" onclick="salvarRegistroNfeAtlas(${Number(p.id)})">
-          Salvar NF-e e liberar quando separado
-        </button>
-      </div>`;
-
-    document.getElementById("modalDetalhe").classList.add("ativo");
-  };
-
-  window.salvarRegistroNfeAtlas = async function(pedidoId){
-    try{
-      await window.AtlasFiscal.registrarNfe(pedidoId,{
-        numero_nfe:document.getElementById("atlasNumeroNfe")?.value,
-        serie_nfe:document.getElementById("atlasSerieNfe")?.value,
-        chave_nfe:document.getElementById("atlasChaveNfe")?.value
-      });
-
-      fecharModalDetalhe?.();
-      atlasToast("✅ NF-e registrada com sucesso.");
-      await window.carregarTudo?.();
-    }catch(e){
-      if(window.AtlasModal?.erro){
-        window.AtlasModal.erro(e?.message || String(e));
-      }else{
-        alert(e?.message || e);
-      }
-    }
-  };
-
-  /*
-   * Acrescenta AGUARDANDO_NFE à lista operacional.
-   */
-  const renderizarPedidosAnterior330 = window.renderizarPedidos || renderizarPedidos;
-  window.renderizarPedidos = renderizarPedidos = function(){
-    renderizarPedidosAnterior330();
-
-    const todos = window.pedidos || pedidos || [];
-    const fiscais = todos.filter(p =>
-      String(p.status || "").toUpperCase() === "AGUARDANDO_NFE"
-    );
-
-    const listaRetirada = document.getElementById("listaRetirada");
-    if(listaRetirada && fiscais.length){
-      const htmlFiscal = fiscais.map(p=>pedidoHTML(p)).join("");
-      listaRetirada.insertAdjacentHTML("afterbegin",htmlFiscal);
-    }
-  };
-
-  /*
-   * Troca a ação do pedido enquanto a nota estiver pendente.
-   */
-  const acoesPedidoAnterior330 = window.acoesPedido || acoesPedido;
-  window.acoesPedido = acoesPedido = function(p){
-    const st = String(p?.status || "").toUpperCase();
-
-    if(st === "AGUARDANDO_NFE"){
-      return `
-        <button class="btn-mini btn-blue" onclick="abrirRegistroNfeAtlas(${Number(p.id)})">
-          📄 Registrar NF-e
-        </button>`;
-    }
-
-    return acoesPedidoAnterior330(p);
-  };
-
-  console.log("✅ ATLAS EXPEDIÇÃO SPRINT 3.3.0 carregado - rota + decisão NF-e");
-})();
-
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO 3.5.0 — ESCOPO POR OBRA + PERFIL
-
-   REGRA CENTRAL:
-   - OWNER id=1: visão e operação global.
-   - Demais usuários: veem apenas pedidos relacionados à sua obra
-     ou solicitações criadas por eles.
-   - MASTER/ADMIN da obra de origem: autoriza, recusa e acompanha
-     as etapas operacionais.
-   - ALMOXARIFE da obra de origem: atua da separação em diante.
-   - Usuário comum: solicita, acompanha e recebe no destino.
-
-   IMPORTANTE:
-   - O filtro visual NÃO é a única proteção.
-   - As funções de ação também são bloqueadas por obra e perfil.
-========================================================= */
-(function(){
-  "use strict";
-
-  if(window.__ATLAS_EXP_ESCOPO_PERFIL_350__) return;
-  window.__ATLAS_EXP_ESCOPO_PERFIL_350__ = true;
-
-  function atlasNorm(v){
-    return String(v ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim()
-      .toUpperCase();
-  }
-
-  function atlasUsuario(){
-    try{
-      if(typeof window.usuarioAtual === "function") return window.usuarioAtual() || {};
-    }catch(e){}
-    try{
-      return JSON.parse(
-        localStorage.getItem("usuario_logado") ||
-        localStorage.getItem("usuarioLogado") ||
-        "{}"
-      );
-    }catch(e){ return {}; }
-  }
-
-  function atlasPerfil(){ return atlasNorm(atlasUsuario()?.perfil); }
-  function atlasObraUsuario(){ return Number(atlasUsuario()?.obra_id || 0); }
-  function atlasOwnerGlobal(){ return Number(atlasUsuario()?.id) === 1; }
-  function atlasPermissoes(){
-    return atlasNorm(atlasUsuario()?.permissoes).split(/[;,|]/).map(x => x.trim()).filter(Boolean);
-  }
-  function atlasTemPermissao(...permissoes){
-    const atuais = atlasPermissoes();
-    return permissoes.some(p => atuais.includes(atlasNorm(p)));
-  }
-  function atlasEhGestor(){ return ["MASTER","ADMIN"].includes(atlasPerfil()); }
-  function atlasEhAlmoxarife(){ return ["ALMOXARIFE","ALMOXARIFADO"].includes(atlasPerfil()); }
-  function atlasEquipeOperacional(){
-    return atlasEhGestor() || atlasEhAlmoxarife() || atlasTemPermissao("EXPEDICAO_SEPARAR","SEPARAR_PEDIDO");
-  }
-  function atlasEhResponsavelTransporte(){
-    return atlasOwnerGlobal() || atlasTemPermissao("EXPEDICAO_TRANSPORTE","EXPEDICAO_ENTREGAR","ENTREGAR_MATERIAL");
-  }
-
-  function atlasPedidoPorId(id){
-    const lista = window.pedidos || (typeof pedidos !== "undefined" ? pedidos : []) || [];
-    return lista.find(p => Number(p?.id) === Number(id));
-  }
-
-  function atlasObraOrigem(p){ return Number(p?.obra_origem_id || 0); }
-  function atlasObraDestino(p){ return Number(p?.obra_destino_id || p?.obra_id || 0); }
-  function atlasMesmaObraOrigem(p){
-    return atlasOwnerGlobal() || (!!atlasObraUsuario() && atlasObraUsuario() === atlasObraOrigem(p));
-  }
-  function atlasMesmaObraDestino(p){
-    return atlasOwnerGlobal() || (!!atlasObraUsuario() && atlasObraUsuario() === atlasObraDestino(p));
-  }
-
-  function atlasPedidoDoUsuario(p){
-    if(atlasOwnerGlobal()) return true;
-    const u = atlasUsuario() || {};
-    const uid = Number(u.id || u.usuario_id || 0);
-    const ids = [
-      p?.solicitante_id,
-      p?.solicitado_por,
-      p?.usuario_criacao_id,
-      p?.criado_por_id,
-      p?.usuario_id
-    ].map(Number).filter(Boolean);
-    if(uid && ids.includes(uid)) return true;
-
-    const nome = atlasNorm(u.nome || u.usuario || u.email);
-    if(!nome) return false;
-    return [p?.solicitante, p?.usuario_criacao, p?.solicitado_por_nome]
-      .some(v => atlasNorm(v) === nome);
-  }
-
-  function atlasPodeAutorizar(p){
-    return atlasOwnerGlobal() || (atlasEhGestor() && atlasMesmaObraOrigem(p));
-  }
-
-  function atlasPodeSeparar(p){
-    return atlasOwnerGlobal() || (atlasEquipeOperacional() && atlasMesmaObraOrigem(p));
-  }
-
-  function atlasPodeRetirada(p){
-    return atlasOwnerGlobal() || (atlasEhResponsavelTransporte() && atlasMesmaObraOrigem(p));
-  }
-  function atlasPodeNfe(p){ return atlasPodeAutorizar(p); }
-  function atlasPodeReceber(p){ return atlasOwnerGlobal() || atlasMesmaObraDestino(p); }
-
-  function atlasPodeAcompanhar(p){
-    if(atlasOwnerGlobal()) return true;
-    return atlasPedidoDoUsuario(p) || atlasMesmaObraOrigem(p) || atlasMesmaObraDestino(p);
-  }
-
-  window.AtlasExpedicaoPermissoes = Object.freeze({
-    ownerGlobal: atlasOwnerGlobal,
-    podeAutorizar: atlasPodeAutorizar,
-    podeSeparar: atlasPodeSeparar,
-    podeRetirada: atlasPodeRetirada,
-    podeReceber: atlasPodeReceber,
-    podeAcompanhar: atlasPodeAcompanhar,
-    pedidoDoUsuario: atlasPedidoDoUsuario,
-    mesmaObraOrigem: atlasMesmaObraOrigem,
-    mesmaObraDestino: atlasMesmaObraDestino
-  });
-
-  function atlasStatus(p){ return atlasNorm(p?.status).replaceAll(" ", "_"); }
-
-  function atlasAjustarAbaRetirada(){
-    const podeVerRetirada = atlasEhResponsavelTransporte();
-    const botao = [...document.querySelectorAll(".tab-btn")].find(btn => {
-      const onclick = btn.getAttribute("onclick") || "";
-      return onclick.includes("'retirada'") || onclick.includes('"retirada"');
-    });
-    const secao = document.getElementById("tab-retirada");
-    if(botao){ botao.style.display = podeVerRetirada ? "" : "none"; botao.setAttribute("aria-hidden", podeVerRetirada ? "false" : "true"); }
-    if(secao){ secao.style.display = podeVerRetirada ? "" : "none"; secao.setAttribute("aria-hidden", podeVerRetirada ? "false" : "true"); }
-  }
-
-  function atlasAjustarAbaAprovacao(){
-    const podeVerAprovacao = atlasOwnerGlobal() || atlasEhGestor();
-
-    const botao = [...document.querySelectorAll(".tab-btn")]
-      .find(btn => {
-        const onclick = btn.getAttribute("onclick") || "";
-        return onclick.includes("'solicitacoes'") ||
-               onclick.includes('"solicitacoes"');
-      });
-
-    const secao = document.getElementById("tab-solicitacoes");
-
-    if(botao){
-      botao.style.display = podeVerAprovacao ? "" : "none";
-      botao.setAttribute("aria-hidden", podeVerAprovacao ? "false" : "true");
-    }
-
-    if(secao){
-      secao.style.display = podeVerAprovacao ? "" : "none";
-      secao.setAttribute("aria-hidden", podeVerAprovacao ? "false" : "true");
-    }
-
-    /*
-     * Se um usuário sem permissão entrou por URL ou ficou com a aba
-     * ativa no navegador, volta automaticamente ao Catálogo.
-     */
-    if(!podeVerAprovacao && secao?.classList.contains("active")){
-      const botaoCatalogo = [...document.querySelectorAll(".tab-btn")]
-        .find(btn => {
-          const onclick = btn.getAttribute("onclick") || "";
-          return onclick.includes("'catalogo'") ||
-                 onclick.includes('"catalogo"');
-        });
-
-      if(typeof window.abrirAba === "function"){
-        window.abrirAba("catalogo", botaoCatalogo || null);
-      }
-    }
-  }
-
-  function atlasListaEscopo(id, arr, vazio){
-    const el = document.getElementById(id);
-    if(!el) return;
-    if(!arr.length){
-      el.innerHTML = `<div class="cart-empty">${typeof esc === "function" ? esc(vazio) : vazio}</div>`;
-      return;
-    }
-    el.innerHTML = arr.map(p => typeof pedidoHTML === "function" ? pedidoHTML(p) : "").join("");
-  }
-
-  /* Cada aba recebe somente os pedidos que cabem ao usuário atual. */
-  window.renderizarPedidos = renderizarPedidos = function(){
-    atlasAjustarAbaAprovacao();
-    atlasAjustarAbaRetirada();
-
-    const todos = (window.pedidos || (typeof pedidos !== "undefined" ? pedidos : []) || [])
-      .filter(atlasPodeAcompanhar);
-
-    const solicitacoes = todos.filter(p => {
-      const st = atlasStatus(p);
-
-      if(!["SOLICITADO","AGUARDANDO_AUTORIZACAO"].includes(st)){
-        return false;
-      }
-
-      /*
-       * REGRA OFICIAL ATLAS:
-       * o solicitante não entra na fila de aprovação do próprio pedido.
-       * A aba Solicitações é exclusiva de quem realmente pode decidir:
-       * OWNER global ou MASTER/ADMIN da obra de origem.
-       */
-      return atlasPodeAutorizar(p);
-    });
-
-    const separacao = todos.filter(p =>
-      atlasStatus(p) === "EM_SEPARACAO" && atlasPodeSeparar(p)
-    );
-
-    const retirada = todos.filter(p =>
-      atlasStatus(p) === "AGUARDANDO_RETIRADA" && atlasPodeRetirada(p)
-    );
-
-    const transito = todos.filter(p => {
-      if(atlasStatus(p) !== "EM_TRANSITO") return false;
-      if(atlasOwnerGlobal()) return true;
-      return atlasPodeRetirada(p) || atlasPodeReceber(p) || atlasPedidoDoUsuario(p);
-    });
-
-    const historico = todos.filter(p => [
-      "RECEBIDO","RECEBIDO_PARCIAL","RECUSADO","CANCELADO","ENTREGUE",
-      "NEGADO","RECEBIDO_COM_DIVERGENCIA"
-    ].includes(atlasStatus(p)));
-
-    atlasListaEscopo(
-      "listaSolicitacoes",
-      solicitacoes,
-      "Nenhuma solicitação da sua obra aguardando autorização."
-    );
-    atlasListaEscopo("listaSeparacao", separacao,
-      "Nenhum pedido da sua obra aguardando separação.");
-    atlasListaEscopo("listaRetirada", retirada,
-      "Nenhum pedido da sua obra aguardando retirada.");
-    atlasListaEscopo("listaTransito", transito,
-      "Nenhum pedido relacionado à sua obra está em trânsito.");
-    atlasListaEscopo("listaHistorico", historico,
-      "Nenhum histórico relacionado à sua obra ou às suas solicitações.");
-  };
-
-  function atlasNegarAcao(msg){
-    const texto = msg || "Esta etapa pertence à equipe da obra de origem do pedido.";
-
-    if(window.AtlasModal?.erro){
-      window.AtlasModal.erro(texto);
-    }else if(typeof window.atlasToast === "function"){
-      window.atlasToast("🔒 " + texto);
-    }else{
-      console.warn("Atlas Expedição:", texto);
-    }
-
-    return false;
-  }
-
-  function atlasProtegerFuncao(nome, regra, mensagem){
-    const original = window[nome];
-    if(typeof original !== "function" || original.__atlasProtegida350) return;
-    const protegida = async function(pedidoId, ...args){
-      const p = atlasPedidoPorId(pedidoId);
-      if(!p || !regra(p)) return atlasNegarAcao(mensagem);
-      return await original.call(this, pedidoId, ...args);
-    };
-    protegida.__atlasProtegida350 = true;
-    window[nome] = protegida;
-    try{ eval(`${nome}=window[nome]`); }catch(e){}
-  }
-
-  function atlasInstalarProtecoes(){
-    atlasProtegerFuncao("autorizar", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode autorizar.");
-    atlasProtegerFuncao("negar", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode recusar.");
-    atlasProtegerFuncao("autorizarTodosAtlas", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode autorizar.");
-    atlasProtegerFuncao("recusarTodosAtlas", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode recusar.");
-    atlasProtegerFuncao("abrirAprovacaoParcialAtlas", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode decidir os itens.");
-    atlasProtegerFuncao("confirmarAprovacaoParcialAtlas", atlasPodeAutorizar, "Somente MASTER/ADMIN da obra de origem pode decidir os itens.");
-    atlasProtegerFuncao("reservar", atlasPodeSeparar, "Somente a equipe da obra de origem pode concluir a separação.");
-    atlasProtegerFuncao("abrirRetirada", atlasPodeRetirada, "Somente o responsável por retirada e transporte da obra de origem pode executar esta etapa.");
-    atlasProtegerFuncao("abrirRegistroNfeAtlas", atlasPodeNfe, "Somente MASTER/ADMIN da obra de origem pode registrar a NF-e.");
-    atlasProtegerFuncao("confirmarRecebimentoAtlas", atlasPodeReceber, "Somente a obra de destino pode confirmar o recebimento.");
-
-    if(window.AtlasSeparacaoQR && typeof window.AtlasSeparacaoQR.abrir === "function" && !window.AtlasSeparacaoQR.abrir.__atlasProtegida350){
-      const abrirQr = window.AtlasSeparacaoQR.abrir;
-      window.AtlasSeparacaoQR.abrir = function(pedidoId, ...args){
-        const p = atlasPedidoPorId(pedidoId);
-        if(!p || !atlasPodeSeparar(p)) return atlasNegarAcao("Somente a equipe da obra de origem pode iniciar a separação.");
-        return abrirQr.call(this, pedidoId, ...args);
-      };
-      window.AtlasSeparacaoQR.abrir.__atlasProtegida350 = true;
-    }
-  }
-
-  function atlasClassificarBotao(btn){
-    const txt = atlasNorm((btn.innerText || "") + " " + (btn.getAttribute("onclick") || ""));
-    if(txt.includes("AUTORIZ") || txt.includes("APROVACAO") || txt.includes("RECUSAR") || txt.includes("NEGAR")) return "AUTORIZAR";
-    if(txt.includes("SEPAR") || txt.includes("RESERV")) return "SEPARAR";
-    if(txt.includes("RETIRADA") || txt.includes("TRANSITO") || txt.includes("ENVIAR")) return "RETIRADA";
-    if(txt.includes("NF-E") || txt.includes("NFE")) return "NFE";
-    if(txt.includes("RECEBIMENTO") || txt.includes("RECEBER")) return "RECEBER";
-    return "OUTRO";
-  }
-
-  function atlasLimparBotoesModal(pedidoId){
-    const p = atlasPedidoPorId(pedidoId);
-    if(!p) return;
-    const raiz = document.getElementById("modalDetalhe") || document;
-    raiz.querySelectorAll("button").forEach(btn => {
-      const tipo = atlasClassificarBotao(btn);
-      let pode = true;
-      if(tipo === "AUTORIZAR") pode = atlasPodeAutorizar(p);
-      if(tipo === "SEPARAR") pode = atlasPodeSeparar(p);
-      if(tipo === "RETIRADA") pode = atlasPodeRetirada(p);
-      if(tipo === "NFE") pode = atlasPodeNfe(p);
-      if(tipo === "RECEBER") pode = atlasPodeReceber(p);
-      if(!pode) btn.remove();
-    });
-  }
-
-  function atlasProtegerModal(){
-    const original = window.abrirDetalhePedidoAtlas;
-    if(typeof original !== "function" || original.__atlasEscopo350) return;
-    const nova = function(pedidoId, ...args){
-      const p = atlasPedidoPorId(pedidoId);
-      if(!p || !atlasPodeAcompanhar(p)) return atlasNegarAcao("Este pedido não pertence à sua obra nem foi solicitado por você.");
-      const r = original.call(this, pedidoId, ...args);
-      [0,70,180,350].forEach(t => setTimeout(() => atlasLimparBotoesModal(pedidoId), t));
-      return r;
-    };
-    nova.__atlasEscopo350 = true;
-    window.abrirDetalhePedidoAtlas = nova;
-    try{ abrirDetalhePedidoAtlas = nova; }catch(e){}
-  }
-
-  function atlasAplicarTudo(){
-    atlasInstalarProtecoes();
-    atlasProtegerModal();
-    try{ window.renderizarPedidos(); }catch(e){ console.warn("Atlas escopo: renderização pendente.", e); }
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(atlasAplicarTudo, 50);
-      setTimeout(atlasAplicarTudo, 500);
-      setTimeout(atlasAplicarTudo, 1400);
-    });
-  }else{
-    setTimeout(atlasAplicarTudo, 0);
-    setTimeout(atlasAplicarTudo, 500);
-  }
-
-  window.addEventListener("load", () => setTimeout(atlasAplicarTudo, 300));
-  window.addEventListener("atlas:owner-mode-changed", () => setTimeout(atlasAplicarTudo, 80));
-
-  console.log("✅ ATLAS EXPEDIÇÃO 3.5.0 carregado — escopo por obra + perfil");
-})();
-
-
-
-/* =========================================================
    CATÁLOGO — FILTROS E PAGINAÇÃO
-   A paginação visual antiga foi removida.
-   A fonte oficial agora é a paginação real do Supabase
-   implementada acima em carregarCatalogo().
+   A fonte oficial é a paginação real do Supabase implementada
+   no fluxo principal e em expedicaoCatalogo.js.
 ========================================================= */
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO — ACABAMENTO LOGÍSTICO V3.6
-   - sem alert()/confirm() nativos no fluxo de retirada/recebimento;
-   - mensagens pelo AtlasModal;
-   - notificações seguem a intenção definida no Workflow.
-========================================================= */
-console.log("✅ ATLAS EXPEDIÇÃO ACABAMENTO V3.6 carregado - logística sem alertas nativos");
-
-console.log("✅ ATLAS CARRINHO VISUAL V3.7 carregado - item voando até o carrinho");
-
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO — SEGURANÇA DE APROVAÇÃO V3.8
-   - solicitante não vê o próprio pedido na fila de aprovação;
-   - aba Solicitações oculta para perfis não gestores;
-   - ações continuam protegidas por pedido e obra de origem.
-========================================================= */
-console.log("✅ ATLAS EXPEDIÇÃO SEGURANÇA V3.8 carregada - aprovação somente para responsáveis da origem");
-
-console.log("✅ ATLAS EXPEDIÇÃO V3.9 carregada - retirada por permissão EXPEDICAO_TRANSPORTE");
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO V4.0 — CONFIRMAÇÃO DE APROVAÇÃO
-========================================================= */
-console.log("✅ ATLAS EXPEDIÇÃO V4.0 carregada - confirmação visual após aprovação");
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO V4.1 — CONFIRMAÇÃO SEGURA
-   - sucesso verde somente quando a autorização conclui;
-   - erro somente quando a operação realmente falha;
-   - correção de escopo das funções visuais.
-========================================================= */
-console.log("✅ ATLAS EXPEDIÇÃO V4.1 carregada - confirmação de aprovação corrigida");
-
-/* =========================================================
-   ATLAS EXPEDIÇÃO V4.2 — HORÁRIO LOCAL CORRETO
-   - interpreta timestamp sem timezone como UTC;
-   - exibe saída no fuso America/Cuiaba.
-========================================================= */
-console.log("✅ ATLAS EXPEDIÇÃO V4.2 carregada - horário de saída corrigido");

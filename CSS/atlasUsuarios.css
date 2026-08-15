@@ -1543,3 +1543,234 @@ body{
     width:100%;
   }
 }
+
+
+/* =========================================================
+   EMPRESAS / OBRAS VISÍVEIS — EXPEDIÇÃO
+   A caixa usa .modal-bg / .modal / .fechar do Patrimônio.
+========================================================= */
+#modalExpedicaoObras .atlas-expedition-works-modal{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  width:95%;
+  max-width:680px;
+  max-height:82vh;
+  overflow:hidden;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-head{
+  flex:0 0 auto;
+  padding:0 44px 11px 0;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-head h3{
+  margin:0;
+  color:var(--bdr-red,#a4161a);
+  font-size:18px;
+  font-weight:900;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-head p{
+  margin:4px 0 0;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.4;
+}
+
+#modalExpedicaoObras .fechar{
+  position:absolute;
+  top:14px;
+  right:14px;
+  z-index:5;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-toolbar{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:9px;
+  padding:10px 0;
+  border-top:1px solid #e5e7eb;
+  border-bottom:1px solid #e5e7eb;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-search{
+  min-width:0;
+  height:40px;
+  padding:0 11px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+  color:#64748b;
+  box-shadow:none;
+}
+
+/* Remove o contorno vermelho/claro apontado no vídeo. */
+#modalExpedicaoObras .atlas-expedition-works-search:focus-within{
+  border-color:#94a3b8;
+  box-shadow:none;
+  outline:none;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-search input,
+#modalExpedicaoObras .atlas-expedition-works-search input:focus,
+#modalExpedicaoObras .atlas-expedition-works-search input:focus-visible{
+  min-width:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+#modalExpedicaoObras #btnSelecionarTodasExpedicaoObras{
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  background:#fff;
+  color:#172033;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-list{
+  flex:1 1 auto;
+  min-height:180px;
+  max-height:420px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  background:#fff;
+}
+
+/*
+  Agora cada obra é um button.
+  Sem label/checkbox escondido = sem tela branca/reflow estranho.
+*/
+#modalExpedicaoObras .atlas-expedition-work-item{
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  min-width:0;
+  min-height:50px;
+  padding:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:0;
+  border-bottom:1px solid #edf1f5;
+  border-radius:0;
+  background:#fff;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-item:hover{
+  background:#f8fafc;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-item.selecionada{
+  background:#fff7f7;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-item.principal{
+  background:#fff1f2;
+  cursor:default;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-item:focus,
+#modalExpedicaoObras .atlas-expedition-work-item:focus-visible{
+  outline:none;
+  box-shadow:inset 0 0 0 1px #e2e8f0;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-checkmark{
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #cbd5e1;
+  border-radius:6px;
+  background:#fff;
+  color:transparent;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-item.selecionada .atlas-expedition-work-checkmark,
+#modalExpedicaoObras .atlas-expedition-work-item.principal .atlas-expedition-work-checkmark{
+  border-color:#c4121a;
+  background:#c4121a;
+  color:#fff;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-text{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-text strong{
+  overflow:hidden;
+  color:#1f2937;
+  font-size:12px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+#modalExpedicaoObras .atlas-expedition-work-text small{
+  color:#64748b;
+  font-size:10px;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-actions{
+  flex:0 0 auto;
+  min-height:52px;
+  padding-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-top:1px solid #e5e7eb;
+}
+
+#modalExpedicaoObras .atlas-expedition-works-actions>small{
+  color:#64748b;
+  font-size:10px;
+}
+
+#modalExpedicaoObras #btnSalvarExpedicaoObras{
+  min-height:38px;
+  padding:8px 13px;
+  border:0;
+  border-radius:9px;
+  background:#cf111b;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+}
+
+@media(max-width:640px){
+  #modalExpedicaoObras .atlas-expedition-works-toolbar{
+    grid-template-columns:1fr;
+  }
+
+  #modalExpedicaoObras #btnSelecionarTodasExpedicaoObras,
+  #modalExpedicaoObras #btnSalvarExpedicaoObras{
+    width:100%;
+  }
+
+  #modalExpedicaoObras .atlas-expedition-works-actions{
+    align-items:stretch;
+    flex-direction:column;
+  }
+}
