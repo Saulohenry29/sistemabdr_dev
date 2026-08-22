@@ -32,7 +32,7 @@ function renderizarCampo(placeholder="Número de série"){
   return `
     <div class="atlas-serie-lote" id="atlasSerieLote">
       <div class="atlas-serie-area" id="atlasSerieArea">
-        <input id="numero_serie" placeholder="${placeholder}">
+        <input id="numero_serie" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${placeholder}">
       </div>
       <button type="button" class="atlas-lote-botao" id="btnAlternarCadastroLote"
         aria-expanded="false" aria-label="Iniciar cadastro em lote"
@@ -43,7 +43,8 @@ function renderizarCampo(placeholder="Número de série"){
 
 function conectar(){
   const botao = el("btnAlternarCadastroLote");
-  if(!botao) return;
+  if(!botao || botao.dataset.atlasLoteConectado === "1") return;
+  botao.dataset.atlasLoteConectado = "1";
   botao.addEventListener("click", alternar);
 }
 
@@ -125,7 +126,7 @@ function fechar(opcoes={}){
   if(!host || !area || !botao) return;
 
   const placeholder = host.dataset.placeholder || "Número de série";
-  area.innerHTML = `<input id="numero_serie" placeholder="${placeholder}">`;
+  area.innerHTML = `<input id="numero_serie" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${placeholder}">`;
   host.dataset.modo = "individual";
   botao.textContent = "+ Lote";
   botao.classList.remove("ativo");

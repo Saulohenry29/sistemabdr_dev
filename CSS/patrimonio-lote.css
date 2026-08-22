@@ -450,3 +450,68 @@
     padding:0!important;
   }
 }
+
+/* =========================================================
+   ATLAS LOTE — TOQUE ÚNICO + MOBILE SEM ZOOM
+   ========================================================= */
+.atlas-lote-sem-serie{
+  position:relative;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.atlas-lote-sem-serie input{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  opacity:0!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  z-index:3;
+}
+.atlas-lote-sem-serie .atlas-lote-check-caixa,
+.atlas-lote-sem-serie > span:not(.atlas-lote-check-caixa){pointer-events:none}
+
+@media(max-width:560px){
+  .atlas-serie-lote,
+  .atlas-serie-lote[data-modo="lote"]{
+    grid-column:1!important;
+    width:100%!important;
+    max-width:100%!important;
+    grid-template-columns:minmax(0,1fr) 64px!important;
+    gap:7px!important;
+  }
+
+  .atlas-serie-area,
+  .atlas-serie-area > input{min-width:0!important;width:100%!important}
+
+  .atlas-lote-botao{
+    width:64px!important;
+    min-width:64px!important;
+    padding:0 6px!important;
+  }
+
+  .atlas-serie-lote[data-modo="lote"] .atlas-lote-botao,
+  .atlas-lote-botao.ativo{
+    width:40px!important;
+    min-width:40px!important;
+  }
+
+  .atlas-lote-modos{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:2px!important;
+    padding:5px 9px 4px!important;
+  }
+
+  .atlas-lote-sem-serie{
+    width:100%;
+    margin:0!important;
+    padding:9px 6px!important;
+    box-sizing:border-box;
+  }
+
+  .atlas-editor-textarea,
+  #atlasLoteQuantidade{font-size:16px!important}
+}

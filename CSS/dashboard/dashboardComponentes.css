@@ -1,0 +1,908 @@
+/* CORREÇÃO FINAL: sem cursor/barra piscando no topo */
+.notif-btn,
+.notif-btn *,
+.user-menu-top,
+.user-menu-top *,
+.dash-user,
+.dash-user *{
+  caret-color:transparent !important;
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  -webkit-tap-highlight-color:transparent !important;
+  outline:none !important;
+}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
+}
+
+.user-menu-top{
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+}
+
+.user-menu-top:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu-top:hover .avatar{
+  transform:scale(1.06);
+}
+
+.avatar{transition:.22s ease;}
+
+/* =========================================================
+   SININHO REAL - NOTIFICAÇÕES DE PEDIDOS
+========================================================= */
+.notif-wrap{
+  position:relative;
+}
+
+.notif-btn{
+  position:relative;
+}
+
+.notif-badge{
+  position:absolute;
+  top:-3px;
+  right:-4px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:50px;
+  right:0;
+  width:360px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownUser .16s ease;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:330px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:11px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+  line-height:1.35;
+}
+
+.notif-item:hover{
+  background:#fff1f2;
+}
+
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+
+.notif-item small{
+  color:#6b7280;
+}
+
+.notif-empty{
+  padding:14px;
+  font-size:12px;
+  color:#6b7280;
+}
+
+@media(max-width:900px){
+  .notif-dropdown{
+    right:-120px;
+    width:310px;
+  }
+}
+
+
+/* =========================================================
+   BDR PREMIUM - FILTRO MODAL LIMPO
+========================================================= */
+.quick-filters{
+  grid-template-columns:auto repeat(4,95px) 220px 220px 130px 95px 1fr !important;
+  align-items:center !important;
+}
+
+.filter-premium-btn{
+  height:42px;
+  border:1px solid #fee2e2;
+  background:linear-gradient(135deg,#fff,#fff7f7);
+  border-radius:12px;
+  padding:5px 12px;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:1px;
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+  transition:.18s;
+}
+
+.filter-premium-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(15,23,42,.10);
+  border-color:#d71920;
+}
+
+.filter-premium-btn span{
+  color:#6b7280;
+  font-size:10px;
+  font-weight:900;
+}
+
+.filter-premium-btn b{
+  color:#111827;
+  font-size:12px;
+  max-width:190px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.modo-pill{
+  height:34px;
+  border-radius:999px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  color:#374151;
+  font-size:11px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+}
+
+.modo-pill.periodo{
+  background:#fff1f2;
+  border-color:#fecaca;
+  color:#d71920;
+}
+
+.bdr-filter-modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.58);
+  backdrop-filter:blur(4px);
+  z-index:1000000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.bdr-filter-modal-bg.ativo{
+  display:flex;
+}
+
+.bdr-filter-modal{
+  width:min(620px,96vw);
+  max-height:86vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  border-left:5px solid #d71920;
+  box-shadow:0 28px 90px rgba(15,23,42,.35);
+  padding:18px;
+}
+
+.bdr-filter-modal-top{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.bdr-filter-modal-top h2{
+  margin:0;
+  color:#d71920;
+  font-size:20px;
+}
+
+.bdr-filter-modal-top p{
+  margin:4px 0 0;
+  color:#6b7280;
+  font-size:12px;
+}
+
+.bdr-filter-modal-top button{
+  border:none;
+  background:#dc2626;
+  color:#fff;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.bdr-filter-tools{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.bdr-filter-tools input{
+  height:42px;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:0 12px;
+  font-size:13px;
+}
+
+.bdr-filter-tools button{
+  height:42px;
+  border:none;
+  background:#111827;
+  color:#fff;
+  border-radius:12px;
+  padding:0 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.bdr-filter-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.bdr-filter-option{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:14px;
+  padding:11px 12px;
+  cursor:pointer;
+  transition:.18s;
+  min-height:52px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+
+.bdr-filter-option:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 18px rgba(15,23,42,.10);
+  border-color:#fecaca;
+}
+
+.bdr-filter-option.ativo{
+  background:linear-gradient(135deg,#d71920,#ef4444);
+  color:#fff;
+  border-color:#d71920;
+  box-shadow:0 12px 25px rgba(215,25,32,.25);
+}
+
+.bdr-filter-option strong{
+  font-size:12px;
+  line-height:1.25;
+}
+
+.bdr-filter-option span{
+  min-width:30px;
+  height:24px;
+  border-radius:999px;
+  background:#f3f4f6;
+  color:#6b7280;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:900;
+}
+
+.bdr-filter-option.ativo span{
+  background:#fff;
+  color:#d71920;
+}
+
+@media(max-width:1350px){
+  .quick-filters{
+    grid-template-columns:1fr 1fr !important;
+  }
+}
+
+
+/* =========================================================
+   BDR FOCO GERENCIAL
+   Valor patrimonial em evidência; quantidade fica em segundo plano.
+========================================================= */
+.kpi-card.valor-destaque{
+  grid-column:span 2;
+  border-color:#ddd6fe;
+  background:linear-gradient(135deg,#fff,#f5f3ff);
+}
+.kpi-card.valor-destaque .kpi-value{
+  font-size:30px;
+}
+.kpi-card.valor-destaque .kpi-label{
+  color:#7c3aed;
+}
+@media(max-width:1350px){
+  .kpi-card.valor-destaque{grid-column:span 2}
+}
+@media(max-width:800px){
+  .kpi-card.valor-destaque{grid-column:span 1}
+}
+
+
+.valor-principal{
+  border-left:5px solid #7c3aed;
+  box-shadow:0 8px 24px rgba(124,58,237,.10);
+}
+.valor-principal h3{
+  color:#7c3aed;
+}
+
+
+
+/* =========================================================
+   BDR DASHBOARD INTERATIVO - PADRÃO FINAL
+   AJUSTES RÁPIDOS:
+   --dash-card-h: altura padrão dos cards/gráficos
+   --dash-gap: espaço entre blocos
+   --dash-ia-bg: cor leve do card de IA
+========================================================= */
+:root{
+  --dash-card-h:300px;
+  --dash-gap:12px;
+  --dash-ia-bg:#fff7f7;
+}
+
+.btn-clear-dashboard{
+  height:34px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  background:#fff;
+  color:#374151;
+  padding:0 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn-clear-dashboard:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  border-color:#fecaca;
+}
+
+.dashboard-grid{
+  grid-template-columns:1fr 1fr .9fr !important;
+  gap:var(--dash-gap) !important;
+  align-items:stretch !important;
+}
+.left-stack,
+.mid-stack,
+.right-stack{
+  display:grid !important;
+  grid-auto-rows:minmax(var(--dash-card-h), auto) !important;
+  gap:var(--dash-gap) !important;
+}
+.left-stack > .card-light,
+.mid-stack > .card-light,
+.right-stack > .card-light,
+.bottom-grid{
+  min-height:var(--dash-card-h) !important;
+}
+.bottom-grid{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:var(--dash-gap) !important;
+}
+.bottom-grid .card-light{
+  min-height:var(--dash-card-h) !important;
+}
+.chart-card canvas,
+.chart-card.big canvas{
+  height:calc(var(--dash-card-h) - 76px) !important;
+}
+
+.card-light{
+  border-left:4px solid var(--bdr-red);
+  border-radius:14px !important;
+}
+.card-light h3{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  border-bottom:1px solid #f1f5f9;
+}
+
+/* IA agora no padrão do sistema, sem bloco vermelho forte */
+.right-stack .card-light.red-head{
+  background:#fff !important;
+  border:1px solid var(--bdr-border) !important;
+  border-left:4px solid var(--bdr-red) !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.04) !important;
+}
+.right-stack .card-light.red-head h3{
+  background:linear-gradient(135deg,#fff,#fff7f7) !important;
+  color:var(--bdr-red) !important;
+  border-bottom:1px solid #fecaca !important;
+}
+.ai-list{
+  gap:9px !important;
+}
+.ai-line{
+  background:#f8fafc !important;
+  border:1px solid #e5e7eb !important;
+  border-left:4px solid #2563eb !important;
+  border-radius:10px !important;
+  padding:9px 10px !important;
+  min-height:42px !important;
+}
+.ai-line:hover{
+  background:#fff1f2 !important;
+  border-left-color:var(--bdr-red) !important;
+}
+.alert-row{
+  min-height:48px;
+}
+
+/* Visual quando um card/gráfico está filtrando */
+.kpi-card.active,
+.bdr-chart-active{
+  outline:3px solid rgba(215,25,32,.18) !important;
+  box-shadow:0 10px 24px rgba(215,25,32,.12) !important;
+}
+
+.bdr-brand-icon.bdr-logo-menu{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  color:transparent !important;
+}
+.bdr-brand-icon.bdr-logo-menu img,
+.bdr-brand-icon.bdr-logo-menu i,
+.bdr-brand-icon.bdr-logo-menu span{
+  display:none !important;
+}
+
+@media(max-width:1350px){
+  .dashboard-grid{grid-template-columns:1fr !important;}
+  .left-stack,.mid-stack,.right-stack{grid-auto-rows:auto !important;}
+}
+@media(max-width:800px){
+  :root{--dash-card-h:260px;}
+  .bottom-grid{grid-template-columns:1fr !important;}
+}
+
+@media(max-width:800px){
+  :root{--dash-card-h:260px;}
+  .bottom-grid{grid-template-columns:1fr !important;}
+}
+
+
+
+
+/* =========================================================
+   BDR DASHBOARD - PADRÃO IGUAL ÀS OUTRAS TELAS
+   ---------------------------------------------------------
+   Regra:
+   - NÃO mexe no menu.
+   - Menu fica por conta do CSS/layout-bdr.css.
+   - Desktop/notebook mantém o desenho original.
+   - Tablet/celular fica compacto, como Entrada/Patrimônio/Usuários.
+
+   Ajuste rápido:
+   --dash-mobile-card-h = altura dos cards no celular/tablet.
+   --dash-mobile-gap    = espaço entre blocos.
+========================================================= */
+
+@media(max-width:1200px){
+
+  :root{
+    --dash-mobile-card-h:230px;
+    --dash-mobile-gap:8px;
+  }
+
+  .dash-container{
+    padding:8px !important;
+  }
+
+  .bdr-topbar{
+    padding:10px 14px !important;
+    margin-bottom:8px !important;
+    border-radius:16px !important;
+    min-height:auto !important;
+  }
+
+  .bdr-topbar-title{
+    font-size:18px !important;
+    line-height:1.15 !important;
+  }
+
+  .bdr-topbar-sub{
+    font-size:11px !important;
+    line-height:1.25 !important;
+  }
+
+  .dash-user{
+    width:100% !important;
+    justify-content:space-between !important;
+    gap:8px !important;
+    font-size:12px !important;
+  }
+
+  .user-menu-top{
+    padding:7px 10px !important;
+  }
+
+  .user-mini{
+    font-size:12px !important;
+  }
+
+  .avatar{
+    width:38px !important;
+    height:38px !important;
+    font-size:17px !important;
+  }
+
+  .notif-btn{
+    width:36px !important;
+    height:36px !important;
+  }
+
+  /* Filtros no mesmo padrão de cards pequenos */
+  .quick-filters{
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+    margin-bottom:8px !important;
+  }
+
+  .quick-filters label{
+    grid-column:1/-1 !important;
+    font-size:12px !important;
+  }
+
+  .pill-btn,
+  .btn-red,
+  .btn-clear-dashboard,
+  .modo-pill{
+    height:32px !important;
+    min-height:32px !important;
+    font-size:11px !important;
+    border-radius:9px !important;
+    padding:0 10px !important;
+  }
+
+  .filter-premium-btn{
+    height:38px !important;
+    min-height:38px !important;
+    padding:5px 10px !important;
+    border-radius:12px !important;
+  }
+
+  .filter-premium-btn span{
+    font-size:9px !important;
+  }
+
+  .filter-premium-btn b{
+    font-size:11px !important;
+  }
+
+  .update-info{
+    grid-column:1/-1 !important;
+    text-align:center !important;
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+
+  /* KPIs: compactos e legíveis */
+  .kpi-row{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    margin-bottom:8px !important;
+  }
+
+  .kpi-card.valor-destaque{
+    grid-column:1/-1 !important;
+  }
+
+  .kpi-card{
+    min-height:72px !important;
+    padding:9px !important;
+    gap:8px !important;
+    border-radius:12px !important;
+  }
+
+  .kpi-icon{
+    width:36px !important;
+    height:36px !important;
+    min-width:36px !important;
+    font-size:16px !important;
+  }
+
+  .kpi-value{
+    font-size:19px !important;
+  }
+
+  .kpi-card.valor-destaque .kpi-value{
+    font-size:23px !important;
+  }
+
+  .kpi-label{
+    font-size:10.5px !important;
+    line-height:1.15 !important;
+    margin-top:3px !important;
+  }
+
+  .kpi-sub{
+    font-size:9.5px !important;
+    line-height:1.15 !important;
+    margin-top:2px !important;
+  }
+
+  /* Cards e gráficos */
+  .dashboard-grid{
+    grid-template-columns:1fr !important;
+    gap:var(--dash-mobile-gap) !important;
+  }
+
+  .left-stack,
+  .mid-stack,
+  .right-stack{
+    gap:var(--dash-mobile-gap) !important;
+    grid-auto-rows:auto !important;
+  }
+
+  .bottom-grid{
+    grid-template-columns:1fr !important;
+    gap:var(--dash-mobile-gap) !important;
+  }
+
+  .card-light{
+    border-radius:16px !important;
+  }
+
+  .card-light h3{
+    min-height:34px !important;
+    font-size:12.5px !important;
+    padding:8px 10px !important;
+    line-height:1.2 !important;
+  }
+
+  .card-body{
+    padding:8px !important;
+  }
+
+  .left-stack > .card-light,
+  .mid-stack > .card-light,
+  .right-stack > .card-light,
+  .bottom-grid,
+  .bottom-grid .card-light{
+    min-height:var(--dash-mobile-card-h) !important;
+  }
+
+  .chart-card canvas,
+  .chart-card.big canvas{
+    height:calc(var(--dash-mobile-card-h) - 62px) !important;
+  }
+
+  .table-mini{
+    font-size:8.5px !important;
+  }
+
+  .table-mini th,
+  .table-mini td{
+    padding:4px !important;
+  }
+
+  .btn-outline{
+    height:28px !important;
+    min-height:28px !important;
+    padding:5px 8px !important;
+    font-size:9.5px !important;
+  }
+
+  .ai-line{
+    min-height:34px !important;
+    padding:6px 8px !important;
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+
+  .alert-row,
+  .info-row{
+    min-height:36px !important;
+    padding:6px 8px !important;
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+
+  .estoque-niveis{
+    gap:6px !important;
+  }
+
+  .estoque-nivel{
+    padding:7px !important;
+    border-radius:10px !important;
+  }
+
+  .estoque-nivel strong{
+    font-size:16px !important;
+  }
+
+  .estoque-nivel span{
+    font-size:9px !important;
+  }
+
+  .footer-dash{
+    font-size:9.5px !important;
+    margin-top:10px !important;
+  }
+}
+
+/* Celular pequeno: só ajusta um pouco mais, sem zoom */
+@media(max-width:520px){
+  :root{
+    --dash-mobile-card-h:215px;
+    --dash-mobile-gap:7px;
+  }
+
+  .dash-container{
+    padding:7px !important;
+  }
+
+  .kpi-card{
+    min-height:68px !important;
+  }
+
+  .kpi-value{
+    font-size:18px !important;
+  }
+
+  .kpi-card.valor-destaque .kpi-value{
+    font-size:22px !important;
+  }
+}
+
+
+
+/* =========================================================
+   BDR DASHBOARD - REAJUSTE FINO DOS FILTROS
+   ---------------------------------------------------------
+   O que foi ajustado:
+   1. Remove visualmente o "Modo: Atual" se ainda existir.
+   2. Aproxima os botões de período do texto "Filtros rápidos".
+   3. Coloca "Última atualização" do lado direito.
+   4. Mantém o layout geral do dashboard sem mexer nos cards/gráficos.
+========================================================= */
+
+.quick-filters{
+  grid-template-columns:auto 95px 95px 95px 95px 220px 220px 95px 130px 1fr !important;
+  column-gap:8px !important;
+  row-gap:6px !important;
+}
+
+.quick-filters label{
+  white-space:nowrap !important;
+  margin-right:4px !important;
+}
+
+.modo-pill{
+  display:none !important;
+}
+
+.update-info{
+  grid-column:auto !important;
+  justify-self:end !important;
+  text-align:right !important;
+  min-width:190px !important;
+}
+
+/* Notebook menor / tablet deitado */
+@media(max-width:1350px){
+  .quick-filters{
+    grid-template-columns:auto repeat(4,95px) 1fr 1fr 95px 130px !important;
+  }
+
+  .update-info{
+    grid-column:1/-1 !important;
+    justify-self:end !important;
+    text-align:right !important;
+  }
+}
+
+/* Tablet/celular: mantém padrão em 2 colunas */
+@media(max-width:1200px){
+  .quick-filters{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .quick-filters label{
+    grid-column:1/-1 !important;
+  }
+
+  .update-info{
+    grid-column:1/-1 !important;
+    justify-self:end !important;
+    text-align:right !important;
+  }
+}
+/* AJUSTE FINAL - DROPDOWN USUÁRIO PADRÃO EMPRESAS */
+.user-dropdown{
+  min-width:220px !important;
+  width:auto !important;
+  padding:8px !important;
+}
+.user-dropdown button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.user-dropdown button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
+}
+.user-dropdown .logout-btn{color:#dc2626;}

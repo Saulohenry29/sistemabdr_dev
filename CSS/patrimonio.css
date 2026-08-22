@@ -1914,3 +1914,108 @@ textarea,
   z-index:1!important;
 }
 
+
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — CADASTRO RÁPIDO + MOBILE
+   ========================================================= */
+.atlas-assistente-cadastro-aviso{
+  display:none;
+  align-items:center;
+  gap:7px;
+  margin:-2px 0 10px;
+  padding:7px 10px;
+  border:1px solid #bbf7d0;
+  border-radius:10px;
+  background:#f0fdf4;
+  color:#166534;
+  font-size:11px;
+  line-height:1.25;
+}
+.atlas-assistente-cadastro-aviso.ativo{display:flex}
+.atlas-assistente-cadastro-aviso > span{font-size:14px;font-weight:900}
+.atlas-assistente-cadastro-aviso strong{font-size:11px;font-weight:900;white-space:nowrap}
+.atlas-assistente-cadastro-aviso small{color:#4b5563;font-size:10px;font-weight:650}
+
+/* O campo que está aberto sempre fica acima dos irmãos seguintes. */
+#cardEntradaPatrimonio #camposExtras{position:relative;isolation:isolate;overflow:visible!important}
+#cardEntradaPatrimonio .atlas-autocomplete-campo{z-index:1!important}
+#cardEntradaPatrimonio .atlas-autocomplete-campo:focus-within{z-index:500!important}
+#cardEntradaPatrimonio .atlas-autocomplete-lista{z-index:600!important}
+#cardEntradaPatrimonio .atlas-autocomplete-wrap:focus-within{z-index:700!important}
+#cardEntradaPatrimonio .atlas-sugestoes{z-index:800!important}
+
+@media(max-width:560px){
+  #cardEntradaPatrimonio{padding:12px!important}
+  #cardEntradaPatrimonio .grid,
+  #cardEntradaPatrimonio #camposExtras{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:9px!important;
+  }
+
+  #cardEntradaPatrimonio input,
+  #cardEntradaPatrimonio select,
+  #cardEntradaPatrimonio textarea{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    font-size:16px!important; /* evita zoom automático do iPhone/Chrome mobile */
+  }
+
+  .atlas-autocomplete-lista,
+  .atlas-sugestoes{
+    left:0!important;
+    right:0!important;
+    max-height:210px!important;
+  }
+
+  .atlas-assistente-cadastro-aviso{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .atlas-assistente-cadastro-aviso strong{white-space:normal}
+  .atlas-assistente-cadastro-aviso small{flex-basis:100%;padding-left:21px}
+}
+
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — AUTOCOMPLETE SEM SOBREPOSIÇÃO DO BOTÃO
+   A lista aberta deve ficar visualmente acima do Gerar Patrimônio.
+========================================================= */
+#cardEntradaPatrimonio #btnGerarPatrimonio{
+  position:relative!important;
+  z-index:0!important;
+}
+#cardEntradaPatrimonio .atlas-autocomplete-campo:focus-within{
+  position:relative!important;
+  z-index:1000!important;
+}
+#cardEntradaPatrimonio .atlas-autocomplete-campo:focus-within .atlas-autocomplete-lista{
+  z-index:1001!important;
+}
+
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — AJUSTE FINAL DE CAMADA DO AUTOCOMPLETE
+   Mantém o botão Gerar Patrimônio atrás da lista aberta.
+========================================================= */
+#cardEntradaPatrimonio #camposExtras{
+  position:relative!important;
+  z-index:2!important;
+  overflow:visible!important;
+}
+#cardEntradaPatrimonio #camposExtras:has(.atlas-autocomplete-lista.ativo){
+  z-index:10000!important;
+}
+#cardEntradaPatrimonio .atlas-autocomplete-campo:has(.atlas-autocomplete-lista.ativo){
+  position:relative!important;
+  z-index:10001!important;
+}
+#cardEntradaPatrimonio .atlas-autocomplete-lista.ativo{
+  z-index:10002!important;
+}
+#cardEntradaPatrimonio #btnGerarPatrimonio{
+  position:relative!important;
+  z-index:1!important;
+}

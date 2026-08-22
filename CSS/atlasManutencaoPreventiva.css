@@ -1,0 +1,254 @@
+
+.atlas-manut-modebar{
+  margin:14px 0 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.atlas-manut-mode{
+  min-height:38px;
+  padding:8px 13px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid #d8e0ea;
+  border-radius:9px;
+  background:#fff;
+  color:#475569;
+  font-size:12px;
+  font-weight:800;
+}
+.atlas-manut-mode.active{
+  border-color:#b5121b;
+  background:#b5121b;
+  color:#fff;
+}
+.atlas-manut-mode-badge{
+  min-width:20px;
+  height:20px;
+  padding:0 5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:#fff;
+  color:#b5121b;
+  font-size:10px;
+}
+.atlas-prev-area{margin-top:8px}
+.atlas-prev-shell{display:grid;gap:12px}
+.atlas-prev-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:15px;
+  padding:16px;
+  border:1px solid #dde5ee;
+  border-radius:13px;
+  background:#fff;
+}
+.atlas-prev-top h2{margin:0;color:#172033;font-size:18px}
+.atlas-prev-top p{margin:4px 0 0;color:#64748b;font-size:11px}
+.atlas-prev-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.atlas-prev-kpi{
+  min-height:82px;
+  padding:13px;
+  border:1px solid #dde5ee;
+  border-radius:12px;
+  background:#fff;
+}
+.atlas-prev-kpi strong{display:block;font-size:22px;color:#172033}
+.atlas-prev-kpi span{font-size:11px;color:#64748b}
+.atlas-prev-toolbar{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 190px auto;
+  gap:9px;
+}
+.atlas-prev-toolbar input,
+.atlas-prev-toolbar select{
+  height:40px;
+  padding:0 10px;
+  border:1px solid #cfd8e5;
+  border-radius:8px;
+  background:#fff;
+}
+.atlas-prev-list{
+  border:1px solid #dde5ee;
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+.atlas-prev-row{
+  width:100%;
+  min-height:66px;
+  padding:10px 13px;
+  display:grid;
+  grid-template-columns:minmax(180px,1.5fr) minmax(150px,1fr) 130px 120px auto;
+  align-items:center;
+  gap:10px;
+  border:0;
+  border-bottom:1px solid #edf1f5;
+  background:#fff;
+  text-align:left;
+}
+.atlas-prev-row:last-child{border-bottom:0}
+.atlas-prev-row:hover{background:#fafbfc}
+.atlas-prev-item strong,.atlas-prev-item small{display:block}
+.atlas-prev-item strong{font-size:12px;color:#172033}
+.atlas-prev-item small{margin-top:3px;font-size:10px;color:#64748b}
+.atlas-prev-date strong{display:block;font-size:12px}
+.atlas-prev-date small{font-size:10px;color:#64748b}
+.atlas-prev-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:25px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.atlas-prev-status.ok{background:#dcfce7;color:#166534}
+.atlas-prev-status.warning{background:#fef3c7;color:#92400e}
+.atlas-prev-status.danger{background:#fee2e2;color:#b91c1c}
+.atlas-prev-status.off{background:#e2e8f0;color:#475569}
+.atlas-prev-actions{display:flex;justify-content:flex-end;gap:6px}
+.atlas-prev-btn{
+  min-height:32px;
+  padding:6px 9px;
+  border:1px solid #cfd8e5;
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:10px;
+  font-weight:800;
+}
+.atlas-prev-btn.primary{border-color:#b5121b;background:#b5121b;color:#fff}
+.atlas-prev-btn.danger{border-color:#fecaca;background:#fff5f5;color:#b91c1c}
+.atlas-prev-empty{
+  padding:30px;
+  text-align:center;
+  color:#64748b;
+}
+.atlas-prev-modal-bg{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(0,0,0,.55);
+}
+.atlas-prev-modal{
+  position:relative;
+  width:95%;
+  max-width:680px;
+  max-height:86vh;
+  padding:18px;
+  overflow:auto;
+  border-left:5px solid #a4161a;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 26px 70px rgba(15,23,42,.36);
+}
+.atlas-prev-modal h3{margin:0 40px 4px 0;color:#a4161a}
+.atlas-prev-modal>p{margin:0 0 13px;color:#64748b;font-size:11px}
+.atlas-prev-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:34px;
+  height:34px;
+  border:0;
+  border-radius:8px;
+  background:#dc2626;
+  color:#fff;
+  font-weight:900;
+}
+.atlas-prev-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+}
+.atlas-prev-form label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  color:#334155;
+  font-size:10px;
+  font-weight:800;
+}
+.atlas-prev-form label.wide{grid-column:1/-1}
+.atlas-prev-form input,
+.atlas-prev-form select,
+.atlas-prev-form textarea{
+  width:100%;
+  min-width:0;
+  border:1px solid #cfd8e5;
+  border-radius:8px;
+  background:#fff;
+}
+.atlas-prev-form input,.atlas-prev-form select{height:40px;padding:0 10px}
+.atlas-prev-form textarea{min-height:78px;padding:9px;resize:vertical}
+.atlas-prev-modal-actions{
+  margin-top:14px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.atlas-prev-note{
+  margin-top:10px;
+  padding:9px 10px;
+  border-radius:8px;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:10px;
+}
+@media(max-width:900px){
+  .atlas-prev-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .atlas-prev-row{grid-template-columns:1fr 1fr 120px}
+  .atlas-prev-row .atlas-prev-period{display:none}
+  .atlas-prev-actions{grid-column:1/-1;justify-content:flex-start}
+}
+@media(max-width:640px){
+  .atlas-prev-top{flex-direction:column}
+  .atlas-prev-kpis{grid-template-columns:1fr 1fr}
+  .atlas-prev-toolbar{grid-template-columns:1fr}
+  .atlas-prev-row{grid-template-columns:1fr}
+  .atlas-prev-date,.atlas-prev-actions{grid-column:auto}
+  .atlas-prev-form{grid-template-columns:1fr}
+  .atlas-prev-form label.wide{grid-column:auto}
+}
+
+
+/* Preventivas ocupam toda a área útil da Manutenção */
+.atlas-prev-area,
+.atlas-prev-shell{
+  width:100%;
+}
+
+.atlas-prev-list{
+  min-height:calc(100vh - 445px);
+}
+
+
+/* Preventiva com data + hora */
+.atlas-prev-kpis{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+.atlas-prev-form input[type="datetime-local"]{
+  color:#172033;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:900px){
+  .atlas-prev-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .atlas-prev-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

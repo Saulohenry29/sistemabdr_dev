@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-expedicao-performance";
+const BDR_CACHE_VERSION = "bdr-erp-patrimonio-ux-20260821b";
 
 const BDR_ASSETS = [
   "./",
@@ -32,8 +32,24 @@ const BDR_ASSETS = [
   "./CSS/responsivo-bdr.css",
   "./CSS/bdr-fix-menu-final.css",
 
+  "./CSS/dashboard/dashboardBase.css",
+  "./CSS/dashboard/dashboardKpis.css",
+  "./CSS/dashboard/dashboardLayout.css",
+  "./CSS/dashboard/dashboardComponentes.css",
+  "./JS/dashboard/dashboardCore.js",
+  "./JS/dashboard/dashboardDados.js",
+  "./JS/dashboard/dashboardFiltros.js",
+  "./JS/dashboard/dashboardKpis.js",
+  "./JS/dashboard/dashboardGraficos.js",
+  "./JS/dashboard/dashboardAnalise.js",
+  "./JS/dashboard/dashboardEstoque.js",
+  "./JS/dashboard/dashboardMovimentacoes.js",
+  "./JS/dashboard/dashboardRankings.js",
+  "./JS/dashboard/dashboardBoot.js",
+
   "./JS/pwa-install.js",
   "./JS/pwa-update.js",
+  "./JS/notificacoes/atlasPush.js",
   "./JS/supabaseClient.js",
   "./JS/auth.js",
   "./JS/bdrCore.js",
@@ -62,7 +78,11 @@ const BDR_ASSETS = [
   "./JS/expedicao/expedicaoImagens.js",
   "./JS/patrimonioService.js",
   "./JS/patrimonio/patrimonio.js",
+  "./JS/patrimonio/atlasPatrimonioAssistente.js",
   "./JS/atlasWorkflowManutencao.js",
+  "./JS/manutencao/atlasManutencaoPreventiva.js",
+  "./JS/manutencao/atlasManutencaoPreventivaAlertas.js",
+  "./CSS/atlasManutencaoPreventiva.css",
   "./JS/atlasManutencao.js",
   "./JS/atlasManutencaoFornecedor.js",
   "./CSS/atlasManutencao.css",
@@ -175,4 +195,59 @@ self.addEventListener("fetch", event => {
 
 self.addEventListener("message", event => {
   if(event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+
+/* =========================================================
+   ATLAS PUSH — FCM / WEB PUSH
+   Usa o MESMO Service Worker da PWA. Não existe segundo SW.
+========================================================= */
+function atlasPushPayload(event){
+  try{
+    if(!event.data) return {};
+    return event.data.json() || {};
+  }catch(_){
+    try{ return {notification:{body:event.data?.text?.()||""}}; }
+    catch(__){ return {}; }
+  }
+}
+
+self.addEventListener("push", event => {
+  const payload=atlasPushPayload(event);
+  const n=payload.notification || {};
+  const d=payload.data || {};
+  const title=n.title || d.title || "Atlas";
+  const options={
+    body:n.body || d.body || d.mensagem || "Você recebeu uma nova notificação.",
+    icon:n.icon || d.icon || "./icons/icon-192.png",
+    badge:n.badge || d.badge || "./icons/icon-192.png",
+    tag:d.tag || d.notificacao_id || d.tipo || "atlas-notificacao",
+    renotify:true,
+    data:{
+      url:d.link || d.url || "./dashboard.html",
+      notificacao_id:d.notificacao_id || null,
+      tipo:d.tipo || null
+    }
+  };
+  event.waitUntil(self.registration.showNotification(title,options));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const destino=new URL(event.notification?.data?.url || "./dashboard.html", self.registration.scope).href;
+  event.waitUntil((async()=>{
+    const clientes=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+    for(const cliente of clientes){
+      try{
+        const atual=new URL(cliente.url);
+        const alvo=new URL(destino);
+        if(atual.origin===alvo.origin){
+          await cliente.focus();
+          if("navigate" in cliente) await cliente.navigate(destino);
+          return;
+        }
+      }catch(_){ }
+    }
+    if(self.clients.openWindow) await self.clients.openWindow(destino);
+  })());
 });

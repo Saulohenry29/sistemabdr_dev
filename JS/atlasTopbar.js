@@ -410,6 +410,27 @@
       });
   }
 
+  function carregarAlertasPreventiva(){
+    if(window.AtlasPreventivaAlertas || document.querySelector('script[data-atlas-preventiva-alertas]')){
+      return;
+    }
+
+    const script=document.createElement("script");
+    script.src="./JS/manutencao/atlasManutencaoPreventivaAlertas.js";
+    script.defer=true;
+    script.dataset.atlasPreventivaAlertas="true";
+    document.head.appendChild(script);
+  }
+
+  function carregarAtlasPush(){
+    if(window.AtlasPush || document.querySelector('script[data-atlas-push]')) return;
+    const script=document.createElement("script");
+    script.src="./JS/notificacoes/atlasPush.js";
+    script.defer=true;
+    script.dataset.atlasPush="true";
+    document.head.appendChild(script);
+  }
+
   /* =========================================================
      9. INICIALIZAÇÃO
   ========================================================= */
@@ -421,7 +442,9 @@
     document.documentElement.dataset.atlasTopbarReady = "true";
 
     normalizeMarkup();
+    carregarAtlasPush();
     getPortal();
+    carregarAlertasPreventiva();
 
     document.addEventListener("click", onDocumentClick, true);
     document.addEventListener("keydown", onKeydown);
