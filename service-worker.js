@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-patrimonio-ux-20260821b";
+const BDR_CACHE_VERSION = "bdr-erp-relatorios-obras-painel-20260825";
 
 const BDR_ASSETS = [
   "./",

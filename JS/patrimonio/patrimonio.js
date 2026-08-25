@@ -800,6 +800,8 @@ function mascaraMoeda(input){
 let atlasObraIndice = -1;
 let atlasObraResultados = [];
 let atlasObraComboIniciado = false;
+let atlasObraInteragindoLista = false;
+let atlasObraInteracaoTimer = null;
 
 function atlasNormalizarBuscaObra(valor){
   return String(valor || "")
@@ -979,13 +981,31 @@ function atlasIniciarComboObras(){
   atlasObraComboIniciado = true;
 
   lista.addEventListener("pointerdown", async evento => {
+    /*
+     * Clicar/arrastar a barra de rolagem tira o foco do campo.
+     * Registramos a interação antes do blur para a lista não fechar durante a rolagem.
+     */
+    atlasObraInteragindoLista = true;
+    clearTimeout(atlasObraInteracaoTimer);
+
     const opcao = evento.target.closest?.(".atlas-obra-opcao");
     if(!opcao || !lista.contains(opcao)) return;
 
     evento.preventDefault();
     evento.stopPropagation();
     await atlasSelecionarObraCombo(opcao.dataset.obraId, false);
+    atlasObraInteragindoLista = false;
   });
+
+  const encerrarInteracaoLista = () => {
+    clearTimeout(atlasObraInteracaoTimer);
+    atlasObraInteracaoTimer = setTimeout(() => {
+      atlasObraInteragindoLista = false;
+    }, 180);
+  };
+
+  lista.addEventListener("pointerup", encerrarInteracaoLista);
+  lista.addEventListener("pointercancel", encerrarInteracaoLista);
 
   input.addEventListener("focus", () => {
     if(!input.disabled) atlasFiltrarObras(input.value);
@@ -1036,12 +1056,14 @@ function atlasIniciarComboObras(){
 
   input.addEventListener("blur", () => {
     setTimeout(() => {
+      if(atlasObraInteragindoLista) return;
+
       atlasFecharSugestoesObra();
       const selecionada = atlasObraSelecionadaAtual();
       if(selecionada){
         input.value = atlasTextoObra(selecionada);
       }
-    }, 140);
+    }, 160);
   });
 
   seta.addEventListener("click", () => {
@@ -1940,7 +1962,7 @@ async function bdrBaseDuplicidadePatrimonio(){
       const { data, error } = await db()
         .from("patrimonio")
         .select(campos)
-        .neq("ativo", false)
+        .or("ativo.eq.true,ativo.is.null")
         .limit(5000);
 
       if(!error && Array.isArray(data)) return data;
@@ -2405,42 +2427,62 @@ async function carregarPatrimonios(){
       return;
     }
 
-    let query = db().from("patrimonio").select("*");
-    query = visualizarInativos
-      ? query.eq("ativo", false)
-      : query.neq("ativo", false);
-
     const usuario = usuarioAtual();
+    const permitidasUsuario = usuario && !usuarioPodeVerTodasObras()
+      ? obrasPermitidasPatrimonioBDR(usuario)
+      : null;
 
-    if(usuario && !usuarioPodeVerTodasObras()){
-      const permitidas = obrasPermitidasPatrimonioBDR(usuario);
-
-      if(permitidas.length === 1){
-        query = query.eq("obra_id", permitidas[0]);
-      }else if(permitidas.length > 1){
-        query = query.in("obra_id", permitidas);
-      }else{
-        patrimonios = [];
-        renderizarPatrimonios();
-        mostrarAvisoModoOffline();
-        atlasAtualizarBotaoInativos();
-        return;
-      }
+    if(Array.isArray(permitidasUsuario) && permitidasUsuario.length === 0){
+      patrimonios = [];
+      renderizarPatrimonios();
+      mostrarAvisoModoOffline();
+      atlasAtualizarBotaoInativos();
+      return;
     }
 
-    const { data, error } = await query.order("id", { ascending:false });
-    if(error) throw error;
+    /*
+     * O PostgREST/Supabase normalmente devolve no máximo cerca de 1000 linhas
+     * por resposta. Como o Atlas já ultrapassou isso, uma leitura única fazia
+     * os registros mais antigos sumirem da tela Patrimônio e da pesquisa.
+     */
+    const TAMANHO_PAGINA_BANCO = 1000;
+    let dados = [];
 
-    let dados = data || [];
+    for(let inicio = 0; ; inicio += TAMANHO_PAGINA_BANCO){
+      let query = db().from("patrimonio").select("*");
 
-    if(usuario && !usuarioPodeVerTodasObras()){
-      const permitidas = new Set(
-        obrasPermitidasPatrimonioBDR(usuario).map(String)
-      );
+      query = visualizarInativos
+        ? query.eq("ativo", false)
+        : query.or("ativo.eq.true,ativo.is.null");
 
-      dados = permitidas.size
-        ? dados.filter(p => permitidas.has(String(p.obra_id)))
-        : [];
+      if(Array.isArray(permitidasUsuario)){
+        if(permitidasUsuario.length === 1){
+          query = query.eq("obra_id", permitidasUsuario[0]);
+        }else{
+          query = query.in("obra_id", permitidasUsuario);
+        }
+      }
+
+      const { data: pagina, error } = await query
+        .order("id", { ascending:false })
+        .range(inicio, inicio + TAMANHO_PAGINA_BANCO - 1);
+
+      if(error) throw error;
+
+      const lote = pagina || [];
+      dados.push(...lote);
+      if(lote.length < TAMANHO_PAGINA_BANCO) break;
+    }
+
+    console.log("✅ ATLAS PATRIMÔNIO: carga completa", {
+      total: dados.length,
+      inativos: visualizarInativos,
+      obras_restritas: Array.isArray(permitidasUsuario) ? permitidasUsuario.length : "todas"
+    });
+
+    if(Array.isArray(permitidasUsuario)){
+      const permitidas = new Set(permitidasUsuario.map(String));
+      dados = dados.filter(p => permitidas.has(String(p.obra_id)));
     }
 
     patrimonios = dados;
@@ -4589,4 +4631,4 @@ setInterval(async () => {
 }, 30000);
 
 iniciar();
-console.log("✅ ATLAS PATRIMÔNIO V4.0 carregado - obras por usuarios.obras_liberadas + trava por escopo");
+console.log("✅ ATLAS PATRIMÔNIO V4.0 carregado - carga paginada completa + combo de obras com rolagem segura");

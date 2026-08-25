@@ -100,7 +100,14 @@
   const canManage=()=>canEditSelected()||canManageSelectedAccess();
 
   const PERMISSION_MODULES=[
-    {id:"GERAL",title:"🧭 Acesso geral",items:[["DASHBOARD_VER","Dashboard"],["RELATORIOS_VER","Relatórios"],["VALORES_VER","Ver valores"]]},
+    {id:"GERAL",title:"🧭 Acesso geral",items:[["DASHBOARD_VER","Dashboard"],["VALORES_VER","Ver valores"]]},
+    {id:"RELATORIOS",title:"📄 Relatórios",access:"RELATORIOS_VER",items:[
+      ["RELATORIOS_OBRAS_PERMITIDAS","Obras permitidas (mesmas da aba Obras)"],
+      ["RELATORIOS_TODAS_OBRAS","Ver todas as obras / setores"],
+      ["RELATORIOS_EXPORTAR","Imprimir / exportar Excel e CSV"],
+      ["PATRIMONIO_CONFERIR_RELATORIO","Conferir, assinar e consultar relatórios assinados"],
+      ["SIENGE_EXPORTAR","Exportação e códigos Sienge"]
+    ]},
     {id:"PATRIMONIO",title:"📦 Patrimônio",items:[["PATRIMONIO_VER","Visualizar / consultar"],["PATRIMONIO_CRIAR","Cadastrar"],["PATRIMONIO_EDITAR","Editar dados"],["PATRIMONIO_MOVIMENTAR","Movimentar"],["PATRIMONIO_IMPRIMIR","Imprimir etiquetas"],["PATRIMONIO_EXCLUIR","Excluir/inativar"],["CONFIGURAR_ETIQUETAS","Configurar etiquetas"]]},
     {id:"MANUTENCAO",title:"🔧 Manutenção",items:[["MANUTENCAO_VER","Acessar manutenção"],["MANUTENCAO_CRIAR","Enviar para manutenção"],["MANUTENCAO_SAIDA","Registrar saída / gerar link"],["MANUTENCAO_ANALISAR_ORCAMENTO","Analisar orçamento / laudo"],["MANUTENCAO_APROVAR","Aprovar, recusar ou pedir ajuste"],["MANUTENCAO_RECEBER","Registrar recebimento"],["MANUTENCAO_PREVENTIVA_GERENCIAR","Gerenciar manutenção preventiva"]] },
     {id:"EXPEDICAO",title:"🚚 Expedição",access:"EXPEDICAO_VER",items:[["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"]]},
@@ -108,6 +115,31 @@
     {id:"EMPRESAS",title:"🏢 Empresas / Obras",items:[["EMPRESAS_VER","Visualizar"],["EMPRESAS_CRIAR","Criar"],["EMPRESAS_EDITAR","Editar"],["EMPRESAS_INATIVAR","Inativar/reativar"],["EMPRESAS_EXCLUIR","Excluir"]]},
     {id:"USUARIOS",title:"👥 Usuários / Administração",items:[["USUARIOS_VER","Visualizar usuários"],["USUARIOS_CRIAR","Criar usuários"],["USUARIOS_EDITAR","Editar usuários"],["USUARIOS_BLOQUEAR","Bloquear usuários"],["USUARIOS_PERMISSOES","Gerenciar permissões"],["CONFIGURACOES_VER","Configurações"]]}
   ];
+
+  function aplicarPadraoRelatorios(permissoes){
+    const p = permissoes instanceof Set ? permissoes : new Set(permissoes || []);
+
+    if(!p.has("RELATORIOS_VER")){
+      p.delete("RELATORIOS_OBRAS_PERMITIDAS");
+      p.delete("RELATORIOS_TODAS_OBRAS");
+      p.delete("RELATORIOS_EXPORTAR");
+      return p;
+    }
+
+    // Acesso padrão ao Relatório:
+    // - mesmas obras liberadas na aba Obras;
+    // - imprimir/exportar Excel/CSV.
+    // Recursos avançados continuam opcionais.
+    p.add("RELATORIOS_EXPORTAR");
+
+    if(p.has("RELATORIOS_TODAS_OBRAS")){
+      p.delete("RELATORIOS_OBRAS_PERMITIDAS");
+    }else{
+      p.add("RELATORIOS_OBRAS_PERMITIDAS");
+    }
+
+    return p;
+  }
 
   const OPTIONAL_NOTIFS=[
     {id:"PATRIMONIO",title:"📦 Patrimônio",items:[["NOTIF_PATRIMONIO_CRIACAO","Criação de patrimônio"],["NOTIF_PATRIMONIO_ETIQUETA","Impressão de etiqueta"],["NOTIF_PATRIMONIO_MOVIMENTACAO","Movimentação"],["NOTIF_PATRIMONIO_STATUS","Excluir, inativar e reativar"]]},
@@ -311,6 +343,9 @@
         )
       };
 
+      // Relatórios: ao liberar o módulo, aplica o pacote padrão.
+      aplicarPadraoRelatorios(STATE.draft.permissions);
+
       STATE.worksDraft =
         new Set(STATE.draft.works);
 
@@ -474,14 +509,22 @@
       ? `<label class="atlas-switch"><input type="checkbox" class="module-access" data-module="${m.id}" value="${m.access}" ${STATE.draft.permissions.has(m.access)?"checked":""} ${bloqueado?"disabled":""}><span></span></label>`
       : `<label class="atlas-switch"><input type="checkbox" class="module-master" data-module="${m.id}" ${bloqueado?"disabled":""}><span></span></label>`;
 
-    const linhas=m.items.map(([p,l])=>`
-      <div class="atlas-permission-row">
-        <label>${esc(l)}</label>
+    const linhas=m.items.map(([p,l])=>{
+      const padraoRelatorio = m.id === "RELATORIOS" &&
+        (p === "RELATORIOS_OBRAS_PERMITIDAS" || p === "RELATORIOS_EXPORTAR");
+      const travadoPadrao = padraoRelatorio &&
+        STATE.draft.permissions.has("RELATORIOS_VER") &&
+        !(p === "RELATORIOS_OBRAS_PERMITIDAS" && STATE.draft.permissions.has("RELATORIOS_TODAS_OBRAS"));
+
+      return `
+      <div class="atlas-permission-row ${padraoRelatorio ? "atlas-permission-default" : ""}">
+        <label>${esc(l)}${padraoRelatorio ? '<small>Padrão ao liberar Relatórios</small>' : ''}</label>
         <label class="atlas-switch">
-          <input type="checkbox" class="permission-toggle" value="${p}" ${STATE.draft.permissions.has(p)?"checked":""} ${bloqueado?"disabled":""}>
+          <input type="checkbox" class="permission-toggle" value="${p}" ${STATE.draft.permissions.has(p)?"checked":""} ${(bloqueado || travadoPadrao)?"disabled":""}>
           <span></span>
         </label>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
     const obras=m.id==="EXPEDICAO"
       ? `<div class="atlas-permission-row atlas-expedition-works-row">
@@ -814,6 +857,7 @@
     */
     const list=normalizarPermissoesPerfilRapido(profile.permissoes);
     STATE.draft.permissions=new Set(list);
+    aplicarPadraoRelatorios(STATE.draft.permissions);
     STATE.draft.perfil_rapido=profile.nome;
     STATE.draft.perfil=profile.nome;
     $("#selectedProfile").textContent=profile.nome;
@@ -953,6 +997,7 @@
       [...STATE.draft.permissions].filter(x=>!LEGACY_MODULE_TOKENS.has(norm(x)))
     );
 
+    aplicarPadraoRelatorios(p);
     p.add("RECEBER_NOTIFICACOES");
 
     OPERATIONAL_NOTIFS.forEach(n=>{
@@ -1159,11 +1204,29 @@
       if(!canManageSelectedAccess()) return;
 
       if(event.target.classList.contains("permission-toggle")){
-        updatePerm(event.target.value,event.target.checked);
+        const valor = event.target.value;
+
+        if(valor === "RELATORIOS_OBRAS_PERMITIDAS" && event.target.checked){
+          STATE.draft.permissions.delete("RELATORIOS_TODAS_OBRAS");
+        }
+
+        if(valor === "RELATORIOS_TODAS_OBRAS" && event.target.checked){
+          STATE.draft.permissions.delete("RELATORIOS_OBRAS_PERMITIDAS");
+        }
+
+        updatePerm(valor,event.target.checked);
+        aplicarPadraoRelatorios(STATE.draft.permissions);
+        renderPermissions();
       }
 
       if(event.target.classList.contains("module-access")){
-        updatePerm(event.target.value,event.target.checked);
+        const valor = event.target.value;
+        updatePerm(valor,event.target.checked);
+
+        if(valor === "RELATORIOS_VER"){
+          aplicarPadraoRelatorios(STATE.draft.permissions);
+        }
+
         renderPermissions();
       }
 
@@ -1305,7 +1368,7 @@
     const perfil=$("#usuarioPerfil");
 
     if(nome)nome.textContent="Olá, "+(user?.nome||"Usuário");
-    if(perfil)perfil.textContent=user?.perfil||"-";
+    if(perfil)perfil.textContent=Number(user?.id)===OWNER_ID?"OWNER":(user?.perfil||"-");
     if($("#btnNovoUsuario")) $("#btnNovoUsuario").hidden=!canCreateUsers();
   }
 

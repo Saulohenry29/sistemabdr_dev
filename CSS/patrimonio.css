@@ -2019,3 +2019,29 @@ textarea,
   position:relative!important;
   z-index:1!important;
 }
+
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — SCROLL COMBO OBRAS 20260825
+   Barra mais fácil de pegar sem alterar o restante da tela.
+========================================================= */
+#obraSugestoes.atlas-obra-sugestoes{
+  scrollbar-gutter:stable;
+  scrollbar-width:auto;
+  scrollbar-color:#94a3b8 #f1f5f9;
+}
+#obraSugestoes.atlas-obra-sugestoes::-webkit-scrollbar{
+  width:12px;
+}
+#obraSugestoes.atlas-obra-sugestoes::-webkit-scrollbar-track{
+  background:#f1f5f9;
+  border-radius:999px;
+}
+#obraSugestoes.atlas-obra-sugestoes::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border:3px solid #f1f5f9;
+  border-radius:999px;
+}
+#obraSugestoes.atlas-obra-sugestoes::-webkit-scrollbar-thumb:hover{
+  background:#64748b;
+}

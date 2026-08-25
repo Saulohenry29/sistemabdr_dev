@@ -1629,10 +1629,10 @@ button,
 
 </div>
 
-<div class="card" data-permissao="SIENGE_EXPORTAR">
-  <h3>🏗 Seleção de obras/setores para exportação</h3>
+<div class="card" data-permissao="RELATORIOS_EXPORTAR">
+  <h3>🏗 Seleção de obras/setores</h3>
   <p style="font-size:13px;color:#374151;margin-top:0;">
-    Marque uma ou mais obras/setores para exportar somente o que você quiser. Se nenhuma obra estiver marcada, o relatório usa o filtro normal acima.
+    Marque uma ou mais obras/setores permitidos para filtrar o relatório e as exportações. Se nenhuma obra estiver marcada, o relatório usa o filtro normal acima.
   </p>
 
   <div class="sienge-mini-actions">
@@ -2110,12 +2110,44 @@ async function carregarDados(){
   }
 
   if(elUsuarioPerfil){
-    elUsuarioPerfil.innerText = usuarioTopo ? (usuarioTopo.perfil || "-") : "-";
+    elUsuarioPerfil.innerText = usuarioTopo
+      ? (Number(usuarioTopo.id) === 1 ? "OWNER" : (usuarioTopo.perfil || "-"))
+      : "-";
   }
 
   if(!db()){
     alert("Supabase não carregado.");
     return;
+  }
+
+  async function carregarUsuarioAtualRelatorioDoBanco(usuarioSessao){
+    if(!usuarioSessao?.id) return usuarioSessao || null;
+
+    // A sessão do navegador pode ter sido criada antes de uma alteração em
+    // Usuários > Obras/Permissões. Para o Relatório, o banco é a fonte atual.
+    for(const tabela of ["usuarios_sistema", "usuarios"]){
+      try{
+        const resposta = await db()
+          .from(tabela)
+          .select("*")
+          .eq("id", Number(usuarioSessao.id))
+          .maybeSingle();
+
+        if(!resposta.error && resposta.data){
+          const atualizado = { ...usuarioSessao, ...resposta.data };
+
+          // Mantém a sessão sincronizada para as outras telas abertas depois.
+          try{
+            localStorage.setItem("usuario_logado", JSON.stringify(atualizado));
+            localStorage.setItem("usuarioLogado", JSON.stringify(atualizado));
+          }catch(_){}
+
+          return atualizado;
+        }
+      }catch(_){}
+    }
+
+    return usuarioSessao;
   }
 
   async function carregarTodosPatrimoniosRelatorio(){
@@ -2187,36 +2219,114 @@ async function carregarDados(){
     console.error(movResp.error);
   }
 
-const usuario = usuarioAtualRelatoriosBDR();
+let usuario = usuarioAtualRelatoriosBDR();
+usuario = await carregarUsuarioAtualRelatorioDoBanco(usuario);
+
+console.log("✅ BDR RELATÓRIOS: usuário/escopo atualizados do banco", {
+  id: usuario?.id ?? null,
+  perfil: Number(usuario?.id) === 1 ? "OWNER" : (usuario?.perfil ?? null),
+  obras_liberadas: usuario?.obras_liberadas ?? null
+});
 
 let dadosPatrimonios = patResp.data || [];
 let dadosMovimentacoes = movResp.data || [];
 
-/* DADOS: filtra por permissão nova, não por perfil. */
-const podeTodasObras = temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
-const podePropriaObra = temPermissaoRelatoriosBDR("PROPRIA_OBRA_VER", usuario);
+/* =========================================================
+   ESCOPO DE OBRAS DOS RELATÓRIOS
+   - OWNER ou RELATORIOS_TODAS_OBRAS: todas as obras.
+   - Caso contrário: usa exatamente obras_liberadas da aba Obras do usuário.
+   - obra_id entra somente como fallback para cadastros legados.
+   Assim Relatórios segue a mesma configuração de obras do usuário.
+========================================================= */
+function idsObrasLiberadasRelatoriosBDR(u){
+  if(!u) return [];
+
+  let raw = u.obras_liberadas;
+  let lista = raw;
+
+  if(typeof lista === "string"){
+    const s = lista.trim();
+    if(!s) lista = [];
+    else{
+      try{
+        const parsed = JSON.parse(s);
+        lista = Array.isArray(parsed) ? parsed : [parsed];
+      }catch(_){
+        lista = s.split(/[,;|]/);
+      }
+    }
+  }
+
+  if(!Array.isArray(lista)){
+    lista = lista === null || lista === undefined ? [] : [lista];
+  }
+
+  const ids = lista
+    .flatMap(item => item && typeof item === "object"
+      ? [item.id, item.obra_id, item.value]
+      : [item])
+    .map(v => Number(String(v ?? "").trim()))
+    .filter(id => Number.isFinite(id) && id > 0);
+
+  if(!ids.length){
+    const principal = Number(u.obra_id);
+    if(Number.isFinite(principal) && principal > 0) ids.push(principal);
+  }
+
+  return [...new Set(ids)];
+}
+
+const podeTodasObras =
+  Number(usuario?.id) === 1 ||
+  temPermissaoRelatoriosBDR("RELATORIOS_TODAS_OBRAS", usuario);
+
+/*
+  IMPORTANTE: TODAS_OBRAS_VER antigo não libera mais TODOS os dados do Relatório.
+  O escopo do Relatório agora é independente:
+  - padrão = obras_liberadas da aba Obras;
+  - RELATORIOS_TODAS_OBRAS = todas.
+  Isso impede permissões antigas de furarem o escopo configurado no usuário.
+*/
+
+let obrasVisiveisRelatorio = obrasResp.data || [];
 
 if(usuario && !podeTodasObras){
-  if(podePropriaObra && usuario.obra_id){
-    dadosPatrimonios = dadosPatrimonios.filter(p =>
-      String(p.obra_id) === String(usuario.obra_id)
-    );
+  const idsPermitidos = idsObrasLiberadasRelatoriosBDR(usuario);
+  const permitidas = new Set(idsPermitidos.map(String));
 
-    dadosMovimentacoes = dadosMovimentacoes.filter(m =>
-      String(m.obra_origem_id) === String(usuario.obra_id) ||
-      String(m.obra_destino_id) === String(usuario.obra_id)
-    );
+  dadosPatrimonios = dadosPatrimonios.filter(p =>
+    permitidas.has(String(p.obra_id))
+  );
 
+  dadosMovimentacoes = dadosMovimentacoes.filter(m =>
+    permitidas.has(String(m.obra_origem_id)) ||
+    permitidas.has(String(m.obra_destino_id))
+  );
+
+  obrasVisiveisRelatorio = obrasVisiveisRelatorio.filter(o =>
+    permitidas.has(String(o.id))
+  );
+
+  if(!idsPermitidos.length){
     document.getElementById("filtroObra").style.display = "none";
   }else{
-    dadosPatrimonios = [];
-    dadosMovimentacoes = [];
-    document.getElementById("filtroObra").style.display = "none";
+    document.getElementById("filtroObra").style.display = "";
   }
+
+  console.log("✅ BDR RELATÓRIOS: obras permitidas aplicadas", {
+    idsPermitidos,
+    obrasVisiveis: obrasVisiveisRelatorio.length,
+    patrimoniosVisiveis: dadosPatrimonios.length
+  });
+}else if(usuario){
+  console.log("✅ BDR RELATÓRIOS: acesso a todas as obras", {
+    owner: Number(usuario.id) === 1,
+    permissao: temPermissaoRelatoriosBDR("RELATORIOS_TODAS_OBRAS", usuario)
+  });
 }
 
 patrimonios = dadosPatrimonios;
-obras = obrasResp.data || [];
+obras = obrasVisiveisRelatorio;
 empresas = empresasResp.data || [];
 siengeCodigos = siengeResp.data || [];
 movimentacoes = dadosMovimentacoes;
@@ -2293,7 +2403,9 @@ function carregarChecksObrasSienge(){
 
   box.innerHTML = "";
 
-  obras.forEach(o => {
+  const obrasDisponiveis = Array.isArray(obras) ? obras : [];
+
+  obrasDisponiveis.forEach(o => {
     const qtd = patrimonios.filter(p => String(p.obra_id) === String(o.id)).length;
     if(qtd === 0) return;
 

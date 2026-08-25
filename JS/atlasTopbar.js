@@ -431,6 +431,71 @@
     document.head.appendChild(script);
   }
 
+
+  /* =========================================================
+     OWNER CORE — restaura o painel administrativo secreto do ID 1.
+     O painel só é carregado para o OWNER; a autorização real continua
+     sendo validada pelo próprio core e pelo banco.
+  ========================================================= */
+  function usuarioOwnerAtual(){
+    for(const chave of ["usuario_logado", "usuarioLogado"]){
+      try{
+        const u=JSON.parse(localStorage.getItem(chave)||"null");
+        if(Number(u?.id)===1) return u;
+      }catch(_){ }
+    }
+    return null;
+  }
+
+  function carregarOwnerCore(){
+    if(!usuarioOwnerAtual()) return;
+
+    if(!document.querySelector('link[data-bdr-owner-core-css]')){
+      const link=document.createElement("link");
+      link.rel="stylesheet";
+      link.href="./CSS/bdr-owner-core.css";
+      link.dataset.bdrOwnerCoreCss="true";
+      document.head.appendChild(link);
+    }
+
+    const prepararGatilho=()=>{
+      const alvo=document.getElementById("usuarioPerfil") || firstVisible(SELECTORS.userButton);
+      if(!alvo || alvo.dataset.bdrOwnerTrigger==="true") return;
+      alvo.dataset.bdrOwnerTrigger="true";
+      alvo.title="OWNER";
+      if(alvo.id==="usuarioPerfil") alvo.textContent="OWNER";
+      alvo.addEventListener("click",event=>{
+        if(!usuarioOwnerAtual()) return;
+        // No texto OWNER, o clique é reservado ao painel secreto e não abre
+        // o dropdown normal do usuário.
+        if(alvo.id==="usuarioPerfil"){
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        if(typeof window.bdrCliqueSecretoOwner==="function"){
+          window.bdrCliqueSecretoOwner(event);
+        }
+      },true);
+    };
+
+    if(typeof window.bdrCliqueSecretoOwner==="function"){
+      prepararGatilho();
+      return;
+    }
+
+    if(document.querySelector('script[data-bdr-owner-core]')){
+      setTimeout(prepararGatilho,300);
+      return;
+    }
+
+    const script=document.createElement("script");
+    script.src="./JS/bdr-owner-core.js";
+    script.defer=true;
+    script.dataset.bdrOwnerCore="true";
+    script.addEventListener("load",prepararGatilho,{once:true});
+    document.head.appendChild(script);
+  }
+
   /* =========================================================
      9. INICIALIZAÇÃO
   ========================================================= */
@@ -443,6 +508,7 @@
 
     normalizeMarkup();
     carregarAtlasPush();
+    carregarOwnerCore();
     getPortal();
     carregarAlertasPreventiva();
 
