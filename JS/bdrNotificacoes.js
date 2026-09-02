@@ -256,6 +256,62 @@
       .notif-item small{display:block;margin-top:5px;color:#64748b}
       .bdr-notif-mais-wrap{padding:10px 12px;background:#f8fafc;border-top:1px solid #e5e7eb}
       .bdr-notif-mostrar-mais{width:100%;border:1px solid #bfdbfe!important;background:#eff6ff!important;color:#1d4ed8!important;border-radius:10px!important;padding:9px 12px!important;font-size:11px!important;font-weight:900!important;cursor:pointer!important}
+
+      /* ATLAS EM 100% REAL — equivalência visual ao legado em 0,85 */
+      body.atlas-shell-page .notif-dropdown{
+        width:min(366px,calc(100vw - 24px))!important;
+        max-height:min(595px,calc(100vh - 110px))!important;
+      }
+      body.atlas-shell-page .notif-list{
+        max-height:min(242px,calc(100vh - 205px))!important;
+      }
+      body.atlas-shell-page .notif-head{
+        gap:8px!important;
+        padding:10px 12px!important;
+        font-size:11px!important;
+      }
+      body.atlas-shell-page .bdr-notif-limpar-todas{
+        font-size:9px!important;
+        border-radius:8px!important;
+        padding:6px 8px!important;
+      }
+      body.atlas-shell-page .bdr-notif-grupo-titulo{
+        padding:8px 10px 5px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .notif-item{
+        padding:9px 36px 9px 11px!important;
+        font-size:10px!important;
+        line-height:1.35!important;
+      }
+      body.atlas-shell-page .notif-item strong{
+        margin-bottom:2px!important;
+        font-size:10px!important;
+      }
+      body.atlas-shell-page .notif-item small{
+        margin-top:4px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .notif-item.bdr-notif-acao::after{
+        margin-top:6px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .bdr-notif-fechar{
+        top:7px!important;
+        right:7px!important;
+        width:23px!important;
+        height:23px!important;
+        border-radius:8px!important;
+        font-size:13px!important;
+      }
+      body.atlas-shell-page .bdr-notif-mais-wrap{
+        padding:8px 10px!important;
+      }
+      body.atlas-shell-page .bdr-notif-mostrar-mais{
+        border-radius:9px!important;
+        padding:8px 10px!important;
+        font-size:9px!important;
+      }
       .bdr-notif-mostrar-mais:hover{background:#dbeafe!important;transform:none!important}
       .notif-btn.bdr-notif-offline{opacity:.75;filter:grayscale(.25)}
       .bdr-notif-toast-forte{

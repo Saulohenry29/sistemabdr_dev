@@ -3,7 +3,7 @@
 ========================================================= */
 let entradas = [];
 let itens = [];
-let obras = [];
+let triagemObras = [];
 let enderecos = [];
 let visaoAtual = "CALENDARIO";
 
@@ -108,7 +108,7 @@ function salvarCacheTriagemLocal(){
     localStorage.setItem(BDR_TRIAGEM_CACHE_KEY, JSON.stringify({
       entradas,
       itens,
-      obras,
+      triagemObras,
       enderecos,
       salvo_em:new Date().toISOString()
     }));
@@ -279,7 +279,7 @@ async function carregarTriagemDoCacheRapido(){
 
     entradas = entradasCache || [];
     itens = itensCache || [];
-    obras = obrasCache || [];
+    triagemObras = obrasCache || [];
     enderecos = enderecosCache || [];
 
     salvarCacheTriagemLocal();
@@ -308,7 +308,7 @@ async function carregarTriagem(){
     if(cache){
       entradas = cache.entradas || [];
       itens = cache.itens || [];
-      obras = cache.obras || [];
+      triagemObras = cache.obras || [];
       enderecos = cache.enderecos || [];
       carregarFiltroMes();
       renderizarTudo();
@@ -389,7 +389,7 @@ async function carregarTriagem(){
 
     entradas = entradasOnline || [];
     itens = itensOnline || [];
-    obras = obrasOnline || [];
+    triagemObras = obrasOnline || [];
     enderecos = enderecosOnline || [];
 
     salvarCacheTriagemLocal();
@@ -1059,7 +1059,7 @@ function sugerirEndereco(destino, item){
 function montarOptionsObras(){
   let html = '<option value="">Selecione a obra</option>';
 
-  obras.forEach(o => {
+  triagemObras.forEach(o => {
     html += `<option value="${o.id}">${o.codigo_obra || "-"} - ${o.nome || "-"}</option>`;
   });
 
@@ -1068,7 +1068,7 @@ function montarOptionsObras(){
 
 
 function obraPorId(obraId){
-  return obras.find(o => String(o.id) === String(obraId)) || null;
+  return triagemObras.find(o => String(o.id) === String(obraId)) || null;
 }
 
 function atualizarEmpresaObraItem(itemId){

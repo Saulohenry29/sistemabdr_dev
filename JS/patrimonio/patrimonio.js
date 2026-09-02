@@ -3,8 +3,8 @@
   Regra de negócio preservada da versão atual.
   Fluxo de etiqueta consolidado e protegido contra impressão antecipada.
 */
-let obras = [];
-let patrimonios = [];
+let patrimonioObras = [];
+let patrimonioItens = [];
 let bdrPatrimonioPaginaAtual = 1;
 const bdrPatrimonioPorPagina = 30;
 let bdrPatrimonioUltimaChaveFiltro = "";
@@ -67,11 +67,11 @@ document.addEventListener("blur", function(e){
   }
 }, true);
 
-function ir(pagina){
+function patrimonioIr(pagina){
   window.location.href = pagina;
 }
 
-function db(){
+function patrimonioDb(){
   return window.client || window.supabaseClient || null;
 }
 
@@ -100,7 +100,7 @@ async function patrimonioOnlineReal(){
     return ok;
   }
 
-  if(navigator.onLine === false || !db()){
+  if(navigator.onLine === false || !patrimonioDb()){
     BDR_PATRIMONIO_ONLINE_REAL = false;
     window.BDR_PATRIMONIO_ONLINE_REAL = false;
     return false;
@@ -114,7 +114,7 @@ async function patrimonioOnlineReal(){
 function patrimonioOffline(){
   return BDR_PATRIMONIO_ONLINE_REAL === false ||
          navigator.onLine === false ||
-         !db();
+         !patrimonioDb();
 }
 
 function mostrarAvisoModoOffline(){
@@ -158,8 +158,8 @@ async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
 
   const onlineReal = await patrimonioOnlineReal();
 
-  if(onlineReal && db()){
-    const { data, error } = await db()
+  if(onlineReal && patrimonioDb()){
+    const { data, error } = await patrimonioDb()
       .from(tabela)
       .insert([payload])
       .select();
@@ -187,8 +187,8 @@ async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
 async function bdrAtualizarPrimeiroNoTablet(tabela, match, payload, meta={}){
   const onlineReal = await patrimonioOnlineReal();
 
-  if(onlineReal && db()){
-    let query = db().from(tabela).update(payload);
+  if(onlineReal && patrimonioDb()){
+    let query = patrimonioDb().from(tabela).update(payload);
 
     Object.entries(match || {}).forEach(([campo, valor]) => {
       query = query.eq(campo, valor);
@@ -268,13 +268,13 @@ function bdrAvisoSalvoTablet(texto="Salvo no tablet. Está pendente de sincroniz
   );
 }
 
-function usuarioAtual(){
+function patrimonioUsuarioAtual(){
   const u = localStorage.getItem("usuario_logado");
   return u ? JSON.parse(u) : null;
 }
 
 function carregarUsuarioTopo(){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const nome = document.getElementById("usuarioNome");
   const perfil = document.getElementById("usuarioPerfil");
   if(nome) nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
@@ -286,7 +286,7 @@ function fecharMenusTopo(){
 }
 document.addEventListener("click", fecharMenusTopo);
 
-function permissoesUsuarioBDR(usuario = usuarioAtual()){
+function patrimonioPermissoesUsuarioBDR(usuario = patrimonioUsuarioAtual()){
   if(!usuario) return [];
   if(Array.isArray(usuario.permissoes)){
     return usuario.permissoes.map(p => String(p).trim().toUpperCase()).filter(Boolean);
@@ -297,22 +297,22 @@ function permissoesUsuarioBDR(usuario = usuarioAtual()){
     .filter(Boolean);
 }
 
-function usuarioOwnerBDR(usuario = usuarioAtual()){
+function patrimonioUsuarioOwnerBDR(usuario = patrimonioUsuarioAtual()){
   return Number(usuario?.id) === 1;
 }
 
 function usuarioTemPermissao(permissao){
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u) return false;
 
   if(window.BDRMenuPermissoes && typeof window.BDRMenuPermissoes.temPermissao === "function"){
     return window.BDRMenuPermissoes.temPermissao(permissao, u);
   }
 
-  if(usuarioOwnerBDR(u)) return true;
+  if(patrimonioUsuarioOwnerBDR(u)) return true;
 
   const p = String(permissao || "").toUpperCase();
-  const ps = permissoesUsuarioBDR(u);
+  const ps = patrimonioPermissoesUsuarioBDR(u);
 
   const aliases = {
     "PATRIMONIO":"PATRIMONIO_VER",
@@ -341,10 +341,10 @@ function usuarioTemPermissao(permissao){
 }
 
 function usuarioPodeCriarPatrimonioBDR(){
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u) return false;
 
-  if(usuarioOwnerBDR(u)) return true;
+  if(patrimonioUsuarioOwnerBDR(u)) return true;
 
   /*
    * A fonte central continua sendo prioritária, mas fazemos fallback para
@@ -354,16 +354,16 @@ function usuarioPodeCriarPatrimonioBDR(){
    */
   if(usuarioTemPermissao("PATRIMONIO_CRIAR")) return true;
 
-  const ps = permissoesUsuarioBDR(u);
+  const ps = patrimonioPermissoesUsuarioBDR(u);
   return ps.includes("PATRIMONIO_CRIAR") ||
          ps.includes("CADASTRAR_PATRIMONIO");
 }
 
 function usuarioQuerSomCriacaoPatrimonioBDR(){
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u) return false;
 
-  const ps = permissoesUsuarioBDR(u);
+  const ps = patrimonioPermissoesUsuarioBDR(u);
 
   /*
    * O som de confirmação do cadastro respeita as preferências do usuário.
@@ -383,7 +383,7 @@ function usuarioEhGestao(){
     Perfil/cargo, USUARIOS_VER ou EMPRESAS_VER não concedem ações.
     Somente o usuário ID 1 é absoluto.
   */
-  return usuarioOwnerBDR();
+  return patrimonioUsuarioOwnerBDR();
 }
 
 function usuarioPodeVerTodasObras(){
@@ -391,12 +391,12 @@ function usuarioPodeVerTodasObras(){
     Escopo amplo também é explícito.
     Perfil ADMIN/MASTER não libera obras automaticamente.
   */
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u) return false;
 
-  if(usuarioOwnerBDR(u)) return true;
+  if(patrimonioUsuarioOwnerBDR(u)) return true;
 
-  const ps = permissoesUsuarioBDR(u);
+  const ps = patrimonioPermissoesUsuarioBDR(u);
   return ps.includes("PATRIMONIO_VER_TODAS_OBRAS") ||
          ps.includes("PATRIMONIO_TODAS_OBRAS") ||
          ps.includes("TODAS_OBRAS_VER");
@@ -435,11 +435,11 @@ function normalizarIdsObrasLiberadasPatrimonioBDR(valor){
   )];
 }
 
-function obrasPermitidasPatrimonioBDR(usuario = usuarioAtual()){
+function obrasPermitidasPatrimonioBDR(usuario = patrimonioUsuarioAtual()){
   if(!usuario) return [];
 
   if(usuarioPodeVerTodasObras()){
-    return (obras || []).map(o => Number(o.id)).filter(Number.isFinite);
+    return (patrimonioObras || []).map(o => Number(o.id)).filter(Number.isFinite);
   }
 
   /*
@@ -470,7 +470,7 @@ function obrasPermitidasPatrimonioBDR(usuario = usuarioAtual()){
   return [];
 }
 
-function usuarioPodeVerObraPatrimonioBDR(obraId, usuario = usuarioAtual()){
+function usuarioPodeVerObraPatrimonioBDR(obraId, usuario = patrimonioUsuarioAtual()){
   if(!usuario) return false;
   if(usuarioPodeVerTodasObras()) return true;
 
@@ -483,19 +483,19 @@ function usuarioPodeVerObraPatrimonioBDR(obraId, usuario = usuarioAtual()){
 
 
 function usuarioPodeLancarQualquerObra(){
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u) return false;
 
-  if(usuarioOwnerBDR(u)) return true;
+  if(patrimonioUsuarioOwnerBDR(u)) return true;
 
-  const ps = permissoesUsuarioBDR(u);
+  const ps = patrimonioPermissoesUsuarioBDR(u);
   return ps.includes("PATRIMONIO_LANCAR_QUALQUER_OBRA") ||
          ps.includes("PATRIMONIO_VER_TODAS_OBRAS") ||
          ps.includes("PATRIMONIO_TODAS_OBRAS") ||
          ps.includes("TODAS_OBRAS_VER");
 }
 
-function usuarioPodeEscolherObraLancamentoBDR(usuario = usuarioAtual()){
+function usuarioPodeEscolherObraLancamentoBDR(usuario = patrimonioUsuarioAtual()){
   if(!usuario) return false;
   if(usuarioPodeLancarQualquerObra()) return true;
 
@@ -507,10 +507,10 @@ function usuarioPodeEscolherObraLancamentoBDR(usuario = usuarioAtual()){
 }
 
 function obraVinculadaUsuarioBDR(){
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   if(!u || !u.obra_id) return null;
 
-  return (obras || []).find(o =>
+  return (patrimonioObras || []).find(o =>
     String(o.id) === String(u.obra_id)
   ) || null;
 }
@@ -518,7 +518,7 @@ function obraVinculadaUsuarioBDR(){
 function aplicarRegraObraLancamentoBDR(){
   const select = document.getElementById("obraSelect");
   const btn = document.getElementById("btnTravarObra");
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
 
   if(!select || !u) return;
 
@@ -578,7 +578,7 @@ function aplicarRegraObraLancamentoBDR(){
 function bloquearPatrimonioSemPermissaoBDR(){
   if(usuarioTemPermissao("PATRIMONIO_VER")) return true;
 
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const destino =
     window.BDRMenuPermissoes?.primeiraPaginaPermitida?.(usuario) ||
     "login.html";
@@ -587,7 +587,7 @@ function bloquearPatrimonioSemPermissaoBDR(){
   return false;
 }
 
-function aplicarMenuPorPermissaoBDR(){
+function patrimonioAplicarMenuPorPermissaoBDR(){
   if(typeof window.bdrAplicarMenuEstavelSemPiscar === "function"){
     window.bdrAplicarMenuEstavelSemPiscar();
     return;
@@ -600,7 +600,7 @@ function aplicarMenuPorPermissaoBDR(){
   });
 }
 
-function valor(id){
+function patrimonioValor(id){
   const el = document.getElementById(id);
   if(!el) return "";
   return String(el.value || "").trim();
@@ -659,7 +659,7 @@ async function bdrProximoSequencialObra(obra){
   const onlineReal = await patrimonioOnlineReal();
 
   if(onlineReal){
-    const { data, error } = await db()
+    const { data, error } = await patrimonioDb()
       .from("patrimonio")
       .select("codigo_qr")
       .like("codigo_qr", prefixoCodigo + "%")
@@ -674,7 +674,7 @@ async function bdrProximoSequencialObra(obra){
     });
   }else{
     const cachePat = await BDROfflineDB.lerTabela("patrimonio") || [];
-    const locais = patrimonios || [];
+    const locais = patrimonioItens || [];
     const todos = [...cachePat, ...locais];
 
     todos.forEach(p => {
@@ -688,7 +688,7 @@ async function bdrProximoSequencialObra(obra){
 
 
 function bdrValorPatrimonioValido(){
-  const valorNumero = moedaParaNumero(valor("valor_bem"));
+  const valorNumero = moedaParaNumero(patrimonioValor("valor_bem"));
   return Number.isFinite(Number(valorNumero)) && Number(valorNumero) > 0;
 }
 
@@ -702,18 +702,18 @@ function bdrSetGerandoPatrimonio(gerando){
 }
 
 function preencherFiltroObraPatrimonio(){
-  const filtro = document.getElementById("filtroObra");
+  const filtro = document.getElementById("patrimonioFiltroObra");
   if(!filtro) return;
 
   const valorAtual = filtro.value;
   filtro.innerHTML = `<option value="">Todas as obras/setores</option>`;
 
-  (obras || []).forEach(o => {
+  (patrimonioObras || []).forEach(o => {
     const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
     filtro.innerHTML += `<option value="${o.id}">${texto}</option>`;
   });
 
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
 
   if(usuario && !usuarioPodeVerTodasObras()){
     const permitidas = new Set(
@@ -759,40 +759,67 @@ function formatarMoeda(valor){
   });
 }
 
-function mascaraMoeda(input){
-  const valorAntes = input.value;
-  const inicioAntes = input.selectionStart ?? valorAntes.length;
-  const digitosAntesDoCursor = valorAntes.slice(0, inicioAntes).replace(/\D/g, "").length;
+function formatarCampoMoedaBRL(input){
+  if(!input) return;
 
-  let valor = valorAntes.replace(/\D/g, "");
-
-  if(!valor){
+  const numero = moedaParaNumero(String(input.value || "").trim());
+  if(numero === null || !Number.isFinite(numero)){
     input.value = "";
     return;
   }
 
-  const numero = Number(valor) / 100;
-  const formatado = numero.toLocaleString("pt-BR", {
+  input.value = numero.toLocaleString("pt-BR", {
     minimumFractionDigits:2,
     maximumFractionDigits:2
   });
+}
+
+function mascaraMoeda(input){
+  if(!input) return;
+
+  /*
+    Máscara monetária com centavos automáticos e cursor preservado.
+    Ex.: 1550 -> 15,50 | 160000 -> 1.600,00.
+    Ao editar no meio do número, o cursor permanece junto ao mesmo dígito
+    em vez de saltar para o final do campo.
+  */
+  const bruto = String(input.value || "");
+  const cursorAntes = Number.isFinite(input.selectionStart) ? input.selectionStart : bruto.length;
+  const digitosDireita = (bruto.slice(cursorAntes).match(/\d/g) || []).length;
+  const digitos = bruto.replace(/\D/g, "");
+
+  if(!digitos){
+    input.value = "";
+    return;
+  }
+
+  const normalizado = digitos.padStart(3, "0");
+  const centavos = normalizado.slice(-2);
+  let inteiro = normalizado.slice(0, -2).replace(/^0+(?=\d)/, "") || "0";
+  inteiro = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const formatado = `${inteiro},${centavos}`;
 
   input.value = formatado;
 
-  // Reposiciona o cursor pelo mesmo número de algarismos à esquerda.
-  let vistos = 0;
-  let pos = formatado.length;
-  for(let i = 0; i < formatado.length; i++){
-    if(/\d/.test(formatado[i])) vistos++;
-    if(vistos >= digitosAntesDoCursor){
-      pos = i + 1;
-      break;
+  if(document.activeElement === input && typeof input.setSelectionRange === "function"){
+    let novaPosicao = formatado.length;
+    for(let pos = formatado.length; pos >= 0; pos--){
+      const qtdDireita = (formatado.slice(pos).match(/\d/g) || []).length;
+      if(qtdDireita === digitosDireita){
+        novaPosicao = pos;
+        continue;
+      }
+      if(qtdDireita > digitosDireita) break;
     }
+    requestAnimationFrame(() => {
+      try{ input.setSelectionRange(novaPosicao, novaPosicao); }catch(_e){}
+    });
   }
 
-  requestAnimationFrame(() => {
-    try{ input.setSelectionRange(pos, pos); }catch(_){ }
-  });
+  if(input.dataset.moedaBlurLigado !== "1"){
+    input.dataset.moedaBlurLigado = "1";
+    input.addEventListener("blur", () => formatarCampoMoedaBRL(input));
+  }
 }
 
 
@@ -818,7 +845,7 @@ function atlasTextoObra(obra){
 function atlasObraSelecionadaAtual(){
   const select = document.getElementById("obraSelect");
   if(!select?.value) return null;
-  return (obras || []).find(o => String(o.id) === String(select.value)) || null;
+  return (patrimonioObras || []).find(o => String(o.id) === String(select.value)) || null;
 }
 
 function atlasFecharSugestoesObra(){
@@ -843,14 +870,14 @@ function atlasSincronizarCampoObra(){
 
 function atlasFiltrarObras(termo, abrirTudo = false){
   const normalizado = atlasNormalizarBuscaObra(termo);
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
   const permitidas = new Set(
     obrasPermitidasPatrimonioBDR(u).map(String)
   );
 
   const base = usuarioPodeVerTodasObras()
-    ? (obras || [])
-    : (obras || []).filter(obra => permitidas.has(String(obra.id)));
+    ? (patrimonioObras || [])
+    : (patrimonioObras || []).filter(obra => permitidas.has(String(obra.id)));
 
   atlasObraResultados = base.filter(obra => {
     if(abrirTudo || !normalizado) return true;
@@ -897,7 +924,7 @@ async function atlasSelecionarObraCombo(obraId, confirmarAutomaticamente = false
   const input = document.getElementById("obraBusca");
   if(!select || !input) return false;
 
-  const obra = (obras || []).find(o => String(o.id) === String(obraId));
+  const obra = (patrimonioObras || []).find(o => String(o.id) === String(obraId));
   if(!obra) return false;
 
   if(!usuarioPodeVerObraPatrimonioBDR(obra.id)){
@@ -928,12 +955,12 @@ async function atlasConfirmarObraDigitada(){
   if(!termo) return false;
 
   const permitidas = new Set(
-    obrasPermitidasPatrimonioBDR(usuarioAtual()).map(String)
+    obrasPermitidasPatrimonioBDR(patrimonioUsuarioAtual()).map(String)
   );
 
   const basePermitida = usuarioPodeVerTodasObras()
-    ? (obras || [])
-    : (obras || []).filter(obra => permitidas.has(String(obra.id)));
+    ? (patrimonioObras || [])
+    : (patrimonioObras || []).filter(obra => permitidas.has(String(obra.id)));
 
   const exata = basePermitida.find(obra =>
     atlasNormalizarBuscaObra(obra.codigo_obra) === termo ||
@@ -1099,7 +1126,7 @@ async function carregarObras(){
     select.innerHTML = `<option value="">Selecione a obra/setor</option>`;
     novaSelect.innerHTML = `<option value="">Selecione nova obra/setor</option>`;
 
-    obras.forEach(o => {
+    patrimonioObras.forEach(o => {
       const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
       select.innerHTML += `<option value="${o.id}">${texto}</option>`;
       novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
@@ -1119,13 +1146,13 @@ async function carregarObras(){
     const onlineReal = await patrimonioOnlineReal();
 
     if(!onlineReal){
-      obras = await BDROfflineDB.lerTabela("obras") || [];
+      patrimonioObras = await BDROfflineDB.lerTabela("obras") || [];
       preencherSelectObras();
       mostrarAvisoModoOffline();
       return;
     }
 
-    const { data, error } = await db()
+    const { data, error } = await patrimonioDb()
       .from("obras")
       .select("*")
       .eq("ativa", true)
@@ -1133,17 +1160,17 @@ async function carregarObras(){
 
     if(error) throw error;
 
-    obras = data || [];
+    patrimonioObras = data || [];
 
     if(window.BDROfflineDB?.salvarTabela){
-      await BDROfflineDB.salvarTabela("obras", obras);
+      await BDROfflineDB.salvarTabela("obras", patrimonioObras);
     }
 
     preencherSelectObras();
 
   }catch(e){
     console.warn("Patrimônio: falha ao carregar obras online, usando cache:", e.message || e);
-    obras = await BDROfflineDB.lerTabela("obras") || [];
+    patrimonioObras = await BDROfflineDB.lerTabela("obras") || [];
     preencherSelectObras();
     BDR_PATRIMONIO_ONLINE_REAL = false;
     mostrarAvisoModoOffline();
@@ -1165,10 +1192,10 @@ async function alternarTravaObra(){
 
   if(window.obraTravada){
     const temDados =
-      valor("nome_bem") ||
-      valor("valor_bem") ||
-      valor("observacao") ||
-      valor("tipo_item");
+      patrimonioValor("nome_bem") ||
+      patrimonioValor("valor_bem") ||
+      patrimonioValor("patrimonioObservacao") ||
+      patrimonioValor("tipo_item");
 
     if(temDados){
       const ok = await bdrConfirmarAtlas(
@@ -1210,7 +1237,7 @@ async function alternarTravaObra(){
    * o usuário a uma obra só para conseguir cadastrar.
    */
   if(
-    !usuarioOwnerBDR() &&
+    !patrimonioUsuarioOwnerBDR() &&
     !usuarioPodeVerObraPatrimonioBDR(obraSelecionada.id)
   ){
     alert("Esta obra não está liberada para este usuário.");
@@ -1327,7 +1354,7 @@ function obterObraParaLancamento(){
     return null;
   }
 
-  const obraSelecionada = obras.find(
+  const obraSelecionada = patrimonioObras.find(
     o => String(o.id) === String(obra_id)
   );
 
@@ -1426,8 +1453,8 @@ function atlasRegistroCatalogoPatrimonio(item){
 
 async function atlasCarregarCatalogoGlobalPatrimonio(){
   try{
-    if(!db()) return;
-    const {data,error}=await db()
+    if(!patrimonioDb()) return;
+    const {data,error}=await patrimonioDb()
       .from('patrimonio')
       .select('id,created_at,nome_bem,tipo_item,tipo_outro,marca,modelo,valor_bem,estado_conservacao,ncm,cor,combustivel,potencia,ano_fabricacao,ano_modelo')
       .neq('ativo',false)
@@ -1463,7 +1490,7 @@ async function atlasCarregarCatalogoGlobalPatrimonio(){
 }
 
 function atlasCatalogoNomesPatrimonio(){
-  const locais=(window.patrimonios||patrimonios||[])
+  const locais=(window.patrimonios||patrimonioItens||[])
     .map(atlasRegistroCatalogoPatrimonio)
     .filter(p=>p?.nome_bem);
 
@@ -1611,7 +1638,7 @@ function atlasCompactarObraPatrimonio(){
   const card = document.getElementById("cardObraLancamento");
   const select = document.getElementById("obraSelect");
   const btn = document.getElementById("btnTravarObra");
-  const u = usuarioAtual();
+  const u = patrimonioUsuarioAtual();
 
   if(!card || !select || !u) return;
 
@@ -1632,7 +1659,7 @@ function atlasCompactarObraPatrimonio(){
 
   if(!acessoAmplo && ids.size === 1){
     const obraId = Array.from(ids)[0];
-    const obra = (window.obras || obras || []).find(o=>String(o.id)===String(obraId));
+    const obra = (window.obras || patrimonioObras || []).find(o=>String(o.id)===String(obraId));
 
     if(obra){
       select.value = String(obra.id);
@@ -1718,12 +1745,12 @@ function atlasListaUnica(valores){
 
 function atlasOpcoesAutocomplete(tipo){
   if(tipo === "marca"){
-    return atlasListaUnica((patrimonios || []).map(item => item?.marca));
+    return atlasListaUnica((patrimonioItens || []).map(item => item?.marca));
   }
 
   const marca = atlasTextoMaiusculo(document.getElementById("marca")?.value);
   return atlasListaUnica(
-    (patrimonios || [])
+    (patrimonioItens || [])
       .filter(item => !marca || atlasTextoMaiusculo(item?.marca) === marca)
       .map(item => item?.modelo)
   );
@@ -1848,7 +1875,7 @@ function atlasCampoSerieComLote(placeholder="Número de série"){
 }
 
 function mostrarCampos(){
-  const tipo = valor("tipo_item");
+  const tipo = patrimonioValor("tipo_item");
   const div = document.getElementById("camposExtras");
   const campoOutro = document.getElementById("campoOutroTipo");
   if(!div || !campoOutro) return;
@@ -1958,8 +1985,8 @@ async function bdrBaseDuplicidadePatrimonio(){
   try{
     const onlineReal = await patrimonioOnlineReal();
 
-    if(onlineReal && db()){
-      const { data, error } = await db()
+    if(onlineReal && patrimonioDb()){
+      const { data, error } = await patrimonioDb()
         .from("patrimonio")
         .select(campos)
         .or("ativo.eq.true,ativo.is.null")
@@ -1977,9 +2004,9 @@ async function bdrBaseDuplicidadePatrimonio(){
       ? await BDROfflineDB.lerTabela("patrimonio")
       : [];
 
-    return [ ...(patrimonios || []), ...(cache || []) ];
+    return [ ...(patrimonioItens || []), ...(cache || []) ];
   }catch(e){
-    return patrimonios || [];
+    return patrimonioItens || [];
   }
 }
 
@@ -2056,13 +2083,13 @@ async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={}){
 }
 
 async function validarDuplicidadeCampoPatrimonio(campo){
-  const v = valor(campo);
+  const v = patrimonioValor(campo);
 
   if(bdrCampoVazioOuGenerico(v)){
     return true;
   }
 
-  const tipoItem = String(valor("tipo_item") || "").toUpperCase();
+  const tipoItem = String(patrimonioValor("tipo_item") || "").toUpperCase();
   const lista = await bdrBaseDuplicidadePatrimonio();
 
   const achados = (lista || []).filter(p => {
@@ -2156,16 +2183,16 @@ async function gerarPatrimonio(){
     return;
   }
 
-  const nome_bem = valor("nome_bem");
-  const tipo_item = valor("tipo_item");
-  const status_inicial = valor("status_inicial") || "ESTOQUE";
+  const nome_bem = patrimonioValor("nome_bem");
+  const tipo_item = patrimonioValor("tipo_item");
+  const status_inicial = patrimonioValor("status_inicial") || "ESTOQUE";
 
   if(!nome_bem || !tipo_item){
     alert("Preencha nome do bem e tipo.");
     return;
   }
 
-  if(tipo_item === "OUTRO" && !valor("tipo_outro")){
+  if(tipo_item === "OUTRO" && !patrimonioValor("tipo_outro")){
     alert("Descreva o tipo do ativo.");
     return;
   }
@@ -2194,13 +2221,13 @@ async function gerarPatrimonio(){
   const dadosParaValidarDuplicidade = {
     nome_bem,
     tipo_item,
-    placa: valor("placa") || null,
-    renavam: valor("renavam") || null,
-    chassi: valor("chassi") || null,
-    codigo_antigo: valor("codigo_antigo") || null,
-    marca: valor("marca") || null,
-    modelo: valor("modelo") || null,
-    numero_serie: valor("numero_serie") || null,
+    placa: patrimonioValor("placa") || null,
+    renavam: patrimonioValor("renavam") || null,
+    chassi: patrimonioValor("chassi") || null,
+    codigo_antigo: patrimonioValor("codigo_antigo") || null,
+    marca: patrimonioValor("marca") || null,
+    modelo: patrimonioValor("modelo") || null,
+    numero_serie: patrimonioValor("numero_serie") || null,
     obra_id: obra.id ? Number(obra.id) : null
   };
 
@@ -2231,7 +2258,7 @@ const usuarioLogado = JSON.parse(
 const patrimonio = {
     nome_bem,
     tipo_item,
-    tipo_outro: valor("tipo_outro") || null,
+    tipo_outro: patrimonioValor("tipo_outro") || null,
 
     empresa_id: obra.empresa_id ? Number(obra.empresa_id) : 17,
     obra_id: obra.id ? Number(obra.id) : null,
@@ -2241,42 +2268,42 @@ const patrimonio = {
     codigo_qr,
     status: status_inicial,
 
-    marca: valor("marca") || null,
-    modelo: valor("modelo") || null,
-    numero_serie: valor("numero_serie") || null,
-    descricao: valor("descricao") || null,
-    fornecedor: valor("fornecedor") || null,
-    data_compra: valor("data_compra") || null,
-    responsavel: valor("responsavel") || null,
-    departamento: valor("departamento") || null,
-    endereco_estoque: valor("endereco_estoque") || null,
+    marca: patrimonioValor("marca") || null,
+    modelo: patrimonioValor("modelo") || null,
+    numero_serie: patrimonioValor("numero_serie") || null,
+    descricao: patrimonioValor("descricao") || null,
+    fornecedor: patrimonioValor("fornecedor") || null,
+    data_compra: patrimonioValor("data_compra") || null,
+    responsavel: patrimonioValor("responsavel") || null,
+    departamento: patrimonioValor("departamento") || null,
+    endereco_estoque: patrimonioValor("endereco_estoque") || null,
 
-    placa: valor("placa") || null,
-    renavam: valor("renavam") || null,
-    cor: valor("cor") || null,
-    combustivel: valor("combustivel") || null,
-    potencia: valor("potencia") || null,
-    chassi: valor("chassi") || null,
+    placa: patrimonioValor("placa") || null,
+    renavam: patrimonioValor("renavam") || null,
+    cor: patrimonioValor("cor") || null,
+    combustivel: patrimonioValor("combustivel") || null,
+    potencia: patrimonioValor("potencia") || null,
+    chassi: patrimonioValor("chassi") || null,
 
-horimetro: moedaParaNumero(valor("horimetro")),
-quilometragem: moedaParaNumero(valor("quilometragem")),
+horimetro: moedaParaNumero(patrimonioValor("horimetro")),
+quilometragem: moedaParaNumero(patrimonioValor("quilometragem")),
 
-ano_fabricacao: valor("ano_fabricacao")
-  ? parseInt(valor("ano_fabricacao"))
+ano_fabricacao: patrimonioValor("ano_fabricacao")
+  ? parseInt(patrimonioValor("ano_fabricacao"))
   : null,
 
-ano_modelo: valor("ano_modelo")
-  ? parseInt(valor("ano_modelo"))
+ano_modelo: patrimonioValor("ano_modelo")
+  ? parseInt(patrimonioValor("ano_modelo"))
   : null,
 
-    valor_bem: moedaParaNumero(valor("valor_bem")),
-    codigo_antigo: valor("codigo_antigo") || null,
-    ncm: valor("ncm") || null,
-    numero_nfe: valor("numero_nfe") || null,
-    estado_conservacao: valor("estado_conservacao") || "BOM",
+    valor_bem: moedaParaNumero(patrimonioValor("valor_bem")),
+    codigo_antigo: patrimonioValor("codigo_antigo") || null,
+    ncm: patrimonioValor("ncm") || null,
+    numero_nfe: patrimonioValor("numero_nfe") || null,
+    estado_conservacao: patrimonioValor("estado_conservacao") || "BOM",
     observacao: [
-      valor("observacao"),
-      valor("especificacoes") ? "Especificações: " + valor("especificacoes") : ""
+      patrimonioValor("patrimonioObservacao"),
+      patrimonioValor("especificacoes") ? "Especificações: " + patrimonioValor("especificacoes") : ""
     ].filter(Boolean).join(" | ") || null,
 
     origem_cadastro:
@@ -2308,7 +2335,7 @@ usuario_cadastro:
         id: resp.offlineFirst ? "LOCAL-" + Date.now() : Date.now()
       };
 
-  patrimonios.unshift({
+  patrimonioItens.unshift({
     ...registroSalvo,
     __offline_pendente: !!resp.offlineFirst
   });
@@ -2345,7 +2372,7 @@ function limparFormularioCadastro(){
   document.getElementById("valor_bem").value = "";
   document.getElementById("tipo_outro").value = "";
   document.getElementById("campoOutroTipo").style.display = "none";
-  document.getElementById("observacao").value = "";
+  document.getElementById("patrimonioObservacao").value = "";
   document.getElementById("codigo_antigo").value = "";
   document.getElementById("ncm").value = "";
   document.getElementById("numero_nfe").value = "";
@@ -2370,7 +2397,7 @@ function limparFormularioCadastro(){
    - Para os demais usuários, o item apenas desaparece da lista.
 ========================================================= */
 function atlasPodeVerInativos(){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   return Number(usuario?.id || usuario?.usuario_id || 0) === 1;
 }
 
@@ -2404,7 +2431,7 @@ async function carregarPatrimonios(){
 
     if(!onlineReal){
       let dadosCache = await BDROfflineDB.lerTabela("patrimonio") || [];
-      const usuario = usuarioAtual();
+      const usuario = patrimonioUsuarioAtual();
 
       dadosCache = dadosCache.filter(p =>
         visualizarInativos ? p.ativo === false : p.ativo !== false
@@ -2420,20 +2447,20 @@ async function carregarPatrimonios(){
           : [];
       }
 
-      patrimonios = dadosCache;
+      patrimonioItens = dadosCache;
       renderizarPatrimonios();
       mostrarAvisoModoOffline();
       atlasAtualizarBotaoInativos();
       return;
     }
 
-    const usuario = usuarioAtual();
+    const usuario = patrimonioUsuarioAtual();
     const permitidasUsuario = usuario && !usuarioPodeVerTodasObras()
       ? obrasPermitidasPatrimonioBDR(usuario)
       : null;
 
     if(Array.isArray(permitidasUsuario) && permitidasUsuario.length === 0){
-      patrimonios = [];
+      patrimonioItens = [];
       renderizarPatrimonios();
       mostrarAvisoModoOffline();
       atlasAtualizarBotaoInativos();
@@ -2449,7 +2476,7 @@ async function carregarPatrimonios(){
     let dados = [];
 
     for(let inicio = 0; ; inicio += TAMANHO_PAGINA_BANCO){
-      let query = db().from("patrimonio").select("*");
+      let query = patrimonioDb().from("patrimonio").select("*");
 
       query = visualizarInativos
         ? query.eq("ativo", false)
@@ -2485,11 +2512,11 @@ async function carregarPatrimonios(){
       dados = dados.filter(p => permitidas.has(String(p.obra_id)));
     }
 
-    patrimonios = dados;
+    patrimonioItens = dados;
 
     // O cache mantém apenas o conjunto carregado nesta visualização.
     if(window.BDROfflineDB?.salvarTabela && !visualizarInativos){
-      await BDROfflineDB.salvarTabela("patrimonio", patrimonios);
+      await BDROfflineDB.salvarTabela("patrimonio", patrimonioItens);
     }
 
     renderizarPatrimonios();
@@ -2498,7 +2525,7 @@ async function carregarPatrimonios(){
   }catch(e){
     console.warn("Patrimônio: falha ao carregar patrimônios online, usando cache:", e.message || e);
     let dadosCache = await BDROfflineDB.lerTabela("patrimonio") || [];
-    const usuario = usuarioAtual();
+    const usuario = patrimonioUsuarioAtual();
 
     dadosCache = dadosCache.filter(p =>
       visualizarInativos ? p.ativo === false : p.ativo !== false
@@ -2514,7 +2541,7 @@ async function carregarPatrimonios(){
         : [];
     }
 
-    patrimonios = dadosCache;
+    patrimonioItens = dadosCache;
     BDR_PATRIMONIO_ONLINE_REAL = false;
     renderizarPatrimonios();
     mostrarAvisoModoOffline();
@@ -2562,6 +2589,11 @@ function textoBuscaPatrimonio(p){
     ${p.observacao || ""}
     ${p.usuario_cadastro || ""}
     ${p.origem_cadastro || ""}
+    ${p.numero_nfe || ""}
+    ${p.ncm || ""}
+    ${p.fornecedor || ""}
+    ${p.departamento || ""}
+    ${p.endereco_estoque || ""}
     ${p.valor_bem || ""}
   `;
 }
@@ -2574,10 +2606,10 @@ function bdrResetPaginaPatrimonio(){
 
 function bdrPatrimonioFiltroChave(){
   return [
-    valor("busca"),
-    valor("filtroObra"),
-    valor("filtroStatus"),
-    valor("filtroTipo"),
+    patrimonioValor("patrimonioBusca"),
+    patrimonioValor("patrimonioFiltroObra"),
+    patrimonioValor("filtroStatus"),
+    patrimonioValor("patrimonioFiltroTipo"),
     atlasMostrarInativos ? "INATIVOS" : "ATIVOS"
   ].join("||");
 }
@@ -2598,11 +2630,11 @@ function bdrPatrimonioProximaPagina(totalPaginas){
 
 function renderizarPatrimonios(){
 
-  const buscaOriginal = valor("busca");
+  const buscaOriginal = patrimonioValor("patrimonioBusca");
   const busca = normalizarBuscaPatrimonio(buscaOriginal);
-  const filtroStatus = valor("filtroStatus");
-  const filtroTipo = valor("filtroTipo");
-  const filtroObra = valor("filtroObra");
+  const filtroStatus = patrimonioValor("filtroStatus");
+  const filtroTipo = patrimonioValor("patrimonioFiltroTipo");
+  const filtroObra = patrimonioValor("patrimonioFiltroObra");
 
   const chaveFiltro = bdrPatrimonioFiltroChave();
   if(chaveFiltro !== bdrPatrimonioUltimaChaveFiltro){
@@ -2613,7 +2645,7 @@ function renderizarPatrimonios(){
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  const filtrados = patrimonios.filter(p => {
+  const filtrados = patrimonioItens.filter(p => {
     const textoBusca = normalizarBuscaPatrimonio(textoBuscaPatrimonio(p));
     const estadoAtivoCorreto = atlasMostrarInativos ? p.ativo === false : p.ativo !== false;
 
@@ -2647,11 +2679,14 @@ function renderizarPatrimonios(){
         <strong>Exibindo ${inicio + 1}–${fim} de ${total}</strong><br>
         <span>${buscaOriginal ? "Resultado filtrado" : "Últimos patrimônios carregados"} • ${porPagina} por página</span>
       </div>
-      <span>Use a pesquisa para localizar PAT, placa, série, nome ou obra.</span>
+      <span>Use a pesquisa para localizar PAT, NF, placa, série, nome ou obra.</span>
     </div>
 
     <div class="lista-header">
-      <div class="bdr-check-etiqueta"><input type="checkbox" aria-label="Selecionar itens desta página" title="Selecionar itens desta página" onchange="bdrSelecionarPaginaEtiquetas(this.checked)"></div>
+      <div class="bdr-check-etiqueta">
+        <input type="checkbox" class="bdr-etiqueta-pagina-check" aria-label="Selecionar etiquetas desta página" title="Selecionar etiquetas desta página" onchange="bdrSelecionarPaginaEtiquetas(this.checked)">
+        <input type="checkbox" class="atlas-remessa-pagina-check" aria-label="Selecionar patrimônios desta página para remessa" title="Selecionar patrimônios desta página para remessa" onchange="AtlasPatrimonioRemessas.selecionarPagina(this.checked)">
+      </div>
       <div>Código</div>
       <div>Patrimônio</div>
       <div>Obra / Setor</div>
@@ -2678,10 +2713,11 @@ function renderizarPatrimonios(){
     ].filter(Boolean).join(" | ");
 
     lista.innerHTML += `
-      <div class="linha-patrimonio" onclick="abrirModal('${p.id}')">
+      <div class="linha-patrimonio" onclick="window.AtlasPatrimonioRemessas?.modoSelecaoAtivo?.() ? AtlasPatrimonioRemessas.alternarPorLinha('${p.id}') : (bdrModoSelecaoEtiquetas ? bdrAlternarEtiquetaPorLinha('${p.codigo_qr || ''}') : abrirModal('${p.id}'))">
 
         <div class="bdr-check-etiqueta" onclick="event.stopPropagation()">
           <input type="checkbox" class="bdr-etiqueta-check" data-codigo="${p.codigo_qr || ''}" ${bdrEtiquetasSelecionadas.has(String(p.codigo_qr || '')) ? 'checked' : ''} onchange="bdrAlternarSelecaoEtiqueta(this.dataset.codigo,this.checked)" aria-label="Selecionar etiqueta ${p.codigo_qr || ''}">
+          <input type="checkbox" class="atlas-remessa-check" data-pat-id="${p.id}" ${window.AtlasPatrimonioRemessas?.estaSelecionado?.(p.id) ? 'checked' : ''} onchange="AtlasPatrimonioRemessas.selecionarItem(this.dataset.patId,this.checked)" aria-label="Selecionar patrimônio ${p.codigo_qr || ''} para remessa">
         </div>
 
         <div class="pat-codigo" title="${p.codigo_qr || "-"}">
@@ -2721,6 +2757,16 @@ function renderizarPatrimonios(){
     </div>
   `;
   bdrAtualizarContadorEtiquetas();
+}
+
+function bdrAlternarEtiquetaPorLinha(codigo){
+  codigo = String(codigo || "").trim();
+  if(!codigo || !bdrModoSelecaoEtiquetas) return;
+  const marcado = !bdrEtiquetasSelecionadas.has(codigo);
+  bdrAlternarSelecaoEtiqueta(codigo, marcado);
+  document.querySelectorAll('.bdr-etiqueta-check').forEach(check => {
+    if(String(check.dataset.codigo || '').trim() === codigo) check.checked = marcado;
+  });
 }
 
 function bdrAlternarSelecaoEtiqueta(codigo, marcado){
@@ -2765,8 +2811,13 @@ function bdrAtualizarContadorEtiquetas(){
 }
 
 function bdrEntrarModoSelecaoEtiquetas(){
+  if(!usuarioTemPermissao("PATRIMONIO_IMPRIMIR")){
+    alert("Você não tem permissão para imprimir etiquetas.");
+    return;
+  }
   bdrModoSelecaoEtiquetas = true;
   document.body.classList.add("bdr-modo-selecao-etiquetas");
+  document.querySelector('.atlas-shell-module[data-module="patrimonio"]')?.classList.add("bdr-modo-selecao-etiquetas");
   bdrAtualizarContadorEtiquetas();
 }
 
@@ -2777,6 +2828,7 @@ function bdrCancelarSelecaoEtiquetas(){
   if(checkPagina) checkPagina.checked = false;
   bdrModoSelecaoEtiquetas = false;
   document.body.classList.remove("bdr-modo-selecao-etiquetas");
+  document.querySelector('.atlas-shell-module[data-module="patrimonio"]')?.classList.remove("bdr-modo-selecao-etiquetas");
   bdrAtualizarContadorEtiquetas();
 }
 
@@ -2908,7 +2960,7 @@ function bdrLinhasTipoPatrimonio(p){
 
 async function abrirModal(id){
 
-  const p = patrimonios.find(
+  const p = patrimonioItens.find(
     x => String(x.id) === String(id) || Number(x.id) === Number(id)
   );
 
@@ -2980,6 +3032,7 @@ async function abrirModal(id){
   }
 
   document.getElementById("modalBg").style.display = "flex";
+  document.body.classList.add("atlas-patrimonio-modal-ativo");
 }
 
 function atlasEscapeHtml(valor){
@@ -3014,9 +3067,9 @@ function atlasFormatarDataHora(valor){
 }
 
 async function atlasBuscarMovimentacaoExclusao(patrimonioId){
-  if(!db() || !patrimonioId) return null;
+  if(!patrimonioDb() || !patrimonioId) return null;
 
-  const { data, error } = await db()
+  const { data, error } = await patrimonioDb()
     .from("movimentacoes")
     .select("*")
     .eq("patrimonio_id", patrimonioId)
@@ -3054,11 +3107,12 @@ async function atlasMontarBlocoExclusao(patrimonio){
 
 function fecharModal(){
   document.getElementById("modalBg").style.display = "none";
+  document.body.classList.remove("atlas-patrimonio-modal-ativo");
   patrimonioSelecionado = null;
 }
 
 function aplicarPermissoesTela(){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
 
   if(!usuario) return;
 
@@ -3102,6 +3156,18 @@ function aplicarPermissoesTela(){
     btn.style.display = podeExcluir ? "" : "none";
     btn.disabled = !podeExcluir;
   });
+
+  const botaoEtiquetas = document.getElementById("bdrBotaoAcaoEtiquetas");
+  if(botaoEtiquetas){
+    botaoEtiquetas.style.display = podeImprimir ? "" : "none";
+    botaoEtiquetas.disabled = !podeImprimir;
+  }
+
+  const botaoNovaRemessa = document.querySelector('#atlasRemessaCard [data-permissao="PATRIMONIO_MOVIMENTAR"]');
+  if(botaoNovaRemessa){
+    botaoNovaRemessa.style.display = podeMovimentar ? "" : "none";
+    botaoNovaRemessa.disabled = !podeMovimentar;
+  }
 
   const observacaoMov = document.getElementById("observacaoMov");
   const novaObraSelect = document.getElementById("novaObraSelect");
@@ -3168,8 +3234,8 @@ function diasEntreDatasBDR(inicio, fim){
 
 async function carregarManutencoesPatrimonio(){
   try{
-    if(!db()) return;
-    const { data, error } = await db()
+    if(!patrimonioDb()) return;
+    const { data, error } = await patrimonioDb()
       .from("manutencoes_patrimonio")
       .select("*")
       .order("id", { ascending:false })
@@ -3245,7 +3311,7 @@ function abrirModalManutencao(){
   if(info){
     info.innerHTML = `<b>${patrimonioSelecionado.codigo_qr || "-"}</b> • ${patrimonioSelecionado.nome_bem || "-"}<br>Informe o motivo para enviar este patrimônio à manutenção.`;
   }
-  document.getElementById("manut_motivo").value = valor("observacaoMov") || "";
+  document.getElementById("manut_motivo").value = patrimonioValor("observacaoMov") || "";
   document.getElementById("modalManutencaoBg").style.display = "flex";
 }
 
@@ -3277,7 +3343,7 @@ function fecharModalFecharManutencao(){
 }
 
 async function registrarEntradaManutencaoBDR(motivo){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const payload = {
     patrimonio_id: patrimonioSelecionado.id,
     codigo_patrimonio: patrimonioSelecionado.codigo_qr || patrimonioSelecionado.codigo_antigo || null,
@@ -3288,7 +3354,7 @@ async function registrarEntradaManutencaoBDR(motivo){
     usuario_abertura: usuario?.nome || "Usuário não identificado"
   };
 
-  const { error } = await db().from("manutencoes_patrimonio").insert([payload]);
+  const { error } = await patrimonioDb().from("manutencoes_patrimonio").insert([payload]);
   if(error) throw error;
 }
 
@@ -3298,10 +3364,10 @@ async function fecharManutencaoBDR(dados){
     throw new Error("Não encontrei manutenção aberta para este patrimônio.");
   }
 
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const dias = diasEntreDatasBDR(aberta.data_entrada, new Date().toISOString());
 
-  const { error } = await db()
+  const { error } = await patrimonioDb()
     .from("manutencoes_patrimonio")
     .update({
       status: "FECHADA",
@@ -3319,7 +3385,7 @@ async function fecharManutencaoBDR(dados){
 }
 
 async function confirmarEntradaManutencao(){
-  const motivo = valor("manut_motivo");
+  const motivo = patrimonioValor("manut_motivo");
   if(!motivo || motivo.length < 5){
     alert("Informe o motivo da manutenção com pelo menos 5 caracteres.");
     return;
@@ -3342,10 +3408,10 @@ async function confirmarEntradaManutencao(){
 }
 
 async function confirmarFechamentoManutencao(){
-  const fornecedor = valor("manut_fornecedor");
-  const valorOrcamento = moedaParaNumero(valor("manut_valor_orcamento"));
-  const descricao = valor("manut_descricao_orcamento");
-  const solucao = valor("manut_solucao");
+  const fornecedor = patrimonioValor("manut_fornecedor");
+  const valorOrcamento = moedaParaNumero(patrimonioValor("manut_valor_orcamento"));
+  const descricao = patrimonioValor("manut_descricao_orcamento");
+  const solucao = patrimonioValor("manut_solucao");
 
   if(!fornecedor || fornecedor.length < 2){ alert("Informe o fornecedor/oficina."); return; }
   if(!valorOrcamento || valorOrcamento <= 0){ alert("Informe o valor do orçamento."); return; }
@@ -3434,7 +3500,7 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
     return;
   }
 
-  const obs = observacaoForcada || valor("observacaoMov");
+  const obs = observacaoForcada || patrimonioValor("observacaoMov");
 
   if(!obs || obs.length < 5){
     alert("Informe uma justificativa da movimentação.");
@@ -3460,11 +3526,11 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
       status_anterior: statusAnterior,
       status_novo: novoStatus,
       observacao: obs,
-      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      usuario: patrimonioUsuarioAtual()?.nome || "Usuário não identificado",
       data_movimentacao: new Date().toISOString()
     }]);
 
-    patrimonios = patrimonios.map(p =>
+    patrimonioItens = patrimonioItens.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
         ? {...p, status:novoStatus, __offline_pendente:!!respStatus.offlineFirst}
         : p
@@ -3490,7 +3556,7 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
     return;
   }
 
-  patrimonios = patrimonios.map(p =>
+  patrimonioItens = patrimonioItens.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
       ? {...p, status:novoStatus, __offline_pendente:!!respStatus.offlineFirst}
       : p
@@ -3526,7 +3592,7 @@ async function trocarObra(){
     return;
   }
 
-  const obs = valor("observacaoMov");
+  const obs = patrimonioValor("observacaoMov");
 
   if(!obs || obs.length < 5){
     alert("Informe uma justificativa da troca de setor/obra.");
@@ -3540,7 +3606,7 @@ async function trocarObra(){
     return;
   }
 
-  const novaObra = obras.find(
+  const novaObra = patrimonioObras.find(
     o => String(o.id) === String(novaObraId)
   );
 
@@ -3574,11 +3640,11 @@ async function trocarObra(){
       status_anterior: statusAnterior,
       status_novo: "EM_USO",
       observacao: obs,
-      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      usuario: patrimonioUsuarioAtual()?.nome || "Usuário não identificado",
       data_movimentacao: new Date().toISOString()
     }]);
 
-    patrimonios = patrimonios.map(p =>
+    patrimonioItens = patrimonioItens.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
         ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
         : p
@@ -3604,7 +3670,7 @@ async function trocarObra(){
     return;
   }
 
-  patrimonios = patrimonios.map(p =>
+  patrimonioItens = patrimonioItens.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
       ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
       : p
@@ -3640,8 +3706,8 @@ async function trocarObra(){
 ========================================================= */
 async function atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId){
   try{
-    const banco = db();
-    const autor = usuarioAtual();
+    const banco = patrimonioDb();
+    const autor = patrimonioUsuarioAtual();
     const autorId = autor?.id || autor?.usuario_id || null;
 
     if(!banco) return [];
@@ -3711,7 +3777,7 @@ async function atlasNotificarExclusaoPatrimonio({ patrimonio, motivo, usuarioNom
 
     const empresaId =
       patrimonio?.empresa_id ||
-      usuarioAtual()?.empresa_id ||
+      patrimonioUsuarioAtual()?.empresa_id ||
       null;
 
     const destinatarios =
@@ -3744,7 +3810,7 @@ async function atlasNotificarExclusaoPatrimonio({ patrimonio, motivo, usuarioNom
 }
 
 async function inativarPatrimonio(){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const podeExcluir =
     usuarioTemPermissao("PATRIMONIO_EXCLUIR");
 
@@ -3758,7 +3824,7 @@ async function inativarPatrimonio(){
     return;
   }
 
-  const motivo = valor("observacaoMov");
+  const motivo = patrimonioValor("observacaoMov");
   if(!motivo || motivo.length < 5){
     alert("Informe o motivo da exclusão com pelo menos 5 caracteres.");
     document.getElementById("observacaoMov")?.focus();
@@ -3821,7 +3887,7 @@ Esta ação removerá o patrimônio das consultas do sistema.`);
     });
   }
 
-  patrimonios = patrimonios.filter(p => String(p.id) !== String(patrimonioExcluido.id));
+  patrimonioItens = patrimonioItens.filter(p => String(p.id) !== String(patrimonioExcluido.id));
   atlasAvisoPatrimonio(
     "✅ Patrimônio excluído",
     "O patrimônio foi removido das consultas do sistema."
@@ -3851,7 +3917,7 @@ async function atlasNotificarReativacaoPatrimonio({ patrimonio, usuarioNome, obr
 
     const empresaId =
       patrimonio?.empresa_id ||
-      usuarioAtual()?.empresa_id ||
+      patrimonioUsuarioAtual()?.empresa_id ||
       null;
 
     const destinatarios =
@@ -3884,7 +3950,7 @@ async function atlasNotificarReativacaoPatrimonio({ patrimonio, usuarioNome, obr
 }
 
 async function reativarPatrimonio(){
-  const usuario = usuarioAtual();
+  const usuario = patrimonioUsuarioAtual();
   const podeReativar =
     usuarioTemPermissao("PATRIMONIO_EXCLUIR");
 
@@ -3957,7 +4023,7 @@ Ele voltará ao status ESTOQUE e ficará disponível nas consultas do sistema.`)
     });
   }
 
-  patrimonios = patrimonios.filter(p => String(p.id) !== String(patrimonioReativado.id));
+  patrimonioItens = patrimonioItens.filter(p => String(p.id) !== String(patrimonioReativado.id));
   atlasAvisoPatrimonio(
     "♻️ Patrimônio reativado",
     "O patrimônio voltou ao estoque e já está disponível nas consultas do sistema."
@@ -4206,7 +4272,7 @@ document.addEventListener("keydown", event => {
 
 
 function montarCamposEdicaoPorTipo(){
-  const tipo = valor("edit_tipo_item") || String(patrimonioSelecionado?.tipo_item || "");
+  const tipo = patrimonioValor("edit_tipo_item") || String(patrimonioSelecionado?.tipo_item || "");
   const box = document.getElementById("editCamposExtras");
   if(!box) return;
 
@@ -4327,7 +4393,7 @@ function abrirEdicao(){
   bdrSetValorCampo("edit_codigo_antigo", patrimonioSelecionado.codigo_antigo || "");
   bdrSetValorCampo("edit_ncm", patrimonioSelecionado.ncm || "");
   bdrSetValorCampo("edit_numero_nfe", patrimonioSelecionado.numero_nfe || "");
-  bdrSetValorCampo("edit_observacao", patrimonioSelecionado.observacao || "");
+  bdrSetValorCampo("patrimonioEditObservacao", patrimonioSelecionado.observacao || "");
   bdrSetValorCampo("motivo_correcao", "");
 
   montarCamposEdicaoPorTipo();
@@ -4371,44 +4437,44 @@ async function salvarEdicaoPatrimonio(){
     return;
   }
 
-  const motivo = valor("motivo_correcao");
+  const motivo = patrimonioValor("motivo_correcao");
 
   if(!motivo || motivo.length < 5){
     alert("Informe o motivo da correção cadastral.");
     return;
   }
 
-  const tipoEditado = valor("edit_tipo_item") || patrimonioSelecionado.tipo_item;
+  const tipoEditado = patrimonioValor("edit_tipo_item") || patrimonioSelecionado.tipo_item;
 
   const dadosAtualizados = {
-    nome_bem: valor("edit_nome_bem"),
+    nome_bem: patrimonioValor("edit_nome_bem"),
     tipo_item: tipoEditado || null,
-    tipo_outro: valor("edit_tipo_outro") || null,
-    valor_bem: moedaParaNumero(valor("edit_valor_bem")),
-    estado_conservacao: valor("edit_estado_conservacao") || "BOM",
-    marca: valor("edit_marca") || null,
-    modelo: valor("edit_modelo") || null,
-    numero_serie: valor("edit_numero_serie") || null,
-    descricao: valor("edit_descricao") || null,
-    fornecedor: valor("edit_fornecedor") || null,
-    data_compra: valor("edit_data_compra") || null,
-    responsavel: valor("edit_responsavel") || null,
-    departamento: valor("edit_departamento") || null,
-    endereco_estoque: valor("edit_endereco_estoque") || null,
-    placa: valor("edit_placa") || null,
-    renavam: valor("edit_renavam") || null,
-    chassi: valor("edit_chassi") || null,
-    cor: valor("edit_cor") || null,
-    combustivel: valor("edit_combustivel") || null,
-    potencia: valor("edit_potencia") || null,
-    ano_fabricacao: valor("edit_ano_fabricacao") ? parseInt(valor("edit_ano_fabricacao")) : null,
-    ano_modelo: valor("edit_ano_modelo") ? parseInt(valor("edit_ano_modelo")) : null,
-    horimetro: moedaParaNumero(valor("edit_horimetro")),
-    quilometragem: moedaParaNumero(valor("edit_horimetro")),
-    codigo_antigo: valor("edit_codigo_antigo") || null,
-    ncm: valor("edit_ncm") || null,
-    numero_nfe: valor("edit_numero_nfe") || null,
-    observacao: valor("edit_observacao") || null
+    tipo_outro: patrimonioValor("edit_tipo_outro") || null,
+    valor_bem: moedaParaNumero(patrimonioValor("edit_valor_bem")),
+    estado_conservacao: patrimonioValor("edit_estado_conservacao") || "BOM",
+    marca: patrimonioValor("edit_marca") || null,
+    modelo: patrimonioValor("edit_modelo") || null,
+    numero_serie: patrimonioValor("edit_numero_serie") || null,
+    descricao: patrimonioValor("edit_descricao") || null,
+    fornecedor: patrimonioValor("edit_fornecedor") || null,
+    data_compra: patrimonioValor("edit_data_compra") || null,
+    responsavel: patrimonioValor("edit_responsavel") || null,
+    departamento: patrimonioValor("edit_departamento") || null,
+    endereco_estoque: patrimonioValor("edit_endereco_estoque") || null,
+    placa: patrimonioValor("edit_placa") || null,
+    renavam: patrimonioValor("edit_renavam") || null,
+    chassi: patrimonioValor("edit_chassi") || null,
+    cor: patrimonioValor("edit_cor") || null,
+    combustivel: patrimonioValor("edit_combustivel") || null,
+    potencia: patrimonioValor("edit_potencia") || null,
+    ano_fabricacao: patrimonioValor("edit_ano_fabricacao") ? parseInt(patrimonioValor("edit_ano_fabricacao")) : null,
+    ano_modelo: patrimonioValor("edit_ano_modelo") ? parseInt(patrimonioValor("edit_ano_modelo")) : null,
+    horimetro: moedaParaNumero(patrimonioValor("edit_horimetro")),
+    quilometragem: moedaParaNumero(patrimonioValor("edit_horimetro")),
+    codigo_antigo: patrimonioValor("edit_codigo_antigo") || null,
+    ncm: patrimonioValor("edit_ncm") || null,
+    numero_nfe: patrimonioValor("edit_numero_nfe") || null,
+    observacao: patrimonioValor("patrimonioEditObservacao") || null
   };
 
   const podeContinuarDuplicidadeEdicao = await bdrVerificarDuplicidadePatrimonio({
@@ -4440,11 +4506,11 @@ async function salvarEdicaoPatrimonio(){
       status_anterior: patrimonioSelecionado.status,
       status_novo: patrimonioSelecionado.status,
       observacao: motivo,
-      usuario: usuarioAtual()?.nome || "Usuário não identificado",
+      usuario: patrimonioUsuarioAtual()?.nome || "Usuário não identificado",
       data_movimentacao: new Date().toISOString()
     }]);
 
-    patrimonios = patrimonios.map(p =>
+    patrimonioItens = patrimonioItens.map(p =>
       Number(p.id) === Number(patrimonioSelecionado.id)
         ? {...p, ...dadosAtualizados, __offline_pendente:true}
         : p
@@ -4471,7 +4537,7 @@ async function salvarEdicaoPatrimonio(){
     return;
   }
 
-  patrimonios = patrimonios.map(p =>
+  patrimonioItens = patrimonioItens.map(p =>
     Number(p.id) === Number(patrimonioSelecionado.id)
       ? {...p, ...dadosAtualizados, __offline_pendente:!!respEdicao.offlineFirst}
       : p
@@ -4499,11 +4565,11 @@ async function salvarEdicaoPatrimonio(){
 
 async function iniciar(){
   if(!bloquearPatrimonioSemPermissaoBDR()) return;
-  aplicarMenuPorPermissaoBDR();
+  patrimonioAplicarMenuPorPermissaoBDR();
 
   carregarUsuarioTopo();
 
-  if(!db()){
+  if(!patrimonioDb()){
     console.warn("Supabase não carregado. Tentando cache local.");
   }
 
@@ -4521,7 +4587,7 @@ async function iniciar(){
     const travada = localStorage.getItem("obraTravada");
 
     if(obraSalva && travada === "SIM"){
-      const existe = obras.find(
+      const existe = patrimonioObras.find(
         o => String(o.id) === String(obraSalva)
       );
 
@@ -4539,7 +4605,7 @@ async function iniciar(){
 
   atualizarVisualTrava();
   aplicarPermissoesTela();
-  aplicarMenuPorPermissaoBDR();
+  patrimonioAplicarMenuPorPermissaoBDR();
 
   // Quando a notificação for clicada, abre diretamente o patrimônio excluído.
   const parametros = new URLSearchParams(window.location.search);
@@ -4631,4 +4697,12 @@ setInterval(async () => {
 }, 30000);
 
 iniciar();
+window.AtlasPatrimonioAPI = Object.freeze({
+  listar: () => patrimonioItens,
+  obras: () => patrimonioObras,
+  selecionado: () => patrimonioSelecionado,
+  recarregar: () => carregarPatrimonios(),
+  renderizar: () => renderizarPatrimonios()
+});
+
 console.log("✅ ATLAS PATRIMÔNIO V4.0 carregado - carga paginada completa + combo de obras com rolagem segura");

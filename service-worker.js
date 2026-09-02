@@ -1,11 +1,12 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-relatorios-obras-painel-20260825";
+const BDR_CACHE_VERSION = "bdr-erp-atlas-patrimonio-ajustes-20260902";
 
 const BDR_ASSETS = [
   "./",
   "./index.html",
   "./login.html",
   "./dashboard.html",
+  "./atlas.html",
   "./estoque.html",
   "./expedicao.html",
   "./patrimonio.html",
@@ -31,6 +32,10 @@ const BDR_ASSETS = [
   "./CSS/layout-bdr.css",
   "./CSS/responsivo-bdr.css",
   "./CSS/bdr-fix-menu-final.css",
+  "./CSS/atlas-shell.css",
+  "./CSS/patrimonio.css",
+  "./CSS/patrimonio-lote.css",
+  "./CSS/patrimonio-remessas.css",
 
   "./CSS/dashboard/dashboardBase.css",
   "./CSS/dashboard/dashboardKpis.css",
@@ -78,6 +83,7 @@ const BDR_ASSETS = [
   "./JS/expedicao/expedicaoImagens.js",
   "./JS/patrimonioService.js",
   "./JS/patrimonio/patrimonio.js",
+  "./JS/patrimonio/patrimonio-remessas.js",
   "./JS/patrimonio/atlasPatrimonioAssistente.js",
   "./JS/atlasWorkflowManutencao.js",
   "./JS/manutencao/atlasManutencaoPreventiva.js",
@@ -189,7 +195,22 @@ self.addEventListener("fetch", event => {
     fetch(req).then(resp => {
       bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp);
       return resp;
-    }).catch(async () => await caches.match(req))
+    }).catch(async () => {
+      const cached = await caches.match(req);
+      if(cached) return cached;
+
+      // Arquivos de áudio são opcionais. Se estiverem temporariamente
+      // indisponíveis, responde vazio em vez de rejeitar o FetchEvent.
+      if(url.pathname.includes('/assets/audio/')){
+        return new Response(null, { status:204 });
+      }
+
+      return new Response('Offline', {
+        status:503,
+        statusText:'Service Unavailable',
+        headers:{ 'Content-Type':'text/plain; charset=utf-8' }
+      });
+    })
   );
 });
 
