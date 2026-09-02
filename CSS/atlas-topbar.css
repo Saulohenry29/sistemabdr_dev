@@ -139,8 +139,8 @@
 
 .notif-badge{
   position:absolute;
-  top:-2px;
-  right:-2px;
+  top:-5px;
+  right:-7px;
   display:none;
   align-items:center;
   justify-content:center;

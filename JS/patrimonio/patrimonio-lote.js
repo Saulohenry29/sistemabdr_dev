@@ -284,7 +284,7 @@ function montarBase(contexto){
     numero_nfe: valorCampo("numero_nfe") || null,
     estado_conservacao: valorCampo("estado_conservacao") || "BOM",
     observacao: [
-      valorCampo("observacao"),
+      valorCampo("patrimonioObservacao"),
       valorCampo("especificacoes") ? "Especificações: " + valorCampo("especificacoes") : ""
     ].filter(Boolean).join(" | ") || null,
 
@@ -429,7 +429,7 @@ async function salvar(contexto){
               : Date.now() + indice
           };
 
-      patrimonios.unshift({
+      patrimonioItens.unshift({
         ...registroSalvo,
         __offline_pendente: !!resp.offlineFirst
       });

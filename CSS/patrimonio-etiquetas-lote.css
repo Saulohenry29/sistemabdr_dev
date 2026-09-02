@@ -1,3 +1,4 @@
+@scope (.atlas-shell-module[data-module="patrimonio"]) {
 /* =========================================================
    ATLAS PATRIMÔNIO — MODAL DE ETIQUETAS EM LOTE
 ========================================================= */
@@ -138,4 +139,6 @@ body.atlas-modal-aberto{
   .atlas-etiquetas-lote-cancelar{
     width:100%;
   }
+}
+
 }

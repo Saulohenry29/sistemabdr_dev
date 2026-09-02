@@ -41,7 +41,7 @@ function limparUnicos(){
   });
 
   // Observação é sempre particular do patrimônio atual.
-  const observacao = el("observacao");
+  const observacao = el("patrimonioObservacao");
   if(observacao) observacao.value = "";
 }
 

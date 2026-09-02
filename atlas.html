@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Atlas | BDR</title>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  var raw = (p.get('m') || p.get('modulo') || '').toLowerCase();
+  var aliases = {
+    dash:'dashboard', dashboard:'dashboard',
+    tri:'triagem', triagem:'triagem',
+    emp:'empresa', empresa:'empresa'
+  };
+  document.documentElement.dataset.shellModulo = aliases[raw] || 'dashboard';
+})();
+</script>
+<link href="./CSS/layout-bdr.css" rel="stylesheet"/>
+<link href="./CSS/bdr-fix-menu-final.css?v=20260828-shell" rel="stylesheet"/>
+<link href="./CSS/atlas-topbar.css?v=20260831-topopadrao" rel="stylesheet"/>
+<link href="./CSS/atlas-shell.css?v=20260902-modalfix" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet"/>
+<style>@scope (.atlas-shell-module[data-module="triagem"]) {
+
+:root{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --orange:#f97316;
+  --green:#16a34a;
+}
+
+body{background:var(--bdr-bg)!important;}
+
+
+
+
+/* TOPO PADRÃO BDR - USUÁRIO + SININHO REAL */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#usuarioNome,#usuarioPerfil{user-select:none!important;caret-color:transparent!important}
+
+
+
+
+
+
+
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+
+button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none!important;box-shadow:none!important}button{-webkit-tap-highlight-color:transparent}
+
+
+/* TRIAGEM */
+.triagem-hero{background:radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),linear-gradient(135deg,#fff,#f8fafc);border-left:4px solid var(--bdr-red);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 9px rgba(0,0,0,.07)}
+.triagem-hero h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900}.triagem-hero p{margin:5px 0 0;color:#6b7280;font-size:13px}
+.card h2,.card h3{margin-top:0;color:var(--bdr-red)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.resumo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.resumo-card{background:#f9fafb;border-radius:12px;padding:12px;border-left:4px solid var(--bdr-red);box-shadow:0 2px 7px rgba(0,0,0,.06)}.resumo-card strong{display:block;font-size:22px;color:#111827}.resumo-card span{font-size:12px;color:#6b7280;font-weight:800}
+input,select,textarea{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:8px;background:#fff}textarea{min-height:60px}.btn{border:none;padding:9px 12px;border-radius:8px;color:white;cursor:pointer;font-weight:bold}.btn-ok{background:#2a9d8f}.btn-dark{background:#111827}.btn-blue{background:#2563eb}.btn-gray{background:#6b7280}
+.badge{display:inline-block;padding:4px 9px;border-radius:20px;color:white;font-size:12px;background:#6b7280}.badge-pendente{background:#f97316}.badge-info{background:#2563eb}
+.info{background:#eff6ff;border-left:5px solid var(--blue);padding:10px;border-radius:8px;margin-top:8px;color:#1e3a8a}.alerta{background:#fff7ed;border-left:4px solid var(--orange);padding:8px;border-radius:8px;margin-top:8px;color:#7c2d12}
+.abas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.aba{border:none;background:#1f2937;color:white;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:900}.aba.ativa{background:var(--bdr-red)}
+.mes-card,.nf-card{background:white;border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.10);border-left:4px solid var(--bdr-red);transition:.18s ease}.mes-card h3{margin:0 0 10px;color:var(--bdr-red)}.dia-linha{display:grid;grid-template-columns:120px 1fr 130px;gap:10px;align-items:center;background:#f9fafb;border-left:4px solid #2563eb;border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer}.dia-linha:hover{background:#fff1f2;transform:translateX(3px)}
+/* NF ABERTA - destaque visual para ficar claro o que está expandido */
+.nf-card.aberta{background:#fff1f2;border-left-color:#991b1b;box-shadow:0 8px 20px rgba(185,28,28,.16)}
+.nf-card.aberta .nf-header{background:#ffe4e6;border:1px solid #fecdd3;border-radius:12px;padding:10px}
+.nf-card.aberta .badge-pendente{background:#991b1b}
+.nf-header{display:grid;grid-template-columns:120px 1fr 130px 120px;gap:10px;align-items:center;cursor:pointer}.nf-header strong{color:var(--bdr-red)}.nf-itens{display:none;margin-top:12px}.item{background:#f9fafb;border-left:4px solid #2563eb;padding:9px;border-radius:10px;margin-top:8px}.item strong{color:var(--bdr-red);font-size:13px}.codigo-end{font-size:15px;font-weight:bold;color:var(--bdr-red);background:#fff;padding:7px;border-radius:9px;border:1px dashed var(--bdr-red);text-align:center}.linha-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.linha-acoes .btn{padding:6px 9px!important;font-size:11px!important;border-radius:7px!important;min-height:auto!important}.item .grid{gap:7px!important}.item label{font-size:11px;font-weight:800;color:#374151}.item input,.item select{min-height:34px!important;padding:6px 8px!important;font-size:12px!important}
+@media(max-width:900px){.dia-linha,.nf-header{grid-template-columns:1fr}}
+
+
+/* =========================================================
+   MODAL/CARD RÁPIDO DE PATRIMÔNIO NA TRIAGEM
+========================================================= */
+.triagem-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:99999;align-items:center;justify-content:center;padding:18px;}
+.triagem-modal-bg.ativo{display:flex;}
+.triagem-modal{width:min(760px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);padding:16px;border-left:5px solid var(--bdr-red);}
+.triagem-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.triagem-modal-head h2{margin:0;color:var(--bdr-red);font-size:20px;font-weight:900;}
+.triagem-modal-head p{margin:4px 0 0;color:#6b7280;font-size:12px;}
+.triagem-fechar{width:34px;height:34px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:900;cursor:pointer;}
+.triagem-modal-info{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;line-height:1.45;}
+.triagem-modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.triagem-modal-grid label{display:block;font-size:11px;font-weight:900;color:#374151;margin-bottom:4px;}
+.triagem-modal-grid input,.triagem-modal-grid select,.triagem-modal textarea{font-size:12px;padding:8px;border-radius:9px;}
+.triagem-modal .full{grid-column:1/-1;}
+.triagem-modo-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.triagem-modo{border:1px solid #e5e7eb;border-left:4px solid #d1d5db;border-radius:12px;padding:9px;cursor:pointer;background:#fff;}
+.triagem-modo:hover{background:#fff1f2;border-left-color:var(--bdr-red);}
+.triagem-modo input{width:auto;margin-right:6px;}
+.triagem-modo strong{font-size:12px;color:#111827;}
+.triagem-modo span{display:block;color:#6b7280;font-size:11px;margin-top:2px;}
+.triagem-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;}
+.triagem-modal-actions button{height:38px;font-weight:900;border-radius:10px;}
+.triagem-aviso-empresa{background:#eff6ff;border-left:4px solid #2563eb;border-radius:10px;padding:8px;color:#1e3a8a;font-size:12px;font-weight:800;}
+@media(max-width:800px){.triagem-modal-grid,.triagem-modo-box,.triagem-modal-actions{grid-template-columns:1fr;}}
+
+
+/* =========================================================
+   BDR FIX LOCAL - ALINHAMENTO IGUAL ENTRADA
+   Mantém a página dentro da largura padrão do layout/menu.
+========================================================= */
+@media(min-width:1201px){
+  .bdr-main,
+  .usuarios-premium-main,
+  main,
+  .content{
+    box-sizing:border-box!important;
+    overflow-x:hidden!important;
+  }
+}
+
+@media(max-width:1200px){
+  .bdr-main,
+  .usuarios-premium-main,
+  main,
+  .content{
+    margin-left:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+}
+
+
+}</style>
+<style>@scope (.atlas-shell-module[data-module="empresa"]) {
+
+/* =========================================================
+   EMPRESAS - PADRÃO EM LINHA IGUAL PATRIMÔNIO
+========================================================= */
+
+.empresa-form-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.empresa-filtro-grid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:8px;
+}
+
+.empresa-header{
+  display:grid;
+  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 350px;
+  gap:10px;
+  padding:10px 14px;
+  margin-bottom:8px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+/* Alinha o título AÇÕES sobre o conjunto de botões */
+.empresa-header > div:last-child{
+    display:flex;
+    justify-content:flex-end;
+    padding-right:92px;
+}
+
+.empresa-linha{
+  display:grid;
+  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 350px;
+  gap:10px;
+  align-items:center;
+  background:white;
+  padding:9px 14px;
+  min-height:42px;
+  border-radius:10px;
+  border-left:4px solid var(--bdr-red);
+  margin-bottom:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.07);
+  cursor:pointer;
+  font-size:13px;
+  transition:.18s ease;
+}
+
+.empresa-linha:hover{
+  background:#f9fafb;
+  transform:translateX(4px);
+  box-shadow:0 5px 14px rgba(0,0,0,.10);
+}
+
+.empresa-nome{
+  font-weight:900;
+  color:var(--bdr-red);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empresa-info{
+  color:#374151;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empresa-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  justify-self:start;
+  width:max-content;
+  padding:4px 10px;
+  border-radius:8px;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+}
+
+.empresa-status.ATIVA{
+  background:#16a34a;
+}
+
+.empresa-status.INATIVA{
+  background:#dc2626;
+}
+
+.empresa-acoes{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:6px;
+  flex-wrap:nowrap;
+  white-space:nowrap;
+  min-width:0;
+}
+
+.btn-mini{
+  border:none;
+  border-radius:8px;
+  padding:6px 8px;
+  font-size:10px;
+  font-weight:800;
+  background:#111827;
+  color:white;
+  cursor:pointer;
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+
+.btn-mini:hover{
+  background:var(--bdr-red);
+}
+
+.empresa-detalhes{
+  grid-column:1/-1;
+  display:none;
+  background:#f8fafc;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+  line-height:1.6;
+  color:#374151;
+}
+
+.empresa-linha.aberta .empresa-detalhes{
+  display:block;
+}
+
+.form-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.btn-salvar{background:#2a9d8f}
+.btn-limpar{background:#6b7280}
+
+/* Detalhes */
+.btn-mini{
+    background:#111827;
+}
+
+/* Editar */
+.btn-mini.btn-editar{
+    background:#2563eb;
+}
+
+/* Inativar: ação de atenção */
+.btn-mini.btn-status-warning{
+    background:#f59e0b;
+    color:#fff;
+}
+
+/* Reativar: ação positiva */
+.btn-mini.btn-status-success{
+    background:#16a34a;
+    color:#fff;
+}
+
+.edicao-card{
+  display:none;
+  border-left-color:#2563eb;
+}
+
+.edicao-card.ativo{
+  display:block;
+}
+
+.edicao-aviso{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+  color:#1f2937;
+  font-size:12px;
+}
+
+.mov-empresa-lista{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.mov-empresa-linha{
+  background:#f8fafc;
+  border-left:4px solid var(--bdr-red);
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:12px;
+  line-height:1.45;
+  color:#374151;
+}
+
+.mov-empresa-linha strong{
+  color:var(--bdr-red);
+}
+
+@media(max-width:1100px){
+  .empresa-form-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .empresa-filtro-grid{
+    grid-template-columns:1fr;
+  }
+
+  .empresa-header{
+    display:none;
+  }
+
+  .empresa-linha{
+    grid-template-columns:1fr;
+    gap:5px;
+    padding:12px;
+  }
+
+  .empresa-acoes{
+    margin-top:6px;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    white-space:normal;
+  }
+}
+
+@media(max-width:700px){
+  .empresa-form-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + SININHO REAL
+========================================================= */
+.bdr-topbar-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:500;
+}
+
+.bdr-topbar-title{
+  color:var(--bdr-red)!important;
+  font-weight:900;
+}
+
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+}
+
+.notif-wrap{position:relative;}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  box-shadow:none;
+  outline:none!important;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:translateY(-1px);
+}
+
+.notif-btn:focus,
+.notif-btn:focus-visible,
+.notif-btn:active{
+  outline:0!important;
+  box-shadow:none!important;
+}
+
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:340px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:var(--bdr-red);
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:300px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.notif-item:hover{background:#f9fafb;}
+.notif-item strong{display:block;color:#111827;margin-bottom:3px;}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+.user-menu:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu:hover .avatar{transform:scale(1.06);}
+
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+
+.user-mini b{display:block;outline:none!important;}
+.user-mini small{color:var(--bdr-red);font-weight:900;outline:none!important;}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--bdr-red);
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:var(--bdr-red);
+  transform:none;
+  filter:none;
+}
+
+.dropdown-user .logout-btn{color:#dc2626;}
+
+.bdr-toast{
+  position:fixed;
+  right:18px;
+  top:18px;
+  z-index:10000;
+  background:#fff;
+  border-left:5px solid var(--bdr-red);
+  border-radius:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+  padding:13px 15px;
+  min-width:280px;
+  max-width:380px;
+  display:none;
+  animation:dropdownTop .22s ease;
+}
+.bdr-toast strong{display:block;color:var(--bdr-red);margin-bottom:4px;}
+.bdr-toast span{color:#374151;font-size:13px;}
+
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active,
+.user-menu:focus,
+.user-menu:active{
+  outline:none!important;
+  box-shadow:none!important;
+}
+
+button,
+.bdr-top-actions,
+.bdr-top-actions *,
+.notif-wrap,
+.notif-wrap *,
+.notif-btn,
+.notif-btn *,
+.notif-badge{
+  -webkit-tap-highlight-color:transparent!important;
+  caret-color:transparent!important;
+  user-select:none!important;
+}
+
+.notif-btn i,
+.notif-badge{pointer-events:none;}
+
+@media(max-width:900px){
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-80px;width:300px;}
+  .bdr-topbar{flex-direction:column;align-items:flex-start;gap:10px;}
+}
+
+
+}</style>
+<script src="./JS/componentes/atlasMenu.js"></script><script src="./JS/componentes/atlasTopo.js"></script><link href="./CSS/dashboard/dashboardBase.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardKpis.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardLayout.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardComponentes.css" rel="stylesheet"/><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="./CSS/patrimonio-lote.css?v=20260902-compacto" rel="stylesheet"/>
+<link href="./CSS/patrimonio-etiquetas-lote.css?v=20260831-atlas" rel="stylesheet"/>
+<link href="./CSS/patrimonio.css?v=20260902-patrimonioajustes" rel="stylesheet"/>
+<link href="./CSS/patrimonio-remessas.css?v=20260902" rel="stylesheet"/>
+<link href="./CSS/atlasManutencao.css?v=20260831-atlas" rel="stylesheet"/>
+</head>
+<body class="atlas-shell-page">
+<span id="dataAtual" style="display:none"></span>
+<span id="usuarioInfo" style="display:none"></span>
+<div class="bdr-app">
+<atlas-menu></atlas-menu>
+<main class="bdr-main">
+<div class="atlas-header-zone">
+
+  <atlas-topo></atlas-topo>
+
+</div>
+<div class="atlas-shell-content"><section class="atlas-shell-module" data-module="dashboard"><div class="dash-container">
+<section class="quick-filters">
+<label>Filtros rápidos:</label>
+<button class="pill-btn" onclick="aplicarPeriodo('15DIAS', this)">15 dias</button>
+<button class="pill-btn" onclick="aplicarPeriodo('30DIAS', this)">30 dias</button>
+<button class="pill-btn" onclick="aplicarPeriodo('MES', this)">Este mês</button>
+<button class="pill-btn" onclick="aplicarPeriodo('ANO', this)">Este ano</button>
+<input id="filtroObra" type="hidden" value=""/>
+<input id="filtroTipo" type="hidden" value=""/>
+<button class="filter-premium-btn" onclick="abrirModalObras(event)" type="button">
+<span>📍 Obra/Setor</span>
+<b id="resumoObrasFiltro">Todas</b>
+</button>
+<button class="filter-premium-btn" onclick="abrirModalTipos(event)" type="button">
+<span>🧩 Tipo de ativo</span>
+<b id="resumoTiposFiltro">Todos</b>
+</button>
+<button class="btn-red" onclick="carregarDados()">Atualizar</button>
+<button class="btn-clear-dashboard" onclick="limparFiltrosDashboard()" type="button">Limpar filtros</button>
+<div class="update-info">
+          Período: <b id="periodoSelecionadoTexto">Atual</b><br/>
+          Última atualização: <span id="ultimaAtualizacao">-</span>
+<i class="fa-solid fa-rotate"></i>
+</div>
+</section>
+<!-- MODAL PREMIUM - OBRA/SETOR -->
+<div class="bdr-filter-modal-bg" id="modalObrasFiltro" onclick="if(event.target.id==='modalObrasFiltro') fecharModalObras()">
+<div class="bdr-filter-modal" onclick="event.stopPropagation()">
+<div class="bdr-filter-modal-top">
+<div>
+<h2>📍 Obra/Setor</h2>
+<p>Clique em uma ou mais obras. O dashboard atualiza na hora.</p>
+</div>
+<button onclick="fecharModalObras()" type="button">×</button>
+</div>
+<div class="bdr-filter-tools">
+<input id="buscaObraModal" oninput="renderizarModalObras()" placeholder="Buscar obra..."/>
+<button onclick="limparObrasSelecionadas()" type="button">Limpar filtro</button>
+</div>
+<div class="bdr-filter-list" id="listaObrasModal"></div>
+</div>
+</div>
+<!-- MODAL PREMIUM - TIPO -->
+<div class="bdr-filter-modal-bg" id="modalTiposFiltro" onclick="if(event.target.id==='modalTiposFiltro') fecharModalTipos()">
+<div class="bdr-filter-modal" onclick="event.stopPropagation()">
+<div class="bdr-filter-modal-top">
+<div>
+<h2>🧩 Tipo de ativo</h2>
+<p>Clique em um ou mais tipos. O dashboard atualiza na hora.</p>
+</div>
+<button onclick="fecharModalTipos()" type="button">×</button>
+</div>
+<div class="bdr-filter-tools">
+<input id="buscaTipoModal" oninput="renderizarModalTipos()" placeholder="Buscar tipo..."/>
+<button onclick="limparTiposSelecionados()" type="button">Limpar filtro</button>
+</div>
+<div class="bdr-filter-list" id="listaTiposModal"></div>
+</div>
+</div>
+<section class="kpi-row">
+<div class="kpi-card purple valor-destaque" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
+<div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+<div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor patrimonial total</div><div class="kpi-sub">Soma em R$ da seleção</div></div>
+</div>
+<div class="kpi-card active" data-kpi="TODOS" onclick="aplicarFiltroKPI('TODOS')">
+<div class="kpi-icon"><i class="fa-solid fa-cube"></i></div>
+<div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Patrimônios</div><div class="kpi-sub">Ativos da seleção</div></div>
+</div>
+<div class="kpi-card blue" data-kpi="EM_USO" onclick="aplicarFiltroKPI('EM_USO')">
+<div class="kpi-icon"><i class="fa-regular fa-circle-check"></i></div>
+<div><div class="kpi-value" id="kpiUso">0</div><div class="kpi-label">Em uso</div><div class="kpi-sub" id="percUso">0% do total</div></div>
+</div>
+<div class="kpi-card green" data-kpi="ESTOQUE" onclick="aplicarFiltroKPI('ESTOQUE')">
+<div class="kpi-icon"><i class="fa-solid fa-box-archive"></i></div>
+<div><div class="kpi-value" id="kpiEstoque">0</div><div class="kpi-label">Estoque geral</div><div class="kpi-sub" id="percEstoque">Disponíveis no sistema</div></div>
+</div>
+<div class="kpi-card orange" data-kpi="MANUTENCAO" onclick="aplicarFiltroKPI('MANUTENCAO')">
+<div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
+<div><div class="kpi-value" id="kpiManutencao">0</div><div class="kpi-label">Em manutenção</div><div class="kpi-sub" id="percManutencao">0% do total</div></div>
+</div>
+<div class="kpi-card" data-kpi="BAIXADO" onclick="aplicarFiltroKPI('BAIXADO')">
+<div class="kpi-icon"><i class="fa-regular fa-trash-can"></i></div>
+<div><div class="kpi-value" id="kpiBaixado">0</div><div class="kpi-label">Baixados</div><div class="kpi-sub" id="percBaixado">0% do total</div></div>
+</div>
+<div class="kpi-card yellow" data-kpi="SEM_VALOR" onclick="aplicarFiltroKPI('SEM_VALOR')">
+<div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+<div><div class="kpi-value" id="kpiSemValor">0</div><div class="kpi-label">Sem valor</div><div class="kpi-sub" id="percSemValor">0% do total</div></div>
+</div>
+</section>
+<section class="dashboard-grid">
+<div class="left-stack">
+<section class="card-light chart-card big valor-principal">
+<h3>💰 Valor patrimonial por obra / setor <small style="color:#6b7280;font-size:11px;">(R$)</small></h3>
+<div class="card-body"><canvas id="graficoValorObra"></canvas></div>
+</section>
+<section class="card-light chart-card big">
+<h3>📦 Quantidade de patrimônios por obra / setor <small style="color:#6b7280;font-size:11px;">(itens)</small></h3>
+<div class="card-body"><canvas id="graficoObras"></canvas></div>
+</section>
+<section class="card-light mov-card">
+<h3>Últimas movimentações</h3>
+<div class="card-body">
+<table class="table-mini">
+<thead>
+<tr>
+<th>Data/Hora</th>
+<th>Tipo</th>
+<th>Patrimônio</th>
+<th>De</th>
+<th>Para</th>
+<th>Usuário</th>
+</tr>
+</thead>
+<tbody id="ultimasMov"></tbody>
+</table>
+<button class="btn-outline" data-permissao="RELATORIOS_VER" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
+</div>
+</section>
+</div>
+<div class="mid-stack">
+<section class="card-light chart-card big">
+<h3>Distribuição por status</h3>
+<div class="card-body"><canvas id="graficoStatus"></canvas></div>
+</section>
+<section class="card-light chart-card big">
+<h3>Tipos de ativos</h3>
+<div class="card-body"><canvas id="graficoTipos"></canvas></div>
+</section>
+<div class="bottom-grid">
+<section class="card-light card-top5">
+<h3>🏆 Ranking principal: obras por valor</h3>
+<div class="card-body" id="topObrasValor"></div>
+<div class="card-body" style="padding-top:0;">
+<button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
+</div>
+</section>
+<section class="card-light card-top5">
+<h3>📦 Ranking secundário: obras por quantidade</h3>
+<div class="card-body" id="topObrasQuantidade"></div>
+<div class="card-body" style="padding-top:0;">
+<button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
+</div>
+</section>
+</div>
+</div>
+<div class="right-stack">
+<section class="card-light red-head">
+<h3>✨ Análise inteligente (IA)</h3>
+<div class="card-body">
+<div class="ai-list" id="analiseIA"></div>
+</div>
+</section>
+<section class="card-light red-head">
+<h3>🛡️ Alertas importantes</h3>
+<div id="alertas"></div>
+</section>
+<section class="card-light estoque-card">
+<h3>📦 Estoque geral por nível</h3>
+<div class="card-body">
+<div class="money-box">
+<span>Total de itens disponíveis</span>
+<strong id="estoqueTotalGeral">0</strong>
+</div>
+<div style="font-size:12px;margin-top:10px;color:#374151;">
+                Clique em um nível para ver os itens.
+              </div>
+<div class="estoque-niveis">
+<div class="estoque-nivel baixo" onclick="mostrarItensAlerta('ESTOQUE_BAIXO')">
+<i class="fa-solid fa-circle-exclamation"></i>
+<strong id="estoqueBaixo">0</strong>
+<span>Baixo</span>
+</div>
+<div class="estoque-nivel medio" onclick="mostrarItensAlerta('ESTOQUE_MEDIO')">
+<i class="fa-solid fa-triangle-exclamation"></i>
+<strong id="estoqueMedio">0</strong>
+<span>Médio</span>
+</div>
+<div class="estoque-nivel muito" onclick="mostrarItensAlerta('ESTOQUE_MUITO')">
+<i class="fa-solid fa-circle-check"></i>
+<strong id="estoqueMuito">0</strong>
+<span>Muito</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</section>
+<section class="card-light itens-alerta-card" id="cardItensAlerta" style="display:none;margin-top:12px;">
+<h3 id="tituloItensAlerta">📋 Itens filtrados</h3>
+<div class="card-body">
+<table class="table-mini">
+<thead>
+<tr>
+<th>Código</th>
+<th>Patrimônio</th>
+<th>Status</th>
+<th>Tipo</th>
+<th>Obra/Setor</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody id="listaItensAlerta"></tbody>
+</table>
+<button class="btn-outline" data-permissao="PATRIMONIO_VER" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
+</div>
+</section>
+<footer class="footer-dash">
+<div>© 2026 BDR ERP 9.0 - Todos os direitos reservados</div>
+<div>Versão 
+          9.0.0</div>
+</footer>
+</div></section>
+<section class="atlas-shell-module" data-module="triagem"><section class="triagem-hero">
+<h2>Triagem inteligente BDR</h2>
+<p>O sistema recomenda Patrimônio ou Estoque comum usando regras, histórico e aprendizado interno.</p>
+<div class="info">Padrão de endereço: <b>R1-F1-P01-C2-N3</b>. O QR da posição será <b>END-R1-F1-P01-C2-N3</b>.</div>
+</section>
+<section class="card">
+<h3>📊 Resumo</h3>
+<div class="resumo-grid">
+<div class="resumo-card"><strong id="resumoNFs">0</strong><span>NFs pendentes</span></div>
+<div class="resumo-card"><strong id="resumoItens">0</strong><span>Itens pendentes</span></div>
+<div class="resumo-card"><strong id="resumoValor">R$ 0,00</strong><span>Valor pendente</span></div>
+<div class="resumo-card"><strong id="resumoPatrimonio">0</strong><span>Sugestões patrimônio</span></div>
+</div>
+</section>
+<section class="card">
+<h3>🔎 Filtros</h3>
+<div class="grid">
+<input id="busca" oninput="renderizarTudo()" placeholder="Buscar NF, fornecedor, item..."/>
+<select id="filtroMes" onchange="renderizarTudo()"><option value="">Todos os meses</option></select>
+</div>
+</section>
+<div class="abas">
+<button class="aba ativa" id="abaCalendario" onclick="mudarVisao('CALENDARIO')">📅 Por data</button>
+<button class="aba" id="abaNFs" onclick="mudarVisao('NFS')">📄 Por NF</button>
+</div>
+<div id="listaTriagem"></div></section>
+<section class="atlas-shell-module" data-module="empresa"><section class="card" data-acao-permissao="EMPRESAS_CRIAR">
+<h3>➕ Cadastro de Empresa / Obra / Setor</h3>
+<div class="empresa-form-grid">
+<div>
+<label>Código da Empresa</label>
+<input id="codigo_empresa" placeholder="Ex: 10013"/>
+</div>
+<div>
+<label>Nome da Empresa</label>
+<input id="nome" oninput="aplicarPadraoBDR()" placeholder="Digite BDR ou outra empresa"/>
+</div>
+<div>
+<label>Setor / Obra</label>
+<input id="setor_obra" placeholder="Ex: CD CENTRO DE DISTRIBUIÇÃO"/>
+</div>
+<div>
+<label>Código Sienge da Obra</label>
+<input id="codigo_sienge_obra" placeholder="Ex: 3"/>
+</div>
+<div>
+<label>Tabela de Insumo</label>
+<select id="tabela_insumo">
+<option selected="" value="2">Tabela 2 (Padrão atual)</option>
+<option value="3">Tabela 3 (Nova)</option>
+</select>
+</div>
+<div>
+<label>CNPJ</label>
+<input id="cnpj" placeholder="00.000.000/0000-00"/>
+</div>
+<div>
+<label>Cidade</label>
+<input id="cidade" placeholder="Ex: Itaara"/>
+</div>
+<div>
+<label>Estado</label>
+<input id="estado" placeholder="Ex: RS"/>
+</div>
+<div>
+<label>Endereço</label>
+<input id="endereco" placeholder="Rua, número, bairro"/>
+</div>
+<div>
+<label>CEP</label>
+<input id="cep" placeholder="00000-000"/>
+</div>
+</div>
+<br/>
+<label>Observação</label>
+<textarea id="observacao" placeholder="Observações da empresa, obra ou setor..."></textarea>
+<div class="form-actions">
+<button class="btn-salvar" data-acao-permissao="EMPRESAS_CRIAR" onclick="salvarEmpresa()">💾 Salvar Empresa</button>
+<button class="btn-limpar" onclick="limparFormulario()">🧹 Limpar</button>
+</div>
+</section>
+<section class="card edicao-card" data-acao-permissao="EMPRESAS_EDITAR" id="cardEdicaoEmpresa">
+<h3>✏️ Editar Empresa / Obra / Setor</h3>
+<div class="edicao-aviso">
+        Editando: <b id="editandoEmpresaTitulo">-</b><br/>
+        Toda alteração será registrada automaticamente em movimentações.
+      </div>
+<input id="edit_id" type="hidden"/>
+<div class="empresa-form-grid">
+<div>
+<label>Código da Empresa</label>
+<input id="edit_codigo_empresa"/>
+</div>
+<div>
+<label>Nome da Empresa</label>
+<input id="edit_nome" oninput="aplicarPadraoBDREdicao()"/>
+</div>
+<div>
+<label>Setor / Obra</label>
+<input id="edit_setor_obra"/>
+</div>
+<div>
+<label>Código Sienge da Obra</label>
+<input id="edit_codigo_sienge_obra"/>
+</div>
+<div>
+<label>Tabela de Insumo</label>
+<select id="edit_tabela_insumo">
+<option value="2">Tabela 2 (Padrão atual)</option>
+<option value="3">Tabela 3 (Nova)</option>
+</select>
+</div>
+<div>
+<label>CNPJ</label>
+<input id="edit_cnpj"/>
+</div>
+<div>
+<label>Cidade</label>
+<input id="edit_cidade"/>
+</div>
+<div>
+<label>Estado</label>
+<input id="edit_estado"/>
+</div>
+<div>
+<label>Endereço</label>
+<input id="edit_endereco"/>
+</div>
+<div>
+<label>CEP</label>
+<input id="edit_cep"/>
+</div>
+</div>
+<br/>
+<label>Observação</label>
+<textarea id="edit_observacao"></textarea>
+<div class="form-actions">
+<button class="btn-salvar" data-acao-permissao="EMPRESAS_EDITAR" onclick="salvarEdicaoEmpresa()">💾 Salvar alterações</button>
+<button class="btn-limpar" onclick="cancelarEdicaoEmpresa()">Cancelar edição</button>
+</div>
+</section>
+<section class="card">
+<h3>🔎 Buscar empresas</h3>
+<div class="empresa-filtro-grid">
+<input id="buscaEmpresa" oninput="renderizarEmpresas()" placeholder="Buscar por nome, código, setor, cidade..."/>
+<select id="filtroStatusEmpresa" onchange="renderizarEmpresas()">
+<option value="">Todos os status</option>
+<option value="ATIVA">Ativas</option>
+<option value="INATIVA">Inativas</option>
+</select>
+<select id="filtroEstadoEmpresa" onchange="renderizarEmpresas()">
+<option value="">Todos os estados</option>
+</select>
+</div>
+</section>
+<section class="card">
+<h3>📋 Empresas cadastradas</h3>
+<div class="empresa-header">
+<div>Empresa</div>
+<div>Código</div>
+<div>Setor / Obra</div>
+<div>Cidade / UF</div>
+<div>Status</div>
+<div>Ações</div>
+</div>
+<div id="listaEmpresas"></div>
+</section>
+<section class="card">
+<h3>🧾 Últimas movimentações de empresas</h3>
+<div class="mov-empresa-lista" id="listaMovEmpresas"></div>
+</section></section>
+<section class="atlas-shell-module atlas-patrimonio-root" data-module="patrimonio">
+<div class="atlas-patrimonio-status"><div class="obra-ativa" id="obraAtivaTexto">🔓 Lançamento livre</div></div>
+<div class="card" id="cardObraLancamento">
+<h3>🏗 Obra de lançamento</h3>
+<div class="obra-lock-helper" id="obraLockHelper">
+    🔓 Escolha a obra e confirme para lançar patrimônios nela.
+  </div>
+<div class="lock-row">
+<div class="atlas-obra-combo" id="atlasObraCombo">
+<input aria-label="Pesquisar obra ou setor" autocomplete="off" id="obraBusca" placeholder="Digite o código ou nome da obra..." type="text"/>
+<button aria-label="Abrir lista de obras" class="atlas-obra-combo-seta" id="obraComboSeta" title="Abrir lista de obras" type="button">▼</button>
+<div class="atlas-obra-sugestoes" id="obraSugestoes" role="listbox"></div>
+<!-- Mantido internamente para preservar toda a lógica atual do sistema. -->
+<select aria-hidden="true" id="obraSelect" tabindex="-1">
+<option value="">Selecione a obra/setor</option>
+</select>
+</div>
+<button class="lock-btn lock-off" id="btnTravarObra" onclick="alternarTravaObra()">
+      ✅ Confirmar obra
+    </button>
+</div>
+</div>
+<div class="card" id="cardEntradaPatrimonio">
+<h3>➕ Novo Patrimônio</h3>
+<div class="grid">
+<div class="atlas-autocomplete-wrap">
+<input autocomplete="off" id="nome_bem" onblur="setTimeout(atlasFecharSugestoesPatrimonio,160)" oninput="atlasAtualizarSugestoesPatrimonio()" onkeydown="atlasTeclaSugestaoPatrimonio(event)" placeholder="Nome do patrimônio. Ex.: Esmerilhadeira"/>
+<div class="atlas-sugestoes" id="atlasSugestoesPatrimonio"></div>
+</div>
+<select id="tipo_item" onchange="mostrarCampos()">
+<option value="">Tipo do patrimônio</option>
+<option value="FERRAMENTA">🔧 Ferramenta</option>
+<option value="EQUIPAMENTO">⚙️ Equipamento</option>
+<option value="MAQUINA">🚜 Máquina pesada</option>
+<option value="VEICULO">🚛 Veículo</option>
+<option value="INFORMATICA">💻 Informática</option>
+<option value="ELETRONICO">📺 Eletrônico</option>
+<option value="ELETRODOMESTICO">🏠 Eletrodoméstico</option>
+<option value="MOBILIARIO">🪑 Imobilizado</option>
+<option value="MATERIAL_APOIO">🧰 Material de apoio</option>
+<option value="OUTRO">📦 Outro</option>
+</select>
+<select id="status_inicial">
+<option value="ESTOQUE">📦 Estoque</option>
+<option value="EM_USO">👷 Em uso</option>
+<option value="MANUTENCAO">🔧 Manutenção</option>
+<option value="BAIXADO">⬇️ Baixado</option>
+</select>
+<select id="estado_conservacao">
+<option value="OTIMO">🟢 Ótimo</option>
+<option selected="" value="BOM">🔵 Bom</option>
+<option value="REGULAR">🟡 Regular</option>
+<option value="RUIM">🟠 Ruim</option>
+</select>
+<div class="atlas-campo-valor"><span class="atlas-campo-valor-prefixo">R$</span><input id="valor_bem" inputmode="decimal" autocomplete="off" oninput="mascaraMoeda(this)" placeholder="0,00" type="text"/></div>
+</div>
+<div class="grid" id="campoOutroTipo" style="display:none;margin-top:8px;">
+<input id="tipo_outro" placeholder="Descreva o tipo do ativo"/>
+</div>
+<br/>
+<div class="atlas-opcoes-cadastro">
+<div class="atlas-legado-wrap">
+<button aria-pressed="false" class="atlas-legado-toggle" id="atlasLegadoToggle" onclick="atlasAlternarPatrimonioAntigo()" type="button">
+<span class="atlas-legado-icone">○</span>
+<span>Patrimônio antigo</span>
+</button>
+<input id="checkLegado" onchange="mostrarCamposLegado()" type="checkbox"/>
+</div>
+<div class="atlas-fiscal-wrap">
+<button aria-pressed="false" class="atlas-fiscal-toggle" id="atlasFiscalToggle" onclick="atlasAlternarDadosFiscais()" type="button">
+<span class="atlas-fiscal-icone">○</span>
+<span>Dados fiscais</span>
+</button>
+</div>
+</div>
+<div class="grid" id="camposLegado" style="display:none;margin-top:10px;grid-template-columns:minmax(220px,420px) !important;">
+<input id="codigo_antigo" onblur="validarDuplicidadeCampoPatrimonio('codigo_antigo')" placeholder="Código antigo / placa antiga / tag antiga"/>
+</div>
+<div aria-hidden="true" class="grid" id="camposFiscais">
+<input id="ncm" inputmode="numeric" maxlength="10" oninput="atlasMascaraNCM(this)" placeholder="NCM. Ex.: 84672999"/>
+<input id="numero_nfe" maxlength="30" placeholder="Número da NF-e. Ex.: 123456"/>
+</div>
+<br/>
+<textarea id="patrimonioObservacao" placeholder="Observações do patrimônio..."></textarea>
+<div class="grid" id="camposExtras" style="margin-top:8px;"></div>
+<template id="atlasLoteEditorTemplate">
+<section aria-label="Cadastro em lote" class="atlas-lote-editor">
+<div class="atlas-lote-cabecalho">
+<div>
+<strong>Cadastro em lote</strong>
+<span>Um número de série por linha</span>
+</div>
+</div>
+<div class="atlas-lote-modos">
+<label class="atlas-lote-sem-serie">
+<input id="atlasLoteSemSerie" type="checkbox"/>
+<span aria-hidden="true" class="atlas-lote-check-caixa"></span>
+<span>Itens sem número de série</span>
+</label>
+<label class="atlas-lote-sem-serie">
+<input id="atlasLoteMesmoNumero" type="checkbox"/>
+<span aria-hidden="true" class="atlas-lote-check-caixa"></span>
+<span>Todos com o mesmo número de série</span>
+</label>
+</div>
+<div id="atlasLoteComSerie">
+<div class="atlas-editor-series">
+<div aria-hidden="true" class="atlas-editor-gutter" id="atlasLoteNumeracao">
+<div class="atlas-editor-numero">1</div>
+</div>
+<textarea autocapitalize="characters" autocomplete="off" class="atlas-editor-textarea" id="atlasLoteSeries" placeholder="A123001
+A123002
+A123003" spellcheck="false"></textarea>
+</div>
+<div class="atlas-lote-rodape">
+<span class="atlas-lote-contador" id="atlasLoteContador">Nenhum número de série informado</span>
+<button class="atlas-lote-limpar" id="atlasLoteLimpar" type="button">Limpar</button>
+</div>
+<div class="atlas-lote-erros" hidden="" id="atlasLoteErros"></div>
+</div>
+<div hidden="" id="atlasLoteSemSerieCampos">
+<label for="atlasLoteQuantidade" id="atlasLoteQuantidadeRotulo">Quantidade</label>
+<input id="atlasLoteQuantidade" inputmode="numeric" max="200" min="2" type="number" value="2"/>
+<small id="atlasLoteQuantidadeAjuda">Os números de série poderão ser adicionados depois.</small>
+</div>
+</section>
+</template>
+<br/>
+<button class="btn-ok" id="btnGerarPatrimonio" onclick="gerarPatrimonio()">Gerar Patrimônio</button>
+</div>
+<div class="card">
+<h3>🔎 Localizar patrimônio</h3>
+<div class="grid">
+<input id="patrimonioBusca" oninput="bdrResetPaginaPatrimonio(); renderizarPatrimonios()" placeholder="Pesquisar por PAT, NF, nome, placa, série, obra, marca...">
+<select id="patrimonioFiltroObra" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
+<option value="">Todas as obras/setores</option>
+</select>
+<select id="filtroStatus" onchange="atlasAoAlterarFiltroStatus()">
+<option value="">Todos os status</option>
+<option value="ESTOQUE">Estoque</option>
+<option value="EM_USO">Em uso</option>
+<option value="MANUTENCAO">Manutenção</option>
+<option value="EM_TRANSITO">🚚 Em trânsito</option>
+<option value="BAIXADO">Baixado</option>
+<option hidden="" id="filtroStatusInativo" value="INATIVO">Inativos</option>
+</select>
+<select id="patrimonioFiltroTipo" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
+<option value="">Todos os tipos</option>
+<option value="FERRAMENTA">🔧 Ferramenta</option>
+<option value="EQUIPAMENTO">⚙️ Equipamento</option>
+<option value="MAQUINA">🚜 Máquina pesada</option>
+<option value="VEICULO">🚛 Veículo</option>
+<option value="INFORMATICA">💻 Informática</option>
+<option value="ELETRONICO">📺 Eletrônico</option>
+<option value="ELETRODOMESTICO">🏠 Eletrodoméstico</option>
+<option value="MOBILIARIO">🪑 Imobilizado</option>
+<option value="MATERIAL_APOIO">🧰 Material de apoio</option>
+<option value="COMUNICACAO">📡 Equipamento de comunicação</option>
+<option value="ELETRICO">🔋 Equipamento elétrico</option>
+<option value="SEGURANCA">🦺 Equipamento de segurança</option>
+<option value="OFICINA">🛠 Equipamento de oficina</option>
+<option value="OUTRO">📦 Outro</option>
+</select>
+</input></div>
+</div>
+<div class="card" data-permissao="PATRIMONIO_VER" id="cardAnalyticsManutencao">
+<h3>🛠 Analytics de Manutenção</h3>
+<div class="bdr-manutencao-kpis">
+<div class="bdr-manutencao-kpi"><strong id="kpiManutAbertas">0</strong><span>Manutenções abertas</span></div>
+<div class="bdr-manutencao-kpi"><strong id="kpiManutFechadas">0</strong><span>Manutenções fechadas</span></div>
+<div class="bdr-manutencao-kpi"><strong id="kpiManutDiasMedios">0</strong><span>Média de dias parado</span></div>
+<div class="bdr-manutencao-kpi"><strong id="kpiManutCusto">R$ 0,00</strong><span>Custo/orçamento total</span></div>
+</div>
+<div class="bdr-manutencao-lista" id="listaAnalyticsManutencao"></div>
+</div>
+<div class="card atlas-remessa-card" id="atlasRemessaCard">
+<div class="atlas-remessa-topo">
+<div><h3>🚚 Remessas patrimoniais</h3><div style="font-size:9.5px;color:#64748b;font-weight:750;margin-top:2px;">Transferência em lote entre obras, trânsito, recebimento e histórico.</div></div>
+<div class="atlas-remessa-acoes">
+<button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.abrirCentral('transito')">🚚 Ver em trânsito</button>
+<button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.abrirCentral('historico')">🕘 Histórico</button>
+<button class="atlas-remessa-btn primary" type="button" data-permissao="PATRIMONIO_MOVIMENTAR" onclick="AtlasPatrimonioRemessas.iniciarSelecao()">＋ Nova remessa</button>
+</div>
+</div>
+<div class="atlas-remessa-resumo">
+<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiTransito">0</strong><span>Remessas em trânsito</span></div>
+<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiItens">0</strong><span>Patrimônios viajando</span></div>
+<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiRecebidas">0</strong><span>Remessas recebidas</span></div>
+</div>
+</div>
+<div class="card">
+<h3>📋 Patrimônios cadastrados</h3>
+<div class="atlas-remessa-selecao-bar" id="atlasRemessaSelecaoBar" hidden>
+<div class="atlas-remessa-selecao-info">
+<strong>🚚 Seleção para remessa</strong>
+<span id="atlasRemessaSelecaoAjuda">Pesquise ou filtre normalmente e marque os patrimônios que serão enviados.</span>
+</div>
+<div class="atlas-remessa-selecao-acoes">
+<span id="atlasRemessaSelecaoQtd">0 selecionados</span>
+<button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.cancelarSelecao()">Cancelar</button>
+<button class="atlas-remessa-btn primary" id="atlasRemessaContinuarBtn" type="button" disabled onclick="AtlasPatrimonioRemessas.continuarSelecao()">Continuar remessa →</button>
+</div>
+</div>
+<div class="bdr-lote-bar">
+<span class="bdr-lote-resumo">🏷 <strong id="bdrQtdEtiquetasSelecionadas">0 etiqueta(s) selecionada(s)</strong></span>
+<span id="bdrLoteAjuda" style="color:#64748b;font-size:12px;font-weight:800;">Imprima uma ou várias etiquetas sem poluir a lista.</span>
+<div class="bdr-lote-acoes">
+<button class="bdr-lote-configurar atlas-owner-inline" data-owner-only="" hidden="" id="btnConfigurarEtiquetas" onclick="abrirModalConfiguracaoEtiqueta()" style="display:none" type="button">⚙ Configurar etiquetas</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoAcaoEtiquetas" onclick="bdrAcaoPrincipalEtiquetas()" type="button">☑ Selecionar etiquetas</button>
+<button class="bdr-lote-cancelar" onclick="bdrCancelarSelecaoEtiquetas()" type="button">Cancelar</button>
+</div>
+</div>
+<div id="lista"></div>
+</div>
+<div class="modal-bg" id="modalBg">
+<div class="modal">
+<button class="fechar" onclick="fecharModal()">X</button>
+<h2 id="modalTitulo">Patrimônio</h2>
+<div class="modal-info" id="modalInfo"></div>
+<div id="atlasControlesPatrimonioAtivo">
+<label><strong>Justificativa obrigatória da movimentação</strong></label>
+<textarea id="observacaoMov" placeholder="Ex: item enviado para manutenção, troca de setor, baixa por defeito..."></textarea>
+<br/><br/>
+<label>Trocar para outra obra/setor</label>
+<select id="novaObraSelect">
+<option value="">Selecione nova obra/setor</option>
+</select>
+</div>
+<div class="acoes">
+<button class="btn-ok acao-movimentar" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
+<button class="btn-blue acao-movimentar" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
+<button class="btn-orange acao-movimentar acao-manutencao" data-permissao="MANUTENCAO_CRIAR" onclick="AtlasManutencao.abrir(patrimonioSelecionado)">🛠 Manutenção</button>
+<button class="acao-movimentar" onclick="trocarObra()">🔁 Trocar Setor</button>
+<button class="btn-gray acao-movimentar" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
+<button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.abrirHistoricoPatrimonio(patrimonioSelecionado?.id)">🕘 Histórico completo</button>
+<button class="btn-dark acao-imprimir" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
+<button class="acao-editar" onclick="abrirEdicao()">✏️ Editar Dados</button>
+<button class="bdr-btn-danger acao-excluir" onclick="excluirPatrimonio()">🗑 Excluir</button>
+<button class="btn-ok" id="btnReativarPatrimonio" onclick="reativarPatrimonio()" style="display:none">♻️ Reativar patrimônio</button>
+</div>
+</div>
+</div>
+<div class="modal-bg" id="modalEdicaoBg">
+<div class="modal">
+<button class="fechar" onclick="fecharEdicao()">X</button>
+<h2>✏️ Correção Cadastral Completa</h2>
+<div class="grid">
+<input id="edit_nome_bem" placeholder="Nome do patrimônio">
+<select id="edit_tipo_item" onchange="montarCamposEdicaoPorTipo()">
+<option value="">Tipo do patrimônio</option>
+<option value="FERRAMENTA">🔧 Ferramenta</option>
+<option value="EQUIPAMENTO">⚙️ Equipamento</option>
+<option value="MAQUINA">🚜 Máquina pesada</option>
+<option value="VEICULO">🚛 Veículo</option>
+<option value="INFORMATICA">💻 Informática</option>
+<option value="ELETRONICO">📺 Eletrônico</option>
+<option value="ELETRODOMESTICO">🏠 Eletrodoméstico</option>
+<option value="MOBILIARIO">🪑 Imobilizado</option>
+<option value="MATERIAL_APOIO">🧰 Material de apoio</option>
+<option value="COMUNICACAO">📡 Equipamento de comunicação</option>
+<option value="ELETRICO">🔋 Equipamento elétrico</option>
+<option value="SEGURANCA">🦺 Equipamento de segurança</option>
+<option value="OFICINA">🛠 Equipamento de oficina</option>
+<option value="OUTRO">📦 Outro</option>
+</select>
+<select id="edit_estado_conservacao">
+<option value="OTIMO">🟢 Ótimo</option>
+<option value="BOM">🔵 Bom</option>
+<option value="REGULAR">🟡 Regular</option>
+<option value="RUIM">🟠 Ruim</option>
+</select>
+<input id="edit_valor_bem" oninput="mascaraMoeda(this)" placeholder="Valor do bem Ex: 1.350,00">
+<input id="edit_codigo_antigo" placeholder="Código antigo"/>
+<div class="atlas-edicao-fiscal-titulo">Dados fiscais</div>
+<input id="edit_ncm" inputmode="numeric" maxlength="10" oninput="atlasMascaraNCM(this)" placeholder="NCM. Ex.: 84672999"/>
+<input id="edit_numero_nfe" maxlength="30" placeholder="Número da NF-e"/>
+</input></input></div>
+<div class="grid" id="editCamposExtras" style="margin-top:8px;"></div>
+<br/>
+<textarea id="patrimonioEditObservacao" placeholder="Observação do patrimônio"></textarea>
+<br/><br/>
+<textarea id="motivo_correcao" placeholder="Motivo obrigatório da correção cadastral"></textarea>
+<br/><br/>
+<button class="btn-ok" onclick="salvarEdicaoPatrimonio()">
+      💾 Salvar Correção
+    </button>
+</div>
+</div>
+<div class="modal-bg" id="modalManutencaoBg">
+<div class="modal">
+<button class="fechar" onclick="fecharModalManutencao()">X</button>
+<h2>🛠 Entrada em Manutenção</h2>
+<div class="modal-info" id="manutInfoAbertura">Informe o motivo para abrir a manutenção.</div>
+<label><strong>Motivo obrigatório</strong></label>
+<textarea id="manut_motivo" placeholder="Ex: motor travando, cabo rompido, defeito elétrico, vazamento..."></textarea>
+<br/><br/>
+<button class="btn-orange" onclick="confirmarEntradaManutencao()">🛠 Confirmar manutenção</button>
+</div>
+</div>
+<div class="modal-bg" id="modalFecharManutencaoBg">
+<div class="modal">
+<button class="fechar" onclick="fecharModalFecharManutencao()">X</button>
+<h2>✅ Fechar Manutenção</h2>
+<div class="modal-info" id="manutInfoFechamento">Para sair da manutenção, informe no mínimo um orçamento.</div>
+<div class="manut-modal-grid">
+<div>
+<label><strong>Fornecedor / Oficina</strong></label>
+<input id="manut_fornecedor" placeholder="Ex: Oficina Central, Elétrica X..."/>
+</div>
+<div>
+<label><strong>Valor do orçamento</strong></label>
+<input id="manut_valor_orcamento" oninput="mascaraMoeda(this)" placeholder="Ex: 350,00"/>
+</div>
+<div class="wide">
+<label><strong>Descrição do orçamento</strong></label>
+<textarea id="manut_descricao_orcamento" placeholder="Descreva o orçamento, peças, serviço previsto..."></textarea>
+</div>
+<div class="wide">
+<label><strong>Solução / Resultado</strong></label>
+<textarea id="manut_solucao" placeholder="Ex: peça trocada, reparo realizado, item sem conserto..."></textarea>
+</div>
+</div>
+<br/>
+<button class="btn-ok" onclick="confirmarFechamentoManutencao()">✅ Fechar manutenção e alterar status</button>
+</div>
+</div>
+<div class="bdr-etiqueta-modal-bg" id="modalEtiquetaBg">
+<div class="bdr-etiqueta-modal">
+<div class="bdr-etiqueta-modal-head">
+<h2>🏷 Etiqueta oficial<small class="bdr-etiqueta-help"> ESC fecha • ENTER imprime somente quando estiver pronta</small></h2>
+<button class="bdr-etiqueta-close" onclick="fecharModalEtiqueta()" title="Fechar" type="button">X</button>
+</div>
+<div class="bdr-etiqueta-preview-area">
+<iframe class="bdr-etiqueta-frame" id="bdrEtiquetaFrame" title="Prévia da etiqueta BDR"></iframe>
+</div>
+<div class="bdr-etiqueta-footer"><div class="bdr-etiqueta-status" id="statusEtiquetaOficial">Aguardando prévia...</div><button class="bdr-etiqueta-print-btn" disabled="" id="btnImprimirEtiquetaOficial" onclick="imprimirEtiquetaModalBDR()" type="button">⏳ Carregando etiqueta...</button></div>
+</div>
+</div>
+<div aria-hidden="true" class="atlas-etiquetas-lote-bg" id="atlasEtiquetasLoteModal">
+<div aria-labelledby="atlasEtiquetasLoteTitulo" aria-modal="true" class="atlas-etiquetas-lote-modal" role="dialog">
+<div class="atlas-etiquetas-lote-head">
+<div>
+<h2 id="atlasEtiquetasLoteTitulo">🏷 Imprimir várias etiquetas</h2>
+<p id="atlasEtiquetasLoteResumo">Preparando etiquetas selecionadas...</p>
+</div>
+<button aria-label="Fechar impressão" class="atlas-etiquetas-lote-fechar" onclick="AtlasEtiquetasLote.fechar()" type="button">✕</button>
+</div>
+<div class="atlas-etiquetas-lote-preview">
+<iframe id="atlasEtiquetasLoteFrame" title="Impressão de etiquetas selecionadas"></iframe>
+<div class="atlas-etiquetas-lote-carregando" id="atlasEtiquetasLoteCarregando">
+<strong>Preparando etiquetas...</strong>
+<span>Aguarde a configuração da impressora.</span>
+</div>
+</div>
+<div class="atlas-etiquetas-lote-footer">
+<span id="atlasEtiquetasLoteStatus">Carregando...</span>
+<button class="atlas-etiquetas-lote-cancelar" onclick="AtlasEtiquetasLote.fechar()" type="button">Cancelar</button>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="atlas-config-etiqueta-modal-bg" id="atlasConfigEtiquetaModal">
+<div class="atlas-config-etiqueta-modal">
+<div class="atlas-config-etiqueta-modal-head">
+<strong>⚙ Configuração de etiquetas</strong>
+<button onclick="fecharModalConfiguracaoEtiqueta()" title="Fechar" type="button">✕</button>
+</div>
+<iframe data-src="etiqueta-config.html?modal=1" id="atlasConfigEtiquetaFrame" title="Configuração de etiquetas"></iframe>
+</div>
+</div>
+
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasNovaRemessaModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">
+<div class="atlas-remessa-modal">
+<div class="atlas-remessa-head"><div><h2>🚚 Nova Remessa Patrimonial</h2><p>Vários patrimônios em uma única transferência entre obras.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">✕</button></div>
+<div class="atlas-remessa-grid">
+<div><label>Código</label><input id="atlasRemessaCodigo" readonly></div>
+<div><label>Status após recebimento</label><select id="atlasRemessaStatusDestino"><option value="MANTER">Manter status anterior</option><option value="EM_USO">Em uso</option><option value="ESTOQUE">Estoque</option></select></div>
+<div><label>Obra de origem</label><select id="atlasRemessaOrigem" disabled><option value="">Origem definida pelos itens selecionados</option></select></div>
+<div><label>Obra de destino</label><select id="atlasRemessaDestino"><option value="">Selecione o destino</option></select></div>
+<div><label>Motorista / transportador</label><input id="atlasRemessaMotorista" placeholder="Nome do motorista ou transportador"></div>
+<div><label>Veículo / placa</label><div style="display:grid;grid-template-columns:1fr 120px;gap:6px;"><input id="atlasRemessaVeiculo" placeholder="Veículo"><input id="atlasRemessaPlaca" placeholder="Placa"></div></div>
+<div class="wide"><label>Observação</label><textarea id="atlasRemessaObs" placeholder="Motivo da transferência, referência ou observação..."></textarea></div>
+</div>
+<div class="atlas-remessa-itens atlas-remessa-itens-revisao">
+<div class="atlas-remessa-itens-tools"><strong id="atlasRemessaSelecionados">0 patrimônio(s) selecionado(s)</strong><span>Itens escolhidos diretamente na tela de Patrimônio.</span></div>
+<div class="atlas-remessa-lista-itens" id="atlasRemessaListaItens"></div>
+</div>
+<div class="atlas-remessa-footer"><span>Enquanto estiver em trânsito, a obra definitiva não muda.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.enviar()">🚚 Colocar em trânsito</button></div></div>
+</div></div>
+
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasRemessasCentralModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasRemessasCentralModal')">
+<div class="atlas-remessa-modal">
+<div class="atlas-remessa-head"><div><h2 id="atlasRemessasCentralTitulo">🚚 Patrimônios em trânsito</h2><p>Acompanhe origem, destino, responsável e recebimento.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasRemessasCentralModal')">✕</button></div>
+<div class="atlas-remessa-acoes" style="margin-bottom:9px;"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.abrirCentral('transito')">🚚 Em trânsito</button><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.abrirCentral('historico')">🕘 Histórico</button></div>
+<div id="atlasRemessasCentralConteudo"></div>
+</div></div>
+
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasRemessaDetalheModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasRemessaDetalheModal')">
+<div class="atlas-remessa-modal small">
+<div class="atlas-remessa-head"><div><h2 id="atlasRemessaDetalheTitulo">Remessa</h2><p>Conferência e recebimento patrimonial.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasRemessaDetalheModal')">✕</button></div>
+<div id="atlasRemessaDetalheConteudo"></div>
+</div></div>
+
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasHistoricoPatrimonioModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasHistoricoPatrimonioModal')">
+<div class="atlas-remessa-modal small">
+<div class="atlas-remessa-head"><div><h2 id="atlasHistoricoPatrimonioTitulo">🕘 Histórico do patrimônio</h2><p>Cadastro, mudanças de status, transferências, remessas e responsáveis.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasHistoricoPatrimonioModal')">✕</button></div>
+<div id="atlasHistoricoPatrimonioConteudo"></div>
+</div></div>
+</section>
+</div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script src="./JS/offlineQueue.js"></script>
+<script src="./JS/offlineDB.js"></script>
+<script src="./JS/bdrSyncEngine.js"></script>
+<script src="./JS/bdrSyncCenter.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
+<script src="./JS/atlasControleAcesso.js?v=20260629-2"></script>
+<script src="./JS/bdr-menu-permissoes-hard-fix.js?v=20260629-1"></script>
+<script src="./JS/bdrNotificacoes.js"></script>
+<script src="./JS/atlasTopbar.js"></script>
+<script src="./JS/bdrUppercase.js"></script>
+<script src="./JS/bdrMenuMobileAtivo.js?v=20260702-3"></script>
+<script>if (typeof verificarLogin === 'function') verificarLogin();</script>
+<!-- Scripts específicos da Triagem -->
+
+<script src="./JS/offlineSync.js"></script>
+<script defer="" src="./JS/triagem.js"></script>
+<script>
+
+/* BDR V4 - ponte para endereçamento inteligente */
+function abrirGuardarPorBipagemTriagem(codigoOuNome){
+  const q=codigoOuNome?('?modo=bipagem&item='+encodeURIComponent(codigoOuNome)):'?modo=bipagem';
+  window.location.href='prateleiras-3d.html'+q;
+}
+
+</script>
+<!-- Scripts específicos de Empresas -->
+<script>
+
+let empresas = [];
+let obrasEmpresas = [];
+let movimentacoesEmpresas = [];
+
+const EMPRESA_PADRAO_BDR = {
+  id: 17,
+  nome: "BDR CONSTRUART",
+  razao_social: "CONSTRUART LTDA",
+  codigo_empresa: "10011",
+  cnpj: "09.338.459/0001-74",
+  endereco: "RUA COLÔMBIA, Nº 1802 - BAIRRO ALVORADA",
+  cep: "78455-000",
+  cidade: "LUCAS DO RIO VERDE",
+  estado: "MT",
+  tabela_insumo: 2
+};
+
+function normalizarTexto(txt){
+  return String(txt || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function ehEmpresaBDR(nome){
+  const t = normalizarTexto(nome);
+  return t.includes("BDR") || t.includes("CONSTRUART");
+}
+
+function preencherDadosBDR(prefixo=""){
+  const mapa = {
+    nome: EMPRESA_PADRAO_BDR.nome,
+    codigo_empresa: EMPRESA_PADRAO_BDR.codigo_empresa,
+    cnpj: EMPRESA_PADRAO_BDR.cnpj,
+    cidade: EMPRESA_PADRAO_BDR.cidade,
+    estado: EMPRESA_PADRAO_BDR.estado,
+    endereco: EMPRESA_PADRAO_BDR.endereco,
+    cep: EMPRESA_PADRAO_BDR.cep,
+    tabela_insumo: String(EMPRESA_PADRAO_BDR.tabela_insumo)
+  };
+
+  Object.entries(mapa).forEach(([id, valor]) => {
+    const el = document.getElementById(prefixo + id);
+    if(el) el.value = valor;
+  });
+}
+
+function aplicarPadraoBDR(){
+  const nome = document.getElementById("nome");
+  if(!nome) return;
+
+  if(ehEmpresaBDR(nome.value)){
+    preencherDadosBDR("");
+  }
+}
+
+function aplicarPadraoBDREdicao(){
+  const nome = document.getElementById("edit_nome");
+  if(!nome) return;
+
+  if(ehEmpresaBDR(nome.value)){
+    preencherDadosBDR("edit_");
+  }
+}
+
+async function buscarEmpresaPadraoBDR(){
+  const { data, error } = await db()
+    .from("empresas")
+    .select("*")
+    .eq("id", EMPRESA_PADRAO_BDR.id)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data;
+}
+
+// A empresa padrão BDR não é atualizada durante o cadastro de obras.
+// Isso evita gravações desnecessárias e respostas 406 do PostgREST.
+
+async function salvarOuAtualizarObraDaEmpresa(empresaId, dados){
+  const nomeObra = String(dados.setor_obra || "").trim().toUpperCase();
+  const codigoObra = String(dados.codigo_sienge_obra || dados.codigo_empresa || "").trim();
+
+  if(!empresaId){
+    throw new Error("Empresa não identificada para vincular a obra.");
+  }
+
+  if(!nomeObra){
+    throw new Error("Informe o nome da obra/setor.");
+  }
+
+  if(!codigoObra){
+    throw new Error("Informe o código Sienge da obra.");
+  }
+
+  // Cadastro deve ser previsível: nunca sobrescrever uma obra existente.
+  const { data: obrasEncontradas, error: erroBusca } = await db()
+    .from("obras")
+    .select("id,codigo_obra,nome,empresa_id")
+    .eq("empresa_id", Number(empresaId))
+    .eq("codigo_obra", codigoObra)
+    .limit(2);
+
+  if(erroBusca) throw erroBusca;
+
+  if(Array.isArray(obrasEncontradas) && obrasEncontradas.length > 0){
+    const existente = obrasEncontradas[0];
+    throw new Error(
+      `Já existe uma obra com o código ${codigoObra} nesta empresa: ${existente.nome || "-"}. Nada foi alterado.`
+    );
+  }
+
+  const payloadObra = {
+    empresa_id: Number(empresaId),
+    nome: nomeObra,
+    codigo_obra: codigoObra,
+    codigo_sienge: codigoObra,
+    tabela_insumo: Number(dados.tabela_insumo || EMPRESA_PADRAO_BDR.tabela_insumo || 2),
+    ativa: true,
+    ativo: true
+  };
+
+  const { data: obraNova, error } = await db()
+    .from("obras")
+    .insert([payloadObra])
+    .select("id,codigo_obra,nome,empresa_id")
+    .limit(1);
+
+  if(error) throw error;
+
+  const novaObra = Array.isArray(obraNova) ? obraNova[0] : null;
+  if(!novaObra?.id){
+    throw new Error("A obra não retornou confirmação após o cadastro. Confira o banco antes de tentar novamente.");
+  }
+
+  return novaObra;
+}
+
+function ir(pagina){
+  window.location.href = pagina;
+}
+
+function db(){
+  return window.client || window.supabaseClient;
+}
+
+/* =========================================================
+   BDR PERMISSÕES - EMPRESAS
+   Modelo novo: EMPRESAS_VER / CRIAR / EDITAR / INATIVAR / EXCLUIR
+========================================================= */
+function permissoesEmpresaBDR(usuario = usuarioAtual()){
+  return String(usuario?.permissoes || "")
+    .split(",")
+    .map(p => String(p || "").trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function usuarioOwnerEmpresaBDR(usuario = usuarioAtual()){
+  return Number(usuario?.id) === 1;
+}
+
+function usuarioTemPermissaoEmpresaBDR(permissao, usuario = usuarioAtual()){
+  if(!usuario) return false;
+  if(usuarioOwnerEmpresaBDR(usuario)) return true;
+  return permissoesEmpresaBDR(usuario).includes(String(permissao || "").toUpperCase());
+}
+
+function exigirPermissaoEmpresaBDR(permissao, mensagem){
+  if(usuarioTemPermissaoEmpresaBDR(permissao)) return true;
+  alert(mensagem || "Você não tem permissão para executar esta ação.");
+  return false;
+}
+
+function aplicarAcoesEmpresaPorPermissao(){
+  document.querySelectorAll("[data-acao-permissao]").forEach(el => {
+    const p = el.getAttribute("data-acao-permissao");
+    const pode = usuarioTemPermissaoEmpresaBDR(p);
+    el.style.display = pode ? "" : "none";
+    el.hidden = !pode;
+  });
+}
+
+function bloquearTelaEmpresaSemPermissao(){
+  if(usuarioTemPermissaoEmpresaBDR("EMPRESAS_VER")) return true;
+  alert("Você não tem permissão para acessar Empresas.");
+  location.href = "dashboard.html";
+  return false;
+}
+
+function campo(id){
+  const el = document.getElementById(id);
+  return el ? String(el.value || "").trim() : "";
+}
+
+function obraDaEmpresa(empresaId){
+  return obrasEmpresas.find(o => String(o.empresa_id) === String(empresaId)) || null;
+}
+
+function usuarioAtual(){
+  const u = localStorage.getItem("usuario_logado");
+  return u ? JSON.parse(u) : null;
+}
+
+function carregarUsuario(){
+  const usuario = usuarioAtual();
+
+  const nome = document.getElementById("usuarioNome");
+  const perfil = document.getElementById("usuarioPerfil");
+
+  if(nome){
+    nome.innerText = usuario ? "Olá, " + (usuario.nome || "usuário") : "Olá, usuário";
+  }
+
+  if(perfil){
+    perfil.innerText = usuario ? (usuario.perfil || "-") : "-";
+  }
+}
+
+async function salvarEmpresa(){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_CRIAR", "Você não tem permissão para cadastrar empresa/obra.")) return;
+
+  aplicarPadraoBDR();
+
+  const empresa = {
+    nome: campo("nome"),
+    codigo_empresa: campo("codigo_empresa"),
+    setor_obra: campo("setor_obra"),
+    codigo_sienge_obra: campo("codigo_sienge_obra"),
+    tabela_insumo: campo("tabela_insumo") || "2",
+    cnpj: campo("cnpj"),
+    cidade: campo("cidade"),
+    estado: campo("estado"),
+    endereco: campo("endereco"),
+    cep: campo("cep"),
+    observacao: campo("observacao"),
+    ativa: true
+  };
+
+  if(!empresa.nome){
+    alert("Informe o nome da empresa.");
+    return;
+  }
+
+  if(!empresa.codigo_empresa){
+    alert("Informe o código da empresa.");
+    return;
+  }
+
+  if(!empresa.setor_obra){
+    alert("Informe o setor / obra.");
+    return;
+  }
+
+  try{
+    if(ehEmpresaBDR(empresa.nome)){
+      const existeBDR = await buscarEmpresaPadraoBDR();
+
+      if(!existeBDR){
+        alert("Empresa padrão BDR CONSTRUART ID 17 não encontrada. Verifique no banco.");
+        return;
+      }
+
+      // Ao cadastrar uma obra da BDR, não atualizar a empresa 17.
+      // A empresa já existe e seus dados não devem ser regravados a cada nova obra.
+      const obraCriada = await salvarOuAtualizarObraDaEmpresa(EMPRESA_PADRAO_BDR.id, empresa);
+
+      await registrarMovimentacaoEmpresa(
+        "CADASTRO_OBRA_SETOR",
+        existeBDR,
+        `Obra/setor vinculado à BDR oficial ID ${EMPRESA_PADRAO_BDR.id}: ${obraCriada.nome || "-"} | Código da obra: ${obraCriada.codigo_obra || "-"} | Tabela: ${empresa.tabela_insumo || "2"}`
+      );
+
+      alert(`Obra cadastrada com sucesso: ${obraCriada.codigo_obra} - ${obraCriada.nome}`);
+    }else{
+      const { data: empresaCriada, error } = await db()
+        .from("empresas")
+        .insert([{
+          nome: empresa.nome,
+          codigo_empresa: empresa.codigo_empresa,
+          setor_obra: empresa.setor_obra,
+          cnpj: empresa.cnpj,
+          cidade: empresa.cidade,
+          estado: empresa.estado,
+          endereco: empresa.endereco,
+          cep: empresa.cep,
+          observacao: empresa.observacao,
+          ativa: true
+        }])
+        .select("id,nome,codigo_empresa,setor_obra")
+        .limit(1);
+
+      if(error) throw error;
+
+      const novaEmpresa = Array.isArray(empresaCriada) ? empresaCriada[0] : null;
+      if(!novaEmpresa?.id){
+        throw new Error("A empresa não retornou confirmação após o cadastro. Confira o banco antes de tentar novamente.");
+      }
+
+      await salvarOuAtualizarObraDaEmpresa(novaEmpresa.id, empresa);
+
+      await registrarMovimentacaoEmpresa(
+        "CADASTRO_EMPRESA",
+        novaEmpresa,
+        `Empresa cadastrada: ${empresa.nome || "-"} | Código: ${empresa.codigo_empresa || "-"} | Setor/Obra: ${empresa.setor_obra || "-"}`
+      );
+
+      alert("Empresa e obra/setor cadastrados com sucesso!");
+    }
+
+    limparFormulario();
+    await carregarEmpresas();
+
+  }catch(e){
+    console.error(e);
+    alert(e.message || "Erro ao salvar empresa/obra.");
+  }
+}
+async function carregarEmpresas(){
+
+  const { data, error } = await db()
+    .from("empresas")
+    .select("*")
+    .order("nome");
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  empresas = data || [];
+
+  const { data: obrasData, error: obrasError } = await db()
+    .from("obras")
+    .select("*")
+    .order("nome");
+
+  if(obrasError){
+    console.warn("Não foi possível carregar obras vinculadas:", obrasError.message);
+    obrasEmpresas = [];
+  }else{
+    obrasEmpresas = obrasData || [];
+  }
+
+  await carregarMovimentacoesEmpresas();
+
+  carregarFiltroEstados();
+  renderizarEmpresas();
+  aplicarAcoesEmpresaPorPermissao();
+  renderizarMovimentacoesEmpresas();
+}
+
+function carregarFiltroEstados(){
+  const select = document.getElementById("filtroEstadoEmpresa");
+  const atual = select.value;
+
+  const estados = [...new Set(
+    empresas.map(e => e.estado).filter(Boolean)
+  )].sort();
+
+  select.innerHTML = `<option value="">Todos os estados</option>`;
+
+  estados.forEach(uf => {
+    select.innerHTML += `<option value="${uf}">${uf}</option>`;
+  });
+
+  select.value = atual;
+}
+
+function renderizarEmpresas(){
+  const lista = document.getElementById("listaEmpresas");
+  const busca = campo("buscaEmpresa").toLowerCase();
+  const filtroStatus = campo("filtroStatusEmpresa");
+  const filtroEstado = campo("filtroEstadoEmpresa");
+
+  lista.innerHTML = "";
+
+  const filtradas = empresas.filter(e => {
+    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+
+    const texto = `
+      ${e.nome || ""}
+      ${e.codigo_empresa || ""}
+      ${e.setor_obra || ""}
+      ${e.cnpj || ""}
+      ${e.cidade || ""}
+      ${e.estado || ""}
+      ${e.endereco || ""}
+      ${e.cep || ""}
+      ${statusTexto}
+      ${obraDaEmpresa(e.id)?.codigo_sienge || ""}
+      ${obraDaEmpresa(e.id)?.tabela_insumo || ""}
+    `.toLowerCase();
+
+    return texto.includes(busca)
+      && (!filtroStatus || statusTexto === filtroStatus)
+      && (!filtroEstado || e.estado === filtroEstado);
+  });
+
+  if(filtradas.length === 0){
+    lista.innerHTML = `<div class="empresa-linha">Nenhuma empresa encontrada.</div>`;
+    return;
+  }
+
+  filtradas.forEach(e => {
+    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
+    const obraVinculada = obraDaEmpresa(e.id);
+
+    lista.innerHTML += `
+      <div class="empresa-linha" id="empresa-${e.id}">
+
+        <div class="empresa-nome" title="${e.nome || "-"}">
+          ${e.nome || "-"}
+        </div>
+
+        <div class="empresa-info">
+          ${e.codigo_empresa || "-"}
+        </div>
+
+        <div class="empresa-info" title="${e.setor_obra || "-"}">
+          ${e.setor_obra || "-"}
+        </div>
+
+        <div class="empresa-info">
+          ${e.cidade || "-"} ${e.estado ? " / " + e.estado : ""}
+        </div>
+
+        <div>
+          <span class="empresa-status ${statusTexto}">
+            ${statusTexto}
+          </span>
+        </div>
+
+        <div class="empresa-acoes">
+          <button class="btn-mini" title="Ver detalhes" onclick="toggleDetalhes(${e.id})">📂 Detalhes</button>
+
+          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EDITAR") ? `
+            <button class="btn-mini btn-editar" title="Editar empresa" onclick="editarEmpresa(${e.id})">✏️ Editar</button>
+          ` : ``}
+
+          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_INATIVAR") ? `
+            <button class="btn-mini ${e.ativa === false ? "btn-status-success" : "btn-status-warning"}"
+              title="${e.ativa === false ? "Reativar empresa" : "Inativar empresa"}"
+              onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
+              ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
+            </button>
+          ` : ``}
+        </div>
+
+        <div class="empresa-detalhes">
+          <b>CNPJ:</b> ${e.cnpj || "-"}<br>
+          <b>Endereço:</b> ${e.endereco || "-"}<br>
+          <b>CEP:</b> ${e.cep || "-"}<br>
+          <b>Código Sienge da obra:</b> ${obraVinculada?.codigo_sienge || "-"}<br>
+          <b>Tabela de insumo:</b> ${obraVinculada?.tabela_insumo || "3"}<br>
+          <b>Observação:</b> ${e.observacao || "-"}<br>
+        </div>
+
+      </div>
+    `;
+  });
+}
+
+function toggleDetalhes(id){
+  const div = document.getElementById("empresa-" + id);
+  if(div){
+    div.classList.toggle("aberta");
+  }
+}
+
+async function registrarMovimentacaoEmpresa(tipo, empresaAntes, observacao){
+
+  const usuario = usuarioAtual();
+
+  await db().from("movimentacoes").insert([{
+    tipo: tipo,
+    observacao: observacao,
+    usuario: usuario?.nome || "SISTEMA",
+    data_movimentacao: new Date().toISOString()
+  }]);
+}
+
+async function carregarMovimentacoesEmpresas(){
+
+  const { data, error } = await db()
+    .from("movimentacoes")
+    .select("*")
+    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA", "EXCLUSAO_EMPRESA"])
+    .order("id", { ascending:false })
+    .limit(10);
+
+  if(error){
+    console.warn("Não foi possível carregar movimentações de empresas:", error.message);
+    movimentacoesEmpresas = [];
+    return;
+  }
+
+  movimentacoesEmpresas = data || [];
+}
+
+function renderizarMovimentacoesEmpresas(){
+  const lista = document.getElementById("listaMovEmpresas");
+
+  if(!lista) return;
+
+  if(movimentacoesEmpresas.length === 0){
+    lista.innerHTML = "<div class='mov-empresa-linha'>Nenhuma movimentação de empresa encontrada.</div>";
+    return;
+  }
+
+  lista.innerHTML = movimentacoesEmpresas.map(m => `
+    <div class="mov-empresa-linha">
+      <strong>${m.tipo || "-"}</strong><br>
+      ${m.observacao || "-"}<br>
+      <small>Usuário: ${m.usuario || "-"} • ${formatarData(m.data_movimentacao)}</small>
+    </div>
+  `).join("");
+}
+
+function formatarData(data){
+  if(!data) return "-";
+  const d = new Date(String(data).replace(" ", "T"));
+  if(isNaN(d.getTime())) return data;
+  return d.toLocaleString("pt-BR");
+}
+
+async function alterarStatusEmpresa(id, status){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR", "Você não tem permissão para inativar ou reativar empresas.")) return;
+
+  const empresaAntes = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresaAntes){
+    alert("Empresa não encontrada.");
+    return;
+  }
+
+  const statusAtual = empresaAntes?.ativa === false ? "INATIVA" : "ATIVA";
+  const statusNovo = status === true ? "ATIVA" : "INATIVA";
+
+  const confirma = confirm(
+    `Confirma ${statusNovo === "ATIVA" ? "REATIVAR" : "INATIVAR"} a empresa "${empresaAntes?.nome || "-"}"?`
+  );
+
+  if(!confirma) return;
+
+  const respEmpresa = await db()
+    .from("empresas")
+    .update({
+      ativa: status,
+      ativo: status
+    })
+    .eq("id", id)
+    .select();
+
+  if(respEmpresa.error){
+    alert("Erro ao alterar empresa: " + respEmpresa.error.message);
+    return;
+  }
+
+  if(!respEmpresa.data || respEmpresa.data.length === 0){
+    alert("Nenhuma linha foi alterada no banco.");
+    return;
+  }
+
+  const respObras = await db()
+    .from("obras")
+    .update({
+      ativa: status,
+      ativo: status
+    })
+    .eq("empresa_id", id);
+
+  if(respObras.error){
+    alert("Erro ao alterar obras: " + respObras.error.message);
+    return;
+  }
+
+  await registrarMovimentacaoEmpresa(
+    "ALTERACAO_STATUS_EMPRESA",
+    empresaAntes,
+    `Empresa: ${empresaAntes?.nome || "-"} | Status anterior: ${statusAtual} | Status novo: ${statusNovo}`
+  );
+
+  alert("Status alterado com sucesso.");
+
+  await carregarEmpresas();
+}
+
+function editarEmpresa(id){
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para editar empresas.")) return;
+
+  const empresa = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresa){
+    alert("Empresa não encontrada.");
+    return;
+  }
+
+  document.getElementById("edit_id").value = empresa.id;
+  document.getElementById("edit_codigo_empresa").value = empresa.codigo_empresa || "";
+  document.getElementById("edit_nome").value = empresa.nome || "";
+  document.getElementById("edit_setor_obra").value = empresa.setor_obra || "";
+  document.getElementById("edit_cnpj").value = empresa.cnpj || "";
+  document.getElementById("edit_cidade").value = empresa.cidade || "";
+  document.getElementById("edit_estado").value = empresa.estado || "";
+  document.getElementById("edit_endereco").value = empresa.endereco || "";
+  document.getElementById("edit_cep").value = empresa.cep || "";
+  document.getElementById("edit_observacao").value = empresa.observacao || "";
+
+  const obraVinculada = obraDaEmpresa(empresa.id);
+  document.getElementById("edit_codigo_sienge_obra").value = obraVinculada?.codigo_sienge || "";
+  document.getElementById("edit_tabela_insumo").value = obraVinculada?.tabela_insumo || 3;
+
+  document.getElementById("editandoEmpresaTitulo").innerText = `${empresa.nome || "-"} | ${empresa.codigo_empresa || "-"}`;
+
+  document.getElementById("cardEdicaoEmpresa").classList.add("ativo");
+
+  document.getElementById("cardEdicaoEmpresa").scrollIntoView({
+    behavior:"smooth",
+    block:"start"
+  });
+}
+
+function cancelarEdicaoEmpresa(){
+  document.getElementById("cardEdicaoEmpresa").classList.remove("ativo");
+  document.getElementById("edit_id").value = "";
+}
+
+function compararAlteracoesEmpresa(antes, depois){
+  const campos = [
+    ["codigo_empresa", "Código"],
+    ["nome", "Nome"],
+    ["setor_obra", "Setor/Obra"],
+    ["cnpj", "CNPJ"],
+    ["cidade", "Cidade"],
+    ["estado", "Estado"],
+    ["endereco", "Endereço"],
+    ["cep", "CEP"],
+    ["observacao", "Observação"]
+  ];
+
+  const alteracoes = [];
+
+  campos.forEach(([campo, rotulo]) => {
+    const valorAntes = String(antes?.[campo] || "").trim();
+    const valorDepois = String(depois?.[campo] || "").trim();
+
+    if(valorAntes !== valorDepois){
+      alteracoes.push(`${rotulo}: "${valorAntes || "-"}" → "${valorDepois || "-"}"`);
+    }
+  });
+
+  return alteracoes;
+}
+
+async function salvarEdicaoEmpresa(){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para salvar edição de empresas.")) return;
+
+  const id = campo("edit_id");
+
+  if(!id){
+    alert("Nenhuma empresa selecionada para edição.");
+    return;
+  }
+
+  const empresaAntes = empresas.find(e => String(e.id) === String(id));
+
+  const empresaEditada = {
+    codigo_empresa: campo("edit_codigo_empresa"),
+    nome: campo("edit_nome"),
+    setor_obra: campo("edit_setor_obra"),
+    cnpj: campo("edit_cnpj"),
+    cidade: campo("edit_cidade"),
+    estado: campo("edit_estado"),
+    endereco: campo("edit_endereco"),
+    cep: campo("edit_cep"),
+    observacao: campo("edit_observacao")
+  };
+
+  if(!empresaEditada.nome){
+    alert("Informe o nome da empresa.");
+    return;
+  }
+
+  if(!empresaEditada.codigo_empresa){
+    alert("Informe o código da empresa.");
+    return;
+  }
+
+  if(!empresaEditada.setor_obra){
+    alert("Informe o setor / obra.");
+    return;
+  }
+
+  const alteracoes = compararAlteracoesEmpresa(empresaAntes, empresaEditada);
+
+  if(alteracoes.length === 0){
+    alert("Nenhuma alteração foi feita.");
+    return;
+  }
+
+  const confirma = confirm(
+    "Confirma salvar as alterações desta empresa?\n\n" +
+    alteracoes.join("\n")
+  );
+
+  if(!confirma) return;
+
+  const { error } = await db()
+    .from("empresas")
+    .update(empresaEditada)
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  const obraAtual = obraDaEmpresa(id);
+  const payloadObra = {
+    nome: empresaEditada.setor_obra,
+    codigo_obra: empresaEditada.codigo_empresa,
+    codigo_sienge: campo("edit_codigo_sienge_obra"),
+    tabela_insumo: Number(campo("edit_tabela_insumo") || 3),
+    ativa: true
+  };
+
+  if(obraAtual?.id){
+    const { error: erroObra } = await db()
+      .from("obras")
+      .update(payloadObra)
+      .eq("id", obraAtual.id);
+
+    if(erroObra){
+      alert("Empresa alterada, mas erro ao atualizar obra: " + erroObra.message);
+      return;
+    }
+  }else{
+    const { error: erroObraNova } = await db()
+      .from("obras")
+      .insert([{...payloadObra, empresa_id:id}]);
+
+    if(erroObraNova){
+      alert("Empresa alterada, mas erro ao criar obra vinculada: " + erroObraNova.message);
+      return;
+    }
+  }
+
+  await db()
+    .from("obras")
+    .update({
+      nome: empresaEditada.setor_obra,
+      codigo_obra: empresaEditada.codigo_empresa
+    })
+    .eq("empresa_id", id);
+
+  await registrarMovimentacaoEmpresa(
+    "EDICAO_EMPRESA",
+    empresaAntes,
+    `Empresa: ${empresaAntes?.nome || "-"} | Alterações: ${alteracoes.join(" | ")}`
+  );
+
+  alert("Empresa alterada com sucesso.");
+
+  cancelarEdicaoEmpresa();
+  carregarEmpresas();
+}
+
+async function excluirEmpresa(id){
+
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EXCLUIR", "Você não tem permissão para excluir empresas.")) return;
+
+  const empresa = empresas.find(e => String(e.id) === String(id));
+
+  if(!empresa){
+    alert("Empresa não encontrada.");
+    return;
+  }
+
+  const confirma = confirm(
+    `APAGAR DEFINITIVAMENTE a empresa "${empresa.nome || "-"}"?\n\n` +
+    "Use esta opção somente para cadastro fake/teste. Empresa real é melhor INATIVAR."
+  );
+
+  if(!confirma) return;
+
+  const senha = prompt("Digite sua senha para confirmar a exclusão:");
+  if(!senha){
+    alert("Exclusão cancelada.");
+    return;
+  }
+
+  const usuario = usuarioAtual();
+  const senhaLocal = String(usuario?.senha || usuario?.senha_master || "");
+
+  if(senhaLocal && senha !== senhaLocal){
+    alert("Senha incorreta. Nada foi apagado.");
+    return;
+  }
+
+  const resp = await db()
+    .from("empresas")
+    .delete()
+    .eq("id", id)
+    .select("id,nome");
+
+  if(resp.error){
+    alert(
+      "Erro ao excluir: " + resp.error.message +
+      "\n\nProvável vínculo com obras, localizações, patrimônios ou movimentações. Nesse caso use INATIVAR."
+    );
+    return;
+  }
+
+  if(!resp.data || resp.data.length === 0){
+    alert(
+      "O Supabase não apagou nenhuma linha.\n\n" +
+      "Pode ser bloqueio de RLS/policy ou vínculo no banco. Nada foi apagado."
+    );
+    return;
+  }
+
+  await registrarMovimentacaoEmpresa(
+    "EXCLUSAO_EMPRESA",
+    empresa,
+    `Empresa excluída definitivamente: ${empresa.nome || "-"} | ID: ${empresa.id}`
+  );
+
+  alert("Empresa excluída definitivamente.");
+  await carregarEmpresas();
+}
+
+function limparFormulario(){
+  document.getElementById("nome").value = "";
+  document.getElementById("codigo_empresa").value = "";
+  document.getElementById("setor_obra").value = "";
+  document.getElementById("cnpj").value = "";
+  document.getElementById("cidade").value = "";
+  document.getElementById("estado").value = "";
+  document.getElementById("endereco").value = "";
+  document.getElementById("cep").value = "";
+  document.getElementById("codigo_sienge_obra").value = "";
+  document.getElementById("tabela_insumo").value = "2";
+  document.getElementById("observacao").value = "";
+}
+
+
+/* =========================================================
+   TOPO PADRÃO - MENU USUÁRIO + SININHO REAL DE PEDIDOS
+========================================================= */
+let ultimaQtdPedidosNotificados = Number(localStorage.getItem("bdr_ultima_qtd_pedidos_notificados") || "0");
+let audioCtxNotif = null;
+let canalPedidosRealtime = null;
+
+function toggleMenuUsuario(event){
+  if(event) event.stopPropagation();
+  document.getElementById("dropdownUser")?.classList.toggle("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+function toggleNotificacoes(event){
+  if(event) event.stopPropagation();
+  document.getElementById("notifDropdown")?.classList.toggle("ativo");
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+}
+
+function fecharMenusTopo(){
+  document.getElementById("dropdownUser")?.classList.remove("ativo");
+  document.getElementById("notifDropdown")?.classList.remove("ativo");
+}
+
+document.addEventListener("click", fecharMenusTopo);
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape") fecharMenusTopo();
+});
+
+function atualizarNotificacoes(lista){
+  const badge = document.getElementById("notifBadge");
+  const box = document.getElementById("notifLista");
+
+  if(!badge || !box) return;
+
+  const total = lista.length;
+  badge.innerText = total > 9 ? "9+" : total;
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+
+  if(total === 0){
+    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
+    return;
+  }
+
+  box.innerHTML = lista.map(n => `
+    <div class="notif-item" onclick="${n.acao || ''}">
+      <strong>${n.titulo}</strong>
+      <span>${n.texto}</span>
+    </div>
+  `).join("");
+}
+
+function prepararAudioNotif(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!audioCtxNotif){
+      audioCtxNotif = new AudioCtx();
+    }
+    if(audioCtxNotif.state === "suspended"){
+      audioCtxNotif.resume();
+    }
+  }catch(e){}
+}
+
+document.addEventListener("click", prepararAudioNotif, { once:false });
+document.addEventListener("touchstart", prepararAudioNotif, { once:false });
+
+function tocarSininho(){
+  try{
+    prepararAudioNotif();
+    if(!audioCtxNotif) return;
+
+    const ctx = audioCtxNotif;
+
+    [880, 1175].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.16);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + idx * 0.16);
+      gain.gain.linearRampToValueAtTime(0.23, ctx.currentTime + idx * 0.16 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.16 + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.16);
+      osc.stop(ctx.currentTime + idx * 0.16 + 0.18);
+    });
+  }catch(e){
+    console.warn("Som de notificação indisponível.", e);
+  }
+}
+
+function mostrarToastNotificacao(titulo, texto){
+  let toast = document.getElementById("toastNotificacaoTop");
+
+  if(!toast){
+    toast = document.createElement("div");
+    toast.id = "toastNotificacaoTop";
+    toast.className = "bdr-toast";
+    toast.innerHTML = `<strong></strong><span></span>`;
+    document.body.appendChild(toast);
+  }
+
+  toast.querySelector("strong").innerText = titulo;
+  toast.querySelector("span").innerText = texto;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 5200);
+}
+
+function usuarioPodeVerPedidosTopo(){
+  const u = usuarioAtual();
+  if(!u) return false;
+  const perfil = String(u.perfil || "").toUpperCase();
+  const permissoes = String(u.permissoes || "").toUpperCase();
+  return perfil === "MASTER" || perfil === "ADMIN" || perfil === "ALMOXARIFE" || permissoes.includes("AUTORIZAR_RETIRADA");
+}
+
+async function carregarNotificacoesPedidosTopo(tocarSomSeNovo=false){
+  const banco = db();
+  const usuario = usuarioAtual();
+
+  if(!banco || !usuario){
+    atualizarNotificacoes([]);
+    return;
+  }
+
+  try{
+    let query = banco
+      .from("pedidos_retirada")
+      .select("id,codigo,status,obra_nome,solicitante,criado_em")
+      .in("status", [
+        "AGUARDANDO_AUTORIZACAO",
+        "EM_SEPARACAO",
+        "AGUARDANDO_RETIRADA",
+        "EM_TRANSITO",
+        "AGUARDANDO_CONFERENCIA"
+      ])
+      .order("id", { ascending:false })
+      .limit(10);
+
+    const resp = await query;
+
+    if(resp.error){
+      console.warn("Erro ao carregar notificações de pedidos:", resp.error.message);
+      atualizarNotificacoes([]);
+      return;
+    }
+
+    let pedidos = resp.data || [];
+
+    const perfil = String(usuario.perfil || "").toUpperCase();
+    if(perfil !== "MASTER" && perfil !== "ADMIN" && perfil !== "ALMOXARIFE"){
+      pedidos = pedidos.filter(p =>
+        String(p.solicitante || "") === String(usuario.nome || "") ||
+        String(p.obra_id || "") === String(usuario.obra_id || "")
+      );
+    }
+
+    const lista = pedidos.map(p => {
+      let titulo = "📝 Pedido em andamento";
+      if(p.status === "AGUARDANDO_AUTORIZACAO") titulo = "🔔 Pedido aguardando autorização";
+      if(p.status === "EM_SEPARACAO") titulo = "📦 Pedido em separação";
+      if(p.status === "AGUARDANDO_RETIRADA") titulo = "✅ Pedido aguardando retirada";
+      if(p.status === "EM_TRANSITO") titulo = "🚛 Pedido em trânsito";
+      if(p.status === "AGUARDANDO_CONFERENCIA") titulo = "📥 Pedido aguardando conferência";
+
+      return {
+        titulo,
+        texto:`${p.codigo || "PED-" + String(p.id).padStart(4,"0")} • ${p.obra_nome || "Obra não informada"} • ${p.solicitante || "-"}`,
+        acao:"ir('pedidos.html')"
+      };
+    });
+
+    atualizarNotificacoes(lista);
+
+    const totalAgora = pedidos.length;
+
+    if(tocarSomSeNovo && totalAgora > ultimaQtdPedidosNotificados){
+      tocarSininho();
+      mostrarToastNotificacao(
+        "🔔 Novo pedido no sistema",
+        totalAgora === 1 ? "Existe 1 pedido precisando de atenção." : `Existem ${totalAgora} pedidos precisando de atenção.`
+      );
+    }
+
+    ultimaQtdPedidosNotificados = totalAgora;
+    localStorage.setItem("bdr_ultima_qtd_pedidos_notificados", String(totalAgora));
+
+  }catch(e){
+    console.warn("Notificações indisponíveis:", e);
+    atualizarNotificacoes([]);
+  }
+}
+
+function iniciarRealtimePedidosTopo(){
+  const banco = db();
+
+  if(!banco || !banco.channel){
+    return;
+  }
+
+  try{
+    if(canalPedidosRealtime){
+      banco.removeChannel(canalPedidosRealtime);
+    }
+
+    canalPedidosRealtime = banco
+      .channel("bdr-topo-pedidos-empresas")
+      .on("postgres_changes", { event:"*", schema:"public", table:"pedidos_retirada" }, () => {
+        carregarNotificacoesPedidosTopo(true);
+      })
+      .on("postgres_changes", { event:"*", schema:"public", table:"historico_pedidos_retirada" }, () => {
+        carregarNotificacoesPedidosTopo(true);
+      })
+      .subscribe();
+  }catch(e){
+    console.warn("Realtime não iniciado:", e);
+  }
+}
+
+function iniciarTopoPadraoBDR(){
+  carregarUsuario();
+}
+
+window.addEventListener("load", () => {
+  iniciarTopoPadraoBDR();
+  if(!bloquearTelaEmpresaSemPermissao()) return;
+  aplicarAcoesEmpresaPorPermissao();
+  carregarEmpresas();
+});
+
+</script>
+<script src="./JS/dashboard/dashboardCore.js"></script><script src="./JS/dashboard/dashboardDados.js"></script><script src="./JS/dashboard/dashboardFiltros.js"></script><script src="./JS/dashboard/dashboardKpis.js"></script><script src="./JS/dashboard/dashboardGraficos.js"></script><script src="./JS/dashboard/dashboardAnalise.js"></script><script src="./JS/dashboard/dashboardEstoque.js"></script><script src="./JS/dashboard/dashboardMovimentacoes.js"></script><script src="./JS/dashboard/dashboardRankings.js"></script><script src="./JS/dashboard/dashboardBoot.js"></script><script src="./JS/atlasShell.js?v=20260831-patrimonio"></script>
+</body>
+</html>

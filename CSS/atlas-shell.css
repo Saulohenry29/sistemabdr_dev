@@ -1,0 +1,452 @@
+/* =========================================================
+   ATLAS — SHELL GLOBAL OFICIAL
+   Arquivo canônico do atlas.html
+
+   REGRA DO ATLAS
+   - menu permanente
+   - topo permanente
+   - MESMO topo em todos os módulos
+   - somente o miolo do sistema muda
+   - escala real 100% (SEM zoom artificial)
+
+   IMPORTANTE:
+   Para personalizar o topo, mexa SOMENTE no painel abaixo.
+   Não crie regras diferentes por módulo.
+========================================================= */
+
+/* =========================================================
+   PAINEL DE AJUSTE DO TOPO GLOBAL
+   =========================================================
+   >>> É AQUI QUE VOCÊ PODE MEXER <<<
+
+   Dashboard, Patrimônio, Manutenção, Usuários e todos os
+   próximos módulos do atlas.html usam estes mesmos valores.
+========================================================= */
+:root{
+
+  /* =====================================================
+     TOPO GLOBAL OFICIAL DO ATLAS
+     ===================================================== */
+
+  /* Área total */
+  --atlas-header-height:80px;
+  --atlas-header-top:10px;
+  --atlas-header-side:10px;
+
+  /* Fundo atrás do topo */
+  --atlas-header-bg:#f5f7fb;
+
+
+  /* =====================================================
+     CAIXA PRINCIPAL
+     ===================================================== */
+
+  --atlas-topbar-height:71px;
+
+  --atlas-topbar-padding-y:7px;
+  --atlas-topbar-padding-x:17px;
+
+  --atlas-topbar-radius:14px;
+
+  --atlas-topbar-bg:#ffffff;
+
+  --atlas-topbar-border:#e5e7eb;
+
+  /* VERMELHO OFICIAL BDR */
+  --atlas-topbar-accent:#a4161a;
+
+  --atlas-topbar-shadow:
+    0 3px 14px rgba(15,23,42,.08);
+
+  --atlas-topbar-gap:12px;
+
+
+  /* =====================================================
+     TÍTULO
+     ===================================================== */
+
+  --atlas-title-size:16px;
+  --atlas-title-weight:900;
+
+  /* mesmo vermelho da Expedição */
+  --atlas-title-color:#a4161a;
+
+
+  /* =====================================================
+     SUBTÍTULO
+     ===================================================== */
+
+  --atlas-subtitle-size:10px; /* 10px = pequeno */
+  --atlas-subtitle-weight:500; /* 500 = medium */
+  --atlas-subtitle-color:#64748b; /* cinza-azulado */
+
+  --atlas-subtitle-gap:2px; /* distância entre título e subtítulo */
+
+
+  /* =====================================================
+     SININHO
+     ===================================================== */
+
+  --atlas-bell-size:30px; /* tamanho do botão do sininho */
+  --atlas-bell-icon-size:10px; /* tamanho do ícone do sininho */
+  /* BALÃO VERMELHO COM NÚMERO */
+--atlas-badge-size:17px;       /* tamanho do círculo vermelho */
+--atlas-badge-font-size:9px;   /* tamanho do número */
+
+  --atlas-actions-gap:21px;  /* distância entre sininho e usuário */
+
+
+  /* =====================================================
+     USUÁRIO
+     ===================================================== */
+
+  --atlas-user-height:43px; /* altura do botão do usuário */
+
+  --atlas-user-padding-y:2px; /* distância do topo e da base do botão do usuário */
+  --atlas-user-padding-x:2px; /* distância da esquerda e da direita do botão do usuário */
+
+  --atlas-user-gap:10px; /* distância entre avatar e nome do usuário */
+
+  --atlas-user-name-size:11px; /* tamanho da fonte do nome do usuário */
+
+  --atlas-user-role-size:8.5px; /* tamanho da fonte do cargo do usuário */
+
+
+  /* =====================================================
+     AVATAR
+     ===================================================== */
+
+  --atlas-avatar-size:36px; /* tamanho do avatar do usuário */
+
+  --atlas-avatar-font-size:15px; /* tamanho da fonte do avatar do usuário */
+
+
+  /* =====================================================
+     CONTEÚDO
+     ===================================================== */
+
+  --atlas-content-gap:0px;
+}
+
+
+/* =========================================================
+   ESCALA REAL DO ATLAS
+   NÃO ALTERAR PARA 0.85 / 0.90
+========================================================= */
+html[data-shell-modulo]{
+  --screen-zoom:1;
+}
+
+html,
+body{
+  min-height:100%;
+}
+
+html{
+  overflow-y:scroll;
+  scrollbar-gutter:stable;
+}
+
+body.atlas-shell-page{
+  margin:0;
+  zoom:1;
+}
+
+
+/* =========================================================
+   ESTRUTURA PRINCIPAL
+========================================================= */
+.atlas-shell-page .bdr-app{
+  min-height:100vh;
+}
+
+.atlas-shell-page .bdr-main{
+  min-width:0;
+}
+
+.atlas-shell-content{
+  width:100%;
+  min-width:0;
+  position:relative;
+  z-index:1;
+}
+
+
+/* Patrimônio: quando um modal estiver aberto, o overlay precisa ficar acima
+   do menu e do topo fixos. O z-index do conteúdo normalmente é 1 para manter
+   a arquitetura do shell; ele sobe apenas durante o modal. */
+body.atlas-shell-page.atlas-patrimonio-modal-ativo .atlas-shell-content,
+body.atlas-shell-page:has(.atlas-shell-module[data-module="patrimonio"] .modal-bg[style*="display: flex"]) .atlas-shell-content,
+body.atlas-shell-page:has(.atlas-shell-module[data-module="patrimonio"] .bdr-etiqueta-modal-bg.ativo) .atlas-shell-content,
+body.atlas-shell-page:has(.atlas-shell-module[data-module="patrimonio"] .atlas-etiquetas-lote-bg.ativo) .atlas-shell-content,
+body.atlas-shell-page:has(.atlas-shell-module[data-module="patrimonio"] .atlas-remessa-modal-bg[aria-hidden="false"]) .atlas-shell-content{
+  z-index:2000;
+}
+
+/* =========================================================
+   MÓDULO ATIVO
+   Somente o miolo muda. Menu e topo continuam os mesmos.
+========================================================= */
+.atlas-shell-module{
+  display:none;
+  min-width:0;
+  animation:none !important;
+  transition:none !important;
+}
+
+html[data-shell-modulo="dashboard"] .atlas-shell-module[data-module="dashboard"],
+html[data-shell-modulo="triagem"] .atlas-shell-module[data-module="triagem"],
+html[data-shell-modulo="empresa"] .atlas-shell-module[data-module="empresa"],
+html[data-shell-modulo="patrimonio"] .atlas-shell-module[data-module="patrimonio"]{
+  display:block;
+}
+
+
+/* =========================================================
+   MENU E TOPO PERMANENTES
+========================================================= */
+atlas-menu.bdr-sidebar{
+  display:flex;
+}
+
+atlas-topo.bdr-topbar{
+  display:flex;
+}
+
+
+/* =========================================================
+   TOPO GLOBAL ÚNICO
+   NÃO criar versão diferente para Patrimônio, Dashboard etc.
+========================================================= */
+.atlas-shell-page .atlas-header-zone{
+  position:fixed;
+  top:0;
+  left:61px;
+  right:0;
+  height:var(--atlas-header-height);
+  z-index:1100;
+  box-sizing:border-box;
+  padding:var(--atlas-header-top) var(--atlas-header-side) 0;
+  background:var(--atlas-header-bg);
+  pointer-events:auto;
+}
+
+.atlas-shell-page .atlas-header-zone .bdr-topbar{
+  position:relative !important;
+  top:auto;
+  left:auto;
+  right:auto;
+  width:100% !important;
+  min-height:var(--atlas-topbar-height);
+  margin:0;
+  padding:var(--atlas-topbar-padding-y) var(--atlas-topbar-padding-x);
+  gap:var(--atlas-topbar-gap);
+  border:1px solid var(--atlas-topbar-border);
+  border-left:4px solid var(--atlas-topbar-accent);
+  border-radius:var(--atlas-topbar-radius);
+  background:
+    radial-gradient(circle at right top,rgba(164,22,26,.12),transparent 35%),
+    linear-gradient(135deg,var(--atlas-topbar-bg),#f8fafc);
+  box-shadow:var(--atlas-topbar-shadow);
+  isolation:isolate;
+}
+
+/* Reserva o espaço físico do topo fixo */
+.atlas-shell-page .atlas-shell-content{
+  padding-top:calc(var(--atlas-header-height) + var(--atlas-content-gap));
+}
+
+
+/* =========================================================
+   TÍTULO / SUBTÍTULO — GLOBAL
+========================================================= */
+.atlas-shell-page .bdr-topbar-title,
+.atlas-shell-page .atlas-topbar-title{
+  margin:0;
+  color:var(--atlas-title-color);
+  font-size:var(--atlas-title-size);
+  font-weight:var(--atlas-title-weight);
+  line-height:1.15;
+}
+
+.atlas-shell-page .bdr-topbar-sub,
+.atlas-shell-page .atlas-topbar-sub{
+  margin-top:var(--atlas-subtitle-gap);
+  color:var(--atlas-subtitle-color);
+  font-size:var(--atlas-subtitle-size);
+  font-weight:var(--atlas-subtitle-weight);
+  line-height:1.15;
+}
+
+
+/* =========================================================
+   AÇÕES / SININHO — GLOBAL
+========================================================= */
+.atlas-shell-page .bdr-top-actions,
+.atlas-shell-page .atlas-top-actions{
+  gap:var(--atlas-actions-gap);
+}
+
+.atlas-shell-page .notif-btn,
+.atlas-shell-page .atlas-notif-btn{
+  width:var(--atlas-bell-size);
+  height:var(--atlas-bell-size);
+  min-width:var(--atlas-bell-size);
+}
+
+.atlas-shell-page .notif-btn i,
+.atlas-shell-page .atlas-notif-btn i{
+  font-size:var(--atlas-bell-icon-size);
+}
+/* =========================================================
+   BALÃO DE NOTIFICAÇÃO — GLOBAL
+   ========================================================= */
+
+.atlas-shell-page .notif-badge{
+  width:var(--atlas-badge-size);
+  height:var(--atlas-badge-size);
+  min-width:var(--atlas-badge-size);
+
+  font-size:var(--atlas-badge-font-size);
+
+  line-height:var(--atlas-badge-size);
+
+  padding:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+
+/* =========================================================
+   USUÁRIO / AVATAR — GLOBAL
+========================================================= */
+.atlas-shell-page .user-menu,
+.atlas-shell-page .user-menu-top,
+.atlas-shell-page .atlas-user-button{
+  min-height:var(--atlas-user-height);
+  gap:var(--atlas-user-gap);
+  padding:var(--atlas-user-padding-y) var(--atlas-user-padding-x);
+}
+
+.atlas-shell-page .user-mini b,
+.atlas-shell-page .user-name{
+  font-size:var(--atlas-user-name-size);
+}
+
+.atlas-shell-page .user-mini small,
+.atlas-shell-page .user-level{
+  font-size:var(--atlas-user-role-size);
+}
+
+.atlas-shell-page .avatar,
+.atlas-shell-page .atlas-avatar{
+  width:var(--atlas-avatar-size);
+  height:var(--atlas-avatar-size);
+  min-width:var(--atlas-avatar-size);
+  font-size:var(--atlas-avatar-font-size);
+}
+
+.atlas-shell-page .bdr-menu-btn[data-shell-module].active{
+  pointer-events:auto;
+}
+
+
+
+/* =========================================================
+   DROPDOWNS DO TOPO — COMPACTOS EM 100% REAL
+   Equivalência visual aproximada ao padrão antigo em 0,85.
+   Vale para TODOS os módulos carregados pelo atlas.html.
+========================================================= */
+.atlas-shell-page .dropdown-user,
+.atlas-shell-page .user-dropdown{
+  width:187px;
+  padding:7px;
+  border-radius:12px;
+}
+
+.atlas-shell-page .dropdown-user button,
+.atlas-shell-page .user-dropdown button{
+  gap:8px;
+  min-height:34px;
+  padding:8px 9px;
+  border-radius:8px;
+  font-size:10px;
+}
+
+/* =========================================================
+   MENU LATERAL DESKTOP
+   PADRÃO JÁ APROVADO — NÃO ALTERADO
+========================================================= */
+@media(min-width:1201px){
+  html[data-shell-modulo]{
+    --sidebar-width:61px;
+  }
+
+  .atlas-shell-page .bdr-sidebar{
+    width:61px;
+    padding:51px 0 26px;
+  }
+
+  .atlas-shell-page .bdr-menu{
+    width:61px;
+    gap:9px;
+  }
+
+  .atlas-shell-page .bdr-menu-btn{
+    flex-basis:39px;
+    width:39px;
+    height:39px;
+    min-width:39px;
+    min-height:39px;
+    border-radius:12px;
+  }
+
+  .atlas-shell-page .bdr-menu-icon i,
+  .atlas-shell-page .bdr-menu-btn i{
+    font-size:15px;
+  }
+
+  .atlas-shell-page .bdr-main{
+    margin-left:61px;
+    width:calc(100% - 61px);
+    padding:10px;
+  }
+}
+
+
+/* =========================================================
+   TABLET / CELULAR
+   Continua usando o MESMO topo; apenas adapta o espaço.
+========================================================= */
+@media(max-width:1200px){
+  .atlas-shell-page .atlas-header-zone{
+    left:0;
+    height:var(--atlas-header-height);
+    padding:8px 8px 0;
+  }
+
+  .atlas-shell-page .atlas-header-zone .bdr-topbar{
+    min-height:var(--atlas-topbar-height);
+    border-radius:var(--atlas-topbar-radius);
+  }
+
+  .atlas-shell-page .atlas-shell-content{
+    padding-top:calc(var(--atlas-header-height) + var(--atlas-content-gap));
+  }
+}
+
+
+/* =========================================================
+   AJUSTES DO MIOLO — NÃO SÃO ALTERAÇÕES DO TOPO
+========================================================= */
+.atlas-shell-module[data-module="dashboard"] .dash-container{
+  margin-top:0;
+}
+
+.atlas-shell-module[data-module="patrimonio"] .atlas-patrimonio-status{
+  display:flex;
+  justify-content:flex-end;
+  margin:0 0 10px;
+}

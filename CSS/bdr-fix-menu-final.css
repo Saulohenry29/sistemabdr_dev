@@ -16,6 +16,8 @@
   --atlas-menu-bg-end:#111827;
   --atlas-menu-z:500;
   --atlas-menu-tooltip-z:600;
+  --atlas-menu-tooltip-left:46px;
+  --atlas-menu-tooltip-hover-x:2px;
   --bdr-mobile-menu-altura:74px;
   --bdr-mobile-menu-btn:48px;
   --bdr-mobile-menu-icone:18px;
@@ -91,10 +93,17 @@
   .bdr-menu-icon i,
   .bdr-menu-btn i{font-size:18px;color:#fff;}
 
+
+  /* atlas.html: botão compacto de 39px; tooltip continua pertencendo somente a este arquivo. */
+  .atlas-shell-page{
+    --atlas-menu-tooltip-left:53px; /* 46px + 7px de deslocamento do botão */
+    --atlas-menu-tooltip-hover-x:2px; /* deslocamento do tooltip ao passar o mouse */
+  }
+
   .bdr-menu-btn[data-tip]::after{
     content:attr(data-tip);
     position:absolute;
-    left:46px;
+    left:var(--atlas-menu-tooltip-left);
     top:50%;
     z-index:var(--atlas-menu-tooltip-z);
     display:block;
@@ -106,21 +115,21 @@
     background:#111827;
     color:#fff;
     box-shadow:0 10px 24px rgba(0,0,0,.18);
-    font-size:13px;
-    font-weight:800;
-    line-height:1.2;
-    white-space:nowrap;
-    opacity:0;
-    visibility:hidden;
-    pointer-events:none;
-    transform:translate(8px,-50%);
-    transition:opacity .18s ease,visibility .18s ease,transform .18s ease;
+    font-size:10px; /* tamanho do texto do tooltip */
+    font-weight:800;/* peso do texto do tooltip */
+    line-height:1.2;/*  altura da linha do texto do tooltip */
+    white-space:nowrap;/* impede quebra de linha do tooltip */
+    opacity:0;/* inicia invisível */
+    visibility:hidden;/* inicia invisível */
+    pointer-events:none;/* impede interação com o tooltip */
+    transform:translate(0,-50%); /* inicia deslocado para a esquerda */
+    transition:opacity .18s ease,visibility .18s ease,transform .18s ease; /* animação de transição do tooltip */
   }
 
   .bdr-menu-btn[data-tip]:hover::after{
     opacity:1;
     visibility:visible;
-    transform:translate(14px,-50%);
+    transform:translate(var(--atlas-menu-tooltip-hover-x),-50%);
   }
 }
 

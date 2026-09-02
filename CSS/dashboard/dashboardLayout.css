@@ -2,21 +2,21 @@
 .dashboard-grid{
   display:grid;
   grid-template-columns:1.05fr .9fr .75fr;
-  gap:12px;
+  gap:10px;
 }
 
 .card-light{
   background:#fff;
   border:1px solid var(--bdr-border);
-  border-radius:10px;
+  border-radius:9px;
   box-shadow:0 2px 8px rgba(15,23,42,.04);
   overflow:hidden;
 }
 
 .card-light h3{
   margin:0;
-  padding:13px 16px 8px;
-  font-size:15px;
+  padding:11px 14px 7px;
+  font-size:13px;
   font-weight:900;
   color:#111827;
 }
@@ -28,15 +28,15 @@
 }
 
 .card-body{
-  padding:10px 14px 14px;
+  padding:9px 12px 12px;
 }
 
 .chart-card canvas{
-  height:190px !important;
+  height:162px !important;
 }
 
 .chart-card.big canvas{
-  height:205px !important;
+  height:174px !important;
 }
 
 .right-stack,
@@ -44,7 +44,7 @@
 .left-stack{
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:10px;
 }
 /* =========================================================
    ÁREA DO TOP 5 PATRIMÔNIOS
@@ -53,12 +53,12 @@
 .bottom-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:10px;
 }
 
 /* ALTURA DO CARD TOP 5 */
 :root{
-  --altura-card-top5:315px;
+  --altura-card-top5:268px;
 }
 
 /* CARD TOP 5 */
@@ -68,19 +68,19 @@
 .table-mini{
   width:100%;
   border-collapse:collapse;
-  font-size:10px;
+  font-size:9px;
 }
 
 .table-mini th{
   text-align:left;
   color:#6b7280;
   border-bottom:1px solid #e5e7eb;
-  padding:6px;
+  padding:5px;
 }
 
 .table-mini td{
   border-bottom:1px solid #f1f5f9;
-  padding:6px;
+  padding:5px;
   color:#374151;
 }
 
@@ -94,9 +94,9 @@
   color:var(--bdr-red);
   background:#fff;
   border-radius:8px;
-  padding:8px 10px;
+  padding:7px 9px;
   font-weight:900;
-  font-size:11px;
+  font-size:9px;
   cursor:pointer;
 }
 
@@ -105,11 +105,11 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:8px;
-  padding:8px 10px;
+  gap:7px;
+  padding:7px 9px;
   background:#fff;
   border-bottom:1px solid #f1f5f9;
-  font-size:12px;
+  font-size:10px;
   color:#374151;
 }
 
@@ -129,14 +129,14 @@
   align-items:center;
   justify-content:center;
   font-weight:900;
-  font-size:11px;
+  font-size:9px;
 }
 
 .ai-list{
   display:flex;
   flex-direction:column;
-  gap:8px;
-  font-size:12px;
+  gap:7px;
+  font-size:10px;
   color:#374151;
   line-height:1.45;
 }
@@ -155,7 +155,7 @@
 
 .money-box strong{
   display:block;
-  font-size:22px;
+  font-size:19px;
   margin:5px 0;
   color:#111827;
 }
@@ -163,26 +163,26 @@
 .money-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
+  gap:7px;
   margin-top:10px;
 }
 
 .money-small{
   border:1px solid #e5e7eb;
   border-radius:8px;
-  padding:10px;
+  padding:9px;
   text-align:center;
 }
 
 .money-small strong{
   display:block;
-  font-size:18px;
+  font-size:15px;
   color:#111827;
 }
 
 .money-small span{
   color:#6b7280;
-  font-size:11px;
+  font-size:9px;
 }
 
 /* RISCO */
@@ -191,12 +191,12 @@
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  min-height:180px;
+  min-height:153px;
 }
 
 .risk-gauge{
-  width:145px;
-  height:75px;
+  width:123px;
+  height:64px;
   position:relative;
   overflow:hidden;
 }
@@ -206,7 +206,7 @@
   position:absolute;
   left:0;
   top:0;
-  width:145px;
+  width:123px;
   height:145px;
   border-radius:50%;
   background:conic-gradient(
@@ -255,7 +255,7 @@
 .risk-text{
   color:#16a34a;
   font-weight:900;
-  font-size:18px;
+  font-size:15px;
   margin-top:6px;
 }
 
@@ -264,7 +264,7 @@
   display:flex;
   justify-content:space-between;
   color:#6b7280;
-  font-size:12px;
+  font-size:10px;
 }
 
 @media(max-width:1350px){
@@ -277,7 +277,7 @@
 @media(max-width:800px){
   .kpi-row{grid-template-columns:1fr}
   .quick-filters{grid-template-columns:1fr}
-  .dash-top{height:auto;gap:12px;align-items:flex-start;flex-direction:column;padding:14px}
+  .dash-top{height:auto;gap:10px;align-items:flex-start;flex-direction:column;padding:14px}
 }
 
 /* AJUSTES FINAIS 9.1 */
@@ -294,7 +294,7 @@
 
 #topValores .info-row{
   padding:6px 8px;
-  font-size:10px;
+  font-size:9px;
   line-height:1.2;
 }
 #topValores .info-row span{
@@ -305,7 +305,7 @@
 }
 #topValores .info-row b{
   white-space:nowrap;
-  font-size:10px;
+  font-size:9px;
 }
 
 .mov-card canvas{height:auto}
@@ -323,7 +323,7 @@
   margin-top:-5px;
 }
 .risco-card .risk-text{
-  font-size:15px;
+  font-size:13px;
   margin-top:-2px;
 }
 
@@ -374,14 +374,14 @@
 .estoque-niveis{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
+  gap:7px;
   margin-top:12px;
 }
 
 .estoque-nivel{
   border:1px solid #e5e7eb;
-  border-radius:10px;
-  padding:10px;
+  border-radius:9px;
+  padding:9px;
   cursor:pointer;
   transition:.18s;
   background:#fff;
@@ -400,7 +400,7 @@
 }
 
 .estoque-nivel span{
-  font-size:11px;
+  font-size:9px;
   color:#6b7280;
   font-weight:900;
 }
