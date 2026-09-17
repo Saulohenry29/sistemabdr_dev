@@ -194,11 +194,23 @@ body.atlas-shell-page:has(.atlas-shell-module[data-module="patrimonio"] .atlas-r
   transition:none !important;
 }
 
+/* Isolamento obrigatório entre módulos: conteúdo da Expedição nunca pode vazar para Patrimônio. */
+.atlas-shell-module[aria-hidden="true"]{
+  display:none!important;
+}
+
 html[data-shell-modulo="dashboard"] .atlas-shell-module[data-module="dashboard"],
 html[data-shell-modulo="triagem"] .atlas-shell-module[data-module="triagem"],
 html[data-shell-modulo="empresa"] .atlas-shell-module[data-module="empresa"],
-html[data-shell-modulo="patrimonio"] .atlas-shell-module[data-module="patrimonio"]{
+html[data-shell-modulo="patrimonio"] .atlas-shell-module[data-module="patrimonio"],
+html[data-shell-modulo="expedicao"] .atlas-shell-module[data-module="expedicao"],
+html[data-shell-modulo="manutencao"] .atlas-shell-module[data-module="manutencao"]{
   display:block;
+}
+
+/* Regra final de isolamento: aria-hidden sempre vence a seleção visual do módulo. */
+html body .atlas-shell-content > .atlas-shell-module[aria-hidden="true"]{
+  display:none!important;
 }
 
 
@@ -449,4 +461,14 @@ atlas-topo.bdr-topbar{
   display:flex;
   justify-content:flex-end;
   margin:0 0 10px;
+}
+
+
+/* ATLAS Shell — painéis operacionais da Expedição só existem visualmente dentro da Expedição. */
+html:not([data-shell-modulo="expedicao"]) #tab-solicitacoes,
+html:not([data-shell-modulo="expedicao"]) #tab-separacao,
+html:not([data-shell-modulo="expedicao"]) #tab-retirada,
+html:not([data-shell-modulo="expedicao"]) #tab-transito,
+html:not([data-shell-modulo="expedicao"]) #tab-historico{
+  display:none!important;
 }

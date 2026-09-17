@@ -1,154 +1,18 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BDR - Manutenção</title>
-
-  <link href="data:," rel="icon">
-  <link href="./CSS/layout-bdr.css" rel="stylesheet">
-  <link href="./CSS/bdr-fix-menu-final.css?v=20260724-padrao-profissional-v1" rel="stylesheet">
-  <link href="./CSS/atlas-topbar.css?v=20260724-padrao-profissional-v1" rel="stylesheet">
-  <link href="./CSS/atlasManutencao.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-
-  <script src="./JS/atlasAudio/atlasAudio.js"></script>
-  <script src="./JS/bdrNotificacoes.js"></script>
-<script src="JS/atlasTopbar.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manutenção | Atlas</title>
+<script>
+(function(){
+  var origem = new URL(location.href);
+  var destino = new URL('atlas.html', location.href);
+  destino.searchParams.set('m','manutencao');
+  origem.searchParams.forEach(function(v,k){ if(k !== 'm' && k !== 'modulo') destino.searchParams.set(k,v); });
+  location.replace(destino.href);
+})();
+</script>
 </head>
-
-<body class="atlas-manut-page">
-  <script src="./JS/auth.js"></script>
-
-  <div class="app-layout">
-    <aside class="bdr-sidebar">
-      <div class="bdr-brand">
-        <div class="bdr-brand-icon bdr-logo-menu"></div>
-      </div>
-
-      <nav class="bdr-menu">
-        <button class="bdr-menu-btn" data-permissao="DASHBOARD_VER" data-tip="Dashboard" onclick="ir('dashboard.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="ENTRADA_VER" data-tip="Entrada" onclick="ir('entrada.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-arrow-down-wide-short"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="TRIAGEM_VER" data-tip="Triagem" onclick="ir('triagem.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-vials"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="ESTOQUE_VER" data-tip="Estoque" onclick="ir('estoque.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="PATRIMONIO_VER" data-tip="Patrimônio" onclick="ir('patrimonio.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-tags"></i></span></button>
-        <button class="bdr-menu-btn active" data-permissao="MANUTENCAO_VER" data-tip="Manutenção" onclick="ir('manutencao.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-screwdriver-wrench"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="EXPEDICAO_VER" data-tip="Expedição" onclick="ir('expedicao.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-truck-fast"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="MOVIMENTACOES_VER" data-tip="Movimentações" onclick="ir('movimentacoes.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-right-left"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="RELATORIOS_VER" data-tip="Relatórios" onclick="ir('relatorios.html')"><span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="EMPRESAS_VER" data-tip="Empresas" onclick="ir('empresa.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-building"></i></span></button>
-        <button class="bdr-menu-btn" data-permissao="USUARIOS_VER" data-tip="Usuários" onclick="ir('usuarios.html')"><span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span></button>
-      </nav>
-    </aside>
-
-    <main class="bdr-main atlas-manut-main">
-      <div class="bdr-topbar">
-        <div>
-          <div class="bdr-topbar-title">🔧 BDR ERP - Manutenção</div>
-          <div class="bdr-topbar-sub">Ordens, fornecedores, orçamentos, aprovação, execução e retorno dos patrimônios.</div>
-        </div>
-
-        <div class="bdr-top-actions">
-          <div class="notif-wrap">
-            <button aria-label="Abrir notificações" class="notif-btn" data-atlas-toggle="notifications" title="Notificações" type="button">
-              <i class="fa-regular fa-bell"></i>
-              <span class="notif-badge" id="notifBadge">0</span>
-            </button>
-            <div class="notif-dropdown" id="notifDropdown" onclick="event.stopPropagation()">
-              <div class="notif-head">🔔 Central de notificações</div>
-              <div class="notif-list" id="notifLista">
-                <div class="notif-item">Nenhuma notificação no momento.</div>
-              </div>
-            </div>
-          </div>
-
-          <div aria-label="Abrir menu do usuário" class="user-menu" data-atlas-toggle="user">
-            <div class="user-mini">
-              <b id="usuarioNome" tabindex="-1">Olá, -</b>
-              <small id="usuarioPerfil" tabindex="-1">-</small>
-            </div>
-            <div class="avatar"><i class="fa-solid fa-user"></i></div>
-            <div class="dropdown-user" id="dropdownUser">
-            <button type="button" onclick="location.href='MinhaConta/minha-conta.html';event.stopPropagation()">
-              <i class="fa-solid fa-circle-user"></i> Minha conta
-            </button>
-            <button class="logout-btn" onclick="logout();event.stopPropagation()" type="button">
-                <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
-              </button>
-          </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="atlas-manut-kpis">
-        <div class="atlas-manut-kpi"><strong id="manutKpiTotal">0</strong><span>Total de ordens</span></div>
-        <div class="atlas-manut-kpi"><strong id="manutKpiEnvio">0</strong><span>Aguardando envio</span></div>
-        <div class="atlas-manut-kpi"><strong id="manutKpiOrcamento">0</strong><span>Orçamento / aprovação</span></div>
-        <div class="atlas-manut-kpi"><strong id="manutKpiExecucao">0</strong><span>Em execução</span></div>
-        <div class="atlas-manut-kpi"><strong id="manutKpiRetorno">0</strong><span>Aguardando retorno</span></div>
-        <div class="atlas-manut-kpi"><strong id="manutKpiCusto">R$ 0,00</strong><span>Custo registrado</span></div>
-      </div>
-
-      <div id="atlasManutencaoApp">
-        <section class="atlas-manut-pane left">
-          <div class="atlas-manut-toolbar">
-            <input id="manutBusca" placeholder="Buscar ordem, patrimônio, fornecedor...">
-
-            <select id="manutFiltroStatus">
-              <option value="">Todos os status</option>
-              <option value="AGUARDANDO_ENVIO">Aguardando envio</option>
-              <option value="AGUARDANDO_ORCAMENTO">Aguardando orçamento</option>
-              <option value="ORCAMENTO_RECEBIDO">Orçamento recebido</option>
-              <option value="ORCAMENTO_APROVADO">Orçamento aprovado</option>
-              <option value="EM_MANUTENCAO">Em manutenção</option>
-              <option value="AGUARDANDO_RECEBIMENTO">Aguardando recebimento</option>
-              <option value="FINALIZADA">Finalizada</option>
-            </select>
-
-            <button id="btnManutAtualizar" title="Atualizar" type="button">
-              <i class="fa-solid fa-rotate"></i>
-            </button>
-          </div>
-
-          <div id="manutLista"></div>
-
-          <div
-            id="manutPaginacao"
-            class="atlas-manut-pagination"
-            aria-label="Paginação das ordens de manutenção">
-          </div>
-        </section>
-
-        <section class="atlas-manut-pane right">
-          <div id="manutDetalhe">
-            <div class="atlas-manut-detail-empty">Selecione uma ordem para acompanhar o fluxo.</div>
-          </div>
-        </section>
-      </div>
-    </main>
-  </div>
-
-  <!-- =========================================================
-       NAVEGAÇÃO PADRÃO DO MENU
-       A Manutenção usa onclick="ir('pagina.html')" nos botões.
-       Este helper existia em outros módulos, mas não nesta página.
-  ========================================================== -->
-  <script>
-    function ir(pagina) {
-      if (!pagina) return;
-      window.location.href = pagina;
-    }
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="./JS/supabaseClient.js"></script>
-  <script src="./JS/bdrCore.js"></script>
-  <script src="./JS/bdrMenuPermissoes.js"></script>
-  <script src="./JS/atlasControleAcesso.js?v=20260629-padrao-unico"></script>
-  <script src="./JS/atlasGestorNotificacoes.js"></script>
-    <script src="./JS/atlasAmbienteDominio.js"></script>
-<script src="./JS/atlasWorkflowManutencao.js"></script>
-  <script src="./JS/atlasManutencao.js"></script>
-  <script src="./JS/bdrMenuMobileAtivo.js?v=20260702-3"></script>
-</body>
+<body></body>
 </html>

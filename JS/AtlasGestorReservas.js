@@ -154,7 +154,7 @@
   async function notificarDestino(pedido, tipo, titulo, mensagem, link){
     try{
       if(window.AtlasGestorNotificacoes && typeof window.AtlasGestorNotificacoes.notificarDestinoPedido === "function"){
-        return await window.AtlasGestorNotificacoes.notificarDestinoPedido(pedido, tipo, titulo, mensagem, link || "expedicao.html?aba=historico");
+        return await window.AtlasGestorNotificacoes.notificarDestinoPedido(pedido, tipo, titulo, mensagem, link || "atlas.html?m=expedicao&aba=historico");
       }
     }catch(e){
       console.warn("AtlasGestorReservas: falha ao notificar destino", e?.message || e);
@@ -175,7 +175,7 @@
           tipo:tipo || "RESERVA",
           titulo,
           mensagem,
-          link:"expedicao.html?aba=solicitacoes",
+          link:"atlas.html?m=expedicao&aba=solicitacoes",
           pedido_id:pedido.id,
           obra_origem_id:pedido.obra_origem_id || null,
           obra_destino_id:pedido.obra_destino_id || pedido.obra_id || null
@@ -285,7 +285,7 @@
       "PEDIDO_EM_FILA",
       "⏳ Pedido aguardando disponibilidade",
       codigoPedido(pedido) + ": o item " + itemDescricao(item) + " não está disponível no momento. Pedido aguardando disponibilidade.",
-      "expedicao.html?aba=historico"
+      "atlas.html?m=expedicao&aba=historico"
     );
 
     return true;

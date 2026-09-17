@@ -1,0 +1,343 @@
+/* =========================================================
+   ATLAS - ENTRADA
+   Estilos consolidados do módulo para uso dentro do atlas.html.
+========================================================= */
+@scope (.atlas-shell-module[data-module="entrada"]) {
+
+:scope{
+  --bdr-red:#d71920;
+  --bdr-dark:#111827;
+  --bdr-bg:#f6f7fb;
+  --bdr-border:#e5e7eb;
+  --blue:#2563eb;
+  --orange:#f97316;
+}
+
+:scope{
+  background:var(--bdr-bg)!important;
+}
+
+
+
+
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + NOTIFICAÇÕES
+========================================================= */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+
+
+
+
+
+
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active{
+  outline:none!important;
+  box-shadow:none!important;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* =========================================================
+   ENTRADA
+========================================================= */
+.entrada-hero{
+  background:
+    radial-gradient(circle at right top,rgba(215,25,32,.10),transparent 35%),
+    linear-gradient(135deg,#fff,#f8fafc);
+  border-left:4px solid var(--bdr-red);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 2px 9px rgba(0,0,0,.07);
+  display:grid;
+  grid-template-columns:1.3fr .7fr;
+  gap:12px;
+  align-items:center;
+}
+
+.entrada-hero h2{
+  margin:0;
+  color:var(--bdr-red);
+  font-size:20px;
+  font-weight:900;
+}
+
+.entrada-hero p{
+  margin:5px 0 0;
+  color:#6b7280;
+  font-size:13px;
+}
+
+.hero-status{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.hero-mini{
+  background:#fff;
+  border:1px solid #fee2e2;
+  border-left:4px solid var(--bdr-red);
+  border-radius:13px;
+  padding:10px;
+  font-size:12px;
+}
+
+.hero-mini strong{
+  display:block;
+  color:#111827;
+  font-size:18px;
+}
+
+.hero-mini span{
+  color:#6b7280;
+  font-weight:800;
+}
+
+.entrada-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.upload-row{
+  display:grid;
+  grid-template-columns:1fr 190px;
+  gap:10px;
+  align-items:center;
+}
+
+label{
+  display:block;
+  margin-bottom:5px;
+  font-weight:900;
+  color:#374151;
+  font-size:12px;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  box-sizing:border-box;
+  background:#fff;
+  font-family:Arial,sans-serif;
+}
+
+textarea{
+  min-height:84px;
+  resize:vertical;
+}
+
+.card h2,
+.card h3{
+  color:var(--bdr-red);
+  margin-top:0;
+}
+
+.importacao-box{
+  border:2px dashed #fecaca;
+  background:#fff7f7;
+  border-radius:16px;
+  padding:14px;
+}
+
+.info{
+  background:#eff6ff;
+  border-left:4px solid var(--blue);
+  padding:10px 12px;
+  border-radius:10px;
+  margin-top:10px;
+  color:#1e3a8a;
+  font-size:13px;
+}
+
+.alerta{
+  background:#fff7ed;
+  border-left:4px solid var(--orange);
+  padding:10px 12px;
+  border-radius:10px;
+  margin-top:10px;
+  color:#7c2d12;
+  font-size:13px;
+}
+
+.btn-bdr{
+  border:none;
+  border-radius:10px;
+  padding:10px 13px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.18s;
+}
+
+.btn-bdr:hover{
+  transform:translateY(-2px);
+  box-shadow:0 5px 14px rgba(0,0,0,.12);
+}
+
+.btn-red{
+  background:var(--bdr-red);
+  color:#fff;
+}
+
+.btn-dark{
+  background:#111827;
+  color:#fff;
+}
+
+.table-wrap{
+  overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1120px;
+  background:#fff;
+}
+
+th{
+  background:#111827;
+  color:white;
+  padding:11px;
+  text-align:left;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:12px;
+  vertical-align:top;
+}
+
+td input,
+td select{
+  font-size:12px;
+  padding:8px;
+}
+
+.entrada-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.total-box{
+  font-size:22px;
+  font-weight:900;
+  color:var(--bdr-red);
+  text-align:right;
+}
+
+.badge-fluxo{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#fff1f2;
+  color:var(--bdr-red);
+  border:1px solid #fecaca;
+  font-size:12px;
+  font-weight:900;
+}
+
+@media(max-width:1000px){
+  .entrada-hero,
+  .entrada-grid,
+  .upload-row{
+    grid-template-columns:1fr;
+  }
+
+  .hero-status{
+    grid-template-columns:1fr;
+  }
+
+  
+
+  
+}
+
+/* CORREÇÃO DEFINITIVA: remove barra/cursor piscando no sino e topo */
+
+
+
+
+
+
+
+}

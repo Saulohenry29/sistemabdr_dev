@@ -96,7 +96,7 @@
       alert("Você não tem permissão para acessar esta tela.");
 
       if(pag !== "dashboard.html" && temPermissao("DASHBOARD_VER")){
-        location.href = "dashboard.html";
+        location.href = "atlas.html?m=dashboard";
         return;
       }
 

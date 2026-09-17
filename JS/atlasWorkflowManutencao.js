@@ -189,7 +189,7 @@
             tipo,
             titulo,
             mensagem,
-            link:`manutencao.html?id=${manutencao.id}`,
+            link:`atlas.html?m=manutencao&id=${manutencao.id}`,
             patrimonio_id:manutencao.patrimonio_id || null
           });
         }
@@ -250,12 +250,8 @@
       .single();
     if(erroCodigo) throw erroCodigo;
 
-    // Mantém compatibilidade com os status atuais do patrimônio.
-    const {error:erroPatrimonio} = await banco
-      .from("patrimonio")
-      .update({status:"MANUTENCAO"})
-      .eq("id", patrimonio.id);
-    if(erroPatrimonio) throw erroPatrimonio;
+    // A criação da OS não altera a situação física do patrimônio.
+    // O status MANUTENCAO só é aplicado quando a saída para o fornecedor é registrada.
 
     await historico(ordem.id, null, STATUS.AGUARDANDO_ENVIO, "ORDEM_CRIADA",
       `Ordem criada para ${patrimonio.codigo_qr || patrimonio.nome_bem}. Defeito: ${dados.defeito_informado}`);
@@ -348,6 +344,12 @@
       throw new Error("A saída foi registrada, mas o servidor não retornou o link do fornecedor.");
     }
 
+    const {error:erroPatrimonio} = await banco
+      .from("patrimonio")
+      .update({status:"MANUTENCAO"})
+      .eq("id", ordem.patrimonio_id);
+    if(erroPatrimonio) throw erroPatrimonio;
+
     const ordemAtualizada = await buscar(id);
 
     return {
@@ -362,6 +364,39 @@
         url:urlFornecedor(data.token)
       }
     };
+  }
+
+  async function registrarDestinoInterno(id,dados={}){
+    const banco=db(),ordem=await buscar(id);
+    if(!ordem) throw new Error("Ordem não encontrada.");
+    if(String(ordem.status||"").toUpperCase()!==STATUS.AGUARDANDO_ENVIO) throw new Error("Somente ordens aguardando envio podem ser encaminhadas.");
+    const tipo=String(dados.tipo_execucao||"").toUpperCase();
+    if(!["PROPRIA_OBRA","OUTRA_OBRA"].includes(tipo)) throw new Error("Destino interno inválido.");
+    if(tipo==="PROPRIA_OBRA" && !String(dados.responsavel_servico||"").trim()) throw new Error("Informe o responsável pelo serviço.");
+    if(tipo==="OUTRA_OBRA" && (!dados.obra_destino_id || !String(dados.motorista||"").trim() || !String(dados.placa||"").trim())) throw new Error("Outra obra exige destino, motorista e placa.");
+    const agora=new Date().toISOString();
+    const patch={status:STATUS.EM_MANUTENCAO,tipo_execucao:tipo,lote_codigo:dados.lote_codigo||null,lote_criado_em:agora,lote_criado_por:usuarioNome(),responsavel_servico:dados.responsavel_servico||null,obra_destino_manutencao_id:dados.obra_destino_id||null,motorista_saida:dados.motorista||null,placa_saida:dados.placa||null,data_saida_manutencao:dados.data_saida||agora,previsao_retorno:dados.previsao_retorno||null,data_inicio_servico:agora};
+    if(dados.observacao) patch.observacao=[ordem.observacao,dados.observacao].filter(Boolean).join(" | ");
+    const {data,error}=await banco.from("manutencoes_patrimonio").update(patch).eq("id",id).select("*").single();
+    if(error) throw error;
+    const {error:erroPat}=await banco.from("patrimonio").update({status:"MANUTENCAO"}).eq("id",ordem.patrimonio_id);if(erroPat) throw erroPat;
+    await historico(id,STATUS.AGUARDANDO_ENVIO,STATUS.EM_MANUTENCAO,tipo==="PROPRIA_OBRA"?"SERVICO_INTERNO_NA_OBRA":"ENVIO_MANUTENCAO_OUTRA_OBRA",[dados.lote_codigo, dados.responsavel_servico?`Responsável: ${dados.responsavel_servico}`:null,dados.motorista?`Motorista: ${dados.motorista}`:null,dados.placa?`Placa: ${dados.placa}`:null,dados.observacao].filter(Boolean).join(" | "));
+    return data;
+  }
+
+  async function concluirServicoInterno(id,dados={}){
+    const banco=db(),ordem=await buscar(id);if(!ordem) throw new Error("Ordem não encontrada.");
+    const tipo=String(ordem.tipo_execucao||"").toUpperCase();if(!["PROPRIA_OBRA","OUTRA_OBRA"].includes(tipo)) throw new Error("Esta ordem não é uma manutenção interna.");
+    if(!String(dados.executado_por||"").trim() || !String(dados.diagnostico||"").trim() || !String(dados.servico_executado||"").trim()) throw new Error("Executado por, diagnóstico e serviço executado são obrigatórios.");
+    const agora=new Date().toISOString(),finalizar=tipo==="PROPRIA_OBRA"&&dados.finalizar_local===true;
+    const novo=finalizar?STATUS.FINALIZADA:STATUS.SERVICO_CONCLUIDO;
+    const custoPecas=moedaNumero(dados.custo_pecas),custoMao=moedaNumero(dados.custo_mao_obra),total=custoPecas+custoMao;
+    const patch={status:novo,responsavel_servico:String(dados.executado_por).trim(),diagnostico_interno:String(dados.diagnostico).trim(),servico_executado:String(dados.servico_executado).trim(),materiais_utilizados:String(dados.materiais_utilizados||"").trim()||null,custo_pecas_interno:custoPecas,custo_mao_obra_interno:custoMao,custo_total_interno:total,data_execucao_servico:dados.data_execucao||agora,data_conclusao_servico:agora,comprovacao_servico:String(dados.observacao||"").trim()||null};
+    if(finalizar) patch.data_finalizacao=agora;
+    const {data,error}=await banco.from("manutencoes_patrimonio").update(patch).eq("id",id).select("*").single();if(error) throw error;
+    await historico(id,String(ordem.status||""),novo,"SERVICO_INTERNO_CONCLUIDO",`Executado por: ${dados.executado_por} | Diagnóstico: ${dados.diagnostico} | Serviço: ${dados.servico_executado} | Materiais: ${dados.materiais_utilizados||"Não informado"} | Custo total: ${total.toFixed(2)}${dados.observacao?` | ${dados.observacao}`:""}`);
+    if(finalizar){const {error:erroPat}=await banco.from("patrimonio").update({status:"EM_USO"}).eq("id",ordem.patrimonio_id);if(erroPat) throw erroPat;}
+    return data;
   }
 
   async function prepararLinkFornecedor(id){
@@ -513,6 +548,15 @@
       throw new Error("O servidor não retornou o resultado do recebimento.");
     }
 
+    // A notificacao e criada no banco. Para lote, ela so e enviada
+    // quando o ultimo patrimonio do lote tiver sido conferido.
+    const resultadoNotificacao = String(dados.resultado_notificacao || condicao).toUpperCase();
+    const {error:erroNotificacao} = await banco.rpc(
+      "atlas_manutencao_notificar_recebimento",
+      {p_manutencao_id:Number(id),p_resultado:resultadoNotificacao}
+    );
+    if(erroNotificacao) throw erroNotificacao;
+
     return data;
   }
 
@@ -555,13 +599,15 @@
 
   window.AtlasWorkflowManutencao = {
     __loaded:true,
-    versao:"1.6-saida-atomica",
+    versao:"1.8-destinos-lote-interno-externo",
     STATUS,
     NEXT,
     buscar,
     abertaPorPatrimonio,
     criarOrdem,
     registrarSaida,
+    registrarDestinoInterno,
+    concluirServicoInterno,
     prepararLinkFornecedor,
     gerarOuBuscarLink,
     mudarStatus,

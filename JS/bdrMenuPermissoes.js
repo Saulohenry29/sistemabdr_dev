@@ -19,16 +19,16 @@
 (function(){
 
   const PAGINAS = {
-    DASHBOARD: "dashboard.html",
+    DASHBOARD: "atlas.html?m=dashboard",
     ENTRADA: "entrada.html",
-    TRIAGEM: "triagem.html",
+    TRIAGEM: "atlas.html?m=triagem",
     ESTOQUE: "estoque.html",
-    PATRIMONIO: "patrimonio.html",
-    MANUTENCAO: "manutencao.html",
+    PATRIMONIO: "atlas.html?m=patrimonio",
+    MANUTENCAO: "atlas.html?m=manutencao",
     EXPEDICAO: "expedicao.html",
     RELATORIOS: "relatorios.html",
     MOVIMENTACOES: "movimentacoes.html",
-    EMPRESAS: "empresa.html",
+    EMPRESAS: "atlas.html?m=empresa",
     USUARIOS: "usuarios.html",
     CONFIGURACOES: "configuracoes.html"
   };
@@ -284,7 +284,7 @@
   }
 
   function primeiraPaginaPermitida(u){
-    if(masterLivre(u)) return "dashboard.html";
+    if(masterLivre(u)) return "atlas.html?m=dashboard";
 
     const ps = permissoes(u);
     const achou = ORDEM.find(p => ps.includes(p));

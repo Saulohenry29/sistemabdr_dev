@@ -91,12 +91,12 @@ input:focus,textarea:focus{border-color:#7897bc;box-shadow:0 0 0 3px rgba(9,42,8
 @media(max-width:640px){
   #portalConteudo,.forn-state{width:calc(100% - 20px);margin:10px auto}
   .forn-head{min-height:auto;padding:14px;flex-direction:column}
-  .forn-brand img{width:105px;max-width:none}
+  .forn-brand img{width:88px;max-width:none}
   .forn-brand{gap:12px}
   .forn-brand h1{font-size:20px}
   .forn-brand p{font-size:11px}
   .forn-order{width:100%;min-width:0}
-  .forn-card{padding:14px}
+  .forn-card{padding:12px}
   .forn-section-head{align-items:flex-start}
   .forn-section-title{font-size:16px}
   .forn-add{padding:7px 9px;font-size:10px}
@@ -109,4 +109,54 @@ input:focus,textarea:focus{border-color:#7897bc;box-shadow:0 0 0 3px rgba(9,42,8
   .forn-totals .grand{min-height:76px}
   .forn-submit{align-items:stretch;flex-direction:column}
   .forn-submit button{width:100%}
+}
+
+/* Lote: um único link, preenchimento item a item. Navegação no rodapé para
+   o fornecedor preencher a página de cima para baixo sem voltar ao topo. */
+.forn-lote-nav{display:flex;align-items:center;justify-content:flex-start;gap:16px;border:1px solid #d8e1ea}
+.forn-lote-nav>div:first-child{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.forn-lote-nav small{color:#64748b}.forn-lote-nav span{font-size:13px;color:#475569}
+.forn-lote-bottom{display:flex;justify-content:flex-end;gap:10px;padding:2px 0 4px}
+.forn-lote-bottom button{min-height:44px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer}
+.forn-lote-bottom #btnSalvarProximo{background:#0f766e;color:#fff;border-color:#0f766e}
+.forn-lote-bottom button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){
+  .forn-lote-nav{align-items:flex-start}
+  .forn-lote-bottom{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .forn-lote-bottom button{width:100%;padding:11px 8px;font-size:13px}
+}
+
+/* Mensagens do próprio portal: evita alert()/popup nativo do navegador. */
+.forn-aviso{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:80;width:max-content;max-width:min(560px,calc(100vw - 24px));padding:12px 14px;border-radius:10px;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(15,23,42,.25);font-size:13px;font-weight:700}
+.forn-aviso[data-tipo="erro"]{background:#991b1b}
+.forn-aviso[data-tipo="sucesso"]{background:#166534}
+
+/* Revisão final do lote: só aparece quando todos os patrimônios foram preenchidos. */
+.forn-review-help{margin:4px 0 0;color:var(--muted);font-size:12px}
+.forn-review-list{display:grid;gap:8px;margin-top:12px}
+.forn-review-item{width:100%;display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(220px,2fr) minmax(120px,.7fr) auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+.forn-review-item:hover{border-color:#94a3b8;background:#f8fafc}
+.forn-review-item span{min-width:0;display:flex;flex-direction:column;gap:2px}
+.forn-review-item small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forn-review-item b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forn-review-total{text-align:right}
+.forn-review-action{font-size:11px;font-weight:800;color:#991b1b}
+@media(max-width:760px){.forn-review-item{grid-template-columns:1fr auto}.forn-review-item span:nth-child(2){grid-column:1/-1;order:3}.forn-review-total{text-align:right}.forn-review-action{align-items:flex-end}}
+
+@media(max-width:480px){
+  #portalConteudo,.forn-state{width:calc(100% - 12px);margin:6px auto}
+  #portalConteudo{gap:10px}
+  .forn-head{padding:10px 12px;gap:10px}
+  .forn-brand h1{font-size:18px}
+  .forn-brand p{font-size:10px;margin-top:3px}
+  .forn-order{padding:8px 10px}
+  .forn-order strong{font-size:16px}
+  .forn-card{padding:11px;border-radius:11px}
+  .forn-pat-grid{margin-top:10px}
+  .forn-pat-grid>div{padding:9px 10px}
+  .forn-grid{gap:10px;margin-top:12px}
+  textarea{min-height:76px}
+  .forn-section-title{font-size:15px}
+  .forn-aviso{left:6px;right:6px;top:8px;transform:none;width:auto;max-width:none;text-align:center}
+  .forn-review-item{padding:9px}
 }

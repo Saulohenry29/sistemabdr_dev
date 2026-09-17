@@ -62,7 +62,7 @@ async function fazerLogin(){
     localStorage.setItem("perfil_usuario", usuario.perfil || "");
     localStorage.setItem("bdr_login_cache_em", new Date().toISOString());
 
-    window.location.href = "dashboard.html";
+    window.location.href = "atlas.html?m=dashboard";
   }catch(e){
     console.error("Erro login:", e);
     if(msg) msg.textContent = "Erro de conexão. Verifique a internet e tente novamente.";

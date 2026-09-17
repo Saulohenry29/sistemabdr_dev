@@ -147,13 +147,13 @@
     if(!p)return;
     const status=texto(p.status).toUpperCase();
     if(checked && (p.ativo===false || status==='EM_TRANSITO')){
-      aviso('Este patrimônio não está disponível para uma nova remessa.');
+      aviso('Este patrimônio não está disponível para uma nova transferência.');
       document.querySelectorAll(`.atlas-remessa-check[data-pat-id="${CSS.escape(String(id))}"]`).forEach(c=>c.checked=false);
       return;
     }
     if(checked){
       if(state.obraOrigemSelecao && String(state.obraOrigemSelecao)!==String(p.obra_id)){
-        aviso(`Uma remessa precisa sair de uma única obra. Os itens já selecionados são de ${obraNome(state.obraOrigemSelecao)}.`);
+        aviso(`Uma transferência precisa sair de uma única obra. Os itens já selecionados são de ${obraNome(state.obraOrigemSelecao)}.`);
         document.querySelectorAll(`.atlas-remessa-check[data-pat-id="${CSS.escape(String(id))}"]`).forEach(c=>c.checked=false);
         return;
       }
@@ -216,7 +216,7 @@
     if(!state.itensSelecionados.size) return aviso('Selecione pelo menos um patrimônio para continuar.');
     const selecionados=patrimonios().filter(p=>estaSelecionado(p.id));
     const origens=[...new Set(selecionados.map(p=>String(p.obra_id||'')))].filter(Boolean);
-    if(origens.length!==1) return aviso('Todos os patrimônios da remessa precisam sair da mesma obra.');
+    if(origens.length!==1) return aviso('Todos os patrimônios da transferência precisam sair da mesma obra.');
     state.obraOrigemSelecao=origens[0];
     prepararModal();
     modal('atlasNovaRemessaModal',true);
@@ -231,19 +231,96 @@
   async function abrirNova(){ return iniciarSelecao(); }
   function origemMudou(){ /* compatibilidade: a origem agora é definida pela seleção na lista principal */ }
 
+  function permissoesDoUsuarioRemessa(u){
+    return texto(u?.permissoes).split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);
+  }
+
+  async function buscarDestinatariosRemessa(remessa, gestor){
+    const log=usuario();
+    const destinoId=String(remessa.obra_destino_id||'');
+    const filtrar=(lista)=>{
+      const base=(lista||[])
+        .filter(u=>u?.ativo!==false)
+        .filter(u=>String(u.id)!==String(log.id))
+        .filter(u=>gestor.usuarioTemAcessoObra?.(u,remessa.obra_destino_id));
+      const operadores=base.filter(u=>{
+        const p=permissoesDoUsuarioRemessa(u);
+        return Number(u.id)===1 || p.includes('PATRIMONIO_MOVIMENTAR') || p.includes('PATRIMONIO_VER');
+      });
+      return operadores.length?operadores:base;
+    };
+
+    let users=await gestor.buscarUsuariosEmpresa(remessa.empresa_id||empresaId());
+    let destinos=filtrar(users);
+
+    // Se a empresa_id estiver antiga/inconsistente no cadastro do usuário,
+    // não deixa uma remessa real chegar sem avisar a obra de destino.
+    if(!destinos.length){
+      const {data,error}=await db().from('usuarios_sistema')
+        .select('id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas')
+        .eq('ativo',true);
+      if(error) throw error;
+      destinos=filtrar(data||[]);
+    }
+
+    return destinos;
+  }
+
   async function notificarDestino(remessa){
     const gestor=window.AtlasGestorNotificacoes;
-    if(!gestor?.buscarUsuariosEmpresa || !gestor?.notificarLista) return;
+    if(!gestor?.buscarUsuariosEmpresa || !gestor?.notificarLista) return 0;
     try{
-      const users=await gestor.buscarUsuariosEmpresa(remessa.empresa_id||empresaId());
-      const log=usuario();
-      const destinos=users.filter(u=>u?.ativo!==false && gestor.usuarioTemAcessoObra?.(u,remessa.obra_destino_id)).filter(u=>String(u.id)!==String(log.id));
-      await gestor.notificarLista(destinos,{
+      const destinos=await buscarDestinatariosRemessa(remessa,gestor);
+      if(!destinos.length){
+        console.warn('Atlas Remessas: nenhuma pessoa da obra de destino foi encontrada para receber o aviso.', remessa.obra_destino_id);
+        return 0;
+      }
+
+      const payload={
         empresa_id:remessa.empresa_id||empresaId(),tipo:'PATRIMONIO_TRANSFERENCIA_EM_TRANSITO',titulo:'🚚 Patrimônios em trânsito',
         mensagem:`Remessa ${remessa.codigo}: ${remessa.total_itens} patrimônio(s) estão a caminho de ${remessa.obra_destino_nome||obraNome(remessa.obra_destino_id)}. Enviado por ${remessa.enviado_por_nome||'responsável'}.`,
         link:'atlas.html?m=patrimonio&remessas=transito',obra_origem_id:remessa.obra_origem_id,obra_destino_id:remessa.obra_destino_id
-      });
-    }catch(e){ console.warn('Atlas Remessas: notificação de destino não enviada',e.message||e); }
+      };
+
+      let total=await gestor.notificarLista(destinos,payload);
+
+      /*
+       * Remessa em trânsito é aviso operacional de recebimento.
+       * Se a configuração antiga do usuário não tiver RECEBER_NOTIFICACOES,
+       * o Gestor pode devolver zero. Nesse caso registramos o aviso somente
+       * para pessoas da própria obra de destino que podem ver/movimentar
+       * Patrimônio. Não vira aviso global e não notifica o remetente.
+       */
+      if(!total){
+        const elegiveis=destinos.filter(u=>{
+          const p=permissoesDoUsuarioRemessa(u);
+          return Number(u.id)===1 || p.includes('PATRIMONIO_MOVIMENTAR') || p.includes('PATRIMONIO_VER');
+        });
+        if(elegiveis.length){
+          const agora=new Date().toISOString();
+          const rows=elegiveis.map(u=>({
+            empresa_id:u.empresa_id||payload.empresa_id,
+            usuario_destino_id:u.id,
+            tipo:payload.tipo,
+            titulo:payload.titulo,
+            mensagem:payload.mensagem,
+            link:payload.link,
+            lida:false,status:'NAO_LIDA',
+            pedido_id:null,
+            obra_origem_id:payload.obra_origem_id||null,
+            obra_destino_id:payload.obra_destino_id||null,
+            patrimonio_id:null,produto_id:null,created_at:agora
+          }));
+          const {error}=await db().from('notificacoes').insert(rows);
+          if(error) throw error;
+          total=rows.length;
+          document.dispatchEvent(new CustomEvent('atlas:notificacoes:atualizar'));
+        }
+      }
+
+      console.info(`Atlas Remessas: ${total||0} destinatário(s) avisado(s) na obra de destino.`);
+      return total||0;
+    }catch(e){ console.warn('Atlas Remessas: notificação de destino não enviada',e.message||e); return 0; }
   }
 
   async function notificarOrigemRecebida(remessa){
@@ -251,11 +328,32 @@
     if(!gestor?.criarNotificacao || !remessa.enviado_por_id) return;
     try{
       await gestor.criarNotificacao({
-        usuario_destino_id:remessa.enviado_por_id,empresa_id:remessa.empresa_id||empresaId(),tipo:'PATRIMONIO_TRANSFERENCIA_RECEBIDA',titulo:'✅ Remessa patrimonial recebida',
+        usuario_destino_id:remessa.enviado_por_id,empresa_id:remessa.empresa_id||empresaId(),tipo:'PATRIMONIO_TRANSFERENCIA_RECEBIDA',titulo:'✅ Transferência patrimonial recebida',
         mensagem:`A remessa ${remessa.codigo} chegou em ${remessa.obra_destino_nome||obraNome(remessa.obra_destino_id)} e foi recebida por ${remessa.recebido_por_nome||'responsável'}.`,
         link:'atlas.html?m=patrimonio&remessas=historico',obra_origem_id:remessa.obra_origem_id,obra_destino_id:remessa.obra_destino_id
       });
     }catch(e){ console.warn('Atlas Remessas: notificação de origem não enviada',e.message||e); }
+  }
+
+
+  async function notificarExpedicao(remessa){
+    try{
+      const cli=db(); if(!cli)return 0;
+      const {data:usuarios,error}=await cli.from('usuarios').select('id,nome,obra_id,obras_liberadas,permissoes,ativo,empresa_id').eq('ativo',true);
+      if(error) throw error;
+      const origem=String(remessa.obra_origem_id||'');
+      const destinos=(usuarios||[]).filter(x=>{
+        if(Number(x.id)===Number(remessa.enviado_por_id)) return false;
+        const obras=[x.obra_id,...String(x.obras_liberadas||'').split(',')].map(v=>String(v||'').trim()).filter(Boolean);
+        const perms=Array.isArray(x.permissoes)?x.permissoes:String(x.permissoes||'').split(',').map(v=>v.trim());
+        return obras.includes(origem) && (perms.includes('EXPEDICAO_VER')||perms.includes('EXPEDICAO_ENTREGAR')||perms.includes('MASTER'));
+      });
+      if(!destinos.length)return 0;
+      const rows=destinos.map(x=>({usuario_destino_id:x.id,empresa_id:remessa.empresa_id||empresaId(),tipo:'TRANSFERENCIA_AGUARDANDO_EXPEDICAO',titulo:'↔ Transferência aguardando expedição',mensagem:`${remessa.codigo}: ${remessa.total_itens||0} patrimônio(s) de ${remessa.obra_origem_nome||'origem'} para ${remessa.obra_destino_nome||'destino'}.`,link:'atlas.html?m=expedicao&aba=transferencias',lida:false}));
+      const {error:err}=await cli.from('notificacoes').insert(rows); if(err)throw err;
+      document.dispatchEvent(new CustomEvent('atlas:notificacoes:atualizar'));
+      return rows.length;
+    }catch(e){console.warn('Atlas Transferência: notificação da Expedição não enviada',e?.message||e);return 0;}
   }
 
   async function enviar(){
@@ -282,15 +380,15 @@
     try{
       const {data,error}=await db().rpc('atlas_criar_remessa_patrimonial',payload);
       if(error)throw error;
-      const remessa={id:data,codigo,empresa_id:payload.p_empresa_id,obra_origem_id:Number(origem),obra_destino_id:Number(destino),obra_origem_nome:payload.p_obra_origem_nome,obra_destino_nome:payload.p_obra_destino_nome,enviado_por_id:payload.p_enviado_por_id,enviado_por_nome:payload.p_enviado_por_nome,total_itens:itens.length,status:'EM_TRANSITO'};
-      await notificarDestino(remessa);
+      const remessa={id:data,codigo,empresa_id:payload.p_empresa_id,obra_origem_id:Number(origem),obra_destino_id:Number(destino),obra_origem_nome:payload.p_obra_origem_nome,obra_destino_nome:payload.p_obra_destino_nome,enviado_por_id:payload.p_enviado_por_id,enviado_por_nome:payload.p_enviado_por_nome,total_itens:itens.length,status:'AGUARDANDO_EXPEDICAO'};
+      await notificarExpedicao(remessa);
       modal('atlasNovaRemessaModal',false);
       await api().recarregar?.();
       await carregarRemessas();
       cancelarSelecao();
-      aviso(`Remessa ${codigo} criada. ${itens.length} patrimônio(s) agora estão em trânsito.`);
+      aviso(`Transferência ${codigo} encaminhada para a Expedição com ${itens.length} patrimônio(s).`);
     }catch(e){ console.error(e); alert('Não foi possível criar a remessa: '+(e.message||e)); }
-    finally{ if(btn){btn.disabled=false;btn.textContent='🚚 Colocar em trânsito';} }
+    finally{ if(btn){btn.disabled=false;btn.textContent='↔ Enviar para Expedição';} }
   }
 
   async function abrirCentral(aba){
@@ -346,24 +444,116 @@
   }
 
   async function abrirHistoricoPatrimonio(id){
-    const p=patrimonios().find(x=>String(x.id)===String(id)); if(!p)return alert('Patrimônio não encontrado.');
+    const p=patrimonios().find(x=>String(x.id)===String(id));
+    if(!p)return alert('Patrimônio não encontrado.');
+
     document.getElementById('atlasHistoricoPatrimonioTitulo').textContent=`🕘 Histórico • ${p.codigo_qr||p.nome_bem||'Patrimônio'}`;
-    const box=document.getElementById('atlasHistoricoPatrimonioConteudo'); box.innerHTML='<div class="atlas-remessa-empty">Carregando histórico...</div>'; modal('atlasHistoricoPatrimonioModal',true);
+    const box=document.getElementById('atlasHistoricoPatrimonioConteudo');
+    box.innerHTML='<div class="atlas-remessa-empty">Carregando vida funcional do patrimônio...</div>';
+    modal('atlasHistoricoPatrimonioModal',true);
+
+    const add=(lista,data,titulo,detalhes=[],ordem=0)=>{
+      const textoDetalhe=(detalhes||[]).filter(v=>v!==null&&v!==undefined&&String(v).trim()!=='').join(' • ');
+      lista.push({data:data||null,titulo,detalhe:textoDetalhe,ordem});
+    };
+    const campo=(rotulo,valor)=>valor!==null&&valor!==undefined&&String(valor).trim()!==''?`${rotulo}: ${valor}`:'';
+    const moeda=v=>Number(v||0)>0?Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'';
+
     try{
-      const [movRes,remRes]=await Promise.all([
-        db().from('movimentacoes').select('*').eq('patrimonio_id',id).order('data_movimentacao',{ascending:false}).limit(300),
-        schemaOk().then(ok=>ok?db().from('atlas_patrimonio_remessa_itens').select('*, atlas_patrimonio_remessas(*)').eq('patrimonio_id',id).order('created_at',{ascending:false}).limit(100):Promise.resolve({data:[]}))
+      const remPromise=schemaOk().then(ok=>ok
+        ? db().from('atlas_patrimonio_remessa_itens').select('*, atlas_patrimonio_remessas(*)').eq('patrimonio_id',id).order('created_at',{ascending:false}).limit(100)
+        : Promise.resolve({data:[],error:null}));
+
+      const [movRes,remRes,manRes]=await Promise.all([
+        db().from('movimentacoes').select('*').eq('patrimonio_id',id).order('data_movimentacao',{ascending:false}).limit(500),
+        remPromise,
+        db().from('manutencoes_patrimonio').select('*').eq('patrimonio_id',id).order('id',{ascending:false}).limit(300)
       ]);
+
       if(movRes.error)throw movRes.error;
-      const eventos=(movRes.data||[]).map(m=>({data:m.data_movimentacao||m.created_at,titulo:labelMov(m.tipo,m.status_novo),detalhe:[m.observacao,m.usuario?`Por: ${m.usuario}`:'',m.obra_origem_id||m.obra_destino_id?`${obraNome(m.obra_origem_id)} → ${obraNome(m.obra_destino_id)}`:''].filter(Boolean).join(' • ')}));
-      if(!eventos.length && p.usuario_cadastro) eventos.push({data:p.created_at,titulo:'Patrimônio cadastrado',detalhe:`Cadastrado por ${p.usuario_cadastro}${p.localizacao?' • '+p.localizacao:''}`});
-      box.innerHTML=`<div class="atlas-remessa-grid"><div><label>Status atual</label><strong>${esc(p.status||'-')}</strong></div><div><label>Localização atual</label><strong>${esc(p.endereco_estoque||p.localizacao||'-')}</strong></div></div>${eventos.length?`<div class="atlas-historico-timeline">${eventos.map(e=>`<div class="atlas-historico-evento"><div class="atlas-historico-data">${esc(fmtData(e.data))}</div><div class="atlas-historico-eixo"></div><div class="atlas-historico-box"><strong>${esc(e.titulo)}</strong><span>${esc(e.detalhe||'-')}</span></div></div>`).join('')}</div>`:'<div class="atlas-remessa-empty">Ainda não há movimentações registradas para este patrimônio.</div>'}`;
-    }catch(e){ box.innerHTML=`<div class="atlas-remessa-empty">Falha ao carregar histórico: ${esc(e.message||e)}</div>`; }
+      if(manRes.error)throw manRes.error;
+
+      const eventos=[];
+
+      // O cadastro faz parte da vida funcional mesmo quando já existem movimentações posteriores.
+      add(eventos,p.created_at||p.data_cadastro,'📦 Patrimônio cadastrado',[
+        campo('Por',p.usuario_cadastro),campo('Obra',p.localizacao),campo('Origem',p.origem_cadastro),campo('Status inicial',p.status)
+      ],10);
+
+      (movRes.data||[]).forEach(m=>add(eventos,m.data_movimentacao||m.created_at,labelMov(m.tipo,m.status_novo),[
+        m.observacao,
+        campo('Por',m.usuario||m.usuario_nome||m.responsavel),
+        (m.obra_origem_id||m.obra_destino_id)?`${obraNome(m.obra_origem_id)} → ${obraNome(m.obra_destino_id)}`:'',
+        campo('Status',m.status_novo)
+      ],20));
+
+      // Transferências/remessas eram consultadas anteriormente, mas não eram exibidas na timeline.
+      (remRes.data||[]).forEach(i=>{
+        const r=i.atlas_patrimonio_remessas||{};
+        add(eventos,r.enviado_em||i.created_at,'🚚 Transferência patrimonial enviada',[
+          campo('Remessa',r.codigo),`${r.obra_origem_nome||obraNome(r.obra_origem_id)} → ${r.obra_destino_nome||obraNome(r.obra_destino_id)}`,
+          campo('Motorista',r.motorista),campo('Placa',r.placa),campo('Enviado por',r.enviado_por_nome)
+        ],30);
+        if(i.recebido||r.recebido_em){
+          add(eventos,r.recebido_em||i.recebido_em||i.atualizado_em,'✅ Transferência recebida',[
+            campo('Remessa',r.codigo),campo('Recebido por',r.recebido_por_nome||i.recebido_por_nome),campo('Destino',r.obra_destino_nome||obraNome(r.obra_destino_id)),campo('Localização',i.localizacao_destino)
+          ],31);
+        }
+      });
+
+      (manRes.data||[]).forEach(m=>{
+        const codigo=m.codigo||`MAN-${m.id}`;
+        add(eventos,m.data_criacao||m.data_entrada||m.created_at,`🔧 ${codigo} • Manutenção aberta`,[
+          campo('Lote',m.lote_codigo),campo('Motivo/defeito',m.motivo),campo('Tipo',m.tipo_manutencao),campo('Destino',m.tipo_execucao),
+          campo('Fornecedor',m.fornecedor_nome||m.fornecedor),campo('Responsável/técnico',m.responsavel_servico),campo('Motorista',m.motorista_saida),campo('Placa',m.placa_saida)
+        ],40);
+        if(m.data_saida_manutencao) add(eventos,m.data_saida_manutencao,`🚚 ${codigo} • Encaminhado para manutenção`,[
+          campo('Lote',m.lote_codigo),campo('Fornecedor',m.fornecedor_nome||m.fornecedor),campo('Motorista',m.motorista_saida),campo('Placa',m.placa_saida)
+        ],41);
+        if(m.diagnostico_interno||m.servico_executado||m.materiais_utilizados||m.data_execucao_servico){
+          add(eventos,m.data_execucao_servico||m.updated_at,`🛠 ${codigo} • Serviço executado`,[
+            campo('Lote',m.lote_codigo),campo('Diagnóstico',m.diagnostico_interno),campo('Serviço',m.servico_executado),campo('Materiais/peças',m.materiais_utilizados),
+            campo('Executor',m.responsavel_servico),campo('Peças',moeda(m.custo_pecas_interno)),campo('Mão de obra',moeda(m.custo_mao_obra_interno)),campo('Custo total',moeda(m.custo_total_interno||m.valor_orcamento))
+          ],42);
+        }
+        const encerrada=['CONCLUIDA','CONCLUIDO','FINALIZADA','FINALIZADO','RECEBIDO','ENCERRADA','ENCERRADO'].includes(String(m.status||'').toUpperCase());
+        if(m.data_saida||m.data_retorno||m.recebido_em||encerrada){
+          add(eventos,m.recebido_em||m.data_retorno||m.data_saida||m.updated_at,`✅ ${codigo} • Retorno / conclusão`,[
+            campo('Lote',m.lote_codigo),campo('Status',m.status),campo('Recebido por',m.recebido_por_nome||m.recebido_por),
+            campo('Resultado',m.resultado_conferencia||m.resultado_recebimento),campo('Divergência',m.divergencia||m.observacao_divergencia),campo('Motivo sem conserto',m.motivo_sem_conserto),campo('Custo',moeda(m.custo_total_interno||m.valor_orcamento))
+          ],43);
+        }
+      });
+
+      const vistos=new Set();
+      const ordenados=eventos.filter(e=>{
+        const chave=[e.data,e.titulo,e.detalhe].join('|');
+        if(vistos.has(chave))return false; vistos.add(chave); return true;
+      }).sort((a,b)=>{
+        const da=a.data?new Date(a.data).getTime():0, dbb=b.data?new Date(b.data).getTime():0;
+        return (dbb-da)||(b.ordem-a.ordem);
+      });
+
+      const mans=manRes.data||[];
+      const lotes=new Set(mans.map(m=>m.lote_codigo).filter(Boolean));
+      const custoTotal=mans.reduce((s,m)=>s+Number(m.custo_total_interno||m.valor_orcamento||0),0);
+      box.innerHTML=`
+        <div class="atlas-historico-resumo">
+          <div><label>Status atual</label><strong>${esc(p.status||'-')}</strong></div>
+          <div><label>Obra / localização</label><strong>${esc(p.endereco_estoque||p.localizacao||'-')}</strong></div>
+          <div><label>Manutenções</label><strong>${mans.length}${lotes.size?` • ${lotes.size} lote(s)`:''}</strong></div>
+          <div><label>Custo de manutenção registrado</label><strong>${esc(moeda(custoTotal)||'R$ 0,00')}</strong></div>
+        </div>
+        ${ordenados.length?`<div class="atlas-historico-timeline">${ordenados.map(e=>`<div class="atlas-historico-evento"><div class="atlas-historico-data">${esc(e.data?fmtData(e.data):'Data não registrada')}</div><div class="atlas-historico-eixo"></div><div class="atlas-historico-box"><strong>${esc(e.titulo)}</strong><span>${esc(e.detalhe||'Sem detalhes adicionais registrados.')}</span></div></div>`).join('')}</div>`:'<div class="atlas-remessa-empty">Ainda não há eventos registrados para este patrimônio.</div>'}`;
+    }catch(e){
+      console.error('Falha ao carregar histórico patrimonial',e);
+      box.innerHTML=`<div class="atlas-remessa-empty">Falha ao carregar histórico: ${esc(e.message||e)}</div>`;
+    }
   }
 
   function labelMov(tipo,status){
     const t=texto(tipo).toUpperCase();
-    if(t.includes('REMESSA_PATRIMONIAL_ENVIO')) return '🚚 Enviado em remessa patrimonial';
+    if(t.includes('REMESSA_PATRIMONIAL_ENVIO')) return '↔ Enviado em transferência patrimonial';
     if(t.includes('REMESSA_PATRIMONIAL_RECEBIMENTO')) return '✅ Recebido em outra obra';
     if(t.includes('TROCA_SETOR')) return '🔁 Transferência de obra/setor';
     if(t.includes('MANUT')) return '🛠 Movimentação de manutenção';

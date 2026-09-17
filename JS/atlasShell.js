@@ -25,6 +25,18 @@
       pagina: 'patrimonio.html',
       titulo: '📦 BDR Patrimônio',
       subtitulo: 'Cadastro, consulta e controle de patrimônios com performance otimizada.'
+    },
+    expedicao: {
+      alias: 'exp',
+      pagina: 'expedicao.html',
+      titulo: '📦 BDR ERP - Expedição',
+      subtitulo: 'Central logística: solicitações, transferências, desmobilização, transporte, recebimento e histórico.'
+    },
+    manutencao: {
+      alias: 'man',
+      pagina: 'manutencao.html',
+      titulo: '🔧 BDR ERP - Manutenção',
+      subtitulo: 'Ordens, fornecedores, orçamentos, aprovação, execução e retorno dos patrimônios.'
     }
   };
 
@@ -89,6 +101,8 @@
 
   const MODULOS_CARREGADOS = new Set(['dashboard','triagem','empresa']);
   let patrimonioCarregando = null;
+  let manutencaoCarregando = null;
+  let expedicaoCarregando = null;
 
   function carregarScriptUnico(src){
     return new Promise((resolve,reject) => {
@@ -127,10 +141,10 @@
         './JS/patrimonio/patrimonio-lote.js?v=20260831-atlas',
         './JS/patrimonio/patrimonio-etiquetas-lote.js?v=20260831-atlas',
         './JS/atlasGestorNotificacoes.js?v=20260728-patrimonio',
-        './JS/atlasWorkflowManutencao.js?v=20260807-fluxo-simplificado',
-        './JS/atlasManutencao.js?v=20260807-fluxo-simplificado',
+        './JS/atlasWorkflowManutencao.js?v=20260904-selecao-patrimonio',
+        './JS/atlasManutencao.js?v=20260904-selecao-patrimonio',
         './JS/patrimonio/atlasPatrimonioAssistente.js?v=20260831-atlas',
-        './JS/patrimonio/patrimonio.js?v=20260902-moeda-cursor',
+        './JS/patrimonio/patrimonio.js?v=20260904-selecao-patrimonio',
         './JS/patrimonio/patrimonio-etiqueta-individual.js?v=20260804-v1',
         './JS/patrimonio/patrimonio-permissoes.js?v=20260831-atlas',
         './JS/patrimonio/patrimonio-config-etiqueta.js?v=20260831-atlas',
@@ -150,8 +164,62 @@
     return patrimonioCarregando;
   }
 
+
+  async function carregarManutencao(){
+    if(MODULOS_CARREGADOS.has('manutencao')){
+      if(window.AtlasManutencao?.iniciarCentral) window.AtlasManutencao.iniciarCentral();
+      return;
+    }
+    if(manutencaoCarregando) return manutencaoCarregando;
+
+    manutencaoCarregando = (async () => {
+      const scripts = [
+        './JS/atlasAudio/atlasAudio.js',
+        './JS/atlasGestorNotificacoes.js',
+        './JS/atlasAmbienteDominio.js',
+        './JS/atlasWorkflowManutencao.js?v=20260904-selecao-patrimonio',
+        './JS/atlasManutencao.js?v=20260904-selecao-patrimonio'
+      ];
+      for(const src of scripts) await carregarScriptUnico(src);
+      MODULOS_CARREGADOS.add('manutencao');
+      if(window.AtlasManutencao?.iniciarCentral) window.AtlasManutencao.iniciarCentral();
+      document.dispatchEvent(new CustomEvent('atlas:manutencao-ready'));
+    })().catch(err => {
+      manutencaoCarregando = null;
+      console.error('ATLAS: falha ao carregar Manutenção.', err);
+      throw err;
+    });
+    return manutencaoCarregando;
+  }
+
+
+  async function carregarExpedicao(){
+    if(MODULOS_CARREGADOS.has('expedicao')){
+      window.AtlasExpedicaoTransferencias?.carregar?.();
+      return;
+    }
+    if(expedicaoCarregando) return expedicaoCarregando;
+    expedicaoCarregando = (async()=>{
+      const scripts = [
+        './JS/expedicao/expedicaoTransferencias.js?v=20260904-expedicao-estavel',
+        './JS/expedicao/expedicaoBoot.js?v=20260904-expedicao-estavel'
+      ];
+      for(const src of scripts) await carregarScriptUnico(src);
+      MODULOS_CARREGADOS.add('expedicao');
+      document.dispatchEvent(new CustomEvent('atlas:expedicao-ready'));
+      window.AtlasExpedicaoTransferencias?.carregar?.();
+    })().catch(err=>{
+      expedicaoCarregando=null;
+      console.error('ATLAS: falha ao carregar Expedição.',err);
+      throw err;
+    });
+    return expedicaoCarregando;
+  }
+
   function carregarModuloSeNecessario(modulo){
     if(modulo === 'patrimonio') return carregarPatrimonio();
+    if(modulo === 'manutencao') return carregarManutencao();
+    if(modulo === 'expedicao') return carregarExpedicao();
     return Promise.resolve();
   }
 

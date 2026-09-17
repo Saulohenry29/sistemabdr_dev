@@ -276,7 +276,7 @@
         <button style="background:#e5e7eb;color:#0f172a" onclick="fecharModalDetalhe()">Fechar</button>`;
     }
 
-    document.getElementById("modalTitulo").innerText = "Detalhes do pedido";
+    document.getElementById("expModalTitulo").innerText = "Detalhes do pedido";
     document.getElementById("modalConteudo").innerHTML = `
       <div class="atlas-modal-pedido-head">
         <div>

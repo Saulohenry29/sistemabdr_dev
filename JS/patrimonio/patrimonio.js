@@ -234,25 +234,38 @@ function atlasAvisoPatrimonio(titulo, texto, tipo="sucesso"){
   if(!aviso){
     aviso = document.createElement("div");
     aviso.id = "atlasPatrimonioToast";
-    aviso.className = "atlas-patrimonio-toast";
     aviso.setAttribute("role","status");
     aviso.setAttribute("aria-live","polite");
-    document.body.appendChild(aviso);
+    // Fora do módulo: o Shell pode ocultar módulos inteiros durante a navegação.
+    document.documentElement.appendChild(aviso);
   }
 
-  aviso.className =
-    "atlas-patrimonio-toast" +
-    (tipo === "offline" ? " offline" : "");
-
+  const offline = tipo === "offline";
+  aviso.className = "atlas-patrimonio-toast" + (offline ? " offline" : "");
   aviso.innerHTML =
     `<span class="atlas-toast-titulo">${String(titulo || "Concluído")}</span>` +
     `<span class="atlas-toast-texto">${String(texto || "")}</span>`;
 
+  // Estilo crítico fica inline para a confirmação nunca desaparecer atrás do Shell.
+  Object.assign(aviso.style, {
+    display:"block", position:"fixed", top:"78px", left:"50%",
+    transform:"translate(-50%, 0)", width:"min(520px, calc(100vw - 28px))",
+    zIndex:"2147483647", opacity:"1", visibility:"visible", pointerEvents:"none",
+    background: offline ? "#fffbeb" : "#f0fdf4",
+    color: offline ? "#422006" : "#17211a",
+    border: offline ? "1px solid #fde68a" : "1px solid #86efac",
+    borderLeft: offline ? "5px solid #f59e0b" : "5px solid #16a34a",
+    borderRadius:"12px", padding:"11px 14px",
+    boxShadow: offline ? "0 16px 38px rgba(245,158,11,.16)" : "0 16px 38px rgba(22,163,74,.18)",
+    fontSize:"13px", fontWeight:"900", lineHeight:"1.4"
+  });
   aviso.classList.add("ativo");
 
   clearTimeout(window.__atlasPatrimonioToastTimer);
   window.__atlasPatrimonioToastTimer = setTimeout(()=>{
     aviso.classList.remove("ativo");
+    aviso.style.opacity = "0";
+    aviso.style.visibility = "hidden";
   },4200);
 }
 
@@ -1918,6 +1931,8 @@ function mostrarCampos(){
       <input id="combustivel" placeholder="Combustível">
       <input id="ano_fabricacao" placeholder="Ano de fabricação" inputmode="numeric">
       <input id="ano_modelo" placeholder="Ano do modelo" inputmode="numeric">
+      <input id="renavam" placeholder="RENAVAM, se houver" onblur="validarDuplicidadeCampoPatrimonio('renavam')">
+      <input id="chassi" placeholder="Chassi, se houver" onblur="validarDuplicidadeCampoPatrimonio('chassi')">
       ${serie()}
     `;
   }
@@ -1986,14 +2001,26 @@ async function bdrBaseDuplicidadePatrimonio(){
     const onlineReal = await patrimonioOnlineReal();
 
     if(onlineReal && patrimonioDb()){
-      const { data, error } = await patrimonioDb()
-        .from("patrimonio")
-        .select(campos)
-        .or("ativo.eq.true,ativo.is.null")
-        .limit(5000);
+      // A API do Supabase pode limitar cada resposta (normalmente 1000 linhas).
+      // Para identificadores únicos não podemos validar somente a primeira página,
+      // pois uma placa/RENAVAM/chassi antigo pode estar em qualquer posição da tabela.
+      const pagina = 1000;
+      const todos = [];
+      for(let inicio = 0; ; inicio += pagina){
+        const { data, error } = await patrimonioDb()
+          .from("patrimonio")
+          .select(campos)
+          .range(inicio, inicio + pagina - 1);
 
-      if(!error && Array.isArray(data)) return data;
-      console.warn("Anti-duplicidade: usando lista local porque o banco retornou erro:", error?.message || error);
+        if(error){
+          console.warn("Anti-duplicidade: usando lista local porque o banco retornou erro:", error?.message || error);
+          break;
+        }
+
+        const lote = Array.isArray(data) ? data : [];
+        todos.push(...lote);
+        if(lote.length < pagina) return todos;
+      }
     }
   }catch(e){
     console.warn("Anti-duplicidade: falha ao consultar banco, usando lista local.", e);
@@ -2011,46 +2038,44 @@ async function bdrBaseDuplicidadePatrimonio(){
 }
 
 async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={}){
-  const lista=await bdrBaseDuplicidadePatrimonio();
-  const bloqueios=[];
-  const alertas=[];
-  const tipo=String(dados.tipo_item||'').toUpperCase();
+  const lista = await bdrBaseDuplicidadePatrimonio();
+  const bloqueios = [];
+  const alertas = [];
 
-  const igual=(a,b)=>bdrMesmoValor(a,b);
-  const camposIguais=(p)=>
+  const igual = (a,b) => bdrMesmoValor(a,b);
+  const camposIguais = (p) =>
     igual(dados.nome_bem,p.nome_bem) &&
     igual(dados.marca,p.marca) &&
     igual(dados.modelo,p.modelo) &&
     igual(dados.numero_serie,p.numero_serie);
 
-  (lista||[]).forEach(p=>{
-    if(!p||p.ativo===false) return;
-    if(dados.id && String(p.id)===String(dados.id)) return;
+  (lista || []).forEach(p => {
+    if(!p) return;
+    if(dados.id && String(p.id) === String(dados.id)) return;
 
-    if(tipo==='VEICULO'){
-      if(igual(dados.placa,p.placa)) bloqueios.push({motivo:'PLACA já cadastrada',patrimonio:p});
-      if(igual(dados.renavam,p.renavam)) bloqueios.push({motivo:'RENAVAM já cadastrado',patrimonio:p});
-      if(igual(dados.chassi,p.chassi)) bloqueios.push({motivo:'CHASSI já cadastrado',patrimonio:p});
-      return;
-    }
+    // REGRA OFICIAL: placa, RENAVAM e chassi são identificadores únicos.
+    // Vale para veículo, máquina pesada e qualquer outro tipo de patrimônio.
+    // Também considera registros baixados/inativos para impedir reutilização acidental.
+    if(igual(dados.placa,p.placa)) bloqueios.push({motivo:'PLACA já cadastrada',patrimonio:p});
+    if(igual(dados.renavam,p.renavam)) bloqueios.push({motivo:'RENAVAM já cadastrado',patrimonio:p});
+    if(igual(dados.chassi,p.chassi)) bloqueios.push({motivo:'CHASSI já cadastrado',patrimonio:p});
 
-    const quatroIguais=camposIguais(p);
-    const codigoAntigoInformado=!bdrCampoVazioOuGenerico(dados.codigo_antigo);
-    const codigoAntigoIgual=codigoAntigoInformado && igual(dados.codigo_antigo,p.codigo_antigo);
+    // As regras abaixo continuam ignorando baixados/inativos.
+    if(p.ativo === false) return;
 
-    // Bloqueio somente quando há certeza máxima: os quatro dados + código antigo.
+    const quatroIguais = camposIguais(p);
+    const codigoAntigoInformado = !bdrCampoVazioOuGenerico(dados.codigo_antigo);
+    const codigoAntigoIgual = codigoAntigoInformado && igual(dados.codigo_antigo,p.codigo_antigo);
+
     if(quatroIguais && codigoAntigoIgual){
       bloqueios.push({motivo:'Nome, marca, modelo, série e código antigo já cadastrados',patrimonio:p});
       return;
     }
 
-    // Máquina recebe alerta forte quando nome, marca, modelo e série coincidem.
-    if((tipo==='MAQUINA'||tipo==='MAQUINA_PESADA') && quatroIguais){
+    const tipo = String(dados.tipo_item || '').toUpperCase();
+    if((tipo === 'MAQUINA' || tipo === 'MAQUINA_PESADA') && quatroIguais){
       alertas.push({motivo:'Máquina com nome, marca, modelo e série iguais',patrimonio:p});
-      return;
-    }
-
-    if(quatroIguais){
+    }else if(quatroIguais){
       alertas.push({motivo:'Nome, marca, modelo e número de série iguais',patrimonio:p});
     }else if(codigoAntigoIgual){
       alertas.push({motivo:'Código antigo já encontrado em outro patrimônio',patrimonio:p});
@@ -2059,82 +2084,81 @@ async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={}){
     }
   });
 
-  const unicos=(itens)=>{
-    const vistos=new Set();
-    return itens.filter(item=>{
-      const chave=`${item.motivo}-${item.patrimonio?.id}`;
+  const unicos = (itens) => {
+    const vistos = new Set();
+    return itens.filter(item => {
+      const chave = `${item.motivo}-${item.patrimonio?.id}`;
       if(vistos.has(chave)) return false;
-      vistos.add(chave);return true;
+      vistos.add(chave);
+      return true;
     });
   };
 
-  const b=unicos(bloqueios),a=unicos(alertas);
+  const b = unicos(bloqueios), a = unicos(alertas);
   if(b.length){
-    const msg=b.slice(0,5).map(item=>`🚫 ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}\nSérie: ${item.patrimonio?.numero_serie||'-'}\nCódigo antigo: ${item.patrimonio?.codigo_antigo||'-'}`).join('\n\n');
-    alert('Cadastro bloqueado porque todos os identificadores coincidem.\n\n'+msg);
+    const msg = b.slice(0,5).map(item =>
+      `🚫 ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}`
+    ).join('\n\n');
+    alert('Cadastro não realizado. Existe identificador duplicado.\n\n' + msg +
+      '\n\nPlaca, RENAVAM e chassi não podem ser repetidos.');
     return false;
   }
 
-  if(a.length && opcoes.confirmar!==false){
-    const msg=a.slice(0,5).map(item=>`⚠️ ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}\nSérie: ${item.patrimonio?.numero_serie||'-'}\nCódigo antigo: ${item.patrimonio?.codigo_antigo||'-'}`).join('\n\n');
-    return await bdrConfirmarAtlas('Possível duplicidade encontrada:\n\n'+msg+'\n\nOs dados não são suficientes para bloquear. Deseja cadastrar mesmo assim?');
+  if(a.length && opcoes.confirmar !== false){
+    const msg = a.slice(0,5).map(item =>
+      `⚠️ ${item.motivo}\n${bdrResumoPatrimonioDuplicado(item.patrimonio)}\nSérie: ${item.patrimonio?.numero_serie||'-'}\nCódigo antigo: ${item.patrimonio?.codigo_antigo||'-'}`
+    ).join('\n\n');
+    return await bdrConfirmarAtlas('Possível duplicidade encontrada:\n\n' + msg +
+      '\n\nOs dados não são suficientes para bloquear. Deseja cadastrar mesmo assim?');
   }
   return true;
 }
 
 async function validarDuplicidadeCampoPatrimonio(campo){
   const v = patrimonioValor(campo);
+  const el = document.getElementById(campo);
 
   if(bdrCampoVazioOuGenerico(v)){
+    el?.classList.remove('atlas-campo-duplicado','atlas-campo-alerta');
     return true;
   }
 
-  const tipoItem = String(patrimonioValor("tipo_item") || "").toUpperCase();
   const lista = await bdrBaseDuplicidadePatrimonio();
-
-  const achados = (lista || []).filter(p => {
-    if(!p || p.ativo === false) return false;
-    return bdrMesmoValor(v, p[campo]);
-  });
+  const achados = (lista || []).filter(p => p && bdrMesmoValor(v, p[campo]));
 
   if(!achados.length){
-    document.getElementById(campo)?.classList.remove(
-      "atlas-campo-duplicado",
-      "atlas-campo-alerta"
-    );
+    el?.classList.remove('atlas-campo-duplicado','atlas-campo-alerta');
     return true;
   }
 
-  const msg = achados
-    .slice(0,5)
-    .map(bdrResumoPatrimonioDuplicado)
-    .join("\n\n");
-
-  const identificadorUnicoVeiculo =
-    tipoItem === "VEICULO" &&
-    ["placa", "renavam", "chassi"].includes(campo);
-
-  if(identificadorUnicoVeiculo){
-    alert(
-      `🚫 ${campo.toUpperCase()} já cadastrado.\n\n` +
-      msg +
-      "\n\nEste identificador não pode se repetir em veículos."
-    );
-
-    document.getElementById(campo)?.classList.add("atlas-campo-duplicado");
-    return false;
-  }
-
-  alert(
-    `⚠️ ${campo.toUpperCase()} já encontrado.\n\n` +
-    msg +
-    "\n\nVocê ainda poderá cadastrar este patrimônio."
-  );
-
-  document.getElementById(campo)?.classList.add("atlas-campo-alerta");
-  return true;
+  const msg = achados.slice(0,5).map(bdrResumoPatrimonioDuplicado).join('\n\n');
+  alert(`⚠️ ${campo.toUpperCase()} já cadastrado.\n\n${msg}\n\nVocê pode continuar preenchendo, mas o Atlas NÃO permitirá salvar enquanto este identificador estiver repetido.`);
+  el?.classList.remove('atlas-campo-duplicado');
+  el?.classList.add('atlas-campo-alerta');
+  return false;
 }
 
+async function validarDuplicidadeCampoEdicaoPatrimonio(campo){
+  const idCampo = `edit_${campo}`;
+  const v = patrimonioValor(idCampo);
+  const el = document.getElementById(idCampo);
+  if(bdrCampoVazioOuGenerico(v)){
+    el?.classList.remove('atlas-campo-duplicado','atlas-campo-alerta');
+    return true;
+  }
+  const lista = await bdrBaseDuplicidadePatrimonio();
+  const achados = (lista || []).filter(p => p &&
+    String(p.id) !== String(patrimonioSelecionado?.id) && bdrMesmoValor(v,p[campo]));
+  if(!achados.length){
+    el?.classList.remove('atlas-campo-duplicado','atlas-campo-alerta');
+    return true;
+  }
+  const msg = achados.slice(0,5).map(bdrResumoPatrimonioDuplicado).join('\n\n');
+  alert(`⚠️ ${campo.toUpperCase()} já cadastrado.\n\n${msg}\n\nA alteração NÃO poderá ser salva enquanto este identificador estiver repetido.`);
+  el?.classList.remove('atlas-campo-duplicado');
+  el?.classList.add('atlas-campo-alerta');
+  return false;
+}
 
 
 function atlasMascaraNCM(input){
@@ -2185,7 +2209,7 @@ async function gerarPatrimonio(){
 
   const nome_bem = patrimonioValor("nome_bem");
   const tipo_item = patrimonioValor("tipo_item");
-  const status_inicial = patrimonioValor("status_inicial") || "ESTOQUE";
+  const status_inicial = patrimonioValor("status_inicial") || "EM_USO";
 
   if(!nome_bem || !tipo_item){
     alert("Preencha nome do bem e tipo.");
@@ -2340,6 +2364,17 @@ usuario_cadastro:
     __offline_pendente: !!resp.offlineFirst
   });
 
+  // Garante que o patrimônio recém-cadastrado apareça imediatamente.
+  // Filtros antigos podem esconder o novo registro e causar dúvida na impressão.
+  ["patrimonioBusca","patrimonioFiltroObra","filtroStatus","patrimonioFiltroTipo",
+   "patrimonioFiltroUsuario","patrimonioFiltroAntigo"].forEach(id => {
+    const campo = document.getElementById(id);
+    if(campo && !campo.disabled) campo.value = "";
+  });
+  atlasMostrarInativos = false;
+  bdrResetPaginaPatrimonio();
+  bdrPreencherFiltroUsuariosPatrimonio();
+
   // Pré-gera o QR local sem bloquear o cadastro.
   atlasPreGerarQRCodePatrimonio(codigo_qr).catch(error =>
     console.warn("Atlas: patrimônio salvo, mas o aquecimento do QR ficou para a impressão.",error)
@@ -2366,9 +2401,12 @@ usuario_cadastro:
   bdrSetGerandoPatrimonio(false);
 }
 function limparFormularioCadastro(){
+  // O status é operacional: preserva a escolha do usuário entre cadastros e após lote.
+  // Evita que um lote lançado como EM_USO volte silenciosamente para ESTOQUE.
+  const statusMantido = document.getElementById("status_inicial")?.value || "EM_USO";
   document.getElementById("nome_bem").value = "";
   document.getElementById("tipo_item").value = "";
-  document.getElementById("status_inicial").value = "ESTOQUE";
+  document.getElementById("status_inicial").value = statusMantido;
   document.getElementById("valor_bem").value = "";
   document.getElementById("tipo_outro").value = "";
   document.getElementById("campoOutroTipo").style.display = "none";
@@ -2604,12 +2642,48 @@ function bdrResetPaginaPatrimonio(){
   bdrPatrimonioPaginaAtual = 1;
 }
 
+function bdrNomeCadastradorPatrimonio(nome){
+  const bruto = String(nome || "").trim();
+  if(!bruto) return "";
+
+  // Consolida registros históricos gravados apenas com o primeiro nome do usuário atual.
+  // Ex.: "Saulo" e "Saulo Henrique" passam a aparecer como uma única opção.
+  const atual = patrimonioUsuarioAtual();
+  const nomeAtual = String(atual?.nome || "").trim();
+  if(nomeAtual && nomeAtual.includes(" ")){
+    const primeiro = nomeAtual.split(/\s+/)[0];
+    if(bruto.localeCompare(primeiro, "pt-BR", {sensitivity:"base"}) === 0){
+      return nomeAtual;
+    }
+  }
+  return bruto;
+}
+
+function bdrPreencherFiltroUsuariosPatrimonio(){
+  const filtro = document.getElementById("patrimonioFiltroUsuario");
+  if(!filtro) return;
+
+  const atual = filtro.value;
+  const usuarios = [...new Set((patrimonioItens || [])
+    .map(p => bdrNomeCadastradorPatrimonio(p.usuario_cadastro))
+    .filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b, "pt-BR", { sensitivity:"base" }));
+
+  const esc = v => String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  filtro.innerHTML = '<option value="">Todos os cadastradores</option>' +
+    usuarios.map(nome => `<option value="${esc(nome)}">${esc(nome)}</option>`).join("");
+
+  if(usuarios.includes(atual)) filtro.value = atual;
+}
+
 function bdrPatrimonioFiltroChave(){
   return [
     patrimonioValor("patrimonioBusca"),
     patrimonioValor("patrimonioFiltroObra"),
     patrimonioValor("filtroStatus"),
     patrimonioValor("patrimonioFiltroTipo"),
+    patrimonioValor("patrimonioFiltroUsuario"),
+    patrimonioValor("patrimonioFiltroAntigo"),
     atlasMostrarInativos ? "INATIVOS" : "ATIVOS"
   ].join("||");
 }
@@ -2635,6 +2709,10 @@ function renderizarPatrimonios(){
   const filtroStatus = patrimonioValor("filtroStatus");
   const filtroTipo = patrimonioValor("patrimonioFiltroTipo");
   const filtroObra = patrimonioValor("patrimonioFiltroObra");
+  const filtroUsuario = patrimonioValor("patrimonioFiltroUsuario");
+  const filtroAntigo = patrimonioValor("patrimonioFiltroAntigo");
+
+  bdrPreencherFiltroUsuariosPatrimonio();
 
   const chaveFiltro = bdrPatrimonioFiltroChave();
   if(chaveFiltro !== bdrPatrimonioUltimaChaveFiltro){
@@ -2653,7 +2731,9 @@ function renderizarPatrimonios(){
       (!busca || textoBusca.includes(busca)) &&
       (!filtroObra || String(p.obra_id || "") === String(filtroObra)) &&
       (!filtroStatus || p.status === filtroStatus) &&
-      (!filtroTipo || p.tipo_item === filtroTipo);
+      (!filtroTipo || p.tipo_item === filtroTipo) &&
+      (!filtroUsuario || bdrNomeCadastradorPatrimonio(p.usuario_cadastro) === filtroUsuario) &&
+      (!filtroAntigo || (filtroAntigo === "COM_CODIGO_ANTIGO" && String(p.codigo_antigo || "").trim() !== ""));
   });
 
   const total = filtrados.length;
@@ -2679,13 +2759,12 @@ function renderizarPatrimonios(){
         <strong>Exibindo ${inicio + 1}–${fim} de ${total}</strong><br>
         <span>${buscaOriginal ? "Resultado filtrado" : "Últimos patrimônios carregados"} • ${porPagina} por página</span>
       </div>
-      <span>Use a pesquisa para localizar PAT, NF, placa, série, nome ou obra.</span>
+      <span>Use a pesquisa ou filtre por cadastrador, origem, obra, status e tipo.</span>
     </div>
 
     <div class="lista-header">
       <div class="bdr-check-etiqueta">
-        <input type="checkbox" class="bdr-etiqueta-pagina-check" aria-label="Selecionar etiquetas desta página" title="Selecionar etiquetas desta página" onchange="bdrSelecionarPaginaEtiquetas(this.checked)">
-        <input type="checkbox" class="atlas-remessa-pagina-check" aria-label="Selecionar patrimônios desta página para remessa" title="Selecionar patrimônios desta página para remessa" onchange="AtlasPatrimonioRemessas.selecionarPagina(this.checked)">
+        <input type="checkbox" class="bdr-etiqueta-pagina-check" aria-label="Selecionar patrimônios desta página" title="Selecionar patrimônios desta página" onchange="bdrSelecionarPaginaEtiquetas(this.checked)">
       </div>
       <div>Código</div>
       <div>Patrimônio</div>
@@ -2713,11 +2792,10 @@ function renderizarPatrimonios(){
     ].filter(Boolean).join(" | ");
 
     lista.innerHTML += `
-      <div class="linha-patrimonio" onclick="window.AtlasPatrimonioRemessas?.modoSelecaoAtivo?.() ? AtlasPatrimonioRemessas.alternarPorLinha('${p.id}') : (bdrModoSelecaoEtiquetas ? bdrAlternarEtiquetaPorLinha('${p.codigo_qr || ''}') : abrirModal('${p.id}'))">
+      <div class="linha-patrimonio" onclick="bdrModoSelecaoEtiquetas ? bdrAlternarEtiquetaPorLinha('${p.codigo_qr || ''}') : abrirModal('${p.id}')">
 
         <div class="bdr-check-etiqueta" onclick="event.stopPropagation()">
-          <input type="checkbox" class="bdr-etiqueta-check" data-codigo="${p.codigo_qr || ''}" ${bdrEtiquetasSelecionadas.has(String(p.codigo_qr || '')) ? 'checked' : ''} onchange="bdrAlternarSelecaoEtiqueta(this.dataset.codigo,this.checked)" aria-label="Selecionar etiqueta ${p.codigo_qr || ''}">
-          <input type="checkbox" class="atlas-remessa-check" data-pat-id="${p.id}" ${window.AtlasPatrimonioRemessas?.estaSelecionado?.(p.id) ? 'checked' : ''} onchange="AtlasPatrimonioRemessas.selecionarItem(this.dataset.patId,this.checked)" aria-label="Selecionar patrimônio ${p.codigo_qr || ''} para remessa">
+          <input type="checkbox" class="bdr-etiqueta-check" data-pat-id="${p.id}" data-codigo="${p.codigo_qr || ''}" ${bdrEtiquetasSelecionadas.has(String(p.codigo_qr || '')) ? 'checked' : ''} onchange="bdrAlternarSelecaoEtiqueta(this.dataset.codigo,this.checked)" aria-label="Selecionar patrimônio ${p.codigo_qr || ''}">
         </div>
 
         <div class="pat-codigo" title="${p.codigo_qr || "-"}">
@@ -2783,42 +2861,74 @@ function bdrSelecionarPaginaEtiquetas(marcado){
   });
 }
 
+function bdrPodeSelecionarPatrimonios(){
+  return usuarioTemPermissao("PATRIMONIO_IMPRIMIR") ||
+         usuarioTemPermissao("PATRIMONIO_MOVIMENTAR") ||
+         usuarioTemPermissao("MANUTENCAO_CRIAR");
+}
+
+function bdrIdsPatrimoniosSelecionados(){
+  const codigos = new Set(Array.from(bdrEtiquetasSelecionadas).map(v=>String(v||"").trim()).filter(Boolean));
+  return patrimonioItens
+    .filter(p=>codigos.has(String(p.codigo_qr||"").trim()))
+    .map(p=>String(p.id));
+}
+
 function bdrAtualizarContadorEtiquetas(){
   const quantidade = bdrEtiquetasSelecionadas.size;
   const el = document.getElementById("bdrQtdEtiquetasSelecionadas");
-  const botao = document.getElementById("bdrBotaoAcaoEtiquetas");
   const ajuda = document.getElementById("bdrLoteAjuda");
+  const botaoSelecao = document.getElementById("bdrBotaoSelecaoPatrimonio");
+  const botaoEtiquetas = document.getElementById("bdrBotaoAcaoEtiquetas");
+  const botaoRemessa = document.getElementById("bdrBotaoAcaoRemessa");
+  const botaoManutencao = document.getElementById("bdrBotaoAcaoManutencao");
 
-  if(el) el.textContent = `${quantidade} etiqueta(s) selecionada(s)`;
+  if(el) el.textContent = `${quantidade} patrimônio(s) selecionado(s)`;
 
-  if(botao){
-    if(bdrModoSelecaoEtiquetas){
-      botao.className = "bdr-lote-imprimir";
-      botao.textContent = quantidade ? `🖨 Imprimir ${quantidade} etiqueta(s)` : "🖨 Imprimir selecionadas";
-      botao.disabled = quantidade === 0;
-    }else{
-      botao.className = "bdr-lote-selecionar";
-      botao.textContent = "☑ Selecionar etiquetas";
-      botao.disabled = false;
-    }
+  if(botaoSelecao){
+    botaoSelecao.textContent = "☑ Selecionar patrimônios";
+    botaoSelecao.style.display = bdrModoSelecaoEtiquetas ? "none" : "";
+  }
+
+  if(botaoEtiquetas){
+    botaoEtiquetas.style.display = bdrModoSelecaoEtiquetas && usuarioTemPermissao("PATRIMONIO_IMPRIMIR") ? "" : "none";
+    botaoEtiquetas.disabled = quantidade === 0;
+    botaoEtiquetas.textContent = quantidade ? `🏷 Etiquetas (${quantidade})` : "🏷 Etiquetas";
+  }
+
+  if(botaoRemessa){
+    botaoRemessa.style.display = bdrModoSelecaoEtiquetas && usuarioTemPermissao("PATRIMONIO_MOVIMENTAR") ? "" : "none";
+    botaoRemessa.disabled = quantidade === 0;
+    botaoRemessa.textContent = quantidade ? `↔ Transferência (${quantidade})` : "↔ Transferência";
+  }
+
+  if(botaoManutencao){
+    botaoManutencao.style.display = bdrModoSelecaoEtiquetas && usuarioTemPermissao("MANUTENCAO_CRIAR") ? "" : "none";
+    botaoManutencao.disabled = quantidade === 0;
+    botaoManutencao.textContent = quantidade ? `🔧 Manutenção (${quantidade})` : "🔧 Manutenção";
   }
 
   if(ajuda){
     ajuda.textContent = bdrModoSelecaoEtiquetas
-      ? "Marque os patrimônios desejados na lista."
-      : "Imprima uma ou várias etiquetas sem poluir a lista.";
+      ? "Selecione os patrimônios na lista e depois escolha a ação ao lado."
+      : "Selecione patrimônios e depois escolha o que deseja fazer.";
   }
 }
 
-function bdrEntrarModoSelecaoEtiquetas(){
-  if(!usuarioTemPermissao("PATRIMONIO_IMPRIMIR")){
-    alert("Você não tem permissão para imprimir etiquetas.");
+function bdrEntrarModoSelecaoPatrimonios(){
+  if(!bdrPodeSelecionarPatrimonios()){
+    alert("Você não possui permissão para executar ações em vários patrimônios.");
     return;
   }
   bdrModoSelecaoEtiquetas = true;
   document.body.classList.add("bdr-modo-selecao-etiquetas");
   document.querySelector('.atlas-shell-module[data-module="patrimonio"]')?.classList.add("bdr-modo-selecao-etiquetas");
   bdrAtualizarContadorEtiquetas();
+}
+
+/* Compatibilidade interna: a seleção antiga de etiquetas agora é a seleção única de patrimônios. */
+function bdrEntrarModoSelecaoEtiquetas(){
+  bdrEntrarModoSelecaoPatrimonios();
 }
 
 function bdrCancelarSelecaoEtiquetas(){
@@ -2840,10 +2950,55 @@ function bdrLimparSelecaoEtiquetas(){
 
 function bdrAcaoPrincipalEtiquetas(){
   if(!bdrModoSelecaoEtiquetas){
-    bdrEntrarModoSelecaoEtiquetas();
+    bdrEntrarModoSelecaoPatrimonios();
     return;
   }
   bdrImprimirEtiquetasSelecionadas();
+}
+
+async function bdrEnviarSelecionadosRemessa(){
+  if(!usuarioTemPermissao("PATRIMONIO_MOVIMENTAR")){
+    alert("Você não tem permissão para movimentar patrimônios.");
+    return;
+  }
+  const ids = bdrIdsPatrimoniosSelecionados();
+  if(!ids.length){ alert("Selecione pelo menos um patrimônio."); return; }
+  const selecionados = patrimonioItens.filter(p=>ids.includes(String(p.id)));
+  const obras = [...new Set(selecionados.map(p=>String(p.obra_id||"")).filter(Boolean))];
+  if(obras.length !== 1){
+    alert("Para criar uma remessa, selecione patrimônios de uma única obra/setor.");
+    return;
+  }
+  if(!window.AtlasPatrimonioRemessas){ alert("O módulo de remessas não foi carregado."); return; }
+  const idsCopia=[...ids];
+  bdrCancelarSelecaoEtiquetas();
+  await window.AtlasPatrimonioRemessas.iniciarSelecao();
+  if(!window.AtlasPatrimonioRemessas.modoSelecaoAtivo?.()) return;
+  idsCopia.forEach(id=>window.AtlasPatrimonioRemessas.selecionarItem(id,true));
+  window.AtlasPatrimonioRemessas.continuarSelecao();
+}
+
+async function bdrEnviarSelecionadosManutencao(){
+  if(!usuarioTemPermissao("MANUTENCAO_CRIAR")){
+    alert("Você não possui permissão para enviar patrimônios para manutenção.");
+    return;
+  }
+  const ids = bdrIdsPatrimoniosSelecionados();
+  if(!ids.length){ alert("Selecione pelo menos um patrimônio."); return; }
+  const selecionados = patrimonioItens.filter(p=>ids.includes(String(p.id)));
+  const obras = [...new Set(selecionados.map(p=>String(p.obra_id||"")).filter(Boolean))];
+  if(obras.length !== 1){
+    alert("Para manutenção em lote, selecione patrimônios de uma única obra/setor.");
+    return;
+  }
+  if(!window.AtlasManutencao){ alert("O módulo de manutenção não foi carregado."); return; }
+  const idsCopia=[...ids];
+  await window.AtlasManutencao.iniciarSelecaoPatrimonio();
+  if(!window.AtlasManutencao.modoSelecaoPatrimonioAtivo?.()) return;
+  for(const id of idsCopia){
+    await window.AtlasManutencao.alternarPatrimonioSelecao(id,true);
+  }
+  window.AtlasManutencao.continuarSelecaoPatrimonio?.();
 }
 
 function bdrImprimirEtiquetasSelecionadas(){
@@ -3005,7 +3160,17 @@ async function abrirModal(id){
   `;
 
   document.getElementById("observacaoMov").value = "";
-  document.getElementById("novaObraSelect").value = "";
+
+  const novaObraSelect = document.getElementById("novaObraSelect");
+  if(novaObraSelect){
+    const obraAtualId = String(p.obra_id ?? "");
+    Array.from(novaObraSelect.options).forEach(option => {
+      if(!option.value) return;
+      option.hidden = String(option.value) === obraAtualId;
+      option.disabled = String(option.value) === obraAtualId;
+    });
+    novaObraSelect.value = "";
+  }
 
   aplicarPermissoesTela();
 
@@ -3124,6 +3289,7 @@ function aplicarPermissoesTela(){
   const podeMovimentar = usuarioTemPermissao("PATRIMONIO_MOVIMENTAR");
   const podeEditar = usuarioTemPermissao("PATRIMONIO_EDITAR");
   const podeImprimir = usuarioTemPermissao("PATRIMONIO_IMPRIMIR");
+  const podeManutencao = usuarioTemPermissao("MANUTENCAO_CRIAR");
   const podeExcluir = usuarioTemPermissao("PATRIMONIO_EXCLUIR");
 
   const cardEntrada = document.getElementById("cardEntradaPatrimonio");
@@ -3159,14 +3325,27 @@ function aplicarPermissoesTela(){
 
   const botaoEtiquetas = document.getElementById("bdrBotaoAcaoEtiquetas");
   if(botaoEtiquetas){
-    botaoEtiquetas.style.display = podeImprimir ? "" : "none";
-    botaoEtiquetas.disabled = !podeImprimir;
+    botaoEtiquetas.style.display = bdrModoSelecaoEtiquetas && podeImprimir ? "" : "none";
+    botaoEtiquetas.disabled = !podeImprimir || bdrEtiquetasSelecionadas.size === 0;
   }
 
-  const botaoNovaRemessa = document.querySelector('#atlasRemessaCard [data-permissao="PATRIMONIO_MOVIMENTAR"]');
-  if(botaoNovaRemessa){
-    botaoNovaRemessa.style.display = podeMovimentar ? "" : "none";
-    botaoNovaRemessa.disabled = !podeMovimentar;
+  const botaoRemessa = document.getElementById("bdrBotaoAcaoRemessa");
+  if(botaoRemessa){
+    botaoRemessa.style.display = bdrModoSelecaoEtiquetas && podeMovimentar ? "" : "none";
+    botaoRemessa.disabled = !podeMovimentar || bdrEtiquetasSelecionadas.size === 0;
+  }
+
+  const botaoManutencao = document.getElementById("bdrBotaoAcaoManutencao");
+  if(botaoManutencao){
+    botaoManutencao.style.display = bdrModoSelecaoEtiquetas && podeManutencao ? "" : "none";
+    botaoManutencao.disabled = !podeManutencao || bdrEtiquetasSelecionadas.size === 0;
+  }
+
+  const botaoSelecao = document.getElementById("bdrBotaoSelecaoPatrimonio");
+  if(botaoSelecao){
+    const podeAlgumaAcao = podeImprimir || podeMovimentar || podeManutencao;
+    botaoSelecao.style.display = podeAlgumaAcao && !bdrModoSelecaoEtiquetas ? "" : "none";
+    botaoSelecao.disabled = !podeAlgumaAcao;
   }
 
   const observacaoMov = document.getElementById("observacaoMov");
@@ -3219,7 +3398,73 @@ const usuarioLogado = JSON.parse(
     return false;
   }
 
+  // Regra Atlas: ESTOQUE <-> EM_USO é movimentação operacional comum e não
+  // gera alerta. As demais movimentações patrimoniais avisam o OWNER (ID 1)
+  // e os usuários responsáveis pela obra que estejam habilitados a receber
+  // notificações. A gravação da movimentação nunca depende do alerta.
+  try{
+    await atlasNotificarMovimentacaoPatrimonio(payloadMovimentacao);
+  }catch(notifErr){
+    console.warn("Atlas Patrimônio: movimentação gravada, mas a notificação falhou.", notifErr?.message || notifErr);
+  }
+
   return true;
+}
+
+function atlasMovimentacaoPatrimonioSilenciosa(mov){
+  const anterior=String(mov?.status_anterior||"").trim().toUpperCase();
+  const novo=String(mov?.status_novo||"").trim().toUpperCase();
+  return (anterior==="EM_USO" && novo==="ESTOQUE") || (anterior==="ESTOQUE" && novo==="EM_USO");
+}
+
+async function atlasNotificarMovimentacaoPatrimonio(mov){
+  if(!mov || atlasMovimentacaoPatrimonioSilenciosa(mov)) return 0;
+  const banco=patrimonioDb();
+  if(!banco) return 0;
+  const atual=patrimonioSelecionado || {};
+  const empresaId=mov.empresa_id || atual.empresa_id || patrimonioUsuarioAtual()?.empresa_id || null;
+  const obraId=mov.obra_destino_id || mov.obra_origem_id || atual.obra_id || null;
+  const gestor=window.AtlasGestorNotificacoes;
+  let usuarios=[];
+  if(gestor?.buscarUsuariosEmpresa){
+    usuarios=await gestor.buscarUsuariosEmpresa(empresaId);
+  }else{
+    let q=banco.from("usuarios_sistema").select("id,nome,usuario,empresa_id,obra_id,obras_liberadas,ativo,permissoes").eq("ativo",true);
+    if(empresaId) q=q.eq("empresa_id",empresaId);
+    const r=await q;
+    if(r.error) throw r.error;
+    usuarios=r.data||[];
+  }
+  const aceita=u=>{
+    if(!u || u.ativo===false) return false;
+    if(Number(u.id)===1) return true;
+    const perms=String(u.permissoes||"").split(",").map(x=>x.trim().toUpperCase());
+    if(!perms.includes("RECEBER_NOTIFICACOES")) return false;
+    if(!obraId) return false;
+    if(gestor?.usuarioTemAcessoObra) return gestor.usuarioTemAcessoObra(u,obraId);
+    const obras=[u.obra_id,...String(u.obras_liberadas||"").split(/[;,|]/)].map(x=>String(x||"").trim());
+    return obras.includes(String(obraId));
+  };
+  const destinos=[];
+  const ids=new Set();
+  for(const u of usuarios){
+    if(!aceita(u) || ids.has(String(u.id))) continue;
+    ids.add(String(u.id)); destinos.push(u);
+  }
+  if(!destinos.length) return 0;
+  const codigo=atual.codigo_qr || atual.codigo_bem || (mov.patrimonio_id ? `Patrimônio #${mov.patrimonio_id}` : "Patrimônio");
+  const tipo=String(mov.tipo||"MOVIMENTACAO_PATRIMONIO").toUpperCase();
+  const titulo=tipo.includes("BAIX") ? "⬇ Patrimônio baixado" : tipo.includes("CORRECAO") ? "✏️ Dados do patrimônio alterados" : tipo.includes("MANUT") ? "🔧 Movimentação de manutenção" : "↔ Movimentação patrimonial";
+  const mensagem=[codigo, mov.status_anterior && mov.status_novo ? `${mov.status_anterior} → ${mov.status_novo}` : null, mov.observacao ? `Motivo: ${mov.observacao}` : null, `Por: ${mov.usuario||"Usuário não identificado"}`].filter(Boolean).join(" • ");
+  const rows=destinos.map(u=>({
+    usuario_destino_id:u.id,empresa_id:empresaId,tipo:"PATRIMONIO_MOVIMENTACAO",titulo,mensagem,
+    link:`atlas.html?m=patrimonio&patrimonio=${encodeURIComponent(codigo)}`,lida:false,status:"NAO_LIDA",
+    obra_origem_id:mov.obra_origem_id||null,obra_destino_id:mov.obra_destino_id||null,patrimonio_id:mov.patrimonio_id||null
+  }));
+  const {error}=await banco.from("notificacoes").insert(rows);
+  if(error) throw error;
+  document.dispatchEvent(new CustomEvent("atlas:notificacoes:atualizar"));
+  return rows.length;
 }
 
 
@@ -3470,7 +3715,7 @@ async function alterarStatus(novoStatus){
         const ordemAtlas = await window.AtlasWorkflowManutencao.abertaPorPatrimonio(patrimonioSelecionado.id);
         if(ordemAtlas && String(ordemAtlas.status || "").toUpperCase() !== "ABERTA"){
           if(confirm(`Existe a ordem ${ordemAtlas.codigo || "#" + ordemAtlas.id} em andamento.\n\nDeseja abrir a Central de Manutenção?`)){
-            location.href = `manutencao.html?id=${ordemAtlas.id}`;
+            location.href = `atlas.html?m=manutencao&id=${ordemAtlas.id}`;
           }
           return;
         }
@@ -3580,117 +3825,62 @@ async function alterarStatusBaseBDR(novoStatus, observacaoForcada=null){
 }
 
 async function trocarObra(){
-
   if(!usuarioTemPermissao("PATRIMONIO_MOVIMENTAR")){
-    alert("Você não tem permissão para trocar obra/setor.");
+    alert("Você não tem permissão para transferir patrimônios.");
     return;
   }
-
-
-  if(!patrimonioSelecionado){
-    alert("Selecione um patrimônio.");
-    return;
-  }
-
+  if(!patrimonioSelecionado){ alert("Selecione um patrimônio."); return; }
   const obs = patrimonioValor("observacaoMov");
-
-  if(!obs || obs.length < 5){
-    alert("Informe uma justificativa da troca de setor/obra.");
-    return;
-  }
-
-  const novaObraId = document.getElementById("novaObraSelect").value;
-
-  if(!novaObraId){
-    alert("Selecione a nova obra/setor.");
-    return;
-  }
-
-  const novaObra = patrimonioObras.find(
-    o => String(o.id) === String(novaObraId)
-  );
-
-  if(!novaObra){
-    alert("Obra não encontrada.");
-    return;
-  }
-
-  const statusAnterior = patrimonioSelecionado.status || null;
-  const obraOrigemId = patrimonioSelecionado.obra_id || null;
-
-  const payload = {
-    obra_id: novaObra.id,
-    empresa_id: novaObra.empresa_id,
-    localizacao: novaObra.nome,
-    status: "EM_USO"
-  };
-
-  
+  if(!obs || obs.length < 5){ alert("Informe uma justificativa da transferência."); return; }
+  const novaObraId = document.getElementById("novaObraSelect")?.value;
+  if(!novaObraId){ alert("Selecione a obra/setor de destino."); return; }
+  if(String(novaObraId)===String(patrimonioSelecionado.obra_id)){ alert("Origem e destino precisam ser diferentes."); return; }
   if(patrimonioOffline()){
-    await salvarOperacaoPatrimonioOffline("update", "patrimonio", payload, {
-      filtro:{ id: patrimonioSelecionado.id }
-    });
-
-    await salvarOperacaoPatrimonioOffline("insert", "movimentacoes", [{
-      patrimonio_id: patrimonioSelecionado.id,
-      empresa_id: novaObra.empresa_id,
-      obra_origem_id: obraOrigemId,
-      obra_destino_id: novaObra.id,
-      tipo: "TROCA_SETOR",
-      status_anterior: statusAnterior,
-      status_novo: "EM_USO",
-      observacao: obs,
-      usuario: patrimonioUsuarioAtual()?.nome || "Usuário não identificado",
-      data_movimentacao: new Date().toISOString()
-    }]);
-
-    patrimonioItens = patrimonioItens.map(p =>
-      Number(p.id) === Number(patrimonioSelecionado.id)
-        ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
-        : p
-    );
-
-    alert("📦 Sem internet. Troca de setor salva no aparelho e será sincronizada quando a internet voltar.");
-
+    alert("A transferência entre obras precisa de conexão para entrar na fila da Expedição e garantir rastreabilidade.");
+    return;
+  }
+  const novaObra = patrimonioObras.find(o=>String(o.id)===String(novaObraId));
+  const obraOrigem = patrimonioObras.find(o=>String(o.id)===String(patrimonioSelecionado.obra_id));
+  if(!novaObra){ alert("Obra de destino não encontrada."); return; }
+  const u=patrimonioUsuarioAtual()||{};
+  const agora=new Date();
+  const codigo=`TR-${agora.getFullYear()}${String(agora.getMonth()+1).padStart(2,'0')}${String(agora.getDate()).padStart(2,'0')}-${String(Date.now()).slice(-6)}`;
+  const payload={
+    p_codigo:codigo,
+    p_empresa_id:Number(obraOrigem?.empresa_id||patrimonioSelecionado.empresa_id||u.empresa_id||17),
+    p_obra_origem_id:Number(patrimonioSelecionado.obra_id),
+    p_obra_destino_id:Number(novaObra.id),
+    p_obra_origem_nome:obraOrigem?.nome||obraOrigem?.setor_obra||patrimonioSelecionado.localizacao||'Origem',
+    p_obra_destino_nome:novaObra?.nome||novaObra?.setor_obra||'Destino',
+    p_status_destino:'',
+    p_enviado_por_id:Number(u.id||u.usuario_id||0)||null,
+    p_enviado_por_nome:u.nome||u.usuario||'Usuário não identificado',
+    p_motorista:'',p_veiculo:'',p_placa:'',
+    p_observacao:obs,
+    p_itens:[{patrimonio_id:Number(patrimonioSelecionado.id)}]
+  };
+  try{
+    const banco=patrimonioDb();
+    const {data,error}=await banco.rpc('atlas_criar_remessa_patrimonial',payload);
+    if(error) throw error;
+    try{
+      const {data:usuarios}=await banco.from('usuarios').select('id,obra_id,obras_liberadas,permissoes,ativo').eq('ativo',true);
+      const autorId=Number(u.id||u.usuario_id||0),origem=String(patrimonioSelecionado.obra_id);
+      const rows=(usuarios||[]).filter(x=>Number(x.id)!==autorId).filter(x=>[x.obra_id,...String(x.obras_liberadas||'').split(',')].map(v=>String(v||'').trim()).includes(origem)).filter(x=>String(x.permissoes||'').includes('EXPEDICAO')).map(x=>({
+        usuario_destino_id:x.id,empresa_id:payload.p_empresa_id,tipo:'TRANSFERENCIA_AGUARDANDO_EXPEDICAO',
+        titulo:'↔ Transferência aguardando expedição',mensagem:`${codigo}: ${patrimonioSelecionado.codigo_qr||patrimonioSelecionado.nome_bem} para ${payload.p_obra_destino_nome}.`,
+        link:'atlas.html?m=expedicao&aba=transferencias',lida:false
+      }));
+      if(rows.length) await banco.from('notificacoes').insert(rows);
+    }catch(notifErr){ console.warn('Transferência criada, mas a notificação da Expedição falhou.',notifErr); }
     fecharModal();
-    renderizarPatrimonios();
-    return;
+    if(typeof atlasAvisoPatrimonio==='function') atlasAvisoPatrimonio('↔ Transferência encaminhada',`${codigo} enviada para a Expedição. O patrimônio continua na obra de origem até a saída e só muda de obra após o recebimento.`);
+    else alert(`Transferência ${codigo} enviada para a Expedição.`);
+    await carregarPatrimonios?.();
+  }catch(e){
+    console.error(e);
+    alert('Não foi possível encaminhar a transferência para a Expedição: '+(e.message||e));
   }
-
-  const respTroca = await bdrAtualizarPrimeiroNoTablet(
-    "patrimonio",
-    { id: patrimonioSelecionado.id },
-    payload,
-    { acao:"TROCA_SETOR_PATRIMONIO" }
-  );
-
-  if(respTroca.error){
-    console.error(respTroca.error);
-    alert(respTroca.error.message || "Erro ao transferir patrimônio.");
-    return;
-  }
-
-  patrimonioItens = patrimonioItens.map(p =>
-    Number(p.id) === Number(patrimonioSelecionado.id)
-      ? {...p, ...payload, __offline_pendente:!!respTroca.offlineFirst}
-      : p
-  );
-
-  await gravarMovimentacao({
-    patrimonio_id: patrimonioSelecionado.id,
-    empresa_id: novaObra.empresa_id,
-    obra_origem_id: obraOrigemId,
-    obra_destino_id: novaObra.id,
-    tipo: "TROCA_SETOR",
-    status_anterior: statusAnterior,
-    status_novo: "EM_USO",
-    observacao: obs
-  });
-
-  if(respTroca.offlineFirst){ bdrAvisoSalvoTablet("Transferência salva offline. Será sincronizada automaticamente quando a internet voltar."); }
-
-  fecharModal();
-  renderizarPatrimonios();
 }
 
 
@@ -4294,9 +4484,9 @@ function montarCamposEdicaoPorTipo(){
 
   if(tipo === "VEICULO"){
     box.innerHTML = `
-      <input id="edit_placa" placeholder="Placa">
-      <input id="edit_renavam" placeholder="RENAVAM">
-      <input id="edit_chassi" placeholder="Chassi">
+      <input id="edit_placa" placeholder="Placa" onblur="validarDuplicidadeCampoEdicaoPatrimonio('placa')">
+      <input id="edit_renavam" placeholder="RENAVAM" onblur="validarDuplicidadeCampoEdicaoPatrimonio('renavam')">
+      <input id="edit_chassi" placeholder="Chassi" onblur="validarDuplicidadeCampoEdicaoPatrimonio('chassi')">
       <input id="edit_marca" placeholder="Marca">
       <input id="edit_modelo" placeholder="Modelo">
       <input id="edit_cor" placeholder="Cor">
@@ -4706,3 +4896,9 @@ window.AtlasPatrimonioAPI = Object.freeze({
 });
 
 console.log("✅ ATLAS PATRIMÔNIO V4.0 carregado - carga paginada completa + combo de obras com rolagem segura");
+
+
+// API mínima do Patrimônio usada pelos módulos integrados do atlas.html.
+window.renderizarPatrimonios = renderizarPatrimonios;
+window.bdrCancelarSelecaoEtiquetas = bdrCancelarSelecaoEtiquetas;
+window.bdrEntrarModoSelecaoEtiquetas = bdrEntrarModoSelecaoEtiquetas;

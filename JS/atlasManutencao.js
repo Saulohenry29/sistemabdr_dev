@@ -38,6 +38,21 @@
     historico:[],
     realtime:null,
 
+    // Seleção de patrimônios para criar OS aguardando envio.
+    patrimonioFila:{
+      ativo:false,
+      selecionados:new Map(),
+      obraId:null,
+      obraNome:""
+    },
+
+    // Seleção de OS já criadas para saída física em lote.
+    envioLote:{
+      selecionados:new Set(),
+      obraId:null,
+      obraNome:""
+    },
+
     // Paginação da lista de ordens da Central.
     pagina:1,
     porPagina:ATLAS_MANUT_CONFIG.manutencoesPorPagina
@@ -413,7 +428,7 @@
           `<button class="atlas-btn light" data-close2>Fechar</button>
            <button class="atlas-btn primary" data-abrir>🔧 Abrir central da manutenção</button>`);
         bg.querySelector("[data-close2]").onclick=()=>bg.remove();
-        bg.querySelector("[data-abrir]").onclick=()=>location.href=`manutencao.html?id=${aberta.id}`;
+        bg.querySelector("[data-abrir]").onclick=()=>location.href=`atlas.html?m=manutencao&id=${aberta.id}`;
         return;
       }
     }catch(e){
@@ -509,7 +524,7 @@
         );
 
         if(abrirCentral){
-          location.href=`manutencao.html?id=${ordem.id}`;
+          location.href=`atlas.html?m=manutencao&id=${ordem.id}`;
         }else{
           location.reload();
         }
@@ -518,6 +533,406 @@
         botao.disabled=false;botao.textContent="🛠 Criar ordem de manutenção";
       }
     };
+  }
+
+
+  /* =========================================================
+     FILA DE MANUTENÇÃO + SAÍDA EM LOTE
+     - Patrimônio: seleciona um ou vários e cria OS em AGUARDANDO_ENVIO.
+     - Manutenção: agrupa somente a saída física para o mesmo fornecedor.
+     - Cada patrimônio mantém sua própria OS.
+  ========================================================= */
+  function moduloPatrimonio(){
+    return document.querySelector('.atlas-shell-module[data-module="patrimonio"]');
+  }
+
+  function patrimonioDisponivelParaFila(p){
+    if(!p?.id) return false;
+    const status=String(p.status||"").toUpperCase();
+    return p.ativo!==false && !["BAIXADO","INATIVO"].includes(status);
+  }
+
+  function nomeObraPatrimonio(p){
+    return p.localizacao || p.obra_nome || (p.obra_id ? `Obra ${p.obra_id}` : "Sem obra");
+  }
+
+  function modoSelecaoPatrimonioAtivo(){
+    return !!state.patrimonioFila.ativo;
+  }
+
+  function estaPatrimonioSelecionado(id){
+    return state.patrimonioFila.selecionados.has(String(id));
+  }
+
+  function resetSelecaoPatrimonio(){
+    state.patrimonioFila.ativo=false;
+    state.patrimonioFila.selecionados.clear();
+    state.patrimonioFila.obraId=null;
+    state.patrimonioFila.obraNome="";
+    moduloPatrimonio()?.classList.remove("atlas-modo-manut-selecao");
+    document.body.classList.remove("atlas-modo-manut-selecao");
+    document.getElementById("atlasManutSelecaoBar")?.remove();
+  }
+
+  function atualizarBarraSelecaoPatrimonio(){
+    const mod=moduloPatrimonio();
+    if(!mod || !state.patrimonioFila.ativo) return;
+    let bar=document.getElementById("atlasManutSelecaoBar");
+    if(!bar){
+      bar=document.createElement("div");
+      bar.id="atlasManutSelecaoBar";
+      bar.className="atlas-manut-patrimonio-selection-bar";
+      const lista=mod.querySelector("#lista");
+      if(lista?.parentElement) lista.parentElement.insertBefore(bar,lista);
+    }
+    const qtd=state.patrimonioFila.selecionados.size;
+    bar.innerHTML=`<div><strong>🔧 ${qtd} patrimônio(s) selecionado(s)</strong><span>${qtd?`Origem: ${esc(state.patrimonioFila.obraNome||"-")}`:"O primeiro item define a obra de origem."}</span></div><div class="atlas-manut-selection-actions"><button type="button" class="atlas-btn light" data-cancelar-manut>Cancelar</button><button type="button" class="atlas-btn primary" data-continuar-manut ${qtd?"":"disabled"}>Continuar</button></div>`;
+    bar.querySelector("[data-cancelar-manut]").onclick=cancelarSelecaoPatrimonio;
+    bar.querySelector("[data-continuar-manut]").onclick=continuarSelecaoPatrimonio;
+  }
+
+  async function iniciarSelecaoPatrimonio(){
+    if(!exigirPermissao("MANUTENCAO_CRIAR","Você não possui permissão para enviar patrimônios para manutenção.")) return;
+    if(window.AtlasPatrimonioRemessas?.modoSelecaoAtivo?.()) window.AtlasPatrimonioRemessas.cancelarSelecao?.();
+    if(typeof window.bdrCancelarSelecaoEtiquetas==="function") window.bdrCancelarSelecaoEtiquetas();
+    resetSelecaoPatrimonio();
+    state.patrimonioFila.ativo=true;
+    moduloPatrimonio()?.classList.add("atlas-modo-manut-selecao");
+    document.body.classList.add("atlas-modo-manut-selecao");
+    atualizarBarraSelecaoPatrimonio();
+    if(typeof window.renderizarPatrimonios==="function") window.renderizarPatrimonios();
+  }
+
+  function cancelarSelecaoPatrimonio(){
+    resetSelecaoPatrimonio();
+    if(typeof window.renderizarPatrimonios==="function") window.renderizarPatrimonios();
+  }
+
+  async function buscarPatrimonioId(id){
+    const {data,error}=await db().from("patrimonio").select("*").eq("id",id).maybeSingle();
+    if(error) throw error;
+    return data;
+  }
+
+  async function alternarPatrimonioSelecao(id,marcado){
+    try{
+      const key=String(id);
+      if(marcado===undefined) marcado=!estaPatrimonioSelecionado(key);
+      if(!marcado){
+        state.patrimonioFila.selecionados.delete(key);
+        if(!state.patrimonioFila.selecionados.size){
+          state.patrimonioFila.obraId=null;
+          state.patrimonioFila.obraNome="";
+        }
+        atualizarBarraSelecaoPatrimonio();
+        return;
+      }
+      const p=await buscarPatrimonioId(id);
+      if(!p || !patrimonioDisponivelParaFila(p)){
+        aviso("Este patrimônio não está disponível para manutenção.","danger");
+        return;
+      }
+      const aberta=await wf().abertaPorPatrimonio(p.id);
+      if(aberta){
+        aviso(`Já existe uma manutenção aberta (${aberta.codigo||"#"+aberta.id}) para ${p.codigo_qr||p.nome_bem}.`,"danger");
+        return;
+      }
+      if(state.patrimonioFila.obraId!==null && String(p.obra_id)!==String(state.patrimonioFila.obraId)){
+        aviso(`Uma seleção para manutenção precisa sair de uma única obra. Os itens já selecionados são de ${state.patrimonioFila.obraNome}.`,"danger");
+        return;
+      }
+      if(state.patrimonioFila.obraId===null){
+        state.patrimonioFila.obraId=p.obra_id;
+        state.patrimonioFila.obraNome=nomeObraPatrimonio(p);
+      }
+      state.patrimonioFila.selecionados.set(key,p);
+      atualizarBarraSelecaoPatrimonio();
+    }catch(e){
+      console.error(e);
+      aviso(e.message||"Não foi possível selecionar o patrimônio.","danger");
+    }finally{
+      document.querySelectorAll(`.atlas-manut-pat-check[data-pat-id="${CSS.escape(String(id))}"]`).forEach(c=>c.checked=estaPatrimonioSelecionado(id));
+    }
+  }
+
+  function alternarPatrimonioPorLinha(id){
+    return alternarPatrimonioSelecao(id,!estaPatrimonioSelecionado(id));
+  }
+
+  async function selecionarPaginaPatrimonio(marcado){
+    const checks=[...document.querySelectorAll(".atlas-manut-pat-check")];
+    for(const c of checks){
+      await alternarPatrimonioSelecao(c.dataset.patId,marcado);
+    }
+    const head=document.querySelector(".atlas-manut-pagina-check");
+    if(head) head.checked=marcado && checks.every(c=>c.checked);
+  }
+
+  function modalFilaPatrimonios(itens,{origem="patrimonio"}={}){
+    if(!itens?.length){aviso("Selecione pelo menos um patrimônio.","danger");return;}
+    const corpo=`
+      <div class="atlas-manut-lote-info"><b>${itens.length} patrimônio(s)</b><span>Origem: ${esc(nomeObraPatrimonio(itens[0]))}</span><span>${itens.length > 1 ? `Será preparado <b>1 lote de manutenção</b>. Cada patrimônio mantém diagnóstico, orçamento e histórico próprios.` : `Será preparada <b>1 manutenção individual</b>.`}</span></div>
+      <div class="atlas-manut-form-grid">
+        <label>Tipo de manutenção<select id="amfTipo"><option value="CORRETIVA">Corretiva</option><option value="PREVENTIVA">Preventiva</option><option value="GARANTIA">Garantia</option><option value="INSPECAO">Inspeção / diagnóstico</option></select></label>
+        <label>Prioridade<select id="amfPrioridade"><option value="NORMAL">Normal</option><option value="ALTA">Alta</option><option value="URGENTE">Urgente</option></select></label>
+        <label class="wide">Motivo padrão<textarea id="amfMotivoPadrao" placeholder="Ex.: não liga, vazamento, revisão preventiva..."></textarea></label>
+      </div>
+      <div class="atlas-manut-lote-review">${itens.map(p=>`<label class="atlas-manut-lote-review-item"><span><b>${esc(p.codigo_qr||p.codigo_antigo||"-")}</b> ${esc(p.nome_bem||"")}</span><textarea data-fila-motivo="${p.id}" placeholder="Defeito / motivo desta OS"></textarea></label>`).join("")}</div>`;
+    const emLote=itens.length>1;
+    const bg=modalBase("atlasManutModalFila",emLote?"🔧 Criar lote de manutenção":"🔧 Encaminhar para manutenção",corpo,`<button class="atlas-btn light" data-cancelar>Cancelar</button><button class="atlas-btn primary" data-criar>${emLote?"🔧 Criar lote de manutenção":"🛠 Criar manutenção"}</button>`);
+    $("[data-cancelar]",bg).onclick=()=>bg.remove();
+    $("#amfMotivoPadrao",bg)?.addEventListener("input",e=>{
+      $$('[data-fila-motivo]',bg).forEach(c=>{if(!c.dataset.editado)c.value=e.target.value;});
+    });
+    $$('[data-fila-motivo]',bg).forEach(c=>c.addEventListener("input",()=>c.dataset.editado="1"));
+    $("[data-criar]",bg).onclick=async()=>{
+      const btn=$("[data-criar]",bg);
+      const motivos=new Map($$('[data-fila-motivo]',bg).map(c=>[String(c.dataset.filaMotivo),c.value.trim()]));
+      const invalido=itens.find(p=>(motivos.get(String(p.id))||"").length<5);
+      if(invalido){aviso(`Informe o motivo de ${invalido.codigo_qr||invalido.nome_bem} com pelo menos 5 caracteres.`,"danger");return;}
+      btn.disabled=true;
+      const criadas=[];
+      try{
+        for(let i=0;i<itens.length;i++){
+          btn.textContent=`Criando ${i+1} de ${itens.length}...`;
+          const p=itens[i];
+          criadas.push(await wf().criarOrdem(p,{
+            tipo_manutencao:$("#amfTipo",bg).value,
+            prioridade:$("#amfPrioridade",bg).value,
+            defeito_informado:motivos.get(String(p.id)),
+            fornecedor_nome:null,
+            destino_fornecedor:null,
+            previsao_envio:null,
+            destino_retorno:p.localizacao||null,
+            observacao:"Encaminhado para a fila da manutenção. Aguardando definição do envio."
+          }));
+        }
+        bg.remove();
+        resetSelecaoPatrimonio();
+        if(typeof window.renderizarPatrimonios==="function") window.renderizarPatrimonios();
+
+        // Em lote, as OS continuam existindo internamente para histórico individual,
+        // mas o usuário trabalha com UMA única unidade: o lote de manutenção.
+        // Assim que os registros internos são preparados, já abrimos o envio do lote
+        // com todos eles selecionados. Não há etapa visual de "2 OS", "3 OS" etc.
+        if(emLote){
+          await carregar();
+          resetEnvioLote();
+          for(const ordemCriada of criadas){
+            const id=String(ordemCriada?.id||"");
+            const ordem=state.ordens.find(o=>String(o.id)===id);
+            if(!ordem) throw new Error("O Atlas criou o lote, mas não conseguiu localizar um dos patrimônios para o envio.");
+            if(state.envioLote.obraId===null){
+              state.envioLote.obraId=ordem.obra_id;
+              state.envioLote.obraNome=ordem.obra_nome||nomeObraPatrimonio(itens[0]);
+            }
+            state.envioLote.selecionados.add(id);
+          }
+          atualizarAcoesCentral();
+          aviso(`${criadas.length} patrimônios preparados em um único lote. Informe agora a oficina e os dados do envio.`);
+          enviarSelecionados();
+          return;
+        }
+
+        if(document.querySelector('.atlas-shell-module[data-module="manutencao"]')?.getAttribute("aria-hidden")==="false") await carregar();
+        const abrirCentral=await confirmarAtlas("Manutenção preparada","1 patrimônio aguardando envio. Deseja abrir a Central de Manutenção?","Abrir Central");
+        if(abrirCentral){
+          window.atlasShellAbrir?.("manutencao");
+          setTimeout(()=>{
+            const filtro=document.getElementById("manutFiltroStatus");
+            if(filtro){filtro.value="AGUARDANDO_ENVIO";state.pagina=1;renderLista();}
+          },180);
+        }
+      }catch(e){
+        console.error(e);aviso(e.message||"Erro ao preparar a manutenção.","danger");
+        btn.disabled=false;btn.textContent=emLote?"🔧 Criar lote de manutenção":"🛠 Criar manutenção";
+      }
+    };
+  }
+
+  function continuarSelecaoPatrimonio(){
+    modalFilaPatrimonios([...state.patrimonioFila.selecionados.values()],{origem:"patrimonio"});
+  }
+
+  async function carregarPatrimoniosDisponiveis(){
+    let q=db().from("patrimonio").select("id,codigo_qr,codigo_antigo,nome_bem,obra_id,empresa_id,localizacao,marca,modelo,status,ativo").order("id",{ascending:false}).limit(1000);
+    if(!usuarioVeTodasAsObras()){
+      const obras=obrasPermitidasUsuario();
+      if(!obras.length) return [];
+      q=obras.length===1?q.eq("obra_id",obras[0]):q.in("obra_id",obras);
+    }
+    const {data,error}=await q;if(error)throw error;
+    const abertas=new Set(state.ordens.filter(o=>!["FINALIZADA","CANCELADA","ORCAMENTO_RECUSADO","FECHADA"].includes(String(o.status||"").toUpperCase())).map(o=>String(o.patrimonio_id)));
+    return (data||[]).filter(p=>patrimonioDisponivelParaFila(p)&&!abertas.has(String(p.id)));
+  }
+
+  async function adicionarPatrimoniosCentral(){
+    if(!exigirPermissao("MANUTENCAO_CRIAR","Você não possui permissão para criar manutenção.")) return;
+    let pats=[];
+    try{pats=await carregarPatrimoniosDisponiveis();}catch(e){aviso(e.message||"Não foi possível carregar os patrimônios.","danger");return;}
+    const escolhidos=new Map();let obraId=null;let obraNome="";
+    const corpo=`<div class="atlas-manut-lote-select-head"><input data-add-busca placeholder="Buscar PAT, nome, marca, modelo ou obra..."><div data-add-resumo>Selecione os patrimônios. O primeiro define a obra.</div></div><div class="atlas-manut-lote-list" data-add-lista></div>`;
+    const bg=modalBase("atlasManutModalAdicionar","＋ Adicionar patrimônios à manutenção",corpo,`<button class="atlas-btn light" data-cancelar>Cancelar</button><button class="atlas-btn primary" data-continuar disabled>Continuar</button>`);
+    const render=()=>{
+      const termo=String($("[data-add-busca]",bg).value||"").trim().toLowerCase();
+      const lista=pats.filter(p=>!termo||[p.codigo_qr,p.codigo_antigo,p.nome_bem,p.marca,p.modelo,p.localizacao].join(" ").toLowerCase().includes(termo));
+      $("[data-add-resumo]",bg).innerHTML=escolhidos.size?`<b>${escolhidos.size}</b> selecionado(s) • origem: <b>${esc(obraNome)}</b>`:"Selecione os patrimônios. O primeiro define a obra.";
+      $("[data-continuar]",bg).disabled=!escolhidos.size;
+      $("[data-add-lista]",bg).innerHTML=lista.map(p=>{const key=String(p.id),sel=escolhidos.has(key),bloq=obraId!==null&&String(p.obra_id)!==String(obraId);return `<button type="button" class="atlas-manut-lote-item ${sel?"selected":""} ${bloq?"blocked":""}" data-add-id="${p.id}"><span class="atlas-manut-lote-check">${sel?"✓":""}</span><span><strong>${esc(p.codigo_qr||p.codigo_antigo||"Sem PAT")}</strong><small>${esc(p.nome_bem||"Patrimônio")} • ${esc([p.marca,p.modelo].filter(Boolean).join(" ")||"-")}</small></span><span class="atlas-manut-lote-obra">${esc(nomeObraPatrimonio(p))}</span></button>`;}).join("")||`<div class="atlas-manut-empty"><h3>Nenhum patrimônio disponível</h3></div>`;
+    };
+    $("[data-add-busca]",bg).oninput=render;
+    $("[data-add-lista]",bg).onclick=e=>{const el=e.target.closest("[data-add-id]");if(!el)return;const p=pats.find(x=>String(x.id)===String(el.dataset.addId));if(!p)return;const key=String(p.id);if(escolhidos.has(key)){escolhidos.delete(key);if(!escolhidos.size){obraId=null;obraNome="";}}else{if(obraId!==null&&String(p.obra_id)!==String(obraId)){aviso(`Selecione patrimônios de uma única obra por vez. Origem atual: ${obraNome}.`,"danger");return;}if(obraId===null){obraId=p.obra_id;obraNome=nomeObraPatrimonio(p);}escolhidos.set(key,p);}render();};
+    $("[data-cancelar]",bg).onclick=()=>bg.remove();
+    $("[data-continuar]",bg).onclick=()=>{const itens=[...escolhidos.values()];bg.remove();modalFilaPatrimonios(itens,{origem:"central"});};
+    render();
+  }
+
+  function resetEnvioLote(){
+    state.envioLote.selecionados.clear();
+    state.envioLote.obraId=null;
+    state.envioLote.obraNome="";
+    atualizarAcoesCentral();
+  }
+
+  function alternarOrdemEnvio(id,marcado){
+    const o=state.ordens.find(x=>String(x.id)===String(id));
+    if(!o || String(o.status||"").toUpperCase()!=="AGUARDANDO_ENVIO") return;
+    const key=String(o.id);
+    if(!marcado){state.envioLote.selecionados.delete(key);if(!state.envioLote.selecionados.size){state.envioLote.obraId=null;state.envioLote.obraNome="";}}else{
+      if(state.envioLote.obraId!==null&&String(o.obra_id)!==String(state.envioLote.obraId)){aviso(`O mesmo envio precisa sair de uma única obra. Origem atual: ${state.envioLote.obraNome}.`,"danger");return;}
+      if(state.envioLote.obraId===null){state.envioLote.obraId=o.obra_id;state.envioLote.obraNome=o.obra_nome||`Obra ${o.obra_id||"-"}`;}
+      state.envioLote.selecionados.add(key);
+    }
+    document.querySelectorAll(`.atlas-manut-envio-check[data-id="${CSS.escape(key)}"]`).forEach(c=>c.checked=state.envioLote.selecionados.has(key));
+    atualizarAcoesCentral();
+  }
+
+  function codigoLoteManutencao(){
+    const d=new Date(),z=n=>String(n).padStart(2,"0");
+    return `LM-${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
+  }
+
+  async function garantirEstruturaLote(){
+    const {error}=await db().from("manutencoes_patrimonio").select("id,lote_codigo").limit(1);
+    if(error&&/lote_codigo/i.test(String(error.message||error))) throw new Error("Execute supabase/atlas_manutencao_lotes.sql no Supabase para habilitar o envio em lote.");
+    if(error) throw error;
+  }
+
+  async function carregarObrasManutencao(){
+    const {data,error}=await db().from("obras").select("id,codigo_obra,nome,ativa,ativo").order("codigo_obra",{ascending:true});
+    if(error) throw error;
+    return (data||[]).filter(o=>o.ativa!==false&&o.ativo!==false);
+  }
+
+  function cardDestinoManutencao(valor,icone,titulo,descricao){
+    return `<label class="atlas-manut-destino-card"><input type="radio" name="amlTipoDestino" value="${valor}"><span class="atlas-manut-destino-icon">${icone}</span><span><strong>${titulo}</strong><small>${descricao}</small></span></label>`;
+  }
+
+  async function enviarSelecionados(){
+    const ordens=[...state.envioLote.selecionados].map(id=>state.ordens.find(o=>String(o.id)===String(id))).filter(Boolean);
+    if(!ordens.length){aviso("Selecione pelo menos um patrimônio aguardando envio.","danger");return;}
+
+    let obras=[];
+    try{obras=await carregarObrasManutencao();}catch(e){console.error(e);aviso("Não foi possível carregar as obras.","danger");return;}
+    const origemId=String(state.envioLote.obraId??"");
+    const opcoesObra=obras.filter(o=>String(o.id)!==origemId).map(o=>`<option value="${esc(o.id)}">${esc(o.codigo_obra||"")} - ${esc(o.nome||"Obra")}</option>`).join("");
+    const hoje=new Date().toISOString().slice(0,10);
+
+    const corpo=`
+      <div class="atlas-manut-lote-info"><b>1 lote • ${ordens.length} patrimônio(s)</b><span>Origem: ${esc(state.envioLote.obraNome||"-")}</span><span>Cada patrimônio mantém sua própria MAN, diagnóstico, custo e histórico.</span></div>
+      <div class="atlas-manut-destino-title">Onde o serviço será realizado?</div>
+      <div class="atlas-manut-destino-grid">
+        ${cardDestinoManutencao("PROPRIA_OBRA","🔧","Nesta própria obra","Eletricista/mecânico executa o serviço sem transporte.")}
+        ${cardDestinoManutencao("OUTRA_OBRA","🏗️","Outra obra da BDR","O lote sai da obra atual para atendimento interno.")}
+        ${cardDestinoManutencao("FORNECEDOR_EXTERNO","🏢","Fornecedor externo","Oficina/empresa externa recebe um link único do lote.")}
+      </div>
+      <div id="amlCamposDestino" class="atlas-manut-destino-fields" hidden></div>`;
+
+    const bg=modalBase("atlasManutModalEnvioLote","🔧 Encaminhar lote de manutenção",corpo,`<button class="atlas-btn light" data-cancelar>Cancelar</button><button class="atlas-btn primary" data-enviar disabled>Continuar</button>`);
+    const campos=$("#amlCamposDestino",bg),btn=$("[data-enviar]",bg);
+    let tipo="";
+
+    const renderCampos=()=>{
+      tipo=bg.querySelector('input[name="amlTipoDestino"]:checked')?.value||"";
+      btn.disabled=!tipo;
+      if(!tipo){campos.hidden=true;campos.innerHTML="";return;}
+      campos.hidden=false;
+      if(tipo==="PROPRIA_OBRA"){
+        campos.innerHTML=`<div class="atlas-manut-form-grid"><label>Responsável pelo serviço *<input id="amlResponsavel" placeholder="Nome do eletricista / mecânico"></label><label>Previsão de início<input id="amlData" type="date" value="${hoje}"></label><label class="wide">Observação do lote<textarea id="amlObs" placeholder="Informações comuns para estes patrimônios..."></textarea></label></div><div class="atlas-manut-note">🔧 Não exige motorista nem placa. Na conclusão, cada patrimônio deverá ter diagnóstico, serviço executado, materiais/peças e custos registrados.</div>`;
+      }else if(tipo==="OUTRA_OBRA"){
+        campos.innerHTML=`<div class="atlas-manut-form-grid"><label>Obra de destino *<select id="amlObraDestino"><option value="">Selecione...</option>${opcoesObra}</select></label><label>Responsável pelo serviço<input id="amlResponsavel" placeholder="Ex.: eletricista / mecânico da obra"></label><label>Motorista *<input id="amlMotorista" placeholder="Nome completo"></label><label>Placa do veículo *<input id="amlPlaca" placeholder="ABC1D23" maxlength="8"></label><label>Data da saída<input id="amlData" type="date" value="${hoje}"></label><label>Previsão de retorno<input id="amlRetorno" type="date"></label><label class="wide">Observação do lote<textarea id="amlObs" placeholder="Informações comuns do transporte / serviço..."></textarea></label></div><div class="atlas-manut-note">🏗️ Motorista e placa são obrigatórios porque os patrimônios sairão fisicamente da obra de origem.</div>`;
+      }else{
+        campos.innerHTML=`<div class="atlas-manut-form-grid"><label>Fornecedor / oficina *<input id="amlFornecedor" placeholder="Ex.: Oficina Silva"></label><label>Destino / endereço<input id="amlDestino" placeholder="Ex.: Oficina Silva - Centro"></label><label>WhatsApp<input id="amlWhatsapp" placeholder="65 99999-9999"></label><label>E-mail<input id="amlEmail" type="email" data-bdr-sem-uppercase placeholder="orcamento@oficina.com.br"></label><label>Motorista *<input id="amlMotorista" placeholder="Nome completo"></label><label>Placa do veículo *<input id="amlPlaca" placeholder="ABC1D23" maxlength="8"></label><label>Data da saída<input id="amlData" type="date" value="${hoje}"></label><label>Previsão de retorno<input id="amlRetorno" type="date"></label><label>Meio de transporte<input id="amlTransporte" placeholder="Ex.: veículo da empresa"></label><label class="wide">Observação do envio<textarea id="amlObs" placeholder="Informações comuns do lote..."></textarea></label></div><div class="atlas-manut-note">🏢 Será criado um único link para o fornecedor preencher os patrimônios um por vez.</div>`;
+        aplicarEmailMinusculo($("#amlEmail",bg));
+      }
+    };
+    $$('.atlas-manut-destino-card input',bg).forEach(r=>r.onchange=renderCampos);
+    $("[data-cancelar]",bg).onclick=()=>bg.remove();
+
+    btn.onclick=async()=>{
+      const lote=codigoLoteManutencao();
+      const responsavel=$("#amlResponsavel",bg)?.value.trim()||"";
+      const motorista=$("#amlMotorista",bg)?.value.trim()||"";
+      const placa=$("#amlPlaca",bg)?.value.trim().toUpperCase()||"";
+      const obs=$("#amlObs",bg)?.value.trim()||"";
+      if(tipo==="PROPRIA_OBRA" && responsavel.length<3){aviso("Informe quem será responsável pelo serviço.","danger");$("#amlResponsavel",bg)?.focus();return;}
+      if(tipo==="OUTRA_OBRA" && !$("#amlObraDestino",bg)?.value){aviso("Selecione a obra de destino.","danger");return;}
+      if(tipo!=="PROPRIA_OBRA" && motorista.length<3){aviso("Informe o motorista responsável pelo transporte.","danger");$("#amlMotorista",bg)?.focus();return;}
+      if(tipo!=="PROPRIA_OBRA" && placa.length<7){aviso("Informe a placa do veículo.","danger");$("#amlPlaca",bg)?.focus();return;}
+      if(tipo==="FORNECEDOR_EXTERNO" && ($("#amlFornecedor",bg)?.value.trim()||"").length<2){aviso("Informe o fornecedor / oficina.","danger");return;}
+
+      btn.disabled=true;let feitos=0;
+      try{
+        await garantirEstruturaLote();
+        if(tipo==="FORNECEDOR_EXTERNO"){
+          const fornecedor=$("#amlFornecedor",bg).value.trim(),tokensLote=[];
+          for(let i=0;i<ordens.length;i++){
+            btn.textContent=`Enviando ${i+1} de ${ordens.length}...`;
+            const o=ordens[i];
+            const {error}=await db().from("manutencoes_patrimonio").update({tipo_execucao:"FORNECEDOR_EXTERNO",fornecedor_nome:fornecedor,fornecedor:fornecedor,destino_fornecedor:$("#amlDestino",bg).value.trim()||null,fornecedor_whatsapp:$("#amlWhatsapp",bg).value.trim()||null,fornecedor_email:emailNormalizado($("#amlEmail",bg).value),lote_codigo:lote,lote_criado_em:new Date().toISOString(),lote_criado_por:usuarioAtual()?.nome||usuarioAtual()?.usuario||"SISTEMA",motorista_saida:motorista,placa_saida:placa,observacao:[o.observacao,obs].filter(Boolean).join(" | ")||null}).eq("id",o.id);
+            if(error) throw error;
+            const saida=await wf().registrarSaida(o.id,{meio_transporte:$("#amlTransporte",bg).value.trim(),motorista,placa,previsao_retorno:$("#amlRetorno",bg).value||null,fornecedor_nome:fornecedor,fornecedor_email:emailNormalizado($("#amlEmail",bg).value),fornecedor_whatsapp:$("#amlWhatsapp",bg).value.trim()});
+            tokensLote.push({manutencao_id:Number(o.id),token:saida?.link?.token});feitos++;
+          }
+          const {data:loteLink,error}=await db().rpc("atlas_manutencao_lote_criar",{p_codigo:lote,p_fornecedor_nome:fornecedor,p_itens:tokensLote});
+          if(error) throw error;
+          const url=window.AtlasAmbienteDominio?.urlFornecedor?.(loteLink?.token);
+          bg.remove();resetEnvioLote();await carregar();
+          if(url){try{await navigator.clipboard.writeText(url);}catch(_){} aviso(`${lote}: ${feitos} patrimônio(s) enviados. Link único copiado.`);await confirmarAtlas("🔗 Link único da manutenção",`O lote ${lote} foi criado com ${feitos} patrimônio(s).\n\n${url}`,"Copiar link").then(async ok=>{if(ok)try{await navigator.clipboard.writeText(url);}catch(_){}});}
+          return;
+        }
+
+        const obraDestinoId=tipo==="OUTRA_OBRA"?Number($("#amlObraDestino",bg).value):null;
+        for(let i=0;i<ordens.length;i++){
+          btn.textContent=`Preparando ${i+1} de ${ordens.length}...`;
+          await wf().registrarDestinoInterno(ordens[i].id,{tipo_execucao:tipo,lote_codigo:lote,responsavel_servico:responsavel||null,obra_destino_id:obraDestinoId,motorista:motorista||null,placa:placa||null,data_saida:$("#amlData",bg)?.value||null,previsao_retorno:$("#amlRetorno",bg)?.value||null,observacao:obs});
+          feitos++;
+        }
+        bg.remove();resetEnvioLote();await carregar();
+        aviso(`${lote}: ${feitos} patrimônio(s) encaminhado(s) ${tipo==="PROPRIA_OBRA"?"para serviço na própria obra":"para outra obra da BDR"}.`);
+      }catch(e){console.error(e);aviso(`${feitos?`${feitos} item(ns) processado(s). `:""}${e.message||"Erro ao encaminhar lote."}`,"danger");btn.disabled=false;btn.textContent="Continuar";await carregar();}
+    };
+  }
+
+  function garantirAcoesCentral(){
+    const main=$(".atlas-manut-main");
+    if(!main) return;
+    let barra=main.querySelector(".atlas-manut-central-actions");
+    if(!barra){
+      barra=document.createElement("div");
+      barra.className="atlas-manut-central-actions";
+      barra.innerHTML=`<div><strong>Central de Manutenção</strong><span>Adicione patrimônios à fila e encaminhe em lote para a própria obra, outra obra ou fornecedor.</span></div><div class="atlas-manut-central-buttons"><button type="button" class="atlas-btn light" id="btnManutAdicionar">＋ Adicionar patrimônio</button><button type="button" class="atlas-btn primary" id="btnManutEnviarSelecionados" disabled>🚚 Enviar selecionados</button></div>`;
+      main.insertBefore(barra,$("#atlasManutencaoApp",main));
+    }
+    const adicionar=$("#btnManutAdicionar",barra);
+    const enviar=$("#btnManutEnviarSelecionados",barra);
+    if(adicionar) adicionar.onclick=adicionarPatrimoniosCentral;
+    if(enviar) enviar.onclick=enviarSelecionados;
+    atualizarAcoesCentral();
+  }
+
+  function atualizarAcoesCentral(){
+    const btn=$("#btnManutEnviarSelecionados");if(!btn)return;const qtd=state.envioLote.selecionados.size;btn.disabled=!qtd;btn.textContent=qtd?`🚚 Enviar selecionados (${qtd})`:"🚚 Enviar selecionados";
   }
 
   function filtros(){
@@ -538,7 +953,7 @@
     set("manutKpiExecucao",lista.filter(x=>["ORCAMENTO_APROVADO","EM_MANUTENCAO","AGUARDANDO_PECA"].includes(x.status)).length);
     set("manutKpiRetorno",lista.filter(x=>["SERVICO_CONCLUIDO","AGUARDANDO_RECEBIMENTO","RECEBIDA"].includes(x.status)).length);
     set("manutKpiCusto",podeVerValoresManutencao()
-      ? brl(lista.reduce((s,x)=>s+Number(x.valor_orcamento||0),0))
+      ? brl(lista.reduce((s,x)=>s+Number(x.valor_orcamento||x.custo_total_interno||0),0))
       : "••••");
   }
 
@@ -693,14 +1108,19 @@
     const inicio=(state.pagina-1)*state.porPagina;
     const pagina=lista.slice(inicio,inicio+state.porPagina);
 
-    box.innerHTML=pagina.map(o=>`
-      <button class="atlas-manut-row ${String(state.selecionada?.id)===String(o.id)?"selected":""}" data-id="${o.id}" type="button">
-        <div class="atlas-manut-row-code"><strong>${esc(o.codigo||"#"+o.id)}</strong><small>${esc(o.codigo_patrimonio||"-")}</small></div>
-        <div class="atlas-manut-row-item"><strong>${esc(o.nome_patrimonio||"Patrimônio")}</strong><small>${esc(o.fornecedor_nome||o.fornecedor||"Fornecedor ainda não definido")}</small></div>
+    box.innerHTML=pagina.map(o=>{
+      const aguardando=String(o.status||"").toUpperCase()==="AGUARDANDO_ENVIO";
+      const marcado=state.envioLote.selecionados.has(String(o.id));
+      return `
+      <div class="atlas-manut-row ${String(state.selecionada?.id)===String(o.id)?"selected":""} ${marcado?"batch-selected":""}" data-id="${o.id}" role="button" tabindex="0">
+        <div class="atlas-manut-row-check">${aguardando?`<input type="checkbox" class="atlas-manut-envio-check" data-id="${o.id}" ${marcado?"checked":""} aria-label="Selecionar ${esc(o.codigo||"ordem")} para envio">`:""}</div>
+        <div class="atlas-manut-row-code"><strong>${esc(o.codigo||"#"+o.id)}</strong><small>${esc(o.codigo_patrimonio||"-")}${o.lote_codigo?` • ${esc(o.lote_codigo)}`:""}</small></div>
+        <div class="atlas-manut-row-item"><strong>${esc(o.nome_patrimonio||"Patrimônio")}</strong><small>${esc(o.fornecedor_nome||o.fornecedor||(aguardando?"Aguardando definição do fornecedor":"Fornecedor ainda não definido"))}</small></div>
         <div class="atlas-manut-row-status"><span class="atlas-manut-status ${statusClass(o.status)}">${esc(labelStatus(o.status))}</span></div>
         <div class="atlas-manut-row-value"><strong>${podeVerValoresManutencao()?brl(o.valor_orcamento||0):"••••"}</strong><small>${dataHora(o.data_criacao||o.data_entrada)}</small></div>
         <span class="atlas-manut-row-open">Abrir</span>
-      </button>`).join("");
+      </div>`;
+    }).join("");
 
     renderPaginacao(lista.length);
   }
@@ -768,7 +1188,7 @@
     const b=[];
     const temOrcamento=Boolean(state.orcamento?.id);
 
-    if(s==="AGUARDANDO_ENVIO" && temPermissao("MANUTENCAO_SAIDA")) b.push(`<button class="atlas-btn primary" data-action="saida">🚚 Registrar saída</button>`);
+    if(s==="AGUARDANDO_ENVIO" && temPermissao("MANUTENCAO_SAIDA")) b.push(`<button class="atlas-btn primary" data-action="saida">🔧 Encaminhar manutenção</button>`);
     if(["ENVIADA_FORNECEDOR","AGUARDANDO_ORCAMENTO","AJUSTE_SOLICITADO"].includes(s) && temPermissao("MANUTENCAO_SAIDA")) b.push(`<button class="atlas-btn dark" data-action="link">🔗 Gerar / Copiar link do fornecedor</button>`);
 
     /*
@@ -794,13 +1214,17 @@
       orçamento aprovado já significa serviço autorizado.
       Depois disso, a empresa apenas aguarda o patrimônio voltar.
     */
+    if(s==="EM_MANUTENCAO" && ["PROPRIA_OBRA","OUTRA_OBRA"].includes(String(ordem.tipo_execucao||"").toUpperCase()) && temPermissao("MANUTENCAO_RECEBER")){
+      b.push(`<button class="atlas-btn success" data-action="servico-interno">🧰 Registrar serviço executado</button>`);
+    }
+
     if([
       "ORCAMENTO_APROVADO",
       "EM_MANUTENCAO",
       "AGUARDANDO_PECA",
       "SERVICO_CONCLUIDO",
       "AGUARDANDO_RECEBIMENTO"
-    ].includes(s) && temPermissao("MANUTENCAO_RECEBER")){
+    ].includes(s) && temPermissao("MANUTENCAO_RECEBER") && String(ordem.tipo_execucao||"").toUpperCase()!=="PROPRIA_OBRA"){
       b.push(`<button class="atlas-btn primary" data-action="receber">📦 Registrar recebimento</button>`);
     }
 
@@ -920,10 +1344,18 @@
           <h3>📋 Dados da ordem</h3>
           ${linha("Tipo",o.tipo_manutencao||"-")}
           ${linha("Prioridade",o.prioridade||"-")}
+          ${linha("Execução",({PROPRIA_OBRA:"Própria obra",OUTRA_OBRA:"Outra obra BDR",FORNECEDOR_EXTERNO:"Fornecedor externo"})[String(o.tipo_execucao||"").toUpperCase()]||"A definir")}
+          ${linha("Lote",o.lote_codigo||"-")}
           ${linha("Fornecedor",o.fornecedor_nome||o.fornecedor||"-")}
-          ${linha("Responsável pela entrega",o.responsavel_entrega||"-")}
-          ${linha("Envio",dataHora(o.data_envio))}
+          ${linha("Responsável pelo serviço",o.responsavel_servico||"-")}
+          ${linha("Motorista",o.motorista_saida||"-")}
+          ${linha("Placa",o.placa_saida||"-")}
+          ${linha("Envio",dataHora(o.data_envio||o.data_saida_manutencao))}
           ${linha("Previsão de retorno",data(o.previsao_retorno))}
+          ${o.diagnostico_interno?linha("Diagnóstico",o.diagnostico_interno):""}
+          ${o.servico_executado?linha("Serviço executado",o.servico_executado):""}
+          ${o.materiais_utilizados?linha("Materiais / peças",o.materiais_utilizados):""}
+          ${Number(o.custo_total_interno||0)>0?linha("Custo interno",podeValores?brl(o.custo_total_interno):"••••"):""}
         </section>
         <section class="atlas-manut-card">
           <h3>💰 Orçamento do fornecedor</h3>
@@ -1114,7 +1546,12 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
     try{
       if(acao==="saida"){
         if(!exigirPermissao("MANUTENCAO_SAIDA")) return;
-        return abrirRegistrarSaida(o);
+        resetEnvioLote();
+        state.envioLote.obraId=o.obra_id;
+        state.envioLote.obraNome=o.obra_nome||`Obra ${o.obra_id||"-"}`;
+        state.envioLote.selecionados.add(String(o.id));
+        atualizarAcoesCentral();
+        return enviarSelecionados();
       }
       if(acao==="link"){
         if(!exigirPermissao("MANUTENCAO_SAIDA")) return;
@@ -1132,6 +1569,10 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
         if(acao==="aprovar") return decisao("ORCAMENTO_APROVADO","Aprovar orçamento",true);
         if(acao==="ajuste") return decisao("AJUSTE_SOLICITADO","Solicitar ajuste",true);
         return decisao("ORCAMENTO_RECUSADO","Recusar orçamento",true);
+      }
+      if(acao==="servico-interno"){
+        if(!exigirPermissao("MANUTENCAO_RECEBER","Você não possui permissão para registrar o serviço.")) return;
+        return abrirServicoInterno(o);
       }
       if(acao==="receber"){
         if(!exigirPermissao("MANUTENCAO_RECEBER","Você não possui permissão para registrar o recebimento.")) return;
@@ -1243,6 +1684,24 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
     }
   }
 
+  async function abrirServicoInterno(ordem){
+    const local=String(ordem.tipo_execucao||"").toUpperCase()==="PROPRIA_OBRA";
+    const corpo=`<div class="atlas-manut-note">${local?"🔧 Serviço realizado na própria obra.":"🏗️ Serviço realizado em outra obra da BDR."} Para concluir, registre o que realmente foi feito em cada patrimônio.</div><div class="atlas-manut-form-grid atlas-manut-service-form"><label>Executado por *<input id="amsExecutado" value="${esc(ordem.responsavel_servico||"")}" placeholder="Eletricista / mecânico"></label><label>Data da execução<input id="amsData" type="date" value="${new Date().toISOString().slice(0,10)}"></label><label class="wide">Diagnóstico / causa *<textarea id="amsDiagnostico" placeholder="O que causou o problema?"></textarea></label><label class="wide">Serviço executado *<textarea id="amsServico" placeholder="Descreva o reparo realizado e os testes feitos."></textarea></label><label class="wide">Peças / materiais utilizados<textarea id="amsMateriais" placeholder="Ex.: 1 disjuntor 20A; 2 terminais; cabo 2,5 mm..."></textarea></label><label>Custo de peças / materiais<input id="amsCustoPecas" type="number" min="0" step="0.01" value="0"></label><label>Custo de mão de obra<input id="amsCustoMao" type="number" min="0" step="0.01" value="0"></label><label class="wide">Observações / comprovação<textarea id="amsObs" placeholder="Testes realizados, condição final, referência de NF/recibo, observações..."></textarea></label></div>`;
+    const bg=modalBase("atlasManutServicoInterno","🧰 Registrar serviço executado",corpo,`<button class="atlas-btn light" data-cancelar>Cancelar</button><button class="atlas-btn success" data-salvar>Concluir serviço</button>`);
+    $("[data-cancelar]",bg).onclick=()=>bg.remove();
+    $("[data-salvar]",bg).onclick=async()=>{
+      const executado=$("#amsExecutado",bg).value.trim(),diagnostico=$("#amsDiagnostico",bg).value.trim(),servico=$("#amsServico",bg).value.trim();
+      if(executado.length<3){aviso("Informe quem executou o serviço.","danger");return;}
+      if(diagnostico.length<3){aviso("Informe o diagnóstico / causa.","danger");return;}
+      if(servico.length<3){aviso("Informe o serviço executado.","danger");return;}
+      const btn=$("[data-salvar]",bg);btn.disabled=true;btn.textContent="Salvando...";
+      try{
+        await wf().concluirServicoInterno(ordem.id,{executado_por:executado,data_execucao:$("#amsData",bg).value||null,diagnostico,servico_executado:servico,materiais_utilizados:$("#amsMateriais",bg).value.trim(),custo_pecas:Number($("#amsCustoPecas",bg).value||0),custo_mao_obra:Number($("#amsCustoMao",bg).value||0),observacao:$("#amsObs",bg).value.trim(),finalizar_local:local});
+        bg.remove();aviso(local?"Serviço comprovado e manutenção concluída.":"Serviço comprovado. Patrimônio aguardando retorno/recebimento.");await carregar();await selecionar(ordem.id);
+      }catch(e){console.error(e);aviso(e.message||"Não foi possível registrar o serviço.","danger");btn.disabled=false;btn.textContent="Concluir serviço";}
+    };
+  }
+
   async function abrirRecebimento(ordem){
     const obras=await carregarObrasParaRecebimento();
 
@@ -1268,6 +1727,14 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
             <span>
               <strong>⚠️ Recebido com divergência</strong>
               <small>Há problema, diferença ou pendência a ser tratada.</small>
+            </span>
+          </label>
+
+          <label class="atlas-manut-radio-card">
+            <input type="radio" name="atlasCondicaoRetorno" value="NAO_CONSERTADO">
+            <span>
+              <strong>🛠️ Retornou sem conserto</strong>
+              <small>O patrimônio voltou, mas o defeito não foi resolvido e continuará pendente.</small>
             </span>
           </label>
         </section>
@@ -1345,16 +1812,24 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
       btn.textContent="Registrando...";
 
       try{
+        const condicaoRpc=condicao==="NAO_CONSERTADO" ? "DIVERGENCIA" : condicao;
+        const obsRpc=condicao==="NAO_CONSERTADO"
+          ? `[NÃO CONSERTADO] ${observacao || "Patrimônio retornou sem conserto."}`
+          : observacao;
+
         const resultado=await wf().registrarRecebimento(ordem.id,{
-          condicao,
+          condicao:condicaoRpc,
+          resultado_notificacao:condicao,
           destino,
           obra_destino_id:obraId,
-          observacao
+          observacao:obsRpc
         });
 
         bg.remove();
 
-        if(condicao==="DIVERGENCIA"){
+        if(condicao==="NAO_CONSERTADO"){
+          aviso("Retorno registrado sem conserto. O patrimônio permanece com pendência.","warning");
+        }else if(condicao==="DIVERGENCIA"){
           aviso("Recebimento registrado com divergência.","warning");
         }else{
           aviso("Patrimônio recebido e manutenção finalizada.");
@@ -1765,9 +2240,14 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
   }
 
   function iniciarCentral(){
+    const root=$("#atlasManutencaoApp");
+    if(!root || root.dataset.atlasManutInicializado === "1") return;
+    root.dataset.atlasManutInicializado = "1";
     atualizarTopbarUsuario();
+    garantirAcoesCentral();
+    requestAnimationFrame(()=>garantirAcoesCentral());
+    setTimeout(()=>garantirAcoesCentral(),120);
 
-    const root=$("#atlasManutencaoApp");if(!root)return;
     $("#manutBusca")?.addEventListener("input",()=>{
       state.pagina=1;
       renderLista();
@@ -1776,10 +2256,17 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
       state.pagina=1;
       renderLista();
     });
-    $("#manutLista")?.addEventListener("click",e=>{const row=e.target.closest("[data-id]");if(row)selecionar(row.dataset.id);});
+    $("#manutLista")?.addEventListener("click",e=>{
+      const check=e.target.closest(".atlas-manut-envio-check");
+      if(check){e.stopPropagation();alternarOrdemEnvio(check.dataset.id,check.checked);return;}
+      const row=e.target.closest("[data-id]");if(row)selecionar(row.dataset.id);
+    });
     $("#btnManutAtualizar")?.addEventListener("click",async()=>{await carregar();aviso("Central atualizada.");});
     carregar().then(async()=>{
-      const id=new URLSearchParams(location.search).get("id");
+      const params=new URLSearchParams(location.search);
+      const status=params.get("status");
+      if(status && $("#manutFiltroStatus")){ $("#manutFiltroStatus").value=status; state.pagina=1; renderLista(); }
+      const id=params.get("id");
       if(id) await selecionar(id);
     }).catch(e=>{
       console.error(e);
@@ -1802,9 +2289,21 @@ const btnDocumento=bg.querySelector("[data-documento-orcamento]");
     carregar,
     selecionar,
     mostrarLink,
-    imprimirOrcamento
+    imprimirOrcamento,
+    iniciarCentral,
+    iniciarSelecaoPatrimonio,
+    continuarSelecaoPatrimonio,
+    cancelarSelecaoPatrimonio,
+    modoSelecaoPatrimonioAtivo,
+    estaPatrimonioSelecionado,
+    alternarPatrimonioSelecao,
+    alternarPatrimonioPorLinha,
+    selecionarPaginaPatrimonio,
+    adicionarPatrimoniosCentral,
+    enviarSelecionados
   };
 
-  document.addEventListener("DOMContentLoaded",iniciarCentral);
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",iniciarCentral,{once:true});
+  else iniciarCentral();
   console.log("✅ ATLAS MANUTENÇÃO carregado - acesso por obra ativo, JS sem CSS injetado");
 })();

@@ -204,7 +204,7 @@
     const p = (window.pedidos || []).find(x=>Number(x.id)===Number(pedidoId));
     if(!p) return;
 
-    document.getElementById("modalTitulo").innerText =
+    document.getElementById("expModalTitulo").innerText =
       "Registrar NF-e - " + (p.codigo || ("PED-" + p.id));
 
     document.getElementById("modalConteudo").innerHTML = `

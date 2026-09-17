@@ -178,7 +178,7 @@
     const itens = itensDoPedidoLocal(p);
     if(!itens.length){ alert("Pedido sem itens carregados."); return; }
 
-    document.getElementById("modalTitulo").innerText = "Autorizar parcial - " + (p.codigo || ("PED-" + p.id));
+    document.getElementById("expModalTitulo").innerText = "Autorizar parcial - " + (p.codigo || ("PED-" + p.id));
     document.getElementById("modalConteudo").innerHTML = `
       <div class="info-box" style="margin-top:0">Escolha item por item. O Atlas vai definir o status geral automaticamente: APROVADO, RECUSADO ou APROVADO_PARCIAL.</div>
       <div style="display:grid;gap:10px;margin-top:12px">
@@ -293,7 +293,7 @@
     const p = pedidoLocal(pedidoId);
     if(!p) return;
     const itens = itensDoPedidoLocal(p);
-    document.getElementById("modalTitulo").innerText = "Detalhes - " + (p.codigo || ("PED-" + p.id));
+    document.getElementById("expModalTitulo").innerText = "Detalhes - " + (p.codigo || ("PED-" + p.id));
     document.getElementById("modalConteudo").innerHTML = `
       <div class="det-line"><b>Status:</b> ${esc(p.status || '-')}</div>
       <div class="det-line"><b>Solicitante:</b> ${esc(p.solicitante || '-')}</div>

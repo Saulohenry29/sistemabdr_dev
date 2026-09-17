@@ -475,28 +475,32 @@
 }
 
 /* =========================================================
-   DESKTOP COM ZOOM GLOBAL 0.85
-   A compensação fica em um único lugar e só vale quando
-   o menu lateral também está no modo desktop.
+   DESKTOP — ATLAS EM ESCALA REAL 100%
+
+   A Manutenção agora vive dentro de atlas.html. O body não usa
+   mais a antiga classe atlas-manut-page e não existe zoom 0.85.
+   A altura do módulo é definida pelo próprio shell para que
+   lista e detalhe apareçam já no primeiro render, sem depender
+   de resize da janela.
 ========================================================= */
 @media(min-width:1201px){
-  body.atlas-manut-page .app-layout,
-  body.atlas-manut-page .atlas-manut-main{
-    height:117.647dvh !important;
-    min-height:117.647dvh !important;
-    overflow:hidden !important;
-  }
-
-  body.atlas-manut-page #atlasManutencaoApp{
-    flex:1 1 0;
-    min-height:0;
+  .atlas-shell-page .atlas-shell-module[data-module="manutencao"] .atlas-manut-main{
+    min-height:calc(100dvh - var(--atlas-header-height,80px) - 20px);
+    height:calc(100dvh - var(--atlas-header-height,80px) - 20px);
     overflow:hidden;
   }
 
-  body.atlas-manut-page .atlas-manut-pane.left,
-  body.atlas-manut-page .atlas-manut-pane.right{
-    height:100%;
+  .atlas-shell-page .atlas-shell-module[data-module="manutencao"] #atlasManutencaoApp{
+    flex:1 1 auto;
     min-height:0;
+    height:auto;
+    overflow:hidden;
+  }
+
+  .atlas-shell-page .atlas-shell-module[data-module="manutencao"] .atlas-manut-pane.left,
+  .atlas-shell-page .atlas-shell-module[data-module="manutencao"] .atlas-manut-pane.right{
+    min-height:0;
+    height:100%;
   }
 }
 
@@ -948,8 +952,20 @@
   border-color:#fecaca;
   background:#fffafa;
 }
-.atlas-manut-radio-card input{
-  margin-top:3px;
+.atlas-manut-radio-card input[type="radio"]{
+  appearance:auto !important;
+  -webkit-appearance:radio !important;
+  width:14px !important;
+  height:14px !important;
+  min-width:14px !important;
+  min-height:14px !important;
+  flex:0 0 14px;
+  margin:3px 0 0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:50% !important;
+  box-shadow:none !important;
+  background:transparent !important;
   accent-color:#b5121b;
 }
 .atlas-manut-radio-card span{
@@ -1150,3 +1166,79 @@
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+/* =========================================================
+   FILA + ENVIO EM LOTE — MANUTENÇÃO
+   O lote agrupa a saída física; cada patrimônio mantém sua OS.
+========================================================= */
+.atlas-manut-central-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 10px;
+  padding:9px 11px;
+  border:1px solid #dbe4ee;
+  border-radius:11px;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(15,23,42,.04);
+}
+.atlas-manut-central-actions strong,.atlas-manut-central-actions span{display:block}
+.atlas-manut-central-actions strong{font-size:12px;color:#172033}
+.atlas-manut-central-actions span{margin-top:2px;font-size:9px;color:var(--am-muted);font-weight:700}
+.atlas-manut-central-buttons{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.atlas-manut-central-buttons .atlas-btn{min-height:34px;padding:7px 10px;font-size:9px}
+
+.atlas-manut-row{
+  grid-template-columns:26px 110px minmax(0,1.2fr) 135px 120px 48px;
+}
+.atlas-manut-row-check{display:flex;align-items:center;justify-content:center}
+.atlas-manut-envio-check{width:16px;height:16px;accent-color:#16a34a;cursor:pointer}
+.atlas-manut-row.batch-selected{background:#f0fdf4;border-color:#86efac}
+
+.atlas-manut-lote-select-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;margin-bottom:10px}
+.atlas-manut-lote-select-head input{height:38px;padding:0 10px;border:1px solid #d7dee8;border-radius:9px}
+.atlas-manut-lote-select-head [data-add-resumo]{font-size:9px;color:#475569;font-weight:800;text-align:right}
+.atlas-manut-lote-list{max-height:52vh;overflow:auto;border:1px solid var(--am-line);border-radius:11px}
+.atlas-manut-lote-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(150px,240px);gap:9px;align-items:center;width:100%;min-height:55px;padding:8px 10px;border:0;border-bottom:1px solid #edf1f5;background:#fff;text-align:left;cursor:pointer}
+.atlas-manut-lote-item:last-child{border-bottom:0}.atlas-manut-lote-item:hover{background:#f8fafc}.atlas-manut-lote-item.selected{background:#eff6ff}.atlas-manut-lote-item.blocked{opacity:.48}
+.atlas-manut-lote-check{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#166534;font-weight:900}
+.atlas-manut-lote-item.selected .atlas-manut-lote-check{border-color:#86efac;background:#dcfce7}
+.atlas-manut-lote-item strong,.atlas-manut-lote-item small{display:block}.atlas-manut-lote-item strong{font-size:10px;color:#172033}.atlas-manut-lote-item small{margin-top:2px;font-size:8px;color:#475569}
+.atlas-manut-lote-obra{font-size:8px;font-weight:800;color:#475569;text-align:right;overflow-wrap:anywhere}
+.atlas-manut-lote-info{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:11px;padding:9px 11px;border:1px solid #bfdbfe;border-radius:9px;background:#eff6ff;font-size:9px;color:#1e3a8a}
+.atlas-manut-lote-review{margin-top:12px;border-top:1px solid var(--am-line);padding-top:10px}
+.atlas-manut-lote-review-item{display:grid;grid-template-columns:minmax(180px,280px) minmax(0,1fr);gap:10px;align-items:center;margin-bottom:7px;font-size:9px;font-weight:800}
+.atlas-manut-lote-review-item textarea{min-height:44px;padding:8px;border:1px solid #d7dee8;border-radius:8px;resize:vertical}
+
+@media(max-width:1200px){
+  .atlas-manut-central-actions{align-items:flex-start;flex-direction:column}
+  .atlas-manut-central-buttons{width:100%;justify-content:flex-start}
+  .atlas-manut-lote-select-head{grid-template-columns:1fr}
+  .atlas-manut-lote-select-head [data-add-resumo]{text-align:left}
+  .atlas-manut-lote-item{grid-template-columns:28px minmax(0,1fr)}
+  .atlas-manut-lote-obra{grid-column:2;text-align:left}
+  .atlas-manut-lote-review-item{grid-template-columns:1fr}
+}
+
+
+/* =========================================================
+   DESTINO DO SERVIÇO + PADRÃO VISUAL COMPACTO
+========================================================= */
+.atlas-manut-root{--am-font-body:10px;--am-font-small:8.5px;--am-font-title:12px;--am-font-modal:17px}
+.atlas-manut-root,.atlas-manut-modal{font-size:var(--am-font-body)}
+.atlas-manut-modal-head h2{font-size:var(--am-font-modal)}
+.atlas-manut-detail h2,.atlas-manut-detail h3,.atlas-manut-section h3{font-size:var(--am-font-title)}
+.atlas-manut-form-grid input,.atlas-manut-form-grid select{min-height:36px;padding:8px 10px;font-size:10px}
+.atlas-manut-form-grid textarea{padding:8px 10px;font-size:10px;line-height:1.4}
+.atlas-manut-destino-title{margin:3px 0 8px;color:#334155;font-size:10px;font-weight:900}
+.atlas-manut-destino-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.atlas-manut-destino-card{position:relative;display:flex;align-items:center;gap:9px;min-height:72px;padding:10px;border:1px solid #dbe3ec;border-radius:11px;background:#fff;cursor:pointer;transition:.15s}
+.atlas-manut-destino-card:hover{border-color:#94a3b8;background:#f8fafc}
+.atlas-manut-destino-card:has(input:checked){border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+.atlas-manut-destino-card input{position:absolute;opacity:0;pointer-events:none}
+.atlas-manut-destino-icon{display:flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border-radius:9px;background:#f1f5f9;font-size:17px}
+.atlas-manut-destino-card strong,.atlas-manut-destino-card small{display:block}.atlas-manut-destino-card strong{font-size:10px;color:#172033}.atlas-manut-destino-card small{margin-top:3px;color:#64748b;font-size:8px;line-height:1.3;font-weight:700}
+.atlas-manut-destino-fields{margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0}
+.atlas-manut-service-form textarea{min-height:62px}
+@media(max-width:760px){.atlas-manut-destino-grid{grid-template-columns:1fr}.atlas-manut-destino-card{min-height:60px}}

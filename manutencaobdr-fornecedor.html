@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BDR - Orçamento de Manutenção</title>
-  <link href="data:," rel="icon">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="shortcut icon" href="./favicon.ico">
   <link rel="stylesheet" href="./CSS/atlasManutencaoFornecedor.css">
 </head>
 <body>
@@ -43,6 +44,9 @@
     </div>
 
     <main id="portalConteudo" hidden>
+      <section id="loteNavegacao" class="forn-card forn-lote-nav" hidden>
+        <div><small>Lote de manutenção</small><strong id="loteCodigo">-</strong><span id="loteProgresso">0 de 0 preenchidos</span></div>
+      </section>
       <section class="forn-card">
         <h2 class="forn-section-title">🔧 Patrimônio enviado para manutenção</h2>
         <div class="forn-pat-grid">
@@ -120,10 +124,26 @@
         </div>
       </section>
 
+      <section id="loteAcoesRodape" class="forn-lote-bottom" hidden>
+        <button id="btnLoteAnterior" type="button">← Anterior</button>
+        <button id="btnSalvarProximo" type="button">Salvar e próximo →</button>
+      </section>
+
+      <section id="loteRevisao" class="forn-card forn-review" hidden>
+        <div class="forn-section-head">
+          <div>
+            <h2 class="forn-section-title">4. Revisão do lote</h2>
+            <p class="forn-review-help">Confira os patrimônios preenchidos antes do envio definitivo para a BDR.</p>
+          </div>
+        </div>
+        <div id="loteRevisaoItens" class="forn-review-list"></div>
+      </section>
+
       <section class="forn-submit">
-        <p>Ao enviar, o orçamento será registrado automaticamente no Atlas e a equipe responsável da BDR será avisada.</p>
+        <p id="textoEnvio">Ao enviar, o orçamento será registrado automaticamente no Atlas e a equipe responsável da BDR será avisada.</p>
         <button id="btnEnviarOrcamento" type="button">Enviar orçamento para a BDR</button>
       </section>
+      <div id="portalAviso" class="forn-aviso" role="status" aria-live="polite" hidden></div>
     </main>
   </div>
 

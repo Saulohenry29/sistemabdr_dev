@@ -359,7 +359,7 @@
       tipo: tipo || "FLUXO",
       titulo: titulo || "Notificação",
       mensagem: mensagem || "",
-      link: link === undefined ? "expedicao.html" : (link || null),
+      link: link === undefined ? "atlas.html?m=expedicao" : (link || null),
       lida: false,
       status: "NAO_LIDA",
       pedido_id: pedido_id || null,
@@ -425,7 +425,7 @@
       tipo:"PEDIDO_CRIADO",
       titulo:"📋 Novo pedido recebido",
       mensagem:mensagemPedidoCriado(pedido, itens),
-      link:"expedicao.html?aba=solicitacoes",
+      link:"atlas.html?m=expedicao&aba=solicitacoes",
       pedido_id:pedido.id,
       obra_origem_id:origemId,
       obra_destino_id:destinoId
@@ -462,7 +462,7 @@
       tipo,
       titulo,
       mensagem,
-      link:link === undefined ? "expedicao.html?aba=historico" : (link || null),
+      link:link === undefined ? "atlas.html?m=expedicao&aba=historico" : (link || null),
       pedido_id:pedido.id,
       obra_origem_id:pedido.obra_origem_id || null,
       obra_destino_id:pedido.obra_destino_id || pedido.obra_id || null
@@ -525,7 +525,7 @@
         "Pedido " + (pedido?.codigo || "#" + pedido?.id) +
         " foi autorizado por " + (usuarioAprovador || "responsável") +
         " e já pode ser separado. " + resumoItens(itens),
-      link:"expedicao.html?aba=separacao",
+      link:"atlas.html?m=expedicao&aba=separacao",
       pedido_id:pedido?.id || null,
       obra_origem_id:origemId,
       obra_destino_id:destinoId
@@ -596,7 +596,7 @@
     const total = await notificarLista(responsaveis,{
       empresa_id:empresaId,tipo:"PEDIDO_AGUARDANDO_RETIRADA",titulo:"🚚 Pedido pronto para transporte",
       mensagem:"Pedido " + (pedido?.codigo || "#" + pedido?.id) + " foi separado por " + (usuarioSeparacao || "almoxarifado") + ". Informe motorista, veículo e placa para colocar o pedido em trânsito.",
-      link:"expedicao.html?aba=retirada",pedido_id:pedido?.id || null,obra_origem_id:origemId,obra_destino_id:destinoId
+      link:"atlas.html?m=expedicao&aba=retirada",pedido_id:pedido?.id || null,obra_origem_id:origemId,obra_destino_id:destinoId
     });
     return {ok:total>0,notificacoes:total,destinatarios:responsaveis.map(u=>({id:u.id,nome:u.nome,perfil:u.perfil,obra_id:u.obra_id}))};
   }
@@ -629,7 +629,7 @@
       tipo,
       titulo,
       mensagem,
-      link:link === undefined ? "expedicao.html?aba=historico" : (link || null),
+      link:link === undefined ? "atlas.html?m=expedicao&aba=historico" : (link || null),
       pedido_id:pedido?.id || null,
       obra_origem_id:origemId,
       obra_destino_id:pedido?.obra_destino_id || pedido?.obra_id || null

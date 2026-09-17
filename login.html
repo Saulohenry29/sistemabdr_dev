@@ -186,19 +186,20 @@ function destinoPadraoBDR(usuario){
   const perms = permissoesLoginBDR(usuario);
 
   if(Number(usuario?.id) === 1){
-    return "dashboard.html";
+    return "atlas.html?m=dashboard";
   }
 
   const rotas = [
-    ["DASHBOARD_VER", "dashboard.html"],
-    ["PATRIMONIO_VER", "patrimonio.html"],
+    ["DASHBOARD_VER", "atlas.html?m=dashboard"],
+    ["PATRIMONIO_VER", "atlas.html?m=patrimonio"],
+    ["MANUTENCAO_VER", "atlas.html?m=manutencao"],
     ["ENTRADA_VER", "entrada.html"],
-    ["TRIAGEM_VER", "triagem.html"],
+    ["TRIAGEM_VER", "atlas.html?m=triagem"],
     ["ESTOQUE_VER", "estoque.html"],
     ["EXPEDICAO_VER", "expedicao.html"],
     ["MOVIMENTACOES_VER", "movimentacoes.html"],
     ["RELATORIOS_VER", "relatorios.html"],
-    ["EMPRESAS_VER", "empresa.html"],
+    ["EMPRESAS_VER", "atlas.html?m=empresa"],
     ["USUARIOS_VER", "usuarios.html"],
     ["CONFIGURACOES_VER", "configuracoes.html"]
   ];

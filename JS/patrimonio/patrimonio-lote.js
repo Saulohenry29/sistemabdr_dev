@@ -389,6 +389,7 @@ async function salvar(contexto){
 
   const btn = el("btnGerarPatrimonio");
   let criados = 0;
+  const codigosCriados = [];
   const erros = [];
 
   try{
@@ -435,14 +436,23 @@ async function salvar(contexto){
       });
 
       criados++;
+      codigosCriados.push(String(registroSalvo.codigo_qr || codigo_qr || "").trim());
     }
 
     if(criados){
       window.AtlasAudio?.concluido?.();
       if(typeof atlasAvisoPatrimonio === "function"){
+        const primeiroCodigo = codigosCriados[0] || "";
+        const ultimoCodigo = codigosCriados[codigosCriados.length - 1] || primeiroCodigo;
+        const ultimoCurto = primeiroCodigo.startsWith("PAT-") && ultimoCodigo.startsWith("PAT-")
+          ? ultimoCodigo.slice(4)
+          : ultimoCodigo;
+        const faixaCodigos = criados > 1
+          ? `${primeiroCodigo} a ${ultimoCurto}`
+          : primeiroCodigo;
         atlasAvisoPatrimonio(
           "✅ Cadastro em lote concluído",
-          `${criados} patrimônios foram criados com códigos automáticos.`
+          faixaCodigos ? `${faixaCodigos} — ${criados} patrimônios cadastrados com sucesso.` : `${criados} patrimônios cadastrados com sucesso.`
         );
       }else{
         alert(`${criados} patrimônios criados com sucesso.`);

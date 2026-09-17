@@ -97,6 +97,7 @@
   }
 
   async function prepararAba(nome){
+    if(nome==='transferencias'){ global.AtlasExpedicaoTransferencias?.carregar?.(); return true; }
     if(nome==='solicitacoes') await modulo('fiscal');
     if(nome==='separacao') await modulo('scanner');
     if(nome==='retirada'||nome==='transito') await modulo('logistica');

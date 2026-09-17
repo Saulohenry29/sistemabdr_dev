@@ -1,3 +1,9 @@
+/* =========================================================
+   ATLAS — EXPEDIÇÃO / CENTRAL LOGÍSTICA
+   Arquivo canônico: CSS/expedicao-nova.css
+   Integrado ao atlas.html em escala real 100%.
+   ========================================================= */
+
 /* ATLAS EXPEDIÇÃO NOVA — carregamento inicial */
 .atlas-expedicao-loading{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:rgba(248,250,252,.94);transition:opacity .2s ease}
 .atlas-expedicao-loading.oculto{opacity:0;pointer-events:none}
@@ -10,28 +16,1052 @@
    Campos de digitação e conteúdos úteis continuam liberados.
 ========================================================= */
 
-body.atlas-expedicao-nova,
-body.atlas-expedicao-nova button,
-body.atlas-expedicao-nova .card,
-body.atlas-expedicao-nova .kpi,
-body.atlas-expedicao-nova .tabs,
-body.atlas-expedicao-nova .pedido-card,
-body.atlas-expedicao-nova .produto-card,
-body.atlas-expedicao-nova .chip-exp,
-body.atlas-expedicao-nova .bdr-topbar,
-body.atlas-expedicao-nova .bdr-sidebar{
+.atlas-shell-module[data-module="expedicao"],
+.atlas-shell-module[data-module="expedicao"] button,
+.atlas-shell-module[data-module="expedicao"] .card,
+.atlas-shell-module[data-module="expedicao"] .kpi,
+.atlas-shell-module[data-module="expedicao"] .tabs,
+.atlas-shell-module[data-module="expedicao"] .pedido-card,
+.atlas-shell-module[data-module="expedicao"] .produto-card,
+.atlas-shell-module[data-module="expedicao"] .chip-exp,
+.atlas-shell-module[data-module="expedicao"] .bdr-topbar,
+.atlas-shell-module[data-module="expedicao"] .bdr-sidebar{
   user-select:none!important;
   -webkit-user-select:none!important;
   caret-color:transparent!important;
 }
 
 /* Campos onde o usuário precisa digitar ou copiar */
-body.atlas-expedicao-nova input,
-body.atlas-expedicao-nova textarea,
-body.atlas-expedicao-nova select,
-body.atlas-expedicao-nova .permitir-selecao,
-body.atlas-expedicao-nova .notif-item{
+.atlas-shell-module[data-module="expedicao"] input,
+.atlas-shell-module[data-module="expedicao"] textarea,
+.atlas-shell-module[data-module="expedicao"] select,
+.atlas-shell-module[data-module="expedicao"] .permitir-selecao,
+.atlas-shell-module[data-module="expedicao"] .notif-item{
   user-select:text!important;
   -webkit-user-select:text!important;
   caret-color:auto!important;
 }
+
+@scope (.atlas-shell-module[data-module="expedicao"]) {
+
+/* =========================================================
+   BDR EXPEDIÇÃO - MARKETPLACE INTERNO
+   Arquivo: expedicao.html
+   DICA: mexa primeiro nas áreas marcadas como "AJUSTE RÁPIDO".
+========================================================= */
+
+/* =========================================================
+   1) CORES E VARIÁVEIS DO MÓDULO
+========================================================= */
+.atlas-shell-module[data-module="expedicao"]{
+  --exp-blue:#2563eb;      /* azul: em uso / botão principal */
+  --exp-green:#16a34a;     /* verde: estoque/disponível */
+  --exp-orange:#f97316;    /* laranja: manutenção */
+  --exp-red:#dc2626;       /* vermelho: baixado/quebrado */
+  --exp-purple:#7c3aed;    /* roxo: reservado */
+  --exp-border:#e5e7eb;
+}
+
+/* =========================================================
+   3) LAYOUT PRINCIPAL DO CATÁLOGO
+========================================================= */
+.exp-layout{
+  display:block;
+}
+
+/* Catálogo ocupa a largura toda. O carrinho agora abre em modal. */
+
+.exp-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.exp-title h2{
+  margin:0;
+  color:#111827;
+  font-size:22px;
+}
+.exp-title p{
+  margin:3px 0 0;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:700;
+}
+
+/* Busca do catálogo */
+.searchbar{
+  display:grid;
+  grid-template-columns:1fr 130px 54px;
+  gap:8px;
+  margin-bottom:10px;
+}
+.searchbar input{
+  height:42px;
+  border-radius:999px;
+  padding:0 16px;
+  font-weight:700;
+}
+.searchbar button{
+  border-radius:999px;
+  background:#111827;
+}
+
+/* =========================================================
+   4) FILTROS / CHIPS
+========================================================= */
+.chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.chip-exp{
+  border:1px solid #dbeafe;
+  background:#fff;
+  color:#374151;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.chip-exp.active{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+}
+.chip-exp .num{
+  background:#f3f4f6;
+  color:#111827;
+  border-radius:999px;
+  padding:2px 7px;
+  margin-left:5px;
+}
+.chip-exp.active .num{
+  background:#fff;
+  color:#2563eb;
+}
+
+/* =========================================================
+   5) CARDS DE PRODUTO - ESTILO MARKETPLACE
+========================================================= */
+.catalogo-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); /* AJUSTE RÁPIDO: largura mínima do card */
+  gap:12px;
+}
+
+.produto-card{
+  background:#fff;
+  border:1px solid var(--exp-border);
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(15,23,42,.07);
+  cursor:pointer;
+  transition:.18s;
+  position:relative;
+  z-index:1;
+}
+.produto-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 26px rgba(15,23,42,.14);
+}
+
+.produto-foto{
+  height:118px; /* AJUSTE RÁPIDO: altura da foto do card */
+  background:#f8fafc;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.produto-foto img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.produto-foto .placeholder{
+  font-size:42px;
+}
+
+.hover-detalhe{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,.62);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:900;
+  opacity:0;
+  transition:.18s;
+}
+.produto-card:hover .hover-detalhe{opacity:1;}
+
+.btn-card-action{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:0;
+  background:#fff;
+  color:#111827;
+  box-shadow:0 5px 15px rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  z-index:2;
+}
+.btn-card-action.ok{color:#16a34a;}
+.btn-card-action.info{color:#2563eb;}
+.btn-card-action.block{color:#f97316;}
+
+.produto-info{padding:10px;}
+
+/* CORRIGIDO: sem -webkit-line-clamp para não marcar erro no editor */
+.produto-nome{
+  font-size:13px;
+  font-weight:900;
+  color:#111827;
+  line-height:1.25;
+  min-height:34px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:normal;
+  word-break:break-word;
+}
+
+.produto-obra{
+  font-size:11px;
+  color:#6b7280;
+  font-weight:800;
+  margin:7px 0 8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.produto-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.produto-qtd{
+  font-size:11px;
+  font-weight:900;
+  color:#374151;
+  white-space:nowrap;
+}
+
+/* =========================================================
+   6) CORES DE STATUS PADRÃO BDR
+========================================================= */
+.badge-status{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 7px;
+  border-radius:999px;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+.st-ESTOQUE,
+.st-DISPONIVEL,
+.st-NO_ESTOQUE{background:#16a34a;}
+.st-EM_USO{background:#2563eb;}
+.st-MANUTENCAO{background:#f97316;}
+.st-BAIXADO,
+.st-QUEBRADO{background:#dc2626;}
+.st-RESERVADO{background:#7c3aed;}
+
+/* =========================================================
+   7) CARRINHO LATERAL
+========================================================= */
+.cart-panel{
+  position:sticky;
+  top:12px;
+  background:#fff;
+  border:1px solid var(--exp-border);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 3px 14px rgba(15,23,42,.08);
+  z-index:1;
+}
+.cart-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#2563eb;
+  font-weight:900;
+  margin-bottom:10px;
+}
+.cart-item{
+  display:grid;
+  grid-template-columns:48px 1fr 28px;
+  gap:9px;
+  align-items:center;
+  border:1px solid #eef2f7;
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:8px;
+}
+.cart-img{
+  width:48px;
+  height:48px;
+  background:#f8fafc;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.cart-img img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.cart-info strong{
+  font-size:12px;
+  color:#111827;
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.cart-info span{font-size:11px;color:#6b7280;}
+.cart-remove{background:#fff;color:#dc2626;padding:0;border:0;}
+.cart-empty{
+  background:#f8fafc;
+  border-radius:12px;
+  padding:12px;
+  color:#6b7280;
+  font-size:12px;
+  text-align:center;
+}
+.btn-submit{
+  width:100%;
+  height:42px;
+  border-radius:12px;
+  background:#2563eb;
+  margin-top:10px;
+}
+.mini-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.mini-box{
+  background:#f8fafc;
+  border-radius:12px;
+  padding:9px;
+  font-size:11px;
+  color:#6b7280;
+}
+.mini-box strong{display:block;font-size:16px;color:#111827;}
+.info-box{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+  border-radius:12px;
+  padding:10px;
+  margin-top:10px;
+  color:#1e3a8a;
+  font-size:12px;
+  line-height:1.45;
+}
+
+/* =========================================================
+   8) PEDIDOS / SOLICITAÇÕES / HISTÓRICO
+========================================================= */
+.pedido-lista{display:grid;gap:8px;}
+.pedido-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-left:4px solid var(--bdr-red);
+  border-radius:14px;
+  padding:10px 12px;
+  box-shadow:0 2px 8px rgba(15,23,42,.07);
+}
+.pedido-top{
+  display:grid;
+  grid-template-columns:130px 1fr 160px 120px;
+  gap:10px;
+  align-items:center;
+}
+.pedido-cod{font-weight:900;color:var(--bdr-red);}
+.pedido-small{font-size:12px;color:#6b7280;}
+.pedido-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn-mini{padding:7px 9px;font-size:11px;border-radius:9px;}
+
+/* =========================================================
+   9) MODAIS / DETALHES / RETIRADA
+========================================================= */
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.70);
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+.modal-bg.ativo{display:flex;}
+.modal{
+  background:#fff;
+  width:min(760px,100%);
+  max-height:calc(100dvh - 24px);
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.32);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.modal-head{flex:0 0 auto}
+.modal-body{
+  padding:16px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:max(22px,env(safe-area-inset-bottom));
+}
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  background:#fff5f5;
+  color:var(--bdr-red);
+  font-weight:900;
+}
+
+.modal-grid{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:14px;
+}
+.modal-img{
+  height:210px;
+  background:#f8fafc;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.modal-img img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.det-line{
+  font-size:13px;
+  border-bottom:1px solid #f1f5f9;
+  padding:7px 0;
+}
+.det-line b{color:#111827;}
+.fechar-modal{
+  background:#dc2626;
+  border-radius:10px;
+  padding:7px 10px;
+}
+
+/* =========================================================
+   10) ABAS E KPI
+========================================================= */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.tab-btn{
+  border:1px solid #fecaca;
+  background:#fff;
+  color:#374151;
+  border-radius:999px;
+  padding:9px 13px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.tab-btn.active{background:#fff1f2;color:var(--bdr-red);}
+.tab{display:none;}
+.tab.active{display:block;}
+
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:10px;
+  margin-bottom:12px;
+}
+.kpi{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-left:4px solid var(--bdr-red);
+  border-radius:14px;
+  padding:10px 12px;
+  min-height:76px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  z-index:1;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(15,23,42,.06);
+}
+.kpi::after{content:none!important;}
+.kpi strong{font-size:22px;line-height:1;display:block;color:#0f172a;font-weight:900;}
+.kpi span{font-size:12px;color:#64748b;font-weight:900;margin-top:6px;}
+
+/* =========================================================
+   11) RESPONSIVO
+========================================================= */
+@media(max-width:1100px){
+  .exp-layout{grid-template-columns:1fr;}
+  .cart-panel{position:relative;top:auto;}
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+}
+/* ATLAS MODAL MOBILE 3.2.1 */
+@media(max-width:700px){
+  .modal-bg{
+    align-items:flex-start;
+    padding:10px 8px calc(92px + env(safe-area-inset-bottom));
+    overflow-y:auto;
+  }
+  .modal{
+    width:100%;
+    max-height:calc(100dvh - 110px - env(safe-area-inset-bottom));
+    border-radius:18px;
+  }
+  .modal-body{
+    padding-bottom:28px;
+  }
+
+  .catalogo-grid{grid-template-columns:repeat(2,1fr);}
+  .searchbar{grid-template-columns:1fr;}
+  .modal-grid{grid-template-columns:1fr;}
+  .pedido-top{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+
+/* =========================================================
+   PATCH BDR - CORREÇÕES EXPEDIÇÃO
+========================================================= */
+.cart-item{
+  grid-template-columns:44px minmax(0,1fr) 34px !important;
+  align-items:start;
+}
+.cart-info{
+  min-width:0;
+  overflow:hidden;
+}
+.cart-info strong{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.22;
+  max-height:46px;
+}
+.cart-info span{
+  display:block;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.25;
+}
+.cart-remove{
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  justify-self:end;
+  flex-shrink:0;
+}
+.cart-remove:hover{
+  background:#fee2e2;
+}
+
+.produto-nome{
+  min-height:48px !important;
+  max-height:48px;
+  white-space:normal !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.2;
+}
+.produto-obra{
+  white-space:normal !important;
+  min-height:28px;
+  max-height:32px;
+  line-height:1.25;
+  overflow:hidden;
+  word-break:break-word;
+}
+
+.notif-item.update-app{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+}
+.notif-update-btn{
+  margin-top:7px;
+  border:none;
+  border-radius:9px;
+  padding:7px 10px;
+  background:#2563eb;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  font-size:11px;
+}
+
+
+/* =========================================================
+   PADRÃO IGUAL PATRIMÔNIO - AJUSTE FINAL
+========================================================= */
+.expedicao-premium-main{
+  padding:12px !important;
+}
+.bdr-logo-menu{
+  background:transparent!important;
+  border:none!important;
+  box-shadow:none!important;
+  color:transparent!important;
+}
+.bdr-logo-menu img,.bdr-logo-menu i,.bdr-logo-menu span{
+  display:none!important;
+}
+
+
+
+/* =========================================================
+   CARRINHO EM MODAL - LIMPO E SEM OCUPAR ESPAÇO
+========================================================= */
+.cart-panel{display:none!important;}
+.cart-modal-panel{display:block!important;position:relative!important;top:auto!important;box-shadow:none!important;border:none!important;padding:0!important;background:transparent!important;}
+.btn-cart-top{height:42px;border-radius:12px!important;background:#2563eb!important;color:#fff!important;border:0!important;font-weight:900!important;position:relative;display:flex;align-items:center;justify-content:center;}
+.btn-cart-top span{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;border-radius:999px;background:#dc2626;color:#fff;border:2px solid #fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+#modalCarrinho .modal{width:min(520px,96vw)!important;}
+#modalCarrinho .modal-body textarea{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:10px;resize:vertical;}
+#modalCarrinho .btn-submit{height:44px;border:0;color:#fff;font-weight:900;}
+@media(max-width:700px){.searchbar{grid-template-columns:1fr 56px}.searchbar button:not(.btn-cart-top){display:none}.btn-cart-top{height:42px}}
+
+
+/* =========================================================
+   ATLAS EXPEDIÇÃO 3.6 - FILTROS HORIZONTAIS E PAGINAÇÃO
+========================================================= */
+.atlas-filtros-avancados{
+  display:grid;
+  grid-template-columns:minmax(190px,1.25fr) minmax(155px,1fr) minmax(170px,1fr) 145px auto;
+  gap:10px;
+  align-items:end;
+  margin:10px 0 12px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#f8fafc;
+}
+.atlas-campo-filtro{
+  display:grid;
+  gap:5px;
+}
+.atlas-campo-filtro label{
+  color:#475569;
+  font-size:11px;
+  font-weight:900;
+}
+.atlas-campo-filtro select{
+  width:100%;
+  height:40px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  background:#fff;
+  color:#111827;
+  padding:0 10px;
+  font-size:12px;
+  font-weight:800;
+}
+.atlas-btn-limpar{
+  height:40px;
+  border:1px solid #fecaca;
+  border-radius:10px;
+  background:#fff;
+  color:#b91c1c;
+  padding:0 13px;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.atlas-resumo-catalogo{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:4px 0 10px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+}
+.atlas-paginacao{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+.atlas-paginacao button{
+  min-height:38px;
+  border:1px solid #dbe3ee;
+  border-radius:10px;
+  background:#fff;
+  color:#334155;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.atlas-paginacao button:hover:not(:disabled){
+  border-color:#2563eb;
+  color:#2563eb;
+}
+.atlas-paginacao button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.atlas-pagina-atual{
+  min-width:125px;
+  text-align:center;
+  color:#0f172a;
+  font-size:12px;
+  font-weight:900;
+}
+@media(max-width:900px){
+  .atlas-filtros-avancados{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .atlas-btn-limpar{width:100%;}
+}
+@media(max-width:560px){
+  .atlas-filtros-avancados{
+    grid-template-columns:1fr;
+  }
+  .atlas-resumo-catalogo{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+
+
+
+
+.atlas-resumo-catalogo{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.atlas-paginacao-topo{
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  min-width:max-content;
+}
+.atlas-paginacao-topo button{
+  min-width:34px;
+  height:34px;
+  padding:0 10px;
+}
+@media(max-width:700px){
+  .atlas-resumo-catalogo{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+
+/* =========================================================
+   PAGINAÇÃO PADRÃO ATLAS
+   Mesmo padrão visual usado em Usuários e Manutenção.
+========================================================= */
+.atlas-pagination{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:47px;
+  padding:10px 0 0;
+}
+
+.atlas-page-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:34px;
+  height:34px;
+  padding:0 9px;
+  border:1px solid #d7dee8;
+  border-radius:9px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.atlas-page-btn:hover:not(:disabled){
+  border-color:#f0a5aa;
+  background:#fff1f2;
+  color:#b5121b;
+}
+
+.atlas-page-btn.active{
+  border-color:#b5121b;
+  background:#b5121b;
+  color:#fff;
+  box-shadow:0 6px 14px rgba(181,18,27,.2);
+}
+
+.atlas-page-btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+.atlas-page-dots{
+  display:inline-flex;
+  min-width:20px;
+  justify-content:center;
+  color:#94a3b8;
+  font-weight:900;
+}
+
+
+/* =========================================================
+   SKELETON DO CATÁLOGO
+   A estrutura aparece imediatamente enquanto o Supabase responde.
+========================================================= */
+.atlas-skeleton-card{
+  min-height:245px;
+  pointer-events:none;
+  cursor:default;
+  transform:none!important;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+
+.atlas-skeleton-card:hover{
+  transform:none;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+
+.atlas-skeleton-photo{
+  height:118px;
+  position:relative;
+  overflow:hidden;
+  background:#edf2f7;
+}
+
+.atlas-skeleton-info{
+  padding:10px;
+}
+
+.atlas-skeleton-line,
+.atlas-skeleton-pill{
+  position:relative;
+  overflow:hidden;
+  background:#e7edf4;
+}
+
+.atlas-skeleton-line{
+  height:11px;
+  margin-bottom:9px;
+  border-radius:6px;
+}
+
+.atlas-skeleton-line.title{
+  width:86%;
+  height:14px;
+}
+
+.atlas-skeleton-line.medium{width:68%;}
+.atlas-skeleton-line.short{width:46%;}
+
+.atlas-skeleton-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:10px;
+}
+
+.atlas-skeleton-pill{
+  width:82px;
+  height:22px;
+  border-radius:999px;
+}
+
+.atlas-skeleton-small{
+  width:44px;
+  height:10px;
+  border-radius:5px;
+  background:#e7edf4;
+  position:relative;
+  overflow:hidden;
+}
+
+.atlas-skeleton-photo::after,
+.atlas-skeleton-line::after,
+.atlas-skeleton-pill::after,
+.atlas-skeleton-small::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.72),
+    transparent
+  );
+  animation:atlasSkeletonMove 1.15s ease-in-out infinite;
+}
+
+@keyframes atlasSkeletonMove{
+  100%{transform:translateX(100%);}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .atlas-skeleton-photo::after,
+  .atlas-skeleton-line::after,
+  .atlas-skeleton-pill::after,
+  .atlas-skeleton-small::after{
+    animation:none;
+  }
+}
+
+
+/* =========================================================
+   LOADING DOS KPIs
+   Nunca mostra "0" antes do valor real chegar.
+========================================================= */
+.kpi strong.atlas-kpi-loading{
+  width:46px;
+  height:21px;
+  border-radius:7px;
+  color:transparent!important;
+  background:#e7edf4;
+  position:relative;
+  overflow:hidden;
+}
+
+.kpi strong.atlas-kpi-loading::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.78),
+    transparent
+  );
+  animation:atlasSkeletonMove 1.15s ease-in-out infinite;
+}
+
+/* O skeleton ocupa praticamente o mesmo espaço do card final. */
+.atlas-skeleton-card{
+  min-height:0;
+}
+
+.atlas-skeleton-info{
+  min-height:116px;
+}
+
+.atlas-skeleton-line.title{
+  height:48px;
+  width:88%;
+  border-radius:7px;
+}
+
+.atlas-skeleton-line.medium{
+  height:11px;
+  width:66%;
+  margin-top:7px;
+}
+
+.atlas-skeleton-line.short{
+  height:10px;
+  width:52%;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .kpi strong.atlas-kpi-loading::after{
+    animation:none;
+  }
+}
+
+
+}
+
+
+/* =========================================================
+   TRANSFERÊNCIAS / DESMOBILIZAÇÃO PATRIMONIAL
+========================================================= */
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px
+}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-toolbar h3{margin:0;color:#111827;font-size:16px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-toolbar p{margin:2px 0 0;color:#64748b;font-size:10px;font-weight:700}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-actions{display:flex;gap:7px;flex-wrap:wrap}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-btn{height:34px;padding:0 12px;border:1px solid #dbe2ea;border-radius:9px;background:#fff;color:#0f172a;font-size:10px;font-weight:900;cursor:pointer}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-btn.primary{background:#a4161a;border-color:#a4161a;color:#fff}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-btn.success{background:#0f9f6e;border-color:#0f9f6e;color:#fff}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-btn:disabled{opacity:.45;cursor:not-allowed}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-kpi{background:#fff;border:1px solid #e5e7eb;border-left:3px solid #a4161a;border-radius:10px;padding:9px 11px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-kpi strong{display:block;font-size:17px;color:#0f172a}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-kpi span{font-size:9px;color:#64748b;font-weight:900;text-transform:uppercase}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-filtros{display:grid;grid-template-columns:1fr 170px 170px;gap:7px;margin-bottom:10px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-filtros input,.atlas-shell-module[data-module="expedicao"] .atlas-transfer-filtros select{height:34px;border:1px solid #dbe2ea;border-radius:8px;padding:0 10px;font-size:10px;background:#fff}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-lista{display:grid;gap:7px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-card{display:grid;grid-template-columns:minmax(135px,.75fr) minmax(210px,1.4fr) 90px 105px 115px;gap:8px;align-items:center;padding:10px 11px;border:1px solid #e5e7eb;border-left:3px solid #a4161a;border-radius:10px;background:#fff}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-card strong{font-size:10.5px;color:#111827}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-card small{display:block;margin-top:2px;font-size:8.5px;color:#64748b;font-weight:700}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-status{display:inline-flex;align-items:center;justify-content:center;width:max-content;padding:4px 7px;border-radius:999px;font-size:8px;font-weight:1000;background:#f1f5f9;color:#334155}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-status.transito{background:#fff7ed;color:#c2410c}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-status.recebida{background:#dcfce7;color:#166534}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-status.aguardando{background:#eff6ff;color:#1d4ed8}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-status.divergencia{background:#fef2f2;color:#b91c1c}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-empty{padding:30px;text-align:center;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-bg{position:fixed;inset:0;z-index:2200;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.58)}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-bg.aberto{display:flex}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal{width:min(920px,96vw);max-height:90vh;overflow:auto;border-radius:15px;background:#fff;box-shadow:0 25px 70px rgba(15,23,42,.3);padding:14px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #e5e7eb}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-head h3{margin:0;color:#a4161a;font-size:16px}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-head p{margin:2px 0 0;color:#64748b;font-size:9px;font-weight:700}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid .wide{grid-column:1/-1}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid label{display:block;margin-bottom:4px;font-size:8.5px;font-weight:1000;color:#475569;text-transform:uppercase}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid input,.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid select,.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid textarea{width:100%;box-sizing:border-box;border:1px solid #dbe2ea;border-radius:8px;padding:8px 9px;font-size:10px;background:#fff}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid textarea{min-height:62px;resize:vertical}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-resultados{display:grid;gap:5px;margin-top:8px;max-height:250px;overflow:auto}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-pat{display:grid;grid-template-columns:28px 115px 1fr 130px 85px;gap:7px;align-items:center;padding:7px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-pat span,.atlas-shell-module[data-module="expedicao"] .atlas-transfer-pat strong{font-size:9px}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-selecao-resumo{margin-top:9px;padding:8px 10px;border-radius:9px;background:#eff6ff;color:#1e40af;font-size:9px;font-weight:900}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-historico{display:grid;gap:6px;margin-top:10px}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-evento{padding:8px 10px;border-left:3px solid #cbd5e1;border-radius:7px;background:#f8fafc}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-evento strong{display:block;font-size:9px}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-evento span{font-size:8.5px;color:#64748b}
+@media(max-width:900px){.atlas-shell-module[data-module="expedicao"] .atlas-transfer-kpis{grid-template-columns:1fr 1fr}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-filtros{grid-template-columns:1fr}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-card{grid-template-columns:1fr 1fr}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid{grid-template-columns:1fr}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-grid .wide{grid-column:auto}.atlas-shell-module[data-module="expedicao"] .atlas-transfer-pat{grid-template-columns:28px 1fr}}
+
+
+/* =========================================================
+   ATLAS EXPEDIÇÃO — VISÃO LIMPA POR ETAPAS
+   Cada área aparece somente na sua aba. Transferências fica
+   compacta; formulários continuam apenas em modal.
+========================================================= */
+.atlas-shell-module[data-module="expedicao"] > .tab{display:none !important;}
+.atlas-shell-module[data-module="expedicao"] > .tab.active{display:block !important;}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-bg{display:none !important;}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-modal-bg.aberto{display:flex !important;}
+.atlas-shell-module[data-module="expedicao"] .atlas-transfer-toolbar-compacta{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #eef2f7;}
+.atlas-shell-module[data-module="expedicao"] #tab-transferencias>.card{padding:11px;}
+.atlas-shell-module[data-module="expedicao"] #tab-transferencias .atlas-transfer-filtros{margin-bottom:8px;}
+.atlas-shell-module[data-module="expedicao"] #tab-transferencias .atlas-transfer-empty{padding:18px;}

@@ -536,6 +536,51 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   border:1px solid #e2e8f0!important;
 }
 
+/* Histórico do patrimônio — integrado ao modal original */
+.atlas-patrimonio-info-wrap{
+  position:relative!important;
+  padding-right:52px!important;
+}
+.atlas-patrimonio-historico-btn{
+  position:absolute!important;
+  top:12px!important;
+  right:12px!important;
+  left:auto!important;
+  width:34px!important;
+  height:34px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:#111827!important;
+  font-size:25px!important;
+  line-height:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  cursor:pointer!important;
+  box-shadow:none!important;
+  z-index:2!important;
+}
+.atlas-patrimonio-historico-btn:hover,
+.atlas-patrimonio-historico-btn:focus-visible{
+  background:#e2e8f0!important;
+  color:var(--bdr-red,#a4161a)!important;
+  outline:none!important;
+}
+.atlas-historico-patrimonio-modal{width:min(920px,94vw)!important;max-height:90vh!important;overflow:auto!important;}
+.atlas-historico-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px;}
+.atlas-historico-resumo>div{padding:9px 10px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc;min-width:0;}
+.atlas-historico-resumo label{display:block;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;}
+.atlas-historico-resumo strong{display:block;font-size:12px;color:#111827;overflow-wrap:anywhere;}
+.atlas-historico-box span{display:block;white-space:pre-line;line-height:1.45;}
+
+@media(max-width:760px){
+  .atlas-historico-resumo{grid-template-columns:1fr 1fr;}
+  .atlas-patrimonio-info-wrap{padding-right:44px!important;}
+  .atlas-patrimonio-historico-btn{top:8px!important;right:8px!important;left:auto!important;}
+}
+
 .acoes button{
   border-radius:8px!important;
   min-height:30px!important;
@@ -2199,3 +2244,298 @@ textarea,
 .atlas-campo-valor #valor_bem{border:0!important;box-shadow:none!important;outline:0!important;border-radius:0!important;min-width:0;width:100%;font-weight:850;font-variant-numeric:tabular-nums;}
 :scope.bdr-modo-selecao-etiquetas .linha-patrimonio{cursor:pointer}
 :scope.bdr-modo-selecao-etiquetas .linha-patrimonio:hover{border-color:#fca5a5;background:#fff7f7!important}
+
+/* =========================================================
+   SELEÇÃO ÚNICA DE PATRIMÔNIOS
+   Primeiro seleciona; depois escolhe Etiquetas, Remessa ou Manutenção.
+========================================================= */
+.bdr-lote-acoes button:disabled{opacity:.45;cursor:not-allowed}
+:scope.bdr-modo-selecao-etiquetas .bdr-lote-acoes{align-items:center}
+:scope.bdr-modo-selecao-etiquetas .bdr-lote-selecionar,
+:scope.bdr-modo-selecao-etiquetas .bdr-lote-imprimir{min-height:30px}
+
+@media(max-width:900px){
+  .atlas-manut-patrimonio-selection-bar{align-items:flex-start;flex-direction:column}
+  .atlas-shell-module[data-module="patrimonio"].atlas-modo-manut-selecao .linha-patrimonio{grid-template-columns:1fr!important}
+  .atlas-shell-module[data-module="patrimonio"].atlas-modo-manut-selecao .bdr-check-etiqueta{justify-content:flex-start;margin-bottom:4px}
+}
+
+
+.atlas-patrimonio-toast{top:76px!important;display:block;}
+.atlas-patrimonio-toast .atlas-toast-titulo,.atlas-patrimonio-toast .atlas-toast-texto{display:block!important;}
+.atlas-patrimonio-toast .atlas-toast-texto{margin-top:2px!important;font-weight:700!important;}
+.atlas-patrimonio-toast.ativo{opacity:1!important;visibility:visible!important;}
+@media(max-width:520px){.atlas-patrimonio-toast{top:64px!important;}}
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — FILTROS DESKTOP + COMBOS CONTROLADOS
+   Mantém os seis filtros em uma linha no notebook/desktop.
+   Os selects visuais usam popup próprio, limitado à área útil.
+========================================================= */
+.card:has(#patrimonioBusca) .grid{
+  display:grid!important;
+  grid-template-columns:minmax(150px,1.15fr) minmax(145px,1fr) minmax(120px,.82fr) minmax(120px,.82fr) minmax(150px,1fr) minmax(145px,.95fr)!important;
+  gap:6px!important;
+  align-items:center!important;
+}
+.card:has(#patrimonioBusca) .grid > #patrimonioBusca,
+.card:has(#patrimonioBusca) .grid > select,
+.card:has(#patrimonioBusca) .grid > .atlas-select-control{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important;
+  padding:0 10px!important;
+  border:1px solid #bfdbfe!important;
+  border-radius:11px!important;
+  background:#f8fbff!important;
+  color:#334155!important;
+  font-weight:400!important;
+  cursor:pointer!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+.atlas-select-control:hover{border-color:#93c5fd!important;background:#f8fbff!important;}
+.atlas-select-control:focus-visible,
+.atlas-select-control[aria-expanded="true"]{
+  outline:none!important;
+  border-color:#60a5fa!important;
+  box-shadow:0 0 0 3px rgba(96,165,250,.15)!important;
+}
+.atlas-select-label{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.atlas-select-chevron{flex:0 0 auto;font-size:9px;color:#64748b;}
+
+.atlas-select-popup{
+  position:fixed!important;
+  z-index:450!important;
+  display:none;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  scrollbar-gutter:stable;
+  padding:4px!important;
+  border:1px solid #cbd5e1!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.18)!important;
+}
+.atlas-select-popup.ativo{display:block!important;}
+.atlas-select-option{
+  display:block!important;
+  width:100%!important;
+  min-height:30px!important;
+  padding:6px 8px!important;
+  border:0!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  color:#334155!important;
+  text-align:left!important;
+  font:inherit!important;
+  font-size:11.5px!important;
+  font-weight:400!important;
+  line-height:1.35!important;
+  cursor:pointer!important;
+}
+.atlas-select-option:hover,
+.atlas-select-option:focus-visible{background:#f1f5f9!important;outline:none!important;}
+.atlas-select-option.selecionado{background:#eff6ff!important;color:#1d4ed8!important;font-weight:700!important;}
+.atlas-select-option:disabled{display:none!important;}
+
+/* Só quebra em telas realmente pequenas. Notebook permanece em uma linha. */
+@media(max-width:760px){
+  .card:has(#patrimonioBusca) .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .card:has(#patrimonioBusca) .grid > #patrimonioBusca{grid-column:1/-1!important;}
+}
+@media(max-width:480px){
+  .card:has(#patrimonioBusca) .grid{grid-template-columns:1fr!important;}
+  .card:has(#patrimonioBusca) .grid > #patrimonioBusca{grid-column:auto!important;}
+}
+
+
+/* ATLAS PATRIMÔNIO — select nativo permanece funcional, mas invisível.
+   O controle visual acima é a única interface exibida ao usuário. */
+.card:has(#patrimonioBusca) .grid > select.atlas-select-native,
+#novaObraSelect.atlas-select-native{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+  clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+}
+
+
+/* O destino da transferência usa o mesmo combo controlado dos filtros.
+   Assim a lista respeita a área útil do Atlas em desktop, tablet e celular. */
+.modal #novaObraSelect + .atlas-select-control{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:29px!important;
+  padding:5px 7px!important;
+  border:1px solid #dbe3ee!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#334155!important;
+  font-size:10px!important;
+  font-weight:400!important;
+  box-sizing:border-box!important;
+}
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — PADRÃO VISUAL DO CADASTRO
+   Referência oficial: #tipo_item em Novo Patrimônio.
+========================================================= */
+.card:has(#patrimonioBusca) .grid > #patrimonioBusca,
+.card:has(#patrimonioBusca) .grid > .atlas-select-control{
+  height:31px!important;
+  min-height:31px!important;
+  padding:0 10px!important;
+  border:1px solid #bfdbfe!important;
+  border-radius:11px!important;
+  background:#f8fbff!important;
+  color:#334155!important;
+  font-size:10.5px!important;
+  font-weight:850!important;
+  line-height:1!important;
+}
+.card:has(#patrimonioBusca) .grid > #patrimonioBusca{
+  background:#fff!important;
+  border-color:#dbe3ee!important;
+  font-weight:400!important;
+}
+.atlas-select-popup{
+  padding:6px!important;
+  border:1px solid #bfdbfe!important;
+  border-radius:11px!important;
+  background:#fff!important;
+}
+.atlas-select-option{
+  min-height:31px!important;
+  padding:0 10px!important;
+  border-radius:9px!important;
+  display:flex!important;
+  align-items:center!important;
+  font-size:12px!important;
+  font-weight:400!important;
+  line-height:1.2!important;
+}
+.atlas-select-option + .atlas-select-option{margin-top:2px!important;}
+.atlas-select-option:hover,
+.atlas-select-option:focus-visible{background:#f8fbff!important;}
+.atlas-select-option.selecionado{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  font-weight:850!important;
+}
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — RESPONSIVO DE VERDADE
+   Tablet/celular: nenhum filtro ou popup pode ultrapassar a tela.
+========================================================= */
+@media (max-width: 900px){
+  .card:has(#patrimonioBusca){
+    max-width:100%!important;
+    min-width:0!important;
+    overflow-x:hidden!important;
+  }
+  .card:has(#patrimonioBusca) .grid{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .card:has(#patrimonioBusca) .grid > *,
+  .card:has(#patrimonioBusca) .atlas-select-control{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  .card:has(#patrimonioBusca) .grid > #patrimonioBusca{
+    grid-column:1/-1!important;
+  }
+  .atlas-select-popup{
+    max-width:calc(100vw - 24px)!important;
+    box-sizing:border-box!important;
+    overflow-x:hidden!important;
+  }
+}
+@media (max-width: 560px){
+  .card:has(#patrimonioBusca) .grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .card:has(#patrimonioBusca) .grid > #patrimonioBusca{
+    grid-column:auto!important;
+  }
+}
+
+/* =========================================================
+   ATLAS PATRIMÔNIO — LIMITE REAL DO CONTEÚDO NO SHELL
+   O módulo nunca invade o menu lateral em tablet/smartphone.
+========================================================= */
+.atlas-shell-module[data-module="patrimonio"],
+.atlas-shell-module[data-module="patrimonio"] > *,
+.atlas-shell-module[data-module="patrimonio"] .card{
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.atlas-shell-module[data-module="patrimonio"]{
+  width:100%!important;
+  overflow-x:hidden!important;
+}
+
+@media (max-width:900px){
+  .card:has(#patrimonioBusca) .grid{
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .card:has(#patrimonioBusca) .grid > #patrimonioBusca{
+    grid-column:auto!important;
+  }
+  #cardEntradaPatrimonio .grid,
+  #cardEntradaPatrimonio #camposExtras{
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  #cardEntradaPatrimonio input,
+  #cardEntradaPatrimonio select,
+  #cardEntradaPatrimonio textarea,
+  #cardEntradaPatrimonio button,
+  .card:has(#patrimonioBusca) .grid > *,
+  .card:has(#patrimonioBusca) .atlas-select-control{
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  .atlas-select-popup{
+    max-width:calc(100vw - 20px)!important;
+  }
+}
+
+
+/* Patrimônio no Shell móvel: reserva a faixa do menu inferior oficial.
+   Evita que o último conteúdo e os combos fiquem visualmente por cima do menu. */
+@media (max-width:1200px){
+  .atlas-shell-module[data-module="patrimonio"]{
+    padding-bottom:calc(var(--bdr-mobile-content-bottom,100px) + env(safe-area-inset-bottom))!important;
+  }
+  .atlas-shell-module[data-module="patrimonio"] .card:last-child{
+    margin-bottom:12px!important;
+  }
+}

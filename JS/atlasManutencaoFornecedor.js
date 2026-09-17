@@ -8,7 +8,7 @@
   const $=(s,c=document)=>c.querySelector(s);
   const $$=(s,c=document)=>[...c.querySelectorAll(s)];
 
-  const state={token:null,dados:null};
+  const state={token:null,dados:null,lote:null,loteItens:[],loteIndice:0};
 
   function db(){
     return window.client||window.supabaseClient||globalThis.client;
@@ -218,6 +218,59 @@
     $("#portalErroTexto").textContent=msg;
   }
 
+  let avisoTimer=null;
+  function avisoPortal(msg,tipo="erro"){
+    const el=$("#portalAviso");
+    if(!el) return;
+    clearTimeout(avisoTimer);
+    el.textContent=String(msg||"");
+    el.dataset.tipo=tipo;
+    el.hidden=false;
+    avisoTimer=setTimeout(()=>{el.hidden=true;},4500);
+  }
+
+  function totalRascunhoLote(orcamento){
+    const o=orcamento||{};
+    const pecas=(Array.isArray(o.itens)?o.itens:[]).reduce((soma,item)=>
+      soma+(numero(item?.quantidade||0)*numero(item?.valor_unitario||0)),0);
+    return Math.max(0,pecas+numero(o.mao_obra||0)+numero(o.frete||0)+numero(o.outros_custos||0)-numero(o.desconto||0));
+  }
+
+  function renderRevisaoLote(){
+    const box=$("#loteRevisao");
+    const lista=$("#loteRevisaoItens");
+    if(!box||!lista||!state.lote) return;
+    const completos=state.loteItens.length>0 && state.loteItens.every(x=>x.preenchido);
+    box.hidden=!completos;
+    if(!completos){ lista.innerHTML=""; return; }
+
+    lista.innerHTML=state.loteItens.map((item,indice)=>{
+      const p=item?.dados?.patrimonio||{};
+      const o=item?.rascunho||{};
+      const codigo=p.codigo||p.codigo_qr||`Item ${indice+1}`;
+      const nome=p.nome||p.nome_bem||"Patrimônio";
+      return `<button type="button" class="forn-review-item" data-revisar-indice="${indice}">
+        <span><b>${codigo}</b><small>${nome}</small></span>
+        <span><small>Diagnóstico</small><b>${o.diagnostico||"Preenchido"}</b></span>
+        <span class="forn-review-total"><small>Total</small><b>${brl(totalRascunhoLote(o))}</b></span>
+        <span class="forn-review-action">Revisar</span>
+      </button>`;
+    }).join("");
+  }
+
+  function atualizarEnvioLote(){
+    if(!state.lote) return;
+    const botao=$("#btnEnviarOrcamento");
+    const submit=botao?.closest(".forn-submit");
+    const completos=state.loteItens.length>0 && state.loteItens.every(x=>x.preenchido);
+    if(submit) submit.hidden=!completos;
+    if(botao){
+      botao.hidden=!completos;
+      botao.disabled=!completos;
+    }
+    renderRevisaoLote();
+  }
+
   function preencher(d){
     state.dados=d;
 
@@ -343,6 +396,64 @@
     return total;
   }
 
+  function limparFormularioOrcamento(){
+    ["diagnostico","causaProvavel","servicoRecomendado","maoObraDescricao","prazoDias","garantiaDias","observacoes","urlOrcamento"].forEach(id=>{const el=$("#"+id);if(el)el.value="";});
+    ["maoObra","frete","outrosCustos","desconto"].forEach(id=>definirMoeda($("#"+id),0));
+    $("#itensOrcamento").innerHTML="";adicionarItem();recalcular();
+  }
+
+  function payloadAtual(validar=true){
+    const fornecedor=$("#fornecedorNome").value.trim(), diagnostico=$("#diagnostico").value.trim(), servico=$("#servicoRecomendado").value.trim();
+    if(validar&&fornecedor.length<2) throw new Error("Informe o nome da empresa/oficina.");
+    if(validar&&diagnostico.length<5) throw new Error("Informe o diagnóstico com pelo menos 5 caracteres.");
+    if(validar&&servico.length<5) throw new Error("Informe o serviço recomendado.");
+    return {fornecedor_nome:fornecedor,diagnostico,causa_provavel:$("#causaProvavel").value.trim(),servico_recomendado:servico,mao_obra_descricao:$("#maoObraDescricao").value.trim(),mao_obra:valorCampoMoeda($("#maoObra")),frete:valorCampoMoeda($("#frete")),outros_custos:valorCampoMoeda($("#outrosCustos")),desconto:valorCampoMoeda($("#desconto")),prazo_dias:numero($("#prazoDias").value)||null,garantia_dias:numero($("#garantiaDias").value)||null,observacoes:$("#observacoes").value.trim(),url_orcamento:$("#urlOrcamento").value.trim(),itens:itensPayload()};
+  }
+
+  function renderItemLote(indice){
+    state.loteIndice=Math.max(0,Math.min(indice,state.loteItens.length-1));
+    const item=state.loteItens[state.loteIndice]; if(!item)return;
+    limparFormularioOrcamento();
+    const d=item.dados||{}; preencher({...d,orcamento:item.rascunho||d.orcamento||{}});
+    if(state.lote?.fornecedor_nome && !$("#fornecedorNome").value) $("#fornecedorNome").value=state.lote.fornecedor_nome;
+    $("#loteCodigo").textContent=state.lote?.codigo||"Lote";
+    const feitos=state.loteItens.filter(x=>x.preenchido).length;
+    $("#loteProgresso").textContent=`${feitos} de ${state.loteItens.length} preenchidos • item ${state.loteIndice+1} de ${state.loteItens.length}`;
+    $("#loteAcoesRodape").hidden=false;
+    $("#btnLoteAnterior").disabled=state.loteIndice===0;
+    $("#btnSalvarProximo").textContent=state.loteIndice===state.loteItens.length-1?"Salvar e revisar":"Salvar e próximo →";
+    atualizarEnvioLote();
+  }
+
+  async function salvarItemLote(avancar=true){
+    const item=state.loteItens[state.loteIndice]; if(!item)return;
+    try{
+      const payload=payloadAtual(true), banco=db();
+      const {error}=await banco.rpc("atlas_manutencao_lote_salvar_item",{p_token:state.token,p_manutencao_id:Number(item.manutencao_id),p_orcamento:payload});
+      if(error)throw error; item.rascunho=payload;item.preenchido=true;
+      if(avancar&&state.loteIndice<state.loteItens.length-1){
+        renderItemLote(state.loteIndice+1);
+        document.querySelector("#loteNavegacao")?.scrollIntoView({behavior:"smooth",block:"start"});
+        avisoPortal("Patrimônio salvo. Continue com o próximo.","sucesso");
+      }else{
+        renderItemLote(state.loteIndice);
+        atualizarEnvioLote();
+        avisoPortal("Patrimônio salvo. Todos preenchidos: revise e envie o lote para a BDR.","sucesso");
+        setTimeout(()=>document.querySelector("#loteRevisao")?.scrollIntoView({behavior:"smooth",block:"start"}),120);
+      }
+    }catch(e){avisoPortal(e?.message||"Não foi possível salvar este patrimônio.","erro");}
+  }
+
+  async function tentarCarregarLote(banco){
+    const {data,error}=await banco.rpc("atlas_manutencao_lote_fornecedor_dados",{p_token:state.token});
+    if(error){ if(/does not exist|não existe|function/i.test(String(error.message||""))) return false; throw error; }
+    if(!data?.lote) return false;
+    state.lote=data.lote; state.loteItens=Array.isArray(data.itens)?data.itens:[];
+    if(!state.loteItens.length) throw new Error("Este lote não possui patrimônios disponíveis.");
+    $("#loteNavegacao").hidden=false;$("#textoEnvio").textContent="Todos os patrimônios foram preenchidos. Revise os dados antes do envio final para a BDR.";$("#btnEnviarOrcamento").textContent="Enviar lote de orçamentos para a BDR";
+    $("#portalLoading").hidden=true;$("#portalConteudo").hidden=false; renderItemLote(0); atualizarEnvioLote(); return true;
+  }
+
   async function carregar(){
     state.token=new URLSearchParams(location.search).get("t");
 
@@ -354,6 +465,8 @@
     try{
       const banco=db();
       if(!banco) throw new Error("Conexão com o banco de dados indisponível.");
+
+      if(await tentarCarregarLote(banco)) return;
 
       const {data:estado,error:erroEstado}=await banco.rpc(
         "atlas_manutencao_fornecedor_estado",
@@ -399,30 +512,40 @@
       preencher(data);
 
     }catch(e){
-      console.error("ATLAS fornecedor:",e);
       mostrarErro(e?.message||"Link inválido ou expirado.");
     }
   }
 
   async function enviar(){
+    if(state.lote){
+      try{
+        await salvarItemLote(false);
+        if(!state.loteItens.every(x=>x.preenchido)){avisoPortal("Ainda existem patrimônios sem diagnóstico/orçamento. Preencha todos antes de enviar o lote.","erro");return;}
+        const botao=$("#btnEnviarOrcamento");botao.disabled=true;botao.textContent="Enviando lote...";
+        const {data,error}=await db().rpc("atlas_manutencao_lote_finalizar",{p_token:state.token}); if(error)throw error;
+        $("#portalConteudo").hidden=true;$("#portalSucesso").hidden=false;$("#sucessoTotal").textContent=brl(data?.valor_total||0);
+        const p=$("#portalSucesso p");if(p)p.innerHTML=`A BDR recebeu <b>${data?.quantidade||state.loteItens.length}</b> orçamento(s) deste lote. Total informado: <b>${brl(data?.valor_total||0)}</b>.`;
+      }catch(e){avisoPortal(e?.message||"Não foi possível enviar o lote.","erro");const b=$("#btnEnviarOrcamento");b.disabled=false;b.textContent="Enviar lote de orçamentos para a BDR";}
+      return;
+    }
     const fornecedor=$("#fornecedorNome").value.trim();
     const diagnostico=$("#diagnostico").value.trim();
     const servico=$("#servicoRecomendado").value.trim();
 
     if(fornecedor.length<2){
-      alert("Informe o nome da empresa/oficina.");
+      avisoPortal("Informe o nome da empresa/oficina.","erro");
       $("#fornecedorNome").focus();
       return;
     }
 
     if(diagnostico.length<5){
-      alert("Informe o diagnóstico com pelo menos 5 caracteres.");
+      avisoPortal("Informe o diagnóstico com pelo menos 5 caracteres.","erro");
       $("#diagnostico").focus();
       return;
     }
 
     if(servico.length<5){
-      alert("Informe o serviço recomendado.");
+      avisoPortal("Informe o serviço recomendado.","erro");
       $("#servicoRecomendado").focus();
       return;
     }
@@ -467,19 +590,29 @@
       $("#sucessoTotal").textContent=brl(data?.valor_total??recalcular());
 
     }catch(e){
-      console.error("ATLAS fornecedor:",e);
-      alert(e?.message||"Não foi possível enviar o orçamento.");
+      avisoPortal(e?.message||"Não foi possível enviar o orçamento.","erro");
       botao.disabled=false;
       botao.textContent="Enviar orçamento para a BDR";
     }
   }
 
+  document.addEventListener("click",evento=>{
+    const revisar=evento.target.closest?.("[data-revisar-indice]");
+    if(!revisar) return;
+    const indice=Number(revisar.dataset.revisarIndice);
+    if(Number.isInteger(indice)){
+      renderItemLote(indice);
+      document.querySelector(".forn-order")?.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  });
+
   document.addEventListener("DOMContentLoaded",()=>{
     $$("[data-moeda-brl]").forEach(ligarCampoMoeda);
     $("#btnAdicionarItem").addEventListener("click",()=>adicionarItem());
     $("#btnEnviarOrcamento").addEventListener("click",enviar);
+    $("#btnSalvarProximo")?.addEventListener("click",()=>salvarItemLote(true));
+    $("#btnLoteAnterior")?.addEventListener("click",()=>{renderItemLote(state.loteIndice-1);document.querySelector("#loteNavegacao")?.scrollIntoView({behavior:"smooth",block:"start"});});
     carregar();
-    console.info("✅ ATLAS PORTAL DO FORNECEDOR carregado");
   });
 
 })();

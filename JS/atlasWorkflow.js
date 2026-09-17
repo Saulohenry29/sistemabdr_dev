@@ -528,7 +528,7 @@
       separado_por: nomeUsuario(),
       data_separacao: new Date().toISOString()
     });
-    await notificarSolicitantePedido(pedido, "PEDIDO_EM_SEPARACAO", "📦 Pedido em separação", "Pedido " + (pedido.codigo || "#" + pedido.id) + " entrou em separação por " + nomeUsuario() + ".", "expedicao.html?aba=historico");
+    await notificarSolicitantePedido(pedido, "PEDIDO_EM_SEPARACAO", "📦 Pedido em separação", "Pedido " + (pedido.codigo || "#" + pedido.id) + " entrou em separação por " + nomeUsuario() + ".", "atlas.html?m=expedicao&aba=historico");
     return pedido;
   }
 
@@ -572,7 +572,7 @@
       data_envio: new Date().toISOString()
     });
 
-    await notificarSolicitantePedido(pedido, "PEDIDO_EM_TRANSITO", "🛣 Pedido em trânsito", "Pedido " + (pedido.codigo || "#" + pedido.id) + " saiu com motorista " + motorista + ", placa " + placa + ".", "expedicao.html?aba=transito");
+    await notificarSolicitantePedido(pedido, "PEDIDO_EM_TRANSITO", "🛣 Pedido em trânsito", "Pedido " + (pedido.codigo || "#" + pedido.id) + " saiu com motorista " + motorista + ", placa " + placa + ".", "atlas.html?m=expedicao&aba=transito");
     return pedido;
   }
 

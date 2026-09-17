@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-atlas-patrimonio-ajustes-20260902";
+const BDR_CACHE_VERSION = "bdr-erp-atlas-expedicao-estavel-20260904";
 
 const BDR_ASSETS = [
   "./",
@@ -21,6 +21,7 @@ const BDR_ASSETS = [
   "./etiqueta-lote.html",
   "./etiqueta-config.html",
   "./manifest.json",
+  "./favicon.ico",
 
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -52,6 +53,10 @@ const BDR_ASSETS = [
   "./JS/dashboard/dashboardRankings.js",
   "./JS/dashboard/dashboardBoot.js",
 
+  "./JS/atlasShell.js",
+  "./JS/componentes/atlasMenu.js",
+  "./JS/componentes/atlasTopo.js",
+
   "./JS/pwa-install.js",
   "./JS/pwa-update.js",
   "./JS/notificacoes/atlasPush.js",
@@ -71,6 +76,8 @@ const BDR_ASSETS = [
   "./JS/entrada.js",
   "./JS/triagem.js",
   "./JS/estoque.js",
+  "./CSS/expedicao-nova.css",
+  "./JS/expedicao/expedicaoTransferencias.js",
   "./JS/expedicao/expedicaoBoot.js",
   "./JS/expedicao/expedicaoCatalogo.js",
   "./JS/expedicao/expedicaoPedidos.js",

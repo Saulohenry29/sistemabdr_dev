@@ -5,6 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Atlas | BDR</title>
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png"/>
+<link rel="shortcut icon" href="./favicon.ico"/>
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
@@ -12,7 +14,8 @@
   var aliases = {
     dash:'dashboard', dashboard:'dashboard',
     tri:'triagem', triagem:'triagem',
-    emp:'empresa', empresa:'empresa'
+    emp:'empresa', empresa:'empresa',
+    man:'manutencao', manutencao:'manutencao'
   };
   document.documentElement.dataset.shellModulo = aliases[raw] || 'dashboard';
 })();
@@ -659,9 +662,10 @@ button,
 <script src="./JS/componentes/atlasMenu.js"></script><script src="./JS/componentes/atlasTopo.js"></script><link href="./CSS/dashboard/dashboardBase.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardKpis.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardLayout.css" rel="stylesheet"/><link href="./CSS/dashboard/dashboardComponentes.css" rel="stylesheet"/><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="./CSS/patrimonio-lote.css?v=20260902-compacto" rel="stylesheet"/>
 <link href="./CSS/patrimonio-etiquetas-lote.css?v=20260831-atlas" rel="stylesheet"/>
-<link href="./CSS/patrimonio.css?v=20260902-patrimonioajustes" rel="stylesheet"/>
+<link href="./CSS/patrimonio.css?v=20260904-selecao-patrimonio" rel="stylesheet"/>
 <link href="./CSS/patrimonio-remessas.css?v=20260902" rel="stylesheet"/>
-<link href="./CSS/atlasManutencao.css?v=20260831-atlas" rel="stylesheet"/>
+<link rel="stylesheet" href="./CSS/expedicao-nova.css?v=20260905-expedicao-limpa">
+<link href="./CSS/atlasManutencao.css?v=20260904-lotes-fila3" rel="stylesheet"/>
 </head>
 <body class="atlas-shell-page">
 <span id="dataAtual" style="display:none"></span>
@@ -1101,7 +1105,7 @@ button,
 </select>
 <select id="status_inicial">
 <option value="ESTOQUE">📦 Estoque</option>
-<option value="EM_USO">👷 Em uso</option>
+<option value="EM_USO" selected>👷 Em uso</option>
 <option value="MANUTENCAO">🔧 Manutenção</option>
 <option value="BAIXADO">⬇️ Baixado</option>
 </select>
@@ -1188,18 +1192,18 @@ A123003" spellcheck="false"></textarea>
 <button class="btn-ok" id="btnGerarPatrimonio" onclick="gerarPatrimonio()">Gerar Patrimônio</button>
 </div>
 <div class="card">
-<h3>🔎 Localizar patrimônio</h3>
+<h3>🔎 Localizar Patrimônio</h3>
 <div class="grid">
-<input id="patrimonioBusca" oninput="bdrResetPaginaPatrimonio(); renderizarPatrimonios()" placeholder="Pesquisar por PAT, NF, nome, placa, série, obra, marca...">
+<input id="patrimonioBusca" oninput="bdrResetPaginaPatrimonio(); renderizarPatrimonios()" placeholder="Pesquisar por PAT, NF, Nome, Placa, Série, Obra, Marca...">
 <select id="patrimonioFiltroObra" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
-<option value="">Todas as obras/setores</option>
+<option value="">Todas as Obras/Setores</option>
 </select>
 <select id="filtroStatus" onchange="atlasAoAlterarFiltroStatus()">
-<option value="">Todos os status</option>
+<option value="">Todos os Status</option>
 <option value="ESTOQUE">Estoque</option>
 <option value="EM_USO">Em uso</option>
 <option value="MANUTENCAO">Manutenção</option>
-<option value="EM_TRANSITO">🚚 Em trânsito</option>
+<option value="EM_TRANSITO">Em trânsito</option>
 <option value="BAIXADO">Baixado</option>
 <option hidden="" id="filtroStatusInativo" value="INATIVO">Inativos</option>
 </select>
@@ -1220,6 +1224,13 @@ A123003" spellcheck="false"></textarea>
 <option value="OFICINA">🛠 Equipamento de oficina</option>
 <option value="OUTRO">📦 Outro</option>
 </select>
+<select id="patrimonioFiltroUsuario" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
+<option value="">Todos os cadastradores</option>
+</select>
+<select id="patrimonioFiltroAntigo" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
+<option value="">Todos os patrimônios</option>
+<option value="COM_CODIGO_ANTIGO">Patrimônio antigo</option>
+</select>
 </input></div>
 </div>
 <div class="card" data-permissao="PATRIMONIO_VER" id="cardAnalyticsManutencao">
@@ -1232,21 +1243,6 @@ A123003" spellcheck="false"></textarea>
 </div>
 <div class="bdr-manutencao-lista" id="listaAnalyticsManutencao"></div>
 </div>
-<div class="card atlas-remessa-card" id="atlasRemessaCard">
-<div class="atlas-remessa-topo">
-<div><h3>🚚 Remessas patrimoniais</h3><div style="font-size:9.5px;color:#64748b;font-weight:750;margin-top:2px;">Transferência em lote entre obras, trânsito, recebimento e histórico.</div></div>
-<div class="atlas-remessa-acoes">
-<button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.abrirCentral('transito')">🚚 Ver em trânsito</button>
-<button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.abrirCentral('historico')">🕘 Histórico</button>
-<button class="atlas-remessa-btn primary" type="button" data-permissao="PATRIMONIO_MOVIMENTAR" onclick="AtlasPatrimonioRemessas.iniciarSelecao()">＋ Nova remessa</button>
-</div>
-</div>
-<div class="atlas-remessa-resumo">
-<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiTransito">0</strong><span>Remessas em trânsito</span></div>
-<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiItens">0</strong><span>Patrimônios viajando</span></div>
-<div class="atlas-remessa-kpi"><strong id="atlasRemessaKpiRecebidas">0</strong><span>Remessas recebidas</span></div>
-</div>
-</div>
 <div class="card">
 <h3>📋 Patrimônios cadastrados</h3>
 <div class="atlas-remessa-selecao-bar" id="atlasRemessaSelecaoBar" hidden>
@@ -1257,16 +1253,19 @@ A123003" spellcheck="false"></textarea>
 <div class="atlas-remessa-selecao-acoes">
 <span id="atlasRemessaSelecaoQtd">0 selecionados</span>
 <button class="atlas-remessa-btn" type="button" onclick="AtlasPatrimonioRemessas.cancelarSelecao()">Cancelar</button>
-<button class="atlas-remessa-btn primary" id="atlasRemessaContinuarBtn" type="button" disabled onclick="AtlasPatrimonioRemessas.continuarSelecao()">Continuar remessa →</button>
+<button class="atlas-remessa-btn primary" id="atlasRemessaContinuarBtn" type="button" disabled onclick="AtlasPatrimonioRemessas.continuarSelecao()">Continuar transferência →</button>
 </div>
 </div>
 <div class="bdr-lote-bar">
-<span class="bdr-lote-resumo">🏷 <strong id="bdrQtdEtiquetasSelecionadas">0 etiqueta(s) selecionada(s)</strong></span>
-<span id="bdrLoteAjuda" style="color:#64748b;font-size:12px;font-weight:800;">Imprima uma ou várias etiquetas sem poluir a lista.</span>
+<span class="bdr-lote-resumo">☑ <strong id="bdrQtdEtiquetasSelecionadas">0 patrimônio(s) selecionado(s)</strong></span>
+<span id="bdrLoteAjuda" style="color:#64748b;font-size:12px;font-weight:800;">Selecione patrimônios e depois escolha o que deseja fazer.</span>
 <div class="bdr-lote-acoes">
 <button class="bdr-lote-configurar atlas-owner-inline" data-owner-only="" hidden="" id="btnConfigurarEtiquetas" onclick="abrirModalConfiguracaoEtiqueta()" style="display:none" type="button">⚙ Configurar etiquetas</button>
-<button class="bdr-lote-selecionar" id="bdrBotaoAcaoEtiquetas" onclick="bdrAcaoPrincipalEtiquetas()" type="button">☑ Selecionar etiquetas</button>
-<button class="bdr-lote-cancelar" onclick="bdrCancelarSelecaoEtiquetas()" type="button">Cancelar</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoSelecaoPatrimonio" onclick="bdrEntrarModoSelecaoPatrimonios()" type="button">☑ Selecionar patrimônios</button>
+<button class="bdr-lote-imprimir" id="bdrBotaoAcaoEtiquetas" onclick="bdrImprimirEtiquetasSelecionadas()" style="display:none" type="button">🏷 Etiquetas</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoAcaoRemessa" onclick="bdrEnviarSelecionadosRemessa()" style="display:none" type="button">↔ Transferência</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoAcaoManutencao" onclick="bdrEnviarSelecionadosManutencao()" style="display:none" type="button">🔧 Manutenção</button>
+<button class="bdr-lote-cancelar" id="bdrBotaoCancelarSelecao" onclick="bdrCancelarSelecaoEtiquetas()" type="button">Cancelar</button>
 </div>
 </div>
 <div id="lista"></div>
@@ -1275,7 +1274,7 @@ A123003" spellcheck="false"></textarea>
 <div class="modal">
 <button class="fechar" onclick="fecharModal()">X</button>
 <h2 id="modalTitulo">Patrimônio</h2>
-<div class="modal-info" id="modalInfo"></div>
+<div class="modal-info atlas-patrimonio-info-wrap"><button id="atlasBtnHistoricoPatrimonio" class="atlas-patrimonio-historico-btn" type="button" title="Ver histórico completo" aria-label="Ver histórico completo" onclick="AtlasPatrimonioRemessas.abrirHistoricoPatrimonio(patrimonioSelecionado?.id)"><i class="fa-solid fa-scroll" aria-hidden="true"></i></button><div id="modalInfo"></div></div>
 <div id="atlasControlesPatrimonioAtivo">
 <label><strong>Justificativa obrigatória da movimentação</strong></label>
 <textarea id="observacaoMov" placeholder="Ex: item enviado para manutenção, troca de setor, baixa por defeito..."></textarea>
@@ -1289,9 +1288,8 @@ A123003" spellcheck="false"></textarea>
 <button class="btn-ok acao-movimentar" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
 <button class="btn-blue acao-movimentar" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
 <button class="btn-orange acao-movimentar acao-manutencao" data-permissao="MANUTENCAO_CRIAR" onclick="AtlasManutencao.abrir(patrimonioSelecionado)">🛠 Manutenção</button>
-<button class="acao-movimentar" onclick="trocarObra()">🔁 Trocar Setor</button>
+<button class="acao-movimentar" onclick="trocarObra()">↔ Transferência</button>
 <button class="btn-gray acao-movimentar" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
-<button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.abrirHistoricoPatrimonio(patrimonioSelecionado?.id)">🕘 Histórico completo</button>
 <button class="btn-dark acao-imprimir" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
 <button class="acao-editar" onclick="abrirEdicao()">✏️ Editar Dados</button>
 <button class="bdr-btn-danger acao-excluir" onclick="excluirPatrimonio()">🗑 Excluir</button>
@@ -1429,21 +1427,21 @@ A123003" spellcheck="false"></textarea>
 
 <div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasNovaRemessaModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">
 <div class="atlas-remessa-modal">
-<div class="atlas-remessa-head"><div><h2>🚚 Nova Remessa Patrimonial</h2><p>Vários patrimônios em uma única transferência entre obras.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">✕</button></div>
+<div class="atlas-remessa-head"><div><h2>↔ Nova Transferência Patrimonial</h2><p>Selecione destino e encaminhe os patrimônios para a Expedição.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">✕</button></div>
 <div class="atlas-remessa-grid">
 <div><label>Código</label><input id="atlasRemessaCodigo" readonly></div>
 <div><label>Status após recebimento</label><select id="atlasRemessaStatusDestino"><option value="MANTER">Manter status anterior</option><option value="EM_USO">Em uso</option><option value="ESTOQUE">Estoque</option></select></div>
 <div><label>Obra de origem</label><select id="atlasRemessaOrigem" disabled><option value="">Origem definida pelos itens selecionados</option></select></div>
 <div><label>Obra de destino</label><select id="atlasRemessaDestino"><option value="">Selecione o destino</option></select></div>
-<div><label>Motorista / transportador</label><input id="atlasRemessaMotorista" placeholder="Nome do motorista ou transportador"></div>
-<div><label>Veículo / placa</label><div style="display:grid;grid-template-columns:1fr 120px;gap:6px;"><input id="atlasRemessaVeiculo" placeholder="Veículo"><input id="atlasRemessaPlaca" placeholder="Placa"></div></div>
+<div style="display:none"><label>Motorista / transportador</label><input id="atlasRemessaMotorista"></div>
+<div style="display:none"><label>Veículo / placa</label><input id="atlasRemessaVeiculo"><input id="atlasRemessaPlaca"></div>
 <div class="wide"><label>Observação</label><textarea id="atlasRemessaObs" placeholder="Motivo da transferência, referência ou observação..."></textarea></div>
 </div>
 <div class="atlas-remessa-itens atlas-remessa-itens-revisao">
 <div class="atlas-remessa-itens-tools"><strong id="atlasRemessaSelecionados">0 patrimônio(s) selecionado(s)</strong><span>Itens escolhidos diretamente na tela de Patrimônio.</span></div>
 <div class="atlas-remessa-lista-itens" id="atlasRemessaListaItens"></div>
 </div>
-<div class="atlas-remessa-footer"><span>Enquanto estiver em trânsito, a obra definitiva não muda.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.enviar()">🚚 Colocar em trânsito</button></div></div>
+<div class="atlas-remessa-footer"><span>A transferência será encaminhada para a Expedição. A obra só muda após o recebimento no destino.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.enviar()">↔ Enviar para Expedição</button></div></div>
 </div></div>
 
 <div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasRemessasCentralModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasRemessasCentralModal')">
@@ -1460,10 +1458,523 @@ A123003" spellcheck="false"></textarea>
 </div></div>
 
 <div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasHistoricoPatrimonioModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasHistoricoPatrimonioModal')">
-<div class="atlas-remessa-modal small">
-<div class="atlas-remessa-head"><div><h2 id="atlasHistoricoPatrimonioTitulo">🕘 Histórico do patrimônio</h2><p>Cadastro, mudanças de status, transferências, remessas e responsáveis.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasHistoricoPatrimonioModal')">✕</button></div>
+<div class="atlas-remessa-modal atlas-historico-patrimonio-modal">
+<div class="atlas-remessa-head"><div><h2 id="atlasHistoricoPatrimonioTitulo">🕘 Histórico do patrimônio</h2><p>Vida funcional completa: cadastro, movimentações, transferências e manutenções.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasHistoricoPatrimonioModal')">✕</button></div>
 <div id="atlasHistoricoPatrimonioConteudo"></div>
 </div></div>
+</section>
+
+
+<section class="atlas-shell-module atlas-expedicao-root expedicao-premium-main" data-module="expedicao" aria-hidden="true">
+    <div class="kpi-row">
+      <div class="kpi"><strong id="expKpiTotal" class="atlas-kpi-loading" aria-label="Carregando total de itens"></strong><span>Total itens</span></div>
+      <div class="kpi"><strong id="expKpiEstoque" class="atlas-kpi-loading" aria-label="Carregando itens em estoque"></strong><span>Em estoque</span></div>
+      <div class="kpi"><strong id="expKpiUso" class="atlas-kpi-loading" aria-label="Carregando itens em uso"></strong><span>Em uso</span></div>
+      <div class="kpi"><strong id="expKpiManutencao" class="atlas-kpi-loading" aria-label="Carregando itens em manutenção"></strong><span>Manutenção</span></div>
+      <div class="kpi"><strong id="kpiReservado" class="atlas-kpi-loading" aria-label="Carregando itens reservados"></strong><span>Reservados</span></div>
+      <div class="kpi"><strong id="kpiPedidos" class="atlas-kpi-loading" aria-label="Carregando solicitações"></strong><span>Solicitações</span></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-permissao="EXPEDICAO_VER" onclick="abrirAba('catalogo',this)">🛒 Catálogo</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_APROVAR" onclick="abrirAba('solicitacoes',this)">📋 Solicitações</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_SEPARAR" onclick="abrirAba('separacao',this)">📦 Separação</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('retirada',this)">📦 Aguardando retirada</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_VER" onclick="abrirAba('historico',this)">📜 Histórico</button>
+    </div>
+
+    <section id="tab-catalogo" class="tab active" data-permissao="EXPEDICAO_VER">
+      <div class="exp-layout">
+        <div>
+          <div class="card">
+            <div class="exp-head"><div class="exp-title"><h2>Catálogo de itens</h2><p>Solicite materiais entre obras/setores da rede BDR.</p></div><button class="btn-dark" data-permissao="EXPEDICAO_VER" onclick="carregarTudo()"><i class="fa-solid fa-rotate"></i> Atualizar</button></div>
+            <div class="searchbar"><input id="buscaCatalogo" placeholder="Buscar produto, patrimônio, código, obra..." oninput="agendarBuscaCatalogo()"><button onclick="agendarBuscaCatalogo()"><i class="fa-solid fa-search"></i> Buscar</button><button type="button" class="btn-cart-top" onclick="abrirModalCarrinho()" title="Abrir carrinho"><i class="fa-solid fa-cart-shopping"></i><span id="cartQtdTopo">0</span></button></div>
+            <div class="atlas-filtros-avancados">
+              <div class="atlas-campo-filtro">
+                <label for="filtroObraCatalogo">Obra</label>
+                <select id="filtroObraCatalogo" onchange="atlasAlterarFiltroCatalogo()">
+                  <option value="TODAS">Todas as obras</option>
+                </select>
+              </div>
+              <div class="atlas-campo-filtro">
+                <label for="filtroCategoriaCatalogo">Categoria</label>
+                <select id="filtroCategoriaCatalogo" onchange="atlasAlterarFiltroCatalogo()">
+                  <option value="TODAS">Todas</option>
+                </select>
+              </div>
+              <div class="atlas-campo-filtro">
+                <label for="ordenacaoCatalogo">Ordenar por</label>
+                <select id="ordenacaoCatalogo" onchange="atlasAlterarFiltroCatalogo()">
+                  <option value="RECENTES">Mais recentes</option>
+                  <option value="NOME_ASC">Nome (A–Z)</option>
+                  <option value="CODIGO_ASC">Patrimônio/código</option>
+                  <option value="OBRA_ASC">Obra</option>
+                  <option value="STATUS_ASC">Status</option>
+                </select>
+              </div>
+              <div class="atlas-campo-filtro">
+                <label for="itensPorPaginaCatalogo">Itens por página</label>
+                <select id="itensPorPaginaCatalogo" onchange="atlasAlterarItensPorPagina()">
+                  <option value="30" selected>30</option>
+                  <option value="60">60</option>
+                  <option value="90">90</option>
+                </select>
+              </div>
+              <button type="button" class="atlas-btn-limpar" onclick="atlasLimparFiltrosCatalogo()">
+                <i class="fa-solid fa-filter-circle-xmark"></i> Limpar filtros
+              </button>
+            </div>
+            <div class="atlas-resumo-catalogo">
+              <div>
+                <span id="atlasResumoCatalogo">Preparando catálogo...</span>
+                <span id="atlasFiltrosAtivosCatalogo"></span>
+              </div>
+              </div>
+            </div>
+            <div class="chips">
+              <button class="chip-exp active" data-filtro="TODOS" onclick="filtrarStatus('TODOS',this)">Todos <span class="num" id="chipTodos">0</span></button>
+              <button class="chip-exp" data-filtro="ESTOQUE" onclick="filtrarStatus('ESTOQUE',this)">🟢 Estoque <span class="num" id="chipEstoque">0</span></button>
+              <button class="chip-exp" data-filtro="EM_USO" onclick="filtrarStatus('EM_USO',this)">🟦 Em uso <span class="num" id="chipUso">0</span></button>
+              <button class="chip-exp" data-filtro="MANUTENCAO" onclick="filtrarStatus('MANUTENCAO',this)">🟠 Manutenção <span class="num" id="chipManutencao">0</span></button>
+              <button class="chip-exp" data-filtro="RESERVADO" onclick="filtrarStatus('RESERVADO',this)">🟣 Reservados <span class="num" id="chipReservado">0</span></button>
+            </div>
+            <div id="catalogoGrid" class="catalogo-grid">
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+<div class="produto-card atlas-skeleton-card" aria-hidden="true">
+  <div class="atlas-skeleton-photo"></div>
+  <div class="atlas-skeleton-info">
+    <div class="atlas-skeleton-line title"></div>
+    <div class="atlas-skeleton-line medium"></div>
+    <div class="atlas-skeleton-line short"></div>
+    <div class="atlas-skeleton-footer">
+      <div class="atlas-skeleton-pill"></div>
+      <div class="atlas-skeleton-small"></div>
+    </div>
+  </div>
+</div>
+</div>
+            <div id="atlasPaginacaoCatalogo" class="atlas-pagination" aria-label="Paginação do catálogo"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="tab-solicitacoes" class="tab" data-permissao="EXPEDICAO_APROVAR"><div class="card"><h3>📋 Solicitações aguardando autorização</h3><div id="listaSolicitacoes" class="pedido-lista"></div></div></section>
+    <section id="tab-separacao" class="tab" data-permissao="EXPEDICAO_SEPARAR"><div class="card"><h3>📦 Separação</h3><div id="listaSeparacao" class="pedido-lista"></div></div></section>
+    <section id="tab-retirada" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>📦 Aguardando retirada</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
+    <section id="tab-transito" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
+    <section id="tab-historico" class="tab" data-permissao="EXPEDICAO_VER"><div class="card"><h3>📜 Histórico</h3><div id="listaHistorico" class="pedido-lista"></div></div></section>
+<div id="modalCarrinho" class="modal-bg"><div class="modal"><div class="modal-head"><span><i class="fa-solid fa-cart-shopping"></i> Meu carrinho</span><button class="fechar-modal" onclick="fecharModalCarrinho()">X</button></div><div class="modal-body"><div class="cart-modal-panel"><div class="cart-head"><span>Itens selecionados</span><span id="cartQtd">0</span></div><div id="cartItens"></div><textarea id="obsSolicitacao" placeholder="Observação da solicitação..." style="margin-top:8px;min-height:70px"></textarea><button class="btn-submit" data-permissao="EXPEDICAO_VER" onclick="enviarSolicitacao()"><i class="fa-regular fa-paper-plane"></i> Enviar solicitação</button><div class="mini-summary"><div class="mini-box"><strong id="cartResumoItens">0</strong>Itens</div><div class="mini-box"><strong id="cartResumoObras">0</strong>Origens</div></div><div class="info-box">A solicitação será enviada aos responsáveis pela obra/setor de origem. Itens em uso entram como interesse, não como retirada direta.</div></div></div></div></div>
+<div id="modalDetalhe" class="modal-bg"><div class="modal"><div class="modal-head"><span id="expModalTitulo">Detalhes</span><button class="fechar-modal" onclick="fecharModalDetalhe()">X</button></div><div class="modal-body" id="modalConteudo"></div></div></div>
+<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" data-permissao="EXPEDICAO_ENTREGAR" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
+
+
+
+
+
+
+
+
+
+</section>
+
+<section class="atlas-shell-module atlas-manut-root" data-module="manutencao" aria-hidden="true">
+<div class="atlas-manut-main">
+  <div class="atlas-manut-kpis">
+    <div class="atlas-manut-kpi"><strong id="manutKpiTotal">0</strong><span>Total de ordens</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiEnvio">0</strong><span>Aguardando envio</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiOrcamento">0</strong><span>Orçamento / aprovação</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiExecucao">0</strong><span>Em execução</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiRetorno">0</strong><span>Aguardando retorno</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiCusto">R$ 0,00</strong><span>Custo registrado</span></div>
+  </div>
+
+  <div class="atlas-manut-central-actions" id="atlasManutAcoesCentral">
+    <div>
+      <strong>Central de Manutenção</strong>
+      <span>Adicione patrimônios à fila e envie vários juntos para o mesmo fornecedor.</span>
+    </div>
+    <div class="atlas-manut-central-buttons">
+      <button type="button" class="atlas-btn light" id="btnManutAdicionar">＋ Adicionar patrimônio</button>
+      <button type="button" class="atlas-btn primary" id="btnManutEnviarSelecionados" disabled>🚚 Enviar selecionados</button>
+    </div>
+  </div>
+
+  <div id="atlasManutencaoApp">
+    <section class="atlas-manut-pane left">
+      <div class="atlas-manut-toolbar">
+        <input id="manutBusca" placeholder="Buscar ordem, patrimônio, fornecedor...">
+        <select id="manutFiltroStatus">
+          <option value="">Todos os status</option>
+          <option value="AGUARDANDO_ENVIO">Aguardando envio</option>
+          <option value="AGUARDANDO_ORCAMENTO">Aguardando orçamento</option>
+          <option value="ORCAMENTO_RECEBIDO">Orçamento recebido</option>
+          <option value="ORCAMENTO_APROVADO">Orçamento aprovado</option>
+          <option value="EM_MANUTENCAO">Em manutenção</option>
+          <option value="AGUARDANDO_RECEBIMENTO">Aguardando recebimento</option>
+          <option value="FINALIZADA">Finalizada</option>
+        </select>
+        <button id="btnManutAtualizar" title="Atualizar" type="button"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+      <div id="manutLista"></div>
+      <div id="manutPaginacao" class="atlas-manut-pagination" aria-label="Paginação das ordens de manutenção"></div>
+    </section>
+
+    <section class="atlas-manut-pane right">
+      <div id="manutDetalhe"><div class="atlas-manut-detail-empty">Selecione uma ordem para acompanhar o fluxo.</div></div>
+    </section>
+  </div>
+</div>
 </section>
 </div>
 </main>
@@ -2577,14 +3088,32 @@ function iniciarTopoPadraoBDR(){
   carregarUsuario();
 }
 
-window.addEventListener("load", () => {
-  iniciarTopoPadraoBDR();
+function atlasEmpresaModuloAtivo(){
+  const modulo = String(document.documentElement.dataset.shellModulo || "").toLowerCase();
+  if(modulo) return modulo === "empresa";
+  const params = new URLSearchParams(location.search);
+  return String(params.get("m") || params.get("modulo") || "dashboard").toLowerCase() === "empresa";
+}
+
+async function atlasIniciarEmpresaSeAtiva(){
+  if(!atlasEmpresaModuloAtivo()) return;
   if(!bloquearTelaEmpresaSemPermissao()) return;
   aplicarAcoesEmpresaPorPermissao();
-  carregarEmpresas();
+  await carregarEmpresas();
+}
+
+window.addEventListener("load", () => {
+  iniciarTopoPadraoBDR();
+  atlasIniciarEmpresaSeAtiva();
+});
+
+window.addEventListener("atlas:modulechange", (event) => {
+  if(String(event?.detail?.modulo || "").toLowerCase() === "empresa"){
+    atlasIniciarEmpresaSeAtiva();
+  }
 });
 
 </script>
-<script src="./JS/dashboard/dashboardCore.js"></script><script src="./JS/dashboard/dashboardDados.js"></script><script src="./JS/dashboard/dashboardFiltros.js"></script><script src="./JS/dashboard/dashboardKpis.js"></script><script src="./JS/dashboard/dashboardGraficos.js"></script><script src="./JS/dashboard/dashboardAnalise.js"></script><script src="./JS/dashboard/dashboardEstoque.js"></script><script src="./JS/dashboard/dashboardMovimentacoes.js"></script><script src="./JS/dashboard/dashboardRankings.js"></script><script src="./JS/dashboard/dashboardBoot.js"></script><script src="./JS/atlasShell.js?v=20260831-patrimonio"></script>
+<script src="./JS/dashboard/dashboardCore.js"></script><script src="./JS/dashboard/dashboardDados.js"></script><script src="./JS/dashboard/dashboardFiltros.js"></script><script src="./JS/dashboard/dashboardKpis.js"></script><script src="./JS/dashboard/dashboardGraficos.js"></script><script src="./JS/dashboard/dashboardAnalise.js"></script><script src="./JS/dashboard/dashboardEstoque.js"></script><script src="./JS/dashboard/dashboardMovimentacoes.js"></script><script src="./JS/dashboard/dashboardRankings.js"></script><script src="./JS/dashboard/dashboardBoot.js"></script><script src="./JS/atlasShell.js?v=20260904-empresa-gate"></script>
 </body>
 </html>
