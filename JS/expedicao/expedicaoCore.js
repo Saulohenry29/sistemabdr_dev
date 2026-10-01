@@ -200,7 +200,7 @@ function rotStatus(s){ const m={ESTOQUE:"DISPONÍVEL",DISPONIVEL:"DISPONÍVEL",N
 function statusClass(s){ return "st-" + String(s || "").toUpperCase().replaceAll(" ","_"); }
 function nomeObra(id){ const o=obras.find(x=>String(x.id)===String(id)); return o ? `${o.codigo_obra || "-"} - ${o.nome || "-"}` : "Sem obra"; }
 function obraCurta(id, fallback){ const txt = fallback || nomeObra(id); return txt.replace(/^\d+\s*-\s*/,'').slice(0,28); }
-function fotoItem(i){ return i.foto_url || i.imagem_url || ""; }
+function fotoItem(i){ return window.AtlasExpedicaoImagens?.url?.(i) || i.foto_url || i.imagem_url || ""; }
 function placeholderIcon(i){ const t = `${i.nome || i.descricao || ""}`.toLowerCase(); if(t.includes("furadeira")||t.includes("parafusadeira")) return "🔩"; if(t.includes("notebook")||t.includes("computador")) return "💻"; if(t.includes("impressora")) return "🖨️"; if(t.includes("solda")) return "⚡"; if(t.includes("capacete")) return "⛑️"; if(t.includes("cadeira")) return "🪑"; return "📦"; }
 function carregarTopo(){ const u=usuarioAtual(); document.getElementById("usuarioNome").innerText = u ? "Olá, " + (u.nome || "usuário") : "Olá, usuário"; document.getElementById("usuarioPerfil").innerText = u ? (u.perfil || "-") : "-"; }
 /* =========================================================
@@ -483,6 +483,12 @@ async function carregarCatalogo(){
 
   // Atlas 2.8.1: antes de renderizar, recalcula disponibilidade real.
   lista = await aplicarReservasNoCatalogoAtlas(lista);
+
+  // Imagem de referência: uma foto compartilhada por marca + modelo.
+  if(window.AtlasExpedicaoImagens){
+    await window.AtlasExpedicaoImagens.carregar();
+    lista = window.AtlasExpedicaoImagens.aplicar(lista);
+  }
 
   itensCatalogo = lista.filter(i => !["BAIXADO","QUEBRADO"].includes(normalStatus(i.status)));
   atualizarKPIs();
@@ -1722,6 +1728,8 @@ function abrirDetalhe(origem,id){
         <div class="det-line"><b>Localização:</b> ${esc(i.localizacao||"-")}</div>
         <div class="det-line"><b>Marca/Modelo:</b> ${esc(i.marca||"-")} / ${esc(i.modelo||"-")}</div>
         <div class="det-line"><b>Estado:</b> ${esc(i.estado||"-")}</div>
+
+        ${window.AtlasExpedicaoImagens?.gerenciadorHtml?.(i) || ""}
 
         ${seletorQtd}
 

@@ -2672,14 +2672,6 @@ function renderizarPatrimonios(){
   }
 
   lista.innerHTML = `
-    <div class="bdr-lista-tools">
-      <div>
-        <strong>Exibindo ${inicio + 1}–${fim} de ${total}</strong><br>
-        <span>${buscaOriginal ? "Resultado filtrado" : "Últimos patrimônios carregados"} • ${porPagina} por página</span>
-      </div>
-      <span>Use a pesquisa para localizar PAT, placa, série, nome ou obra.</span>
-    </div>
-
     <div class="lista-header">
       <div class="bdr-check-etiqueta"><input type="checkbox" aria-label="Selecionar itens desta página" title="Selecionar itens desta página" onchange="bdrSelecionarPaginaEtiquetas(this.checked)"></div>
       <div>Código</div>

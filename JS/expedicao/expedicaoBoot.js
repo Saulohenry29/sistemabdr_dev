@@ -168,6 +168,7 @@
     try{
       if(typeof global.verificarLogin==='function') global.verificarLogin();
 
+      await carregarScript('./JS/expedicao/expedicaoImagens.js');
       await carregarScript('./JS/expedicao/expedicaoCore.js');
 
       instalarAbaLazy();
