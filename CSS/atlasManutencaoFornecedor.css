@@ -1,0 +1,162 @@
+:root{
+  --navy:#092a55;
+  --navy2:#061d3d;
+  --red:#d6151d;
+  --redHover:#b90f16;
+  --bg:#f3f6fa;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#dce4ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;width:100%;max-width:100%;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.forn-shell{min-height:100vh}
+.forn-head{min-height:104px;padding:18px clamp(18px,4vw,64px);display:flex;align-items:center;justify-content:space-between;gap:24px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;box-shadow:0 5px 20px rgba(15,23,42,.10)}
+.forn-brand{min-width:0;display:flex;align-items:center;gap:18px}
+.forn-brand img{width:150px;max-width:26vw;max-height:66px;object-fit:contain}
+.forn-brand h1{margin:0;font-size:clamp(20px,2vw,30px);line-height:1.05}
+.forn-brand p{margin:7px 0 0;font-size:14px;color:#e5edf8}
+.forn-order{flex:0 0 auto;min-width:180px;padding:10px 16px;border:1px solid rgba(255,255,255,.28);border-radius:10px}
+.forn-order small,.forn-order strong{display:block}
+.forn-order small{color:#dbe7f5}
+.forn-order strong{margin-top:3px;font-size:19px}
+#portalConteudo,.forn-state{width:min(1380px,calc(100% - 40px));margin:18px auto}
+#portalConteudo{display:grid;gap:16px}
+.forn-card{padding:22px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 5px 18px rgba(15,23,42,.045)}
+.forn-section-title{margin:0;display:flex;align-items:center;gap:8px;font-size:19px;color:var(--navy)}
+.forn-section-head{margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.forn-pat-grid{margin-top:16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.forn-pat-grid>div{min-width:0;padding:12px 15px;border-right:1px solid var(--line)}
+.forn-pat-grid>div:last-child{border-right:0}
+.forn-pat-grid small,.forn-pat-grid strong{display:block}
+.forn-pat-grid small{color:#334155;font-size:12px}
+.forn-pat-grid strong{margin-top:5px;font-size:14px;overflow-wrap:anywhere}
+.forn-defeito{margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.forn-defeito b{color:var(--navy)}
+.forn-grid{margin-top:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.forn-grid label,.forn-labor-box label,.forn-values label{min-width:0;display:flex;flex-direction:column;gap:6px;color:#172033;font-size:12px;font-weight:700}
+.forn-grid .wide{grid-column:1/-1}
+input,textarea{width:100%;min-width:0;border:1px solid #ccd8e6;border-radius:8px;background:#fff;color:#0f172a;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
+input{height:42px;padding:0 11px}
+textarea{min-height:88px;padding:10px 11px;resize:vertical}
+input:focus,textarea:focus{border-color:#7897bc;box-shadow:0 0 0 3px rgba(9,42,85,.08)}
+.forn-add{flex:0 0 auto;min-height:38px;padding:7px 14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--red);border-radius:8px;background:#fff;color:var(--red);font-size:12px;font-weight:800}
+.forn-add span{font-size:18px;line-height:1}
+.forn-add:hover{background:#fff5f5}
+.forn-items-table{border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.forn-items-head,.forn-item-row{display:grid;grid-template-columns:minmax(190px,1.65fr) minmax(145px,1fr) 90px 150px 120px 72px;align-items:center}
+.forn-items-head{min-height:40px;padding:0 12px;background:var(--navy);color:#fff;font-size:11px;font-weight:800}
+.forn-item-row{min-height:54px;padding:7px 12px;gap:8px;border-top:1px solid var(--line);background:#fff}
+.forn-item-row:first-child{border-top:0}
+.forn-item-row input{height:36px}
+.item-total{text-align:center;font-size:12px}
+.item-remove{width:34px;height:34px;justify-self:center;border:0;border-radius:8px;background:#fee2e2;color:#dc2626;font-size:22px;line-height:1}
+.item-remove:hover{background:#fecaca}
+.forn-items-summary{min-height:46px;padding:0 16px;display:flex;align-items:center;justify-content:flex-end;gap:35px;border-top:1px solid var(--line);font-size:13px}
+.forn-items-summary strong{min-width:120px;font-size:15px}
+.forn-labor-box{margin-top:12px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.forn-labor-box>label{padding:10px}
+.forn-labor-box textarea{min-height:68px}
+.forn-values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.forn-values label{padding:10px;border-right:1px solid var(--line);color:var(--navy)}
+.forn-values label:last-child{border-right:0}
+.forn-money{text-align:left;font-variant-numeric:tabular-nums}
+.forn-totals{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-top:0;border-radius:0 0 9px 9px;overflow:hidden}
+.forn-totals>div{min-height:68px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.forn-totals small{font-size:12px}
+.forn-totals strong{margin-top:4px;font-size:20px}
+.forn-totals .grand{background:var(--navy);color:#fff}
+.forn-submit{padding:5px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.forn-submit p{margin:0;color:var(--muted);font-size:12px}
+.forn-submit button{min-height:42px;padding:9px 18px;border:0;border-radius:9px;background:var(--red);color:#fff;font-size:12px;font-weight:800}
+.forn-submit button:hover{background:var(--redHover)}
+.forn-submit button:disabled{opacity:.6;cursor:not-allowed}
+.forn-state{text-align:center}
+.forn-state-icon{font-size:34px}
+.forn-state h2{margin:8px 0 4px}
+.forn-state p{margin:0;color:var(--muted)}
+.forn-error{border-color:#fecaca}
+.forn-success{border-color:#bbf7d0}
+@media(max-width:900px){
+  .forn-head{align-items:flex-start}
+  .forn-pat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .forn-pat-grid>div{border-bottom:1px solid var(--line)}
+  .forn-values{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .forn-items-table{overflow-x:auto}
+  .forn-items-head,.forn-item-row{min-width:880px}
+}
+@media(max-width:640px){
+  #portalConteudo,.forn-state{width:calc(100% - 20px);margin:10px auto}
+  .forn-head{min-height:auto;padding:14px;flex-direction:column}
+  .forn-brand img{width:88px;max-width:none}
+  .forn-brand{gap:12px}
+  .forn-brand h1{font-size:20px}
+  .forn-brand p{font-size:11px}
+  .forn-order{width:100%;min-width:0}
+  .forn-card{padding:12px}
+  .forn-section-head{align-items:flex-start}
+  .forn-section-title{font-size:16px}
+  .forn-add{padding:7px 9px;font-size:10px}
+  .forn-pat-grid{grid-template-columns:1fr}
+  .forn-pat-grid>div{border-right:0}
+  .forn-grid,.forn-values,.forn-totals{grid-template-columns:1fr}
+  .forn-grid .wide{grid-column:auto}
+  .forn-values label{border-right:0;border-bottom:1px solid var(--line)}
+  .forn-values label:last-child{border-bottom:0}
+  .forn-totals .grand{min-height:76px}
+  .forn-submit{align-items:stretch;flex-direction:column}
+  .forn-submit button{width:100%}
+}
+
+/* Lote: um único link, preenchimento item a item. Navegação no rodapé para
+   o fornecedor preencher a página de cima para baixo sem voltar ao topo. */
+.forn-lote-nav{display:flex;align-items:center;justify-content:flex-start;gap:16px;border:1px solid #d8e1ea}
+.forn-lote-nav>div:first-child{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.forn-lote-nav small{color:#64748b}.forn-lote-nav span{font-size:13px;color:#475569}
+.forn-lote-bottom{display:flex;justify-content:flex-end;gap:10px;padding:2px 0 4px}
+.forn-lote-bottom button{min-height:44px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer}
+.forn-lote-bottom #btnSalvarProximo{background:#0f766e;color:#fff;border-color:#0f766e}
+.forn-lote-bottom button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){
+  .forn-lote-nav{align-items:flex-start}
+  .forn-lote-bottom{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .forn-lote-bottom button{width:100%;padding:11px 8px;font-size:13px}
+}
+
+/* Mensagens do próprio portal: evita alert()/popup nativo do navegador. */
+.forn-aviso{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:80;width:max-content;max-width:min(560px,calc(100vw - 24px));padding:12px 14px;border-radius:10px;background:#0f172a;color:#fff;box-shadow:0 12px 32px rgba(15,23,42,.25);font-size:13px;font-weight:700}
+.forn-aviso[data-tipo="erro"]{background:#991b1b}
+.forn-aviso[data-tipo="sucesso"]{background:#166534}
+
+/* Revisão final do lote: só aparece quando todos os patrimônios foram preenchidos. */
+.forn-review-help{margin:4px 0 0;color:var(--muted);font-size:12px}
+.forn-review-list{display:grid;gap:8px;margin-top:12px}
+.forn-review-item{width:100%;display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(220px,2fr) minmax(120px,.7fr) auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+.forn-review-item:hover{border-color:#94a3b8;background:#f8fafc}
+.forn-review-item span{min-width:0;display:flex;flex-direction:column;gap:2px}
+.forn-review-item small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forn-review-item b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forn-review-total{text-align:right}
+.forn-review-action{font-size:11px;font-weight:800;color:#991b1b}
+@media(max-width:760px){.forn-review-item{grid-template-columns:1fr auto}.forn-review-item span:nth-child(2){grid-column:1/-1;order:3}.forn-review-total{text-align:right}.forn-review-action{align-items:flex-end}}
+
+@media(max-width:480px){
+  #portalConteudo,.forn-state{width:calc(100% - 12px);margin:6px auto}
+  #portalConteudo{gap:10px}
+  .forn-head{padding:10px 12px;gap:10px}
+  .forn-brand h1{font-size:18px}
+  .forn-brand p{font-size:10px;margin-top:3px}
+  .forn-order{padding:8px 10px}
+  .forn-order strong{font-size:16px}
+  .forn-card{padding:11px;border-radius:11px}
+  .forn-pat-grid{margin-top:10px}
+  .forn-pat-grid>div{padding:9px 10px}
+  .forn-grid{gap:10px;margin-top:12px}
+  textarea{min-height:76px}
+  .forn-section-title{font-size:15px}
+  .forn-aviso{left:6px;right:6px;top:8px;transform:none;width:auto;max-width:none;text-align:center}
+  .forn-review-item{padding:9px}
+}

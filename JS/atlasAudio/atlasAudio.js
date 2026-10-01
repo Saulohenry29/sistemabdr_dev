@@ -37,7 +37,10 @@
     impedirSobreposicao: true,
 
     // Pequena proteção contra chamadas duplicadas quase simultâneas.
-    intervaloMinimoMs: 180
+    intervaloMinimoMs: 180,
+
+    // Notificações recebidas quase juntas geram um único aviso sonoro, inclusive entre abas.
+    intervaloNotificacaoGlobalMs: 1800
   };
 
   const audios = new Map();
@@ -113,7 +116,7 @@
       }
 
       liberado = true;
-      console.log('🔊 Atlas Audio V3 liberado.');
+      void 0;
       return true;
     } catch (erro) {
       return false;
@@ -127,6 +130,17 @@
     if (!audio) return false;
 
     const agora = Date.now();
+
+    if (nome === 'notificacao') {
+      const chaveGlobal = 'atlas_audio_notificacao_ultimo_toque';
+      try {
+        const ultimoGlobal = Number(localStorage.getItem(chaveGlobal) || 0);
+        if (agora - ultimoGlobal < CONFIG.intervaloNotificacaoGlobalMs) return false;
+        localStorage.setItem(chaveGlobal, String(agora));
+      } catch (_e) {
+        // Se o storage estiver indisponível, permanece a proteção local abaixo.
+      }
+    }
     const ultimo = ultimoToque.get(nome) || 0;
 
     if (agora - ultimo < CONFIG.intervaloMinimoMs) {
@@ -244,7 +258,5 @@
 
   window.AtlasAudio = AtlasAudio;
 
-  console.log(
-    '✅ ATLAS AUDIO V3 carregado - notificação, scanner OK, scanner erro e concluído'
-  );
+  void 0;
 })();

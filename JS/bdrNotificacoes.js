@@ -136,6 +136,9 @@
   }
 
   function aplicarCss(){
+    /* No Atlas, toda a aparência das notificações pertence ao atlas-topbar.css.
+       Mantemos este CSS injetado somente para páginas legadas fora do shell. */
+    if(document.body.classList.contains('atlas-shell-page')) return;
     if(document.getElementById('bdrNotifV12Css')) return;
 
     const css = document.createElement('style');
@@ -256,6 +259,62 @@
       .notif-item small{display:block;margin-top:5px;color:#64748b}
       .bdr-notif-mais-wrap{padding:10px 12px;background:#f8fafc;border-top:1px solid #e5e7eb}
       .bdr-notif-mostrar-mais{width:100%;border:1px solid #bfdbfe!important;background:#eff6ff!important;color:#1d4ed8!important;border-radius:10px!important;padding:9px 12px!important;font-size:11px!important;font-weight:900!important;cursor:pointer!important}
+
+      /* ATLAS EM 100% REAL — equivalência visual ao legado em 0,85 */
+      body.atlas-shell-page .notif-dropdown{
+        width:min(366px,calc(100vw - 24px))!important;
+        max-height:min(595px,calc(100vh - 110px))!important;
+      }
+      body.atlas-shell-page .notif-list{
+        max-height:min(242px,calc(100vh - 205px))!important;
+      }
+      body.atlas-shell-page .notif-head{
+        gap:8px!important;
+        padding:10px 12px!important;
+        font-size:11px!important;
+      }
+      body.atlas-shell-page .bdr-notif-limpar-todas{
+        font-size:9px!important;
+        border-radius:8px!important;
+        padding:6px 8px!important;
+      }
+      body.atlas-shell-page .bdr-notif-grupo-titulo{
+        padding:8px 10px 5px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .notif-item{
+        padding:9px 36px 9px 11px!important;
+        font-size:10px!important;
+        line-height:1.35!important;
+      }
+      body.atlas-shell-page .notif-item strong{
+        margin-bottom:2px!important;
+        font-size:10px!important;
+      }
+      body.atlas-shell-page .notif-item small{
+        margin-top:4px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .notif-item.bdr-notif-acao::after{
+        margin-top:6px!important;
+        font-size:8.5px!important;
+      }
+      body.atlas-shell-page .bdr-notif-fechar{
+        top:7px!important;
+        right:7px!important;
+        width:23px!important;
+        height:23px!important;
+        border-radius:8px!important;
+        font-size:13px!important;
+      }
+      body.atlas-shell-page .bdr-notif-mais-wrap{
+        padding:8px 10px!important;
+      }
+      body.atlas-shell-page .bdr-notif-mostrar-mais{
+        border-radius:9px!important;
+        padding:8px 10px!important;
+        font-size:9px!important;
+      }
       .bdr-notif-mostrar-mais:hover{background:#dbeafe!important;transform:none!important}
       .notif-btn.bdr-notif-offline{opacity:.75;filter:grayscale(.25)}
       .bdr-notif-toast-forte{
@@ -897,9 +956,14 @@
           if(empresaId && nova.empresa_id && String(empresaId) !== String(nova.empresa_id)) return;
 
           /*
-           * O Realtime apenas solicita a atualização.
-           * Quem decide se existe algo novo e toca o som é o sininho.
+           * O INSERT do Realtime é o evento mais confiável para o aviso sonoro.
+           * Avisamos imediatamente e, em seguida, sincronizamos o sininho.
+           * carregarNotificacoes() pode reencontrar o mesmo registro, mas a
+           * proteção por ID impede som duplicado.
            */
+          if(nova?.id){
+            avisarNovaNotificacao(nova);
+          }
           await carregarNotificacoes();
         })
         .subscribe();
@@ -923,12 +987,32 @@
   }
 
   async function toggleNotificacoes(event){
-    event?.stopPropagation();
+    /*
+     * O AtlasTopbar é o único responsável por abrir/fechar dropdowns.
+     * Este módulo fica responsável somente pelo conteúdo das notificações.
+     */
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
     const drop = dropdownEl();
     if(!drop) return;
 
-    document.getElementById('dropdownUser')?.classList.remove('ativo');
-    const vaiAbrir = !drop.classList.contains('ativo');
+    if(window.AtlasTopbar){
+      BDR_NOTIF.quantidadeVisivel = BDR_NOTIF.passoMostrarMais;
+      await carregarNotificacoes();
+      renderNotificacoes(BDR_NOTIF.notificacoesCache, true);
+      listaEl()?.scrollTo({ top:0, behavior:'auto' });
+      return;
+    }
+
+    /* Fallback temporário para página antiga sem AtlasTopbar. */
+    document.getElementById('dropdownUser')?.classList.remove('ativo','show');
+    document.getElementById('userDropdown')?.classList.remove('ativo','show');
+
+    const vaiAbrir =
+      !drop.classList.contains('ativo') &&
+      !drop.classList.contains('show');
+
     drop.classList.toggle('ativo', vaiAbrir);
 
     if(vaiAbrir){
@@ -1017,21 +1101,46 @@
     }
 
     const botaoSininho = notifBtnEl();
-    if(botaoSininho && !botaoSininho.dataset.bdrNotifLigado){
+
+    /*
+     * Não criamos um segundo controlador visual no mesmo botão.
+     * AtlasTopbar abre/fecha; bdrNotificacoes atualiza a lista.
+     */
+    if(
+      botaoSininho &&
+      !window.AtlasTopbar &&
+      !botaoSininho.dataset.bdrNotifLigado
+    ){
       botaoSininho.dataset.bdrNotifLigado = '1';
       botaoSininho.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
         toggleNotificacoes(e);
-      }, true);
+      });
+    }
+
+    if(
+      botaoSininho &&
+      window.AtlasTopbar &&
+      !botaoSininho.dataset.bdrNotifConteudo
+    ){
+      botaoSininho.dataset.bdrNotifConteudo = '1';
+      botaoSininho.addEventListener('click', async () => {
+        BDR_NOTIF.quantidadeVisivel = BDR_NOTIF.passoMostrarMais;
+        await carregarNotificacoes();
+        renderNotificacoes(BDR_NOTIF.notificacoesCache, true);
+        listaEl()?.scrollTo({ top:0, behavior:'auto' });
+      });
     }
 
     iniciarNotificacoes();
   });
 
   document.addEventListener('click', e => {
-    if(!e.target.closest('.notif-wrap')) dropdownEl()?.classList.remove('ativo');
+    if(window.AtlasTopbar) return;
+    if(!e.target.closest('.notif-wrap')){
+      dropdownEl()?.classList.remove('ativo','show');
+    }
   });
 
   document.addEventListener('visibilitychange', () => {
@@ -1053,5 +1162,5 @@
   window.bdrMarcarNotificacaoComoLida = marcarNotificacaoComoLida;
   window.bdrMarcarTodasNotificacoesComoLidas = marcarTodasComoLidas;
 
-  console.log('✅ BDR NOTIFICAÇÕES V14.0 carregado - azul por link, verde informativa e vermelho para erro');
+  void 0;
 })();

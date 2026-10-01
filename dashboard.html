@@ -5,6 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
 <title>Torre de Controle BDR</title>
+<script>
+/* ATLAS: ativa o modo embutido antes dos CSS. */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('atlas') === '1') {
+    document.documentElement.classList.add('atlas-embedded');
+  }
+})();
+</script>
+<style>
+/* Quando aberto pelo atlas.html, o shell é o único dono do menu e do topo. */
+html.atlas-embedded,
+html.atlas-embedded body{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#f6f7fb!important;
+}
+html.atlas-embedded .bdr-app{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html.atlas-embedded .bdr-sidebar,
+html.atlas-embedded .bdr-topbar{
+  display:none!important;
+}
+html.atlas-embedded .bdr-main{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:10px!important;
+  padding-bottom:18px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  box-sizing:border-box!important;
+  background:#f6f7fb!important;
+}
+html.atlas-embedded .dash-container{
+  padding-left:0!important;
+  padding-right:0!important;
+}
+
+/* BDR Dashboard - ajuste consolidado 2026-09-24 */
+.kpi-card.valor-destaque .kpi-value{font-size:30px !important;line-height:1 !important;}
+
+/* Dashboard: gráficos priorizados e coluna operacional compacta. */
+@media (max-width:1180px){
+  .dashboard-grid{grid-template-columns:1fr 1fr;}
+  .right-stack{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;}
+}
+@media (max-width:760px){
+  .dashboard-grid{grid-template-columns:1fr;}
+  .right-stack{grid-column:auto;display:flex;}
+  .bottom-grid{grid-template-columns:1fr;}
+}
+
+/* =========================================================
+   DASHBOARD OPERACIONAL - layout oficial (barras amplas / circulares compactos)
+   ========================================================= */
+.dashboard-grid.dashboard-grid-modelo{
+  display:grid;grid-template-columns:minmax(0,1.48fr) minmax(300px,.88fr) minmax(300px,.94fr);
+  grid-template-areas:"valor status operacional" "quantidade tipos pendencias" "movimentos rankingValor rankingQtd";
+  gap:10px;align-items:stretch;
+}
+.dash-area-valor{grid-area:valor}.dash-area-status{grid-area:status}.dash-area-operacional{grid-area:operacional}
+.dash-area-quantidade{grid-area:quantidade}.dash-area-tipos{grid-area:tipos}.dash-area-pendencias{grid-area:pendencias}
+.dash-area-movimentos{grid-area:movimentos}.dash-area-ranking-valor{grid-area:rankingValor}.dash-area-ranking-qtd{grid-area:rankingQtd}
+.dashboard-grid-modelo>.card-light{min-width:0;min-height:0;border-radius:12px;border-left:3px solid #d71920;box-shadow:0 2px 9px rgba(15,23,42,.06);overflow:hidden}
+.dashboard-grid-modelo .card-light h3{min-height:38px;padding:10px 12px 8px;font-size:12px;line-height:1.2;margin:0;border-bottom:1px solid #eef0f4}
+.dashboard-grid-modelo .card-light h3 small{font-size:9px}
+.dashboard-grid-modelo .card-body{padding:8px 12px 10px}
+.dashboard-grid-modelo .chart-card canvas{height:210px!important}
+.operational-grid{display:block!important}
+.insight-atlas{display:flex;flex-direction:column;gap:8px}
+.insight-item{position:relative;border:1px solid #e5e7eb;border-radius:10px;padding:9px 10px 9px 12px;background:#fff;cursor:pointer;transition:.16s;overflow:hidden}
+.insight-item:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#94a3b8}
+.insight-item:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(15,23,42,.08)}
+.insight-item[data-nivel="CRITICO"]:before{background:#dc2626}.insight-item[data-nivel="ATENCAO"]:before{background:#d97706}.insight-item[data-nivel="INFO"]:before{background:#2563eb}
+.insight-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.insight-top strong{font-size:10px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.insight-badge{font-size:8px;font-weight:900;letter-spacing:.35px;padding:3px 6px;border-radius:999px;flex:0 0 auto}
+.insight-badge.CRITICO{color:#991b1b;background:#fee2e2}.insight-badge.ATENCAO{color:#92400e;background:#fef3c7}.insight-badge.INFO{color:#1d4ed8;background:#dbeafe}
+.insight-texto{font-size:9px;line-height:1.35;color:#4b5563}
+.insight-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;font-size:8px;color:#94a3b8}
+.insight-link{font-weight:900;color:#b91c1c}
+.insight-vazio{padding:18px 10px;text-align:center;color:#64748b;font-size:10px;line-height:1.45}
+.insight-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
+.insight-modal{width:min(900px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 24px 70px rgba(15,23,42,.28)}
+.insight-modal-head{position:sticky;top:0;background:#fff;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #e5e7eb}
+.insight-modal-head h3{margin:0!important;padding:0!important;border:0!important;min-height:0!important;font-size:15px!important}
+.insight-modal-close{border:0;background:#f3f4f6;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:18px}
+.insight-modal-body{padding:16px}
+.insight-resumo{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:12px}
+.insight-resumo h4{margin:0 0 6px;font-size:13px}.insight-resumo p{margin:0;color:#4b5563;font-size:11px;line-height:1.5}
+.insight-evidencias{width:100%;border-collapse:collapse;font-size:10px}.insight-evidencias th,.insight-evidencias td{padding:8px;border-bottom:1px solid #eef0f4;text-align:left;vertical-align:top}.insight-evidencias th{background:#f8fafc;color:#475569;position:sticky;top:61px}
+.insight-meta{margin-top:10px;color:#94a3b8;font-size:9px}
+.dashboard-grid-modelo .dash-area-pendencias .alert-row{padding:10px 11px;min-height:39px;font-size:10px}
+.dashboard-grid-modelo .mov-card,.dashboard-grid-modelo .card-top5{height:100%;display:flex;flex-direction:column}
+.dashboard-grid-modelo .mov-card .card-body,.dashboard-grid-modelo .card-top5>.card-body:first-of-type{flex:1}
+.dashboard-grid-modelo .card-top5 .ranking-action{margin-top:auto;padding-top:0}
+.dashboard-grid-modelo .card-top5 .info-row{position:relative;padding:7px 9px 8px;min-height:31px;overflow:hidden}
+.dashboard-grid-modelo .card-top5 .info-row span,.dashboard-grid-modelo .card-top5 .info-row b{position:relative;z-index:2}
+.dashboard-grid-modelo .card-top5 .info-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-grid-modelo .ranking-bar{position:absolute;left:9px;right:9px;bottom:3px;height:4px;border-radius:99px;background:#eef1f5;overflow:hidden}
+.dashboard-grid-modelo .ranking-bar>i{display:block;height:100%;border-radius:99px;background:#d71920}
+.dashboard-grid-modelo .table-mini{font-size:9px}.dashboard-grid-modelo .table-mini th,.dashboard-grid-modelo .table-mini td{padding:5px 4px}
+@media(max-width:1180px){.dashboard-grid.dashboard-grid-modelo{grid-template-columns:1fr 1fr;grid-template-areas:"valor status" "quantidade tipos" "operacional pendencias" "movimentos movimentos" "rankingValor rankingQtd"}}
+@media(max-width:760px){.dashboard-grid.dashboard-grid-modelo{grid-template-columns:1fr;grid-template-areas:"valor" "status" "quantidade" "tipos" "operacional" "pendencias" "movimentos" "rankingValor" "rankingQtd"}.operational-grid{grid-template-columns:1fr 1fr}.dashboard-grid-modelo .chart-card canvas{height:240px!important}}
+
+</style>
 
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -302,7 +423,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 /* GRID */
 .dashboard-grid{
   display:grid;
-  grid-template-columns:1.05fr .9fr .75fr;
+  grid-template-columns:1.18fr 1fr .54fr;
   gap:12px;
 }
 
@@ -347,24 +468,18 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
   flex-direction:column;
   gap:12px;
 }
-/* =========================================================
-   ÁREA DO TOP 5 PATRIMÔNIOS
-   ALTERE AQUI O TAMANHO E LARGURA
-========================================================= */
 .bottom-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
+  align-items:stretch;
 }
-
-/* ALTURA DO CARD TOP 5 */
-:root{
-  --altura-card-top5:315px;
+.bottom-grid .card-top5{
+  display:flex;
+  flex-direction:column;
 }
-
-/* CARD TOP 5 */
-.card-top5{
-  min-height:var(--altura-card-top5);
+.bottom-grid .card-top5 > .card-body:last-child{
+  margin-top:auto;
 }
 .table-mini{
   width:100%;
@@ -1641,6 +1756,54 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
   filter:none;
 }
 .user-dropdown .logout-btn{color:#dc2626;}
+
+
+/* =========================================================
+   DASHBOARD ATLAS - PADRÃO COMPACTO OFICIAL
+   Mesma densidade visual de Patrimônio/Expedição, sem zoom/scale.
+========================================================= */
+html, body{zoom:1 !important;}
+body{font-size:11px !important;}
+.dash-container{padding:10px 14px 16px !important;}
+
+.quick-filters{
+  display:grid !important;
+  grid-template-columns:auto repeat(4,72px) minmax(125px,1fr) minmax(125px,1fr) 74px 92px minmax(145px,auto) !important;
+  gap:6px !important;
+  margin-bottom:9px !important;
+  align-items:center !important;
+}
+.quick-filters label,.update-info{font-size:9px !important;}
+.pill-btn,.filter-premium-btn,.btn-red,.btn-clear-dashboard{
+  min-height:27px !important;height:27px !important;
+  font-size:9px !important;border-radius:7px !important;padding:0 8px !important;
+}
+.filter-premium-btn span{font-size:8px !important;}
+.filter-premium-btn b{font-size:9px !important;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.update-info{min-width:145px !important;line-height:1.25 !important;}
+
+.kpi-row{gap:7px !important;margin-bottom:9px !important;}
+.kpi-card{min-height:58px !important;padding:8px 9px !important;gap:7px !important;border-radius:9px !important;}
+.kpi-card:hover{transform:none !important;}
+.kpi-icon{width:31px !important;height:31px !important;font-size:14px !important;flex:0 0 31px !important;}
+.kpi-value{font-size:17px !important;}
+.kpi-label{font-size:9px !important;margin-top:2px !important;line-height:1.1 !important;}
+.kpi-sub{display:none !important;}
+
+/* Detalhamento paginado do Dashboard */
+.valor-destaque .kpi-value{cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;}
+/* O valor exato mantém a mesma presença visual do valor resumido. */
+.valor-destaque.valor-exato .kpi-value{font-size:30px !important;line-height:1 !important;letter-spacing:-1.15px;}
+.resumo-valor-dashboard{margin:0 0 9px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:9px;background:#fafafa;font-size:11px;line-height:1.5;}
+.resumo-valor-dashboard strong{font-size:17px;color:#111827;}
+.resumo-valor-dashboard .resumo-linha{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;color:#4b5563;}
+.tabela-dashboard-scroll{overflow-x:auto;}
+.paginacao-dashboard{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:9px 0;font-size:10px;color:#4b5563;}
+.paginacao-dashboard-acoes{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.paginacao-dashboard select{height:28px;border:1px solid #d1d5db;border-radius:7px;background:#fff;font-size:10px;padding:0 5px;}
+.paginacao-dashboard button:disabled{opacity:.45;cursor:not-allowed;}
+@media(max-width:760px){.valor-destaque.valor-exato .kpi-value{font-size:24px !important;letter-spacing:-.8px}.paginacao-dashboard{align-items:flex-start;flex-direction:column;}}
+
 </style>
 
 <link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css?v=20260626-3">
@@ -1653,6 +1816,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 <script src="./JS/auth.js"></script>
 <!-- <script src="./JS/bdrSessaoRealtime.js"></script> -->
 <script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrAcessoObras.js"></script>
 <script src="./JS/offlineQueue.js"></script>
 <script src="./JS/offlineDB.js"></script>
 <script src="./JS/bdrSyncEngine.js"></script>
@@ -1873,7 +2037,7 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
       </div>
 
       <section class="kpi-row">
-        <div class="kpi-card purple valor-destaque" data-kpi="VALOR" onclick="aplicarFiltroKPI('VALOR')">
+        <div class="kpi-card purple valor-destaque" data-kpi="VALOR" onclick="alternarValorPatrimonial(event)" ondblclick="abrirResumoValorPatrimonial(event)" title="1 clique: mostrar valor exato · 2 cliques: abrir detalhamento">
           <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
           <div><div class="kpi-value" id="kpiValor">R$ 0</div><div class="kpi-label">Valor patrimonial total</div><div class="kpi-sub">Soma em R$ da seleção</div></div>
         </div>
@@ -1911,124 +2075,66 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
         </div>
       </section>
 
-      <section class="dashboard-grid">
+      <section class="dashboard-grid dashboard-grid-modelo">
+        <section class="card-light chart-card big dash-area-valor">
+          <h3>💰 Valor patrimonial por obra / setor <small style="color:#6b7280;font-size:11px;"> · Top 10 (R$)</small></h3>
+          <div class="card-body"><canvas id="graficoValorObra"></canvas></div>
+        </section>
 
-        <div class="left-stack">
-          <section class="card-light chart-card big valor-principal">
-            <h3>💰 Valor patrimonial por obra / setor <small style="color:#6b7280;font-size:11px;">(R$)</small></h3>
-            <div class="card-body"><canvas id="graficoValorObra"></canvas></div>
-          </section>
+        <section class="card-light chart-card big dash-area-status">
+          <h3>📍 Distribuição por status</h3>
+          <div class="card-body"><canvas id="graficoStatus"></canvas></div>
+        </section>
 
-          <section class="card-light chart-card big">
-            <h3>📦 Quantidade de patrimônios por obra / setor <small style="color:#6b7280;font-size:11px;">(itens)</small></h3>
-            <div class="card-body"><canvas id="graficoObras"></canvas></div>
-          </section>
+        <section class="card-light red-head dash-area-operacional">
+          <h3>🧠 Insight do Atlas <small style="color:#6b7280;font-size:9px;"> · análise baseada nos registros</small></h3>
+          <div class="card-body"><div id="analiseIA" class="operational-grid"></div></div>
+        </section>
 
-          <section class="card-light mov-card">
-            <h3>Últimas movimentações</h3>
-            <div class="card-body">
-              <table class="table-mini">
-                <thead>
-                  <tr>
-                    <th>Data/Hora</th>
-                    <th>Tipo</th>
-                    <th>Patrimônio</th>
-                    <th>De</th>
-                    <th>Para</th>
-                    <th>Usuário</th>
-                  </tr>
-                </thead>
-                <tbody id="ultimasMov"></tbody>
-              </table>
-              <button data-permissao="RELATORIOS_VER" class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
-            </div>
-          </section>
-        </div>
+        <section class="card-light chart-card big dash-area-quantidade">
+          <h3>📦 Quantidade por obra / setor <small style="color:#6b7280;font-size:11px;"> · Top 10 (itens)</small></h3>
+          <div class="card-body"><canvas id="graficoObras"></canvas></div>
+        </section>
 
-        <div class="mid-stack">
-          <section class="card-light chart-card big">
-            <h3>Distribuição por status</h3>
-            <div class="card-body"><canvas id="graficoStatus"></canvas></div>
-          </section>
+        <section class="card-light chart-card big dash-area-tipos">
+          <h3>🏆 Tipos de ativos</h3>
+          <div class="card-body"><canvas id="graficoTipos"></canvas></div>
+        </section>
 
-          <section class="card-light chart-card big">
-            <h3>Tipos de ativos</h3>
-            <div class="card-body"><canvas id="graficoTipos"></canvas></div>
-          </section>
+        <section class="card-light red-head dash-area-pendencias">
+          <h3>🛡️ Pendências para conferir</h3>
+          <div id="alertas"></div>
+        </section>
 
-          <div class="bottom-grid">
-            <section class="card-light card-top5">
-              <h3>🏆 Ranking principal: obras por valor</h3>
-              <div class="card-body" id="topObrasValor"></div>
-              <div class="card-body" style="padding-top:0;">
-                <button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
-              </div>
-            </section>
-
-            <section class="card-light card-top5">
-              <h3>📦 Ranking secundário: obras por quantidade</h3>
-              <div class="card-body" id="topObrasQuantidade"></div>
-              <div class="card-body" style="padding-top:0;">
-                <button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button>
-              </div>
-            </section>
+        <section class="card-light mov-card dash-area-movimentos">
+          <h3>🕘 Últimas movimentações</h3>
+          <div class="card-body">
+            <table class="table-mini">
+              <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Patrimônio</th><th>De</th><th>Para</th><th>Usuário</th></tr></thead>
+              <tbody id="ultimasMov"></tbody>
+            </table>
+            <button data-permissao="RELATORIOS_VER" class="btn-outline" onclick="ir('movimentacoes.html')">Ver todas as movimentações</button>
           </div>
-        
-</div>
+        </section>
 
-        <div class="right-stack">
-          <section class="card-light red-head">
-            <h3>✨ Análise inteligente (IA)</h3>
-            <div class="card-body">
-              <div id="analiseIA" class="ai-list"></div>
-            </div>
-          </section>
+        <section class="card-light card-top5 dash-area-ranking-valor">
+          <h3>🏆 Ranking principal: obras por valor</h3>
+          <div class="card-body" id="topObrasValor"></div>
+          <div class="card-body ranking-action"><button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button></div>
+        </section>
 
-          <section class="card-light red-head">
-            <h3>🛡️ Alertas importantes</h3>
-            <div id="alertas"></div>
-          </section>
-
-          <section class="card-light estoque-card">
-            <h3>📦 Estoque geral por nível</h3>
-            <div class="card-body">
-              <div class="money-box">
-                <span>Total de itens disponíveis</span>
-                <strong id="estoqueTotalGeral">0</strong>
-              </div>
-
-              <div style="font-size:12px;margin-top:10px;color:#374151;">
-                Clique em um nível para ver os itens.
-              </div>
-
-              <div class="estoque-niveis">
-                <div class="estoque-nivel baixo" onclick="mostrarItensAlerta('ESTOQUE_BAIXO')">
-                  <i class="fa-solid fa-circle-exclamation"></i>
-                  <strong id="estoqueBaixo">0</strong>
-                  <span>Baixo</span>
-                </div>
-
-                <div class="estoque-nivel medio" onclick="mostrarItensAlerta('ESTOQUE_MEDIO')">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <strong id="estoqueMedio">0</strong>
-                  <span>Médio</span>
-                </div>
-
-                <div class="estoque-nivel muito" onclick="mostrarItensAlerta('ESTOQUE_MUITO')">
-                  <i class="fa-solid fa-circle-check"></i>
-                  <strong id="estoqueMuito">0</strong>
-                  <span>Muito</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
+        <section class="card-light card-top5 dash-area-ranking-qtd">
+          <h3>📦 Ranking secundário: obras por quantidade</h3>
+          <div class="card-body" id="topObrasQuantidade"></div>
+          <div class="card-body ranking-action"><button class="btn-outline" onclick="mostrarItensAlerta('TODOS')">Ver itens da seleção</button></div>
+        </section>
       </section>
 
       <section class="card-light itens-alerta-card" id="cardItensAlerta" style="display:none;margin-top:12px;">
         <h3 id="tituloItensAlerta">📋 Itens filtrados</h3>
         <div class="card-body">
+          <div id="resumoItensAlerta" class="resumo-valor-dashboard" style="display:none;"></div>
+          <div class="tabela-dashboard-scroll">
           <table class="table-mini">
             <thead>
               <tr>
@@ -2042,12 +2148,28 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
             </thead>
             <tbody id="listaItensAlerta"></tbody>
           </table>
+          </div>
+          <div id="paginacaoItensDashboard" class="paginacao-dashboard" style="display:none;">
+            <span id="infoPaginacaoDashboard"></span>
+            <div class="paginacao-dashboard-acoes">
+              <label>Por página
+                <select id="tamanhoPaginaDashboard" onchange="alterarTamanhoPaginaDashboard(this.value)">
+                  <option value="25" selected>25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </label>
+              <button type="button" class="btn-outline" id="btnPaginaAnteriorDashboard" onclick="mudarPaginaDashboard(-1)">‹ Anterior</button>
+              <span id="paginaAtualDashboard"></span>
+              <button type="button" class="btn-outline" id="btnProximaPaginaDashboard" onclick="mudarPaginaDashboard(1)">Próxima ›</button>
+            </div>
+          </div>
           <button data-permissao="PATRIMONIO_VER" class="btn-outline" onclick="ir('patrimonio.html')">Abrir tela de patrimônio</button>
         </div>
       </section>
 
       <footer class="footer-dash">
-        <div>© 2026 BDR ERP 9.0 - Todos os direitos reservados</div>
+        <div>© 2026 BDR Gestão 9.0 - Todos os direitos reservados</div>
         <div>Versão 
           9.0.0</div>
       </footer>
@@ -2059,6 +2181,11 @@ grid-template-columns:auto repeat(4,95px) 160px 160px 95px 1fr;
 
 <script>
 let patrimonios = [];
+let manutencoesAtlas = [];
+let orcamentosManutencaoAtlas = [];
+let preventivasManutencaoAtlas = [];
+let historicoManutencaoAtlas = [];
+let insightsAtlas = [];
 let movimentacoes = [];
 let obras = [];
 let filtrados = [];
@@ -2142,7 +2269,11 @@ function aplicarMenuPorPermissaoBDR(){
 }
 
 function usuarioPodeVerTodasObrasBDR(usuario = usuarioAtual()){
-  return usuarioTemPermissaoBDR("TODAS_OBRAS_VER", usuario);
+  return window.BDRAcessoObras?.podeVerTodasObras(usuario) === true;
+}
+
+function idsObrasPermitidasDashboard(usuario = usuarioAtual()){
+  return window.BDRAcessoObras?.idsObrasPermitidas(usuario) || [];
 }
 
 function usuarioPodeVerPropriaObraBDR(usuario = usuarioAtual()){
@@ -2400,7 +2531,9 @@ function aplicarFiltroKPILista(lista){
 }
 
 async function carregarDados(){
-  const usuario = usuarioAtual();
+  const usuario = window.BDRAcessoObras?.sincronizarUsuarioAtual
+    ? await window.BDRAcessoObras.sincronizarUsuarioAtual()
+    : usuarioAtual();
 
   document.getElementById("usuarioNome").innerText =
     usuario ? "Olá, " + usuario.nome : "Olá, usuário";
@@ -2422,9 +2555,51 @@ async function carregarDados(){
     return;
   }
 
-  const patResp = await db().from("patrimonio").select("*").order("id",{ascending:false});
+  // Busca paginada: o PostgREST/Supabase pode limitar uma resposta a 1000 linhas.
+  // O Dashboard precisa do conjunto completo para KPIs, gráficos e valores.
+  const buscarTodosPatrimoniosDashboard = async () => {
+    const TAMANHO_PAGINA = 1000;
+    const todos = [];
+    for(let inicio = 0; ; inicio += TAMANHO_PAGINA){
+      const fim = inicio + TAMANHO_PAGINA - 1;
+      const resp = await db()
+        .from("patrimonio")
+        .select("*")
+        .order("id", { ascending:false })
+        .range(inicio, fim);
+      if(resp.error) return { data:null, error:resp.error };
+      const lote = resp.data || [];
+      todos.push(...lote);
+      if(lote.length < TAMANHO_PAGINA) break;
+    }
+    return { data:todos, error:null };
+  };
+
+  const patResp = await buscarTodosPatrimoniosDashboard();
   const obrasResp = await db().from("obras").select("*").order("nome");
-  const movResp = await db().from("movimentacoes").select("*").order("id",{ascending:false}).limit(200);
+
+  // Movimentações: tenta a trilha oficial/legada e complementa com a trilha nova de transferências.
+  // Falha em uma fonte não derruba o Dashboard.
+  const buscarTabelaPaginadaDashboard = async (tabela, ordem="id", pagina=1000) => {
+    const todos = [];
+    for(let inicio=0; ; inicio+=pagina){
+      const resp = await db().from(tabela).select("*").order(ordem,{ascending:false}).range(inicio,inicio+pagina-1);
+      if(resp.error) return {data:[], error:resp.error};
+      const lote = resp.data || [];
+      todos.push(...lote);
+      if(lote.length < pagina) break;
+    }
+    return {data:todos, error:null};
+  };
+
+  const [movResp, patMovResp, manutResp, orcResp, prevResp, histManResp] = await Promise.all([
+    db().from("movimentacoes").select("*").order("id",{ascending:false}).limit(500),
+    db().from("patrimonio_movimentacoes").select("*").order("id",{ascending:false}).limit(200),
+    buscarTabelaPaginadaDashboard("manutencoes_patrimonio"),
+    buscarTabelaPaginadaDashboard("atlas_manutencao_orcamentos"),
+    buscarTabelaPaginadaDashboard("atlas_manutencao_preventiva"),
+    buscarTabelaPaginadaDashboard("atlas_manutencao_historico")
+  ]);
 
   if(patResp.error){
     alert("Erro ao carregar patrimônios: " + patResp.error.message);
@@ -2433,29 +2608,39 @@ async function carregarDados(){
 
   patrimonios = patResp.data || [];
   obras = obrasResp.data || [];
-  movimentacoes = movResp.data || [];
+  manutencoesAtlas = manutResp.error ? [] : (manutResp.data || []);
+  orcamentosManutencaoAtlas = orcResp.error ? [] : (orcResp.data || []);
+  preventivasManutencaoAtlas = prevResp.error ? [] : (prevResp.data || []);
+  historicoManutencaoAtlas = histManResp.error ? [] : (histManResp.data || []);
+  const movLegado = movResp.error ? [] : (movResp.data || []);
+  const movTransferencias = patMovResp.error ? [] : (patMovResp.data || []).map(m => ({
+    id: `pm-${m.id}`,
+    patrimonio_id: m.patrimonio_id,
+    obra_origem_id: m.obra_origem_id,
+    obra_destino_id: m.obra_destino_id,
+    status_anterior: "-",
+    status_novo: m.status || "-",
+    tipo: "TRANSFERENCIA",
+    usuario: m.recebido_por || m.enviado_por || m.separado_por || m.aprovado_por || m.solicitado_por || "-",
+    data_movimentacao: m.data_recebimento || m.data_envio || m.data_separacao || m.data_aprovacao || m.data_solicitacao || m.created_at
+  }));
 
-  /* DADOS: filtra por permissão, nunca por perfil.
-     Owner id=1 vê tudo. Quem tem TODAS_OBRAS_VER vê tudo.
-     Quem tem PROPRIA_OBRA_VER vê apenas a própria obra.
-     Quem não tem nenhuma permissão de dados fica sem dados. */
+  movimentacoes = [...movLegado, ...movTransferencias]
+    .sort((a,b) => new Date(b.data_movimentacao || 0) - new Date(a.data_movimentacao || 0));
+
+  /* DADOS: o escopo vem de uma única regra de obras.
+     OWNER/TODAS_OBRAS_VER vê tudo. Os demais veem obra_id + obras_liberadas. */
   const podeVerTodas = usuarioPodeVerTodasObrasBDR(usuario);
-  const podeVerPropria = usuarioPodeVerPropriaObraBDR(usuario);
 
   if(usuario && !podeVerTodas){
-    if(podeVerPropria && usuario.obra_id){
-      patrimonios = patrimonios.filter(p =>
-        String(p.obra_id) === String(usuario.obra_id)
-      );
+    const permitidas = new Set(idsObrasPermitidasDashboard(usuario).map(String));
 
-      movimentacoes = movimentacoes.filter(m =>
-        String(m.obra_origem_id) === String(usuario.obra_id) ||
-        String(m.obra_destino_id) === String(usuario.obra_id)
-      );
-    }else{
-      patrimonios = [];
-      movimentacoes = [];
-    }
+    patrimonios = patrimonios.filter(p => permitidas.has(String(p.obra_id)));
+    obras = obras.filter(o => permitidas.has(String(o.id)));
+    movimentacoes = movimentacoes.filter(m =>
+      permitidas.has(String(m.obra_origem_id)) ||
+      permitidas.has(String(m.obra_destino_id))
+    );
   }
 
   aplicarMenuPorPermissaoBDR();
@@ -2464,12 +2649,7 @@ async function carregarDados(){
   carregarFiltros();
   aplicarFiltros();
 
-  console.log("BDR Dashboard OK:", {
-    patrimonios: patrimonios.length,
-    obras: obras.length,
-    movimentacoes: movimentacoes.length,
-    valor_total_geral: patrimonios.reduce((s,p) => s + valorPatrimonio(p), 0)
-  });
+  void 0;
 }
 
 function carregarFiltros(){
@@ -2676,6 +2856,106 @@ function escapeJsBDR(str){
   return String(str || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
+let valorPatrimonialExatoVisivel = false;
+let valorPatrimonialAtualDashboard = 0;
+let listaItensDashboardAtual = [];
+let tituloItensDashboardAtual = "";
+let paginaItensDashboard = 1;
+let tamanhoPaginaItensDashboard = 25;
+
+function baseValorPatrimonialAtivo(){
+  return patrimonioPorFiltrosTela().filter(p => p.status !== "BAIXADO");
+}
+
+function alternarValorPatrimonial(event){
+  if(event) event.stopPropagation();
+  if(!usuarioPodeVerValoresBDR()) return;
+  valorPatrimonialExatoVisivel = !valorPatrimonialExatoVisivel;
+  const card = document.querySelector('.kpi-card[data-kpi="VALOR"]');
+  if(card) card.classList.toggle('valor-exato', valorPatrimonialExatoVisivel);
+  atualizarTextoValorPatrimonial();
+}
+
+function atualizarTextoValorPatrimonial(){
+  const el = document.getElementById("kpiValor");
+  if(!el) return;
+  if(!usuarioPodeVerValoresBDR()){
+    el.innerText = "R$ •••";
+    return;
+  }
+  el.innerText = valorPatrimonialExatoVisivel ? moeda(valorPatrimonialAtualDashboard) : moedaCurta(valorPatrimonialAtualDashboard);
+}
+
+function abrirResumoValorPatrimonial(event){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  if(!usuarioPodeVerValoresBDR()) return;
+  const base = patrimonioPorFiltrosTela();
+  const ativos = base.filter(p => p.status !== "BAIXADO");
+  const baixados = base.filter(p => p.status === "BAIXADO");
+  const valorAtivo = ativos.reduce((s,p) => s + valorPatrimonio(p), 0);
+  const valorBaixado = baixados.reduce((s,p) => s + valorPatrimonio(p), 0);
+  const resumo = document.getElementById("resumoItensAlerta");
+  if(resumo){
+    resumo.style.display = "block";
+    resumo.innerHTML = `
+      <div>Valor patrimonial ativo</div>
+      <strong>${moeda(valorAtivo)}</strong>
+      <div class="resumo-linha">
+        <span><b>${ativos.length}</b> patrimônios considerados</span>
+        <span><b>${baixados.length}</b> baixados desconsiderados · ${moeda(valorBaixado)}</span>
+      </div>`;
+  }
+  renderizarListaItensDashboard(ativos, "💰 Patrimônios que compõem o valor patrimonial ativo", false);
+}
+
+function mudarPaginaDashboard(delta){
+  const totalPaginas = Math.max(1, Math.ceil(listaItensDashboardAtual.length / tamanhoPaginaItensDashboard));
+  paginaItensDashboard = Math.min(totalPaginas, Math.max(1, paginaItensDashboard + Number(delta || 0)));
+  renderizarPaginaItensDashboard();
+}
+
+function alterarTamanhoPaginaDashboard(valor){
+  tamanhoPaginaItensDashboard = [25,50,100].includes(Number(valor)) ? Number(valor) : 25;
+  paginaItensDashboard = 1;
+  renderizarPaginaItensDashboard();
+}
+
+function renderizarPaginaItensDashboard(){
+  const tbody = document.getElementById("listaItensAlerta");
+  const pag = document.getElementById("paginacaoItensDashboard");
+  if(!tbody || !pag) return;
+  const total = listaItensDashboardAtual.length;
+  const totalPaginas = Math.max(1, Math.ceil(total / tamanhoPaginaItensDashboard));
+  paginaItensDashboard = Math.min(totalPaginas, Math.max(1, paginaItensDashboard));
+  const inicio = (paginaItensDashboard - 1) * tamanhoPaginaItensDashboard;
+  const fim = Math.min(inicio + tamanhoPaginaItensDashboard, total);
+  const pagina = listaItensDashboardAtual.slice(inicio, fim);
+
+  if(total === 0){
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum item encontrado.</td></tr>`;
+  }else{
+    tbody.innerHTML = pagina.map(p => `
+      <tr>
+        <td><b>${p.codigo_qr || "-"}</b></td>
+        <td>${p.nome_bem || "-"}</td>
+        <td>${p.status || "-"}</td>
+        <td>${p.tipo_item || "-"}</td>
+        <td>${nomeObraCurto(p.obra_id)}</td>
+        <td>${usuarioPodeVerValoresBDR() ? moeda(valorPatrimonio(p)) : "R$ •••"}</td>
+      </tr>`).join("");
+  }
+
+  pag.style.display = total > 0 ? "flex" : "none";
+  const info = document.getElementById("infoPaginacaoDashboard");
+  const atual = document.getElementById("paginaAtualDashboard");
+  const ant = document.getElementById("btnPaginaAnteriorDashboard");
+  const prox = document.getElementById("btnProximaPaginaDashboard");
+  if(info) info.textContent = total ? `Exibindo ${inicio + 1}–${fim} de ${total}` : "";
+  if(atual) atual.textContent = `Página ${paginaItensDashboard} de ${totalPaginas}`;
+  if(ant) ant.disabled = paginaItensDashboard <= 1;
+  if(prox) prox.disabled = paginaItensDashboard >= totalPaginas;
+}
+
 function aplicarFiltroKPI(tipo){
   filtroKPIAtual = tipo;
 
@@ -2704,7 +2984,7 @@ function aplicarFiltroKPI(tipo){
     setTimeout(() => mostrarItensAlerta("EM_USO"), 120);
   }
 
-  if(tipo === "TODOS" || tipo === "VALOR"){
+  if(tipo === "TODOS"){
     setTimeout(() => mostrarItensAlerta("TODOS"), 120);
   }
 }
@@ -2776,7 +3056,11 @@ function atualizarKPIs(){
   const manut = base.filter(p => p.status === "MANUTENCAO").length;
   const baixado = base.filter(p => p.status === "BAIXADO").length;
   const semValor = base.filter(p => valorPatrimonio(p) <= 0).length;
-  const valorTotal = base.reduce((s,p) => s + valorPatrimonio(p), 0);
+  // Patrimônio baixado permanece contabilizado no card "Baixados", mas não compõe o valor patrimonial ativo.
+  const valorTotal = base
+    .filter(p => p.status !== "BAIXADO")
+    .reduce((s,p) => s + valorPatrimonio(p), 0);
+  valorPatrimonialAtualDashboard = valorTotal;
 
   document.getElementById("kpiTotal").innerText = totalReal;
   document.getElementById("kpiUso").innerText = uso;
@@ -2784,7 +3068,7 @@ function atualizarKPIs(){
   document.getElementById("kpiManutencao").innerText = manut;
   document.getElementById("kpiBaixado").innerText = baixado;
   document.getElementById("kpiSemValor").innerText = semValor;
-  document.getElementById("kpiValor").innerText = usuarioPodeVerValoresBDR() ? moedaCurta(valorTotal) : "R$ •••";
+  atualizarTextoValorPatrimonial();
 
   document.getElementById("percUso").innerText = ((uso/total)*100).toFixed(1).replace(".",",") + "% da seleção";
   document.getElementById("percEstoque").innerText = ((estoque/total)*100).toFixed(1).replace(".",",") + "% da seleção";
@@ -2848,8 +3132,20 @@ function bar(id, labels, data, horizontal=false, color="#d71920", meta={}){
         if(typeof meta.onClick === "function") meta.onClick(index, labels[index], data[index]);
       },
       scales:{
-        x:{beginAtZero:true,grid:{color:"#eef2f7"},ticks:{font:{size:10}}},
-        y:{beginAtZero:true,grid:{color:"#eef2f7"},ticks:{font:{size:10}}}
+        x:{
+          beginAtZero:true,
+          grid:{color:"#eef2f7"},
+          ticks: horizontal
+            ? {font:{size:10}}
+            : {font:{size:10},autoSkip:false,maxRotation:32,minRotation:32}
+        },
+        y:{
+          beginAtZero:true,
+          grid:{color:"#eef2f7"},
+          ticks: horizontal
+            ? {font:{size:10},autoSkip:false}
+            : {font:{size:10}}
+        }
       }
     }
   });
@@ -2872,14 +3168,16 @@ function doughnut(id, labels, data, meta={}){
     options:{
       responsive:true,
       maintainAspectRatio:false,
-      cutout:"58%",
+      cutout:"62%",
+      radius:"82%",
+      layout:{padding:{top:8,right:4,bottom:8,left:4}},
       onClick:(evt, elements)=>{
         if(!elements || !elements.length) return;
         const index = elements[0].index;
         if(typeof meta.onClick === "function") meta.onClick(index, labels[index], data[index]);
       },
       plugins:{
-        legend:{position:"right",labels:{boxWidth:12,font:{size:11}}},
+        legend:{position:"right",labels:{boxWidth:10,font:{size:10},padding:10}},
         tooltip:{callbacks:{label:(ctx)=> `${ctx.label}: ${ctx.raw} item(ns)`}}
       }
     }
@@ -2920,8 +3218,8 @@ function gerarGraficos(){
     "graficoValorObra",
     valorObra.map(o => o.nome),
     valorObra.map(o => Number(o.valor.toFixed(2))),
-    false,
-    "#7c3aed",
+    true,
+    "#d71920",
     {
       tipo:"valor",
       onClick:(index)=> aplicarFiltroObraDashboard(valorObra[index]?.obra_id)
@@ -2935,42 +3233,256 @@ function gerarGraficos(){
   });
 }
 
-function gerarIA(){
-  const total = filtrados.length;
-  const valorTotal = filtrados.reduce((s,p) => s + valorPatrimonio(p), 0);
-  const estoque = itensEmEstoqueGeral().length;
-  const manut = filtrados.filter(p => p.status === "MANUTENCAO").length;
-  const semValor = filtrados.filter(p => !valorPatrimonio(p)).length;
-  const semSerie = filtrados.filter(p => !p.numero_serie && !p.placa).length;
-
-  document.getElementById("analiseIA").innerHTML = `
-    <div class="ai-line" onclick="mostrarItensAlerta('TODOS')">
-      <span>📊</span>
-      <div>Foram encontrados <b>${total}</b> patrimônio(s), com valor patrimonial de <b>${usuarioPodeVerValoresBDR() ? moedaCurta(valorTotal) : "R$ •••"}</b>. Valor patrimonial é a visão principal; quantidade fica separada para conferência.</div>
-    </div>
-
-    <div class="ai-line" onclick="mostrarItensAlerta('MANUTENCAO')">
-      <span>🛠</span>
-      <div><b>${manut}</b> patrimônio(s) estão em manutenção.</div>
-    </div>
-
-    <div class="ai-line" onclick="mostrarItensAlerta('ESTOQUE')">
-      <span>📦</span>
-      <div><b>${estoque}</b> item(ns) estão em estoque geral.</div>
-    </div>
-
-    <div class="ai-line" onclick="mostrarItensAlerta('SEM_VALOR')">
-      <span>⚠️</span>
-      <div><b>${semValor}</b> patrimônio(s) não possuem valor informado.</div>
-    </div>
-
-    <div class="ai-line" onclick="mostrarItensAlerta('SEM_SERIE')">
-      <span>🔎</span>
-      <div><b>${semSerie}</b> patrimônio(s) estão sem número de série ou placa.</div>
-    </div>
-  `;
+function atlasData(v){
+  if(!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
 }
+function atlasDiasEntre(a,b=new Date()){
+  const da=atlasData(a), dbb=atlasData(b);
+  if(!da || !dbb) return null;
+  return Math.max(0, Math.floor((dbb-da)/86400000));
+}
+function atlasMoeda(v){
+  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function atlasPatrimonioPorId(id){
+  return patrimonios.find(p=>String(p.id)===String(id)) || null;
+}
+function atlasNomePat(p){
+  if(!p) return "Patrimônio";
+  return `${p.codigo_qr || p.codigo_bem || ("ID "+p.id)}${p.nome_bem ? " · "+p.nome_bem : ""}`;
+}
+function atlasStatusFinalManut(s){
+  return ["FINALIZADA","FECHADA"].includes(String(s||"").toUpperCase());
+}
+function atlasCustoManut(m){
+  const interno=Number(m.custo_total_interno||0);
+  const orcs=orcamentosManutencaoAtlas.filter(o=>String(o.manutencao_id)===String(m.id));
+  const aprovado=orcs.filter(o=>["APROVADO","ACEITO","FINALIZADO","FINALIZADA"].includes(String(o.status||"").toUpperCase()));
+  const fonte=aprovado.length ? aprovado : orcs;
+  const externo=fonte.length ? Math.max(...fonte.map(o=>Number(o.valor_total||0))) : Number(m.valor_orcamento||0);
+  return Math.max(interno,externo,Number(m.valor_orcamento||0));
+}
+function atlasManutencoesVisiveis(){
+  const ids = new Set(patrimonioPorFiltrosTela().map(p=>String(p.id)));
+  return manutencoesAtlas.filter(m=>m.patrimonio_id && ids.has(String(m.patrimonio_id)));
+}
+function atlasAdicionarInsight(lista, insight){
+  insight.id = `ins-${lista.length}-${String(insight.tipo||"x").toLowerCase()}`;
+  insight.score = Number(insight.score||0);
+  insight.nivel = insight.nivel || (insight.score>=90?"CRITICO":insight.score>=60?"ATENCAO":"INFO");
+  lista.push(insight);
+}
+function construirInsightsAtlas(){
+  const agora=new Date(), lista=[], manut=atlasManutencoesVisiveis();
+  const porPat=new Map();
+  manut.forEach(m=>{
+    const k=String(m.patrimonio_id);
+    if(!porPat.has(k)) porPat.set(k,[]);
+    porPat.get(k).push(m);
+  });
+  porPat.forEach(arr=>arr.sort((a,b)=>(atlasData(b.data_entrada||b.data_criacao||b.created_at)?.getTime()||0)-(atlasData(a.data_entrada||a.data_criacao||a.created_at)?.getTime()||0)));
 
+  // Reincidência 30/60/90 dias
+  for(const [pid, arr] of porPat){
+    const p=atlasPatrimonioPorId(pid);
+    const ult90=arr.filter(m=>{
+      const d=atlasData(m.data_entrada||m.data_criacao||m.created_at);
+      return d && (agora-d)<=90*86400000 && (agora-d)>=0;
+    });
+    if(ult90.length>=2){
+      const ult30=ult90.filter(m=>(agora-atlasData(m.data_entrada||m.data_criacao||m.created_at))<=30*86400000).length;
+      const ult60=ult90.filter(m=>(agora-atlasData(m.data_entrada||m.data_criacao||m.created_at))<=60*86400000).length;
+      const n=ult30>=2?ult30:ult60>=2?ult60:ult90.length;
+      const janela=ult30>=2?30:ult60>=2?60:90;
+      atlasAdicionarInsight(lista,{
+        tipo:"REINCIDENCIA",score:Math.min(100,55+n*12+(janela===30?15:janela===60?8:0)),
+        titulo:`Reincidência · ${atlasNomePat(p)}`,
+        texto:`${n} entradas em manutenção nos últimos ${janela} dias.`,
+        patrimonio_id:pid,evidencias:ult90.slice(0,10)
+      });
+    }
+
+    // Retorno precoce após uma finalização
+    for(let i=0;i<arr.length-1;i++){
+      const atual=arr[i], anterior=arr[i+1];
+      const entrada=atlasData(atual.data_entrada||atual.data_criacao||atual.created_at);
+      const fim=atlasData(anterior.data_finalizacao||anterior.data_saida||anterior.data_conclusao_servico);
+      if(entrada && fim && entrada>=fim){
+        const dias=atlasDiasEntre(fim,entrada);
+        if(dias!==null && dias<=30){
+          atlasAdicionarInsight(lista,{
+            tipo:"RETORNO_PRECOCE",score:95-dias,
+            titulo:`Retorno precoce · ${atlasNomePat(p)}`,
+            texto:`Voltou à manutenção ${dias} dia${dias===1?"":"s"} após a finalização anterior.`,
+            patrimonio_id:pid,evidencias:[atual,anterior]
+          });
+          break;
+        }
+      }
+    }
+
+    // Custo acumulado x valor do bem. Valor ausente ou claramente inconsistente
+    // vira alerta de qualidade cadastral e não gera percentual enganoso.
+    const custo=arr.reduce((s,m)=>s+atlasCustoManut(m),0);
+    const valor=valorPatrimonio(p);
+    const valorClaramenteInconsistente = valor > 0 && valor <= 10 && custo >= 100;
+    if(custo>0 && (valor<=0 || valorClaramenteInconsistente)){
+      atlasAdicionarInsight(lista,{
+        tipo:"QUALIDADE_DADO",score:valor<=0?82:88,
+        titulo:`Valor patrimonial a conferir · ${atlasNomePat(p)}`,
+        texto:valor<=0
+          ? `${atlasMoeda(custo)} já registrados em manutenção, mas o patrimônio está sem valor válido para comparação.`
+          : `Valor patrimonial de ${atlasMoeda(valor)} parece inconsistente diante de ${atlasMoeda(custo)} registrados em manutenção. Confira o cadastro antes de analisar percentuais.`,
+        patrimonio_id:pid,evidencias:arr.slice(0,12)
+      });
+    }else if(custo>0 && valor>0){
+      const perc=(custo/valor)*100;
+      if(perc>=50){
+        atlasAdicionarInsight(lista,{
+          tipo:"CUSTO",score:perc>=90?Math.min(100,90+(perc-90)/5):Math.min(89,55+(perc-50)*0.85),
+          titulo:`Custo acumulado · ${atlasNomePat(p)}`,
+          texto:`${atlasMoeda(custo)} em manutenção (${perc.toFixed(0)}% do valor patrimonial de ${atlasMoeda(valor)}).${perc>=90?" Limite crítico de 90% atingido ou ultrapassado.":""}`,
+          patrimonio_id:pid,evidencias:arr.slice(0,12)
+        });
+      }
+    }
+  }
+
+  // Manutenções abertas/paradas, atraso de retorno e orçamento
+  manut.filter(m=>!atlasStatusFinalManut(m.status)).forEach(m=>{
+    const p=atlasPatrimonioPorId(m.patrimonio_id);
+    const inicio=m.data_entrada||m.data_criacao||m.created_at;
+    const dias=atlasDiasEntre(inicio,agora);
+    if(dias!==null && dias>=15){
+      atlasAdicionarInsight(lista,{
+        tipo:"PARADO",score:Math.min(92,55+dias),
+        titulo:`Tempo parado · ${atlasNomePat(p)}`,
+        texto:`Manutenção aberta há ${dias} dias · status ${m.status||"sem status"}.`,
+        patrimonio_id:m.patrimonio_id,evidencias:[m]
+      });
+    }
+    const prev=atlasData(m.previsao_retorno);
+    if(prev && agora>prev && !m.data_recebimento && !m.data_finalizacao){
+      const atraso=atlasDiasEntre(prev,agora);
+      atlasAdicionarInsight(lista,{
+        tipo:"ATRASO_RETORNO",score:Math.min(100,72+atraso*2),
+        titulo:`Retorno atrasado · ${atlasNomePat(p)}`,
+        texto:`Previsão de retorno vencida há ${atraso} dia${atraso===1?"":"s"}.`,
+        patrimonio_id:m.patrimonio_id,evidencias:[m]
+      });
+    }
+    if(String(m.status||"").toUpperCase()==="AGUARDANDO_ORCAMENTO"){
+      const base=m.data_envio||m.data_saida_manutencao||inicio;
+      const espera=atlasDiasEntre(base,agora);
+      if(espera!==null && espera>=3){
+        atlasAdicionarInsight(lista,{
+          tipo:"ORCAMENTO",score:Math.min(88,50+espera*3),
+          titulo:`Orçamento aguardando · ${atlasNomePat(p)}`,
+          texto:`Aguardando orçamento há ${espera} dias${m.fornecedor_nome||m.fornecedor ? " · "+(m.fornecedor_nome||m.fornecedor) : ""}.`,
+          patrimonio_id:m.patrimonio_id,evidencias:[m]
+        });
+      }
+    }
+  });
+
+  // Preventivas vencidas / próximas
+  preventivasManutencaoAtlas.filter(x=>x.ativo!==false).forEach(pr=>{
+    const p=atlasPatrimonioPorId(pr.patrimonio_id);
+    if(!p) return;
+    const ids=new Set(patrimonioPorFiltrosTela().map(x=>String(x.id)));
+    if(!ids.has(String(pr.patrimonio_id))) return;
+    const prox=atlasData(pr.proxima_manutencao_em||pr.proxima_manutencao);
+    if(!prox) return;
+    const diff=Math.ceil((prox-agora)/86400000);
+    if(diff<0){
+      atlasAdicionarInsight(lista,{
+        tipo:"PREVENTIVA",score:Math.min(98,70+Math.abs(diff)*2),
+        titulo:`Preventiva vencida · ${atlasNomePat(p)}`,
+        texto:`Programação preventiva vencida há ${Math.abs(diff)} dia${Math.abs(diff)===1?"":"s"}.`,
+        patrimonio_id:pr.patrimonio_id,evidencias:[pr]
+      });
+    }else if(diff<=Number(pr.aviso_dias||7)){
+      atlasAdicionarInsight(lista,{
+        tipo:"PREVENTIVA",score:45,
+        titulo:`Preventiva próxima · ${atlasNomePat(p)}`,
+        texto:`Manutenção preventiva prevista em ${diff} dia${diff===1?"":"s"}.`,
+        patrimonio_id:pr.patrimonio_id,evidencias:[pr]
+      });
+    }
+  });
+
+  // Remove duplicidades do mesmo tipo/patrimônio, mantendo a maior prioridade
+  const uniq=new Map();
+  lista.forEach(i=>{
+    const k=`${i.tipo}:${i.patrimonio_id||i.titulo}`;
+    if(!uniq.has(k) || uniq.get(k).score<i.score) uniq.set(k,i);
+  });
+  return [...uniq.values()].sort((a,b)=>b.score-a.score).slice(0,50);
+}
+function escaparHTMLAtlas(v){
+  return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+function gerarIA(){
+  const el=document.getElementById("analiseIA");
+  if(!el) return;
+  insightsAtlas=construirInsightsAtlas();
+
+  // Resumo gerencial: prioriza severidade, mas evita ocupar os três espaços
+  // com a mesma categoria quando existem descobertas relevantes diferentes.
+  const top=[];
+  const tiposEscolhidos=new Set();
+  for(const insight of insightsAtlas){
+    if(top.length>=3) break;
+    if(!tiposEscolhidos.has(insight.tipo)){
+      top.push(insight);
+      tiposEscolhidos.add(insight.tipo);
+    }
+  }
+  if(top.length<3){
+    for(const insight of insightsAtlas){
+      if(top.length>=3) break;
+      if(!top.includes(insight)) top.push(insight);
+    }
+  }
+  if(!top.length){
+    el.innerHTML=`<div class="insight-vazio"><strong>Nenhum alerta relevante detectado.</strong><br>O Atlas analisou manutenção, custos e preventivas disponíveis para a seleção atual.</div>`;
+    return;
+  }
+  el.innerHTML=`<div class="insight-atlas">${top.map(i=>`
+    <div class="insight-item" data-nivel="${i.nivel}" onclick="abrirInsightAtlas('${i.id}')">
+      <div class="insight-top"><strong>${escaparHTMLAtlas(i.titulo)}</strong><span class="insight-badge ${i.nivel}">${i.nivel==="CRITICO"?"CRÍTICO":i.nivel==="ATENCAO"?"ATENÇÃO":"INFO"}</span></div>
+      <div class="insight-texto">${escaparHTMLAtlas(i.texto)}</div>
+      <div class="insight-footer"><span>${escaparHTMLAtlas(i.tipo.replaceAll("_"," "))}</span><span class="insight-link">Ver análise →</span></div>
+    </div>`).join("")}</div>`;
+}
+function abrirInsightAtlas(id){
+  const i=insightsAtlas.find(x=>x.id===id);
+  if(!i) return;
+  const ev=i.evidencias||[];
+  const linhas=ev.map(e=>{
+    const m=e.manutencao_id ? manutencoesAtlas.find(x=>String(x.id)===String(e.manutencao_id)) : e;
+    const data=e.data_entrada||e.data_criacao||e.created_at||e.criado_em||e.proxima_manutencao_em||e.proxima_manutencao;
+    const status=e.status||m?.status||"-";
+    const motivo=e.motivo||e.diagnostico||e.diagnostico_interno||e.descricao_servico||e.observacao||"-";
+    const valor=e.valor_total??e.valor_orcamento??e.custo_total_interno??e.valor;
+    return `<tr><td>${escaparHTMLAtlas(dataBR(data))}</td><td>${escaparHTMLAtlas(status)}</td><td>${escaparHTMLAtlas(motivo)}</td><td>${valor!=null?escaparHTMLAtlas(atlasMoeda(valor)):"-"}</td></tr>`;
+  }).join("");
+  const bg=document.createElement("div");
+  bg.className="insight-modal-bg";
+  bg.onclick=e=>{if(e.target===bg) bg.remove();};
+  bg.innerHTML=`<div class="insight-modal">
+    <div class="insight-modal-head"><h3>🧠 Insight do Atlas</h3><button class="insight-modal-close" aria-label="Fechar">×</button></div>
+    <div class="insight-modal-body">
+      <div class="insight-resumo"><h4>${escaparHTMLAtlas(i.titulo)}</h4><p>${escaparHTMLAtlas(i.texto)}</p></div>
+      <table class="insight-evidencias"><thead><tr><th>Data</th><th>Status</th><th>Motivo / evidência</th><th>Valor</th></tr></thead><tbody>${linhas||'<tr><td colspan="4">Sem registros detalhados para exibir.</td></tr>'}</tbody></table>
+      <div class="insight-meta">Regra objetiva do Atlas · dados registrados no sistema · prioridade ${Math.round(i.score)}/100</div>
+    </div>
+  </div>`;
+  bg.querySelector(".insight-modal-close").onclick=()=>bg.remove();
+  document.body.appendChild(bg);
+}
 function gerarAlertas(){
   const base = patrimonioPorFiltrosTela();
   const semValor = base.filter(p => !valorPatrimonio(p)).length;
@@ -3053,28 +3565,7 @@ function mostrarItensAlerta(tipo){
     titulo = "🚨 Patrimônios com risco operacional";
   }
 
-  const card = document.getElementById("cardItensAlerta");
-  const tbody = document.getElementById("listaItensAlerta");
-
-  document.getElementById("tituloItensAlerta").innerText = `${titulo} (${lista.length})`;
-
-  if(lista.length === 0){
-    tbody.innerHTML = `<tr><td colspan="6">Nenhum item encontrado.</td></tr>`;
-  }else{
-    tbody.innerHTML = lista.map(p => `
-      <tr>
-        <td><b>${p.codigo_qr || "-"}</b></td>
-        <td>${p.nome_bem || "-"}</td>
-        <td>${p.status || "-"}</td>
-        <td>${p.tipo_item || "-"}</td>
-        <td>${nomeObraCurto(p.obra_id)}</td>
-        <td>${usuarioPodeVerValoresBDR() ? moeda(valorPatrimonio(p)) : "R$ •••"}</td>
-      </tr>
-    `).join("");
-  }
-
-  card.style.display = "block";
-  card.scrollIntoView({behavior:"smooth", block:"start"});
+  renderizarListaItensDashboard(lista, titulo);
 }
 
 function itensEmEstoqueGeral(){
@@ -3134,32 +3625,23 @@ function nivelEstoqueGrupo(g){
 }
 
 function gerarEstoqueNivel(){
-  const grupos = gruposEstoque();
-
-  const baixo = grupos.filter(g => nivelEstoqueGrupo(g) === "BAIXO").length;
-  const medio = grupos.filter(g => nivelEstoqueGrupo(g) === "MEDIO").length;
-  const muito = grupos.filter(g => nivelEstoqueGrupo(g) === "MUITO").length;
-
-  document.getElementById("estoqueTotalGeral").innerText =
-    itensEmEstoqueGeral().length + " item(ns)";
-
-  document.getElementById("estoqueBaixo").innerText = baixo;
-  document.getElementById("estoqueMedio").innerText = medio;
-  document.getElementById("estoqueMuito").innerText = muito;
+  // O antigo indicador Baixo/Médio/Muito foi removido: não representava
+  // uma regra real de estoque mínimo/máximo para patrimônio.
 }
 
 function gerarUltimasMov(){
   const tbody = document.getElementById("ultimasMov");
   tbody.innerHTML = "";
 
-  const movs = movimentacoesPeriodo();
+  const movs = movimentacoesPeriodo()
+    .sort((a,b) => new Date(b.data_movimentacao || 0) - new Date(a.data_movimentacao || 0));
 
   if(movs.length === 0){
     tbody.innerHTML = `<tr><td colspan="6">Nenhuma movimentação encontrada no período selecionado.</td></tr>`;
     return;
   }
 
-  movs.slice(0,5).forEach(m => {
+  movs.slice(0,9).forEach(m => {
     tbody.innerHTML += `
       <tr>
         <td>${dataBR(m.data_movimentacao)}</td>
@@ -3191,7 +3673,7 @@ function rankingObrasPatrimonio(){
 
     const v = valorPatrimonio(p);
     mapa[obraId].qtd++;
-    mapa[obraId].valor += v;
+    if(p.status !== "BAIXADO") mapa[obraId].valor += v;
     if(v <= 0) mapa[obraId].semValor++;
     mapa[obraId].itens.push(p);
   });
@@ -3206,17 +3688,19 @@ function gerarTopObrasValor(){
   const lista = rankingObrasPatrimonio()
     .filter(o => o.valor > 0)
     .sort((a,b) => b.valor - a.valor)
-    .slice(0,5);
+    .slice(0,10);
 
   if(lista.length === 0){
     el.innerHTML = `<div class="info-row">Nenhuma obra com valor informado.</div>`;
     return;
   }
 
+  const maxValor = lista[0]?.valor || 1;
   el.innerHTML = lista.map((o,i) => `
     <div class="info-row" onclick="mostrarItensObraRanking('${o.obra_id}','VALOR')" style="cursor:pointer;">
       <span title="${escapeHtmlBDR(o.nome)}">${i+1}. ${escapeHtmlBDR(o.nome)}</span>
       <b>${usuarioPodeVerValoresBDR() ? moedaCurta(o.valor) : "R$ •••"}</b>
+      <div class="ranking-bar"><i style="width:${Math.max(3,(o.valor/maxValor)*100)}%"></i></div>
     </div>
   `).join("");
 }
@@ -3227,17 +3711,19 @@ function gerarTopObrasQuantidade(){
 
   const lista = rankingObrasPatrimonio()
     .sort((a,b) => b.qtd - a.qtd)
-    .slice(0,5);
+    .slice(0,10);
 
   if(lista.length === 0){
     el.innerHTML = `<div class="info-row">Nenhum patrimônio encontrado.</div>`;
     return;
   }
 
+  const maxQtd = lista[0]?.qtd || 1;
   el.innerHTML = lista.map((o,i) => `
     <div class="info-row" onclick="mostrarItensObraRanking('${o.obra_id}','QTD')" style="cursor:pointer;">
       <span title="${escapeHtmlBDR(o.nome)}">${i+1}. ${escapeHtmlBDR(o.nome)}</span>
       <b>${o.qtd} item(ns)</b>
+      <div class="ranking-bar"><i style="width:${Math.max(3,(o.qtd/maxQtd)*100)}%"></i></div>
     </div>
   `).join("");
 }
@@ -3258,30 +3744,18 @@ function mostrarItensObraRanking(obraId, modo){
   renderizarListaItensDashboard(lista, titulo);
 }
 
-function renderizarListaItensDashboard(lista, titulo){
+function renderizarListaItensDashboard(lista, titulo, ocultarResumo = true){
   const card = document.getElementById("cardItensAlerta");
-  const tbody = document.getElementById("listaItensAlerta");
   const title = document.getElementById("tituloItensAlerta");
+  const resumo = document.getElementById("resumoItensAlerta");
+  if(!card || !title) return;
 
-  if(!card || !tbody || !title) return;
-
-  title.innerText = `${titulo} (${lista.length})`;
-
-  if(lista.length === 0){
-    tbody.innerHTML = `<tr><td colspan="6">Nenhum item encontrado.</td></tr>`;
-  }else{
-    tbody.innerHTML = lista.map(p => `
-      <tr>
-        <td><b>${p.codigo_qr || "-"}</b></td>
-        <td>${p.nome_bem || "-"}</td>
-        <td>${p.status || "-"}</td>
-        <td>${p.tipo_item || "-"}</td>
-        <td>${nomeObraCurto(p.obra_id)}</td>
-        <td>${usuarioPodeVerValoresBDR() ? moeda(valorPatrimonio(p)) : "R$ •••"}</td>
-      </tr>
-    `).join("");
-  }
-
+  listaItensDashboardAtual = Array.isArray(lista) ? [...lista] : [];
+  tituloItensDashboardAtual = titulo || "📋 Itens filtrados";
+  paginaItensDashboard = 1;
+  title.innerText = `${tituloItensDashboardAtual} (${listaItensDashboardAtual.length})`;
+  if(ocultarResumo && resumo) resumo.style.display = "none";
+  renderizarPaginaItensDashboard();
   card.style.display = "block";
   card.scrollIntoView({behavior:"smooth", block:"start"});
 }

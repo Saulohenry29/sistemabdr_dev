@@ -560,5 +560,5 @@
 
   window.AtlasGestorReservas = Gestor;
 
-  console.log("✅ ATLAS GESTOR RESERVAS V1.0 carregado - reservas, fila e origem→destino");
+  void 0;
 })();

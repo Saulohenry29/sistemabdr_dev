@@ -51,7 +51,7 @@
 
   function desativarOfflineAuto(){
     if(localStorage.getItem(MODO_OFFLINE_KEY) === "SIM"){
-      console.log("BDR: internet real disponível. Saindo do modo offline.");
+      void 0;
       localStorage.removeItem(MODO_OFFLINE_KEY);
       localStorage.removeItem(MODO_OFFLINE_ORIGEM_KEY);
     }
@@ -136,11 +136,11 @@
         if(voltou){
           console.warn(`BDR: cache vazio para ${tabela}. Tentando baixar do Supabase.`);
         }else{
-          console.log(`BDR offline: ${tabela} carregado do IndexedDB (${local.length})`);
+          void 0;
           return local;
         }
       }else{
-        console.log(`BDR offline: ${tabela} carregado do IndexedDB (${local.length})`);
+        void 0;
         return local;
       }
     }
@@ -154,7 +154,7 @@
 
       const dados = resp?.data || [];
       await dbLocal.salvarTabela(tabela, dados);
-      console.log(`BDR online: ${tabela} atualizado no cache (${dados.length})`);
+      void 0;
       return dados;
 
     }catch(e){
@@ -573,7 +573,7 @@
           const dados = resp?.data || [];
           await offlineDB().salvarTabela(tabela, dados);
           resultado.push({ tabela, ok:true, total:dados.length });
-          console.log(`BDR cache reconstruído: ${tabela} (${dados.length})`);
+          void 0;
         }catch(e){
           resultado.push({ tabela, ok:false, erro:e?.message || String(e) });
           console.warn(`BDR: falha ao reconstruir cache de ${tabela}:`, e?.message || e);
@@ -706,5 +706,5 @@
   window.bdrVoltarOnline = tentarVoltarOnline;
   window.bdrReconstruirCache = reconstruirCache;
 
-  console.log("✔ BDR OFFLINE SYNC AUTO V5.1 TRIAGEM carregado");
+  void 0;
 })();

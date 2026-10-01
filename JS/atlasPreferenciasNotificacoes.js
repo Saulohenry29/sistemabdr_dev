@@ -125,5 +125,5 @@
 
   window.AtlasPreferenciasNotificacoes={__loaded:true,versao:'1.0',montar,sincronizar:sincronizarDaSelecao};
   document.addEventListener('DOMContentLoaded',()=>setTimeout(montar,100));
-  console.log('✅ ATLAS PREFERÊNCIAS DE NOTIFICAÇÃO V1.0 carregado');
+  void 0;
 })();

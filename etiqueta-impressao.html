@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Etiqueta Patrimônio Atlas</title>
+<!-- ATLAS ETIQUETA INDIVIDUAL RÁPIDA V1 -->
 <script src="./JS/atlasEtiquetaConfig.js?v=8.1.2"></script>
 <script src="./JS/atlasPrintCenter.js?v=4.0.0"></script>
 <script src="./JS/atlasQRCode/qrcode.min.js?v=1.0.0"></script>
@@ -106,83 +107,253 @@ html,body{margin:0;padding:0;width:var(--papel-w);height:var(--papel-h);overflow
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script>
-const A=window.AtlasEtiquetaConfig;
-const QR=window.AtlasQRCode;
-const params=new URLSearchParams(location.search);
-const db=()=>window.client||window.supabaseClient;
-const codigo=params.get("codigo")||params.get("id")||"PAT-9990004";
-const isCalibration=params.get("calibracao")==="1";
-const isPreview=params.get("preview")==="1" || window.self!==window.top;
-const isEmbed=params.get("embed")==="1" || window.self!==window.top;
-if(isEmbed)document.body.classList.add("embed");
+"use strict";
 
-function avisarPronta(){
+const A = window.AtlasEtiquetaConfig;
+const QR = window.AtlasQRCode;
+const params = new URLSearchParams(location.search);
+const db = () => window.client || window.supabaseClient;
+
+const isCalibration = params.get("calibracao") === "1";
+const isPreview = params.get("preview") === "1" || window.self !== window.top;
+const isEmbed = params.get("embed") === "1" || window.self !== window.top;
+const isFast = params.get("fast") === "1";
+
+if(isEmbed) document.body.classList.add("embed");
+
+let codigoAtual = "";
+let configLocal = params.get("teste") === "1"
+  ? A.carregarTeste()
+  : A.carregar();
+
+let configBancoCache = null;
+let configBancoPromise = null;
+let atualizacaoToken = 0;
+
+function obterConfigBanco(){
+  if(params.get("teste") === "1"){
+    return Promise.resolve(configLocal);
+  }
+
+  if(configBancoCache){
+    return Promise.resolve(configBancoCache);
+  }
+
+  if(!configBancoPromise){
+    configBancoPromise = A.carregarBanco()
+      .then(config => {
+        configBancoCache = config || configLocal;
+        return configBancoCache;
+      })
+      .catch(() => configLocal);
+  }
+
+  return configBancoPromise;
+}
+
+function avisar(tipo, dados={}){
   try{
-    if(window.parent&&window.parent!==window){
-      window.parent.postMessage({tipo:"ATLAS_ETIQUETA_PRONTA",codigo},location.origin);
+    if(window.parent && window.parent !== window){
+      window.parent.postMessage(
+        {tipo, ...dados},
+        location.origin
+      );
     }
   }catch(e){}
 }
 
-async function start(){
-  // A configuração local aparece imediatamente. O banco atualiza o cache em segundo plano.
-  let cfg=params.get("teste")==="1"?A.carregarTeste():A.carregar();
-  if(params.get("teste")!=="1"){
-    A.carregarBanco().catch(()=>null);
-  }
+function textoSeguro(valor, padrao){
+  const texto = String(valor ?? "").trim();
+  return texto || padrao;
+}
 
-  document.getElementById("codigo").textContent=codigo;
-  await QR.aplicarEmImagem(document.getElementById("qr"),codigo,{tamanho:220,nivel:"M"});
-
-  let patrimonio=null;
-  const localParam=params.get("local");
-  const itemParam=params.get("item");
-  const obraIdParam=params.get("obra_id");
-
-  if(localParam)document.getElementById("local").textContent="Local: "+localParam;
-  if(itemParam)document.getElementById("item").textContent="Item: "+itemParam;
-
-  // Só consulta o banco quando a tela que abriu a etiqueta não enviou os dados.
-  if(!isCalibration&&db()&&(!localParam||!itemParam)){
-    try{
-      const {data}=await db().from("patrimonio").select("*").or(`codigo_qr.eq.${codigo},codigo_bem.eq.${codigo},etiqueta.eq.${codigo}`).maybeSingle();
-      patrimonio=data||null;
-      if(data){
-        document.getElementById("local").textContent="Local: "+(data.localizacao||data.obra_nome||"SEM OBRA");
-        document.getElementById("item").textContent="Item: "+(data.nome_bem||"ITEM");
-      }
-    }catch(e){console.warn("Patrimônio não carregado; mantendo os dados recebidos.",e)}
-  }
-
+async function aplicarPerfilImpressao(cfg, dados){
   try{
-    const PC=window.AtlasPrintCenter;
-    if(PC){
-      const perfil=params.get("perfil_id")
-        ? await PC.buscarPerfil(params.get("perfil_id"))
-        : await PC.perfilDaObra(patrimonio?.obra_id||obraIdParam);
-      cfg=PC.aplicarPerfilAoLayout(cfg,perfil);
-      if(perfil)document.title+=` — ${perfil.nome}`;
+    const PC = window.AtlasPrintCenter;
+    if(!PC) return cfg;
+
+    const perfil = dados?.perfil_id
+      ? await PC.buscarPerfil(dados.perfil_id)
+      : await PC.perfilDaObra(dados?.obra_id || null);
+
+    if(perfil){
+      document.title = `Etiqueta Patrimônio Atlas — ${perfil.nome}`;
     }
-  }catch(e){console.warn("Atlas Print Center: usando configuração local.",e)}
 
-  A.aplicar(cfg);
-  if(isPreview)document.body.classList.add("preview-centralizado");
-  if(isCalibration){
-    document.getElementById("label").style.display="none";
-    document.getElementById("calibration").classList.add("active");
-  }
-
-  document.body.classList.add("ready");
-  avisarPronta();
-
-  if(params.get("auto")==="1"&&!isEmbed){
-    requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
+    return PC.aplicarPerfilAoLayout(cfg, perfil);
+  }catch(error){
+    console.warn("Atlas Print Center: usando configuração global.", error);
+    return cfg;
   }
 }
 
-start().catch(error=>{
-  console.error("Atlas Etiqueta: falha ao preparar etiqueta.",error);
-  document.querySelector(".loading").textContent="Não foi possível preparar a etiqueta.";
+async function atualizarEtiqueta(dados={}){
+  const token = ++atualizacaoToken;
+  const codigo = textoSeguro(
+    dados.codigo || dados.codigo_qr || dados.id,
+    "SEM-CODIGO"
+  );
+
+  codigoAtual = codigo;
+  document.body.classList.remove("ready");
+  document.querySelector(".loading").textContent = "Preparando etiqueta...";
+
+  document.getElementById("codigo").textContent = codigo;
+  document.getElementById("local").textContent =
+    "Local: " + textoSeguro(
+      dados.local || dados.localizacao || dados.obra_nome,
+      "SEM OBRA"
+    );
+
+  document.getElementById("item").textContent =
+    "Item: " + textoSeguro(
+      dados.item || dados.nome_bem,
+      "ITEM"
+    );
+
+  const [cfgBanco] = await Promise.all([
+    obterConfigBanco(),
+    QR.aplicarEmImagem(
+      document.getElementById("qr"),
+      codigo,
+      {tamanho:220, nivel:"M"}
+    )
+  ]);
+
+  if(token !== atualizacaoToken) return;
+
+  let cfg = cfgBanco || configLocal;
+  cfg = await aplicarPerfilImpressao(cfg, dados);
+
+  if(token !== atualizacaoToken) return;
+
+  A.aplicar(cfg);
+
+  if(isPreview){
+    document.body.classList.add("preview-centralizado");
+  }
+
+  document.body.classList.add("ready");
+
+  avisar("ATLAS_ETIQUETA_PRONTA", {
+    codigo,
+    token:dados.token || null
+  });
+}
+
+async function carregarDireto(){
+  const codigo =
+    params.get("codigo") ||
+    params.get("id") ||
+    "PAT-9990004";
+
+  const dados = {
+    codigo,
+    local:params.get("local"),
+    item:params.get("item"),
+    obra_id:params.get("obra_id"),
+    perfil_id:params.get("perfil_id")
+  };
+
+  /*
+   * Na abertura direta, consulta o patrimônio somente quando local e item
+   * não vieram na URL. No modal rápido esses dados chegam por postMessage.
+   */
+  if(!isCalibration && db() && (!dados.local || !dados.item)){
+    try{
+      const {data} = await db()
+        .from("patrimonio")
+        .select("*")
+        .or(
+          `codigo_qr.eq.${codigo},codigo_bem.eq.${codigo},etiqueta.eq.${codigo}`
+        )
+        .maybeSingle();
+
+      if(data){
+        dados.local =
+          data.localizacao ||
+          data.obra_nome ||
+          "SEM OBRA";
+
+        dados.item =
+          data.nome_bem ||
+          "ITEM";
+
+        dados.obra_id = data.obra_id || dados.obra_id;
+      }
+    }catch(error){
+      console.warn(
+        "Patrimônio não carregado; mantendo os dados recebidos.",
+        error
+      );
+    }
+  }
+
+  await atualizarEtiqueta(dados);
+
+  if(params.get("auto") === "1" && !isEmbed){
+    requestAnimationFrame(
+      () => requestAnimationFrame(() => window.print())
+    );
+  }
+}
+
+window.addEventListener("message", event => {
+  if(event.origin !== location.origin) return;
+
+  const mensagem = event.data || {};
+
+  if(mensagem.tipo === "ATLAS_ETIQUETA_ATUALIZAR"){
+    atualizarEtiqueta(mensagem.dados || {})
+      .catch(error => {
+        console.error(
+          "Atlas Etiqueta: falha ao atualizar a prévia.",
+          error
+        );
+
+        document.querySelector(".loading").textContent =
+          "Não foi possível preparar a etiqueta.";
+
+        avisar("ATLAS_ETIQUETA_ERRO", {
+          codigo:mensagem?.dados?.codigo || null,
+          token:mensagem?.dados?.token || null
+        });
+      });
+  }
+
+  if(mensagem.tipo === "ATLAS_ETIQUETA_IMPRIMIR"){
+    window.focus();
+    window.print();
+  }
+});
+
+async function iniciar(){
+  if(isCalibration){
+    A.aplicar(configLocal);
+    document.getElementById("label").style.display = "none";
+    document.getElementById("calibration").classList.add("active");
+    document.body.classList.add("ready");
+    return;
+  }
+
+  if(isFast && isEmbed){
+    /*
+     * Modo residente:
+     * carrega configuração e bibliotecas uma única vez;
+     * depois o patrimônio apenas envia os dados de cada etiqueta.
+     */
+    A.aplicar(configLocal);
+    avisar("ATLAS_ETIQUETA_BRIDGE_PRONTA");
+    return;
+  }
+
+  await carregarDireto();
+}
+
+iniciar().catch(error => {
+  console.error("Atlas Etiqueta: falha ao preparar etiqueta.", error);
+  document.querySelector(".loading").textContent =
+    "Não foi possível preparar a etiqueta.";
 });
 </script>
 </body>

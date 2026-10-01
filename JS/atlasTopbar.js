@@ -485,9 +485,7 @@
     getZoom: getBodyZoom
   });
 
-  console.log(
-    "✅ ATLAS TOPBAR V1.4 carregado - foco e aria-hidden corrigidos"
-  );
+  void 0;
 
   if(document.readyState === "loading"){
     document.addEventListener(

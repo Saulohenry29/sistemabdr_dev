@@ -138,4 +138,4 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-console.log("✅ movimentacao.js V10.6 carregado - obra destino livre + offline first");
+void 0;

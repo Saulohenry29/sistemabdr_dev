@@ -1,781 +1,132 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-<!-- =========================================================
-     BDR MARCAÇÃO OFFLINE
-     Esta página está preparada para usar JS/offlineQueue.js.
-     Próximo passo: ligar os botões que salvam dados no helper offline.
-========================================================= -->
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:,">
-<link rel="stylesheet" href="./CSS/layout-bdr.css">
-<link rel="stylesheet" href="./CSS/bdr-owner-core.css">
-<link rel="stylesheet" href="./CSS/bdr-usuarios-compacto.css?v=20260701">
-<title>BDR - Usuários </title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="./JS/supabaseClient.js"></script>
-<script src="./JS/auth.js"></script>
-<script src="./JS/bdrCore.js"></script>
-<script src="./JS/bdrAcessoObras.js?v=20260701"></script>
-<script src="./JS/bdrMenuPermissoes.js"></script>
-<script src="./JS/bdr-menu-ocultar-de-verdade.js?v=20260629-final-sem-piscar"></script>
-
-
-<style>
-/* =========================================================
-   BDR USUÁRIOS - CSS LIMPO DA PÁGINA
-   ---------------------------------------------------------
-   AJUSTES RÁPIDOS:
-   --usuarios-zoom: diminui/aumenta apenas a tela de usuários
-   --usuarios-gap: espaço entre os cards
-   --usuarios-radius: arredondamento dos cards
-   --usuarios-red: cor principal da tela
-========================================================= */
-:root{
-  --usuarios-zoom:.86;
-  --usuarios-red:#a4161a;
-  --usuarios-bg:#eef2f7;
-  --usuarios-card:#ffffff;
-  --usuarios-line:#e5e7eb;
-  --usuarios-muted:#6b7280;
-  --usuarios-gap:8px;
-  --usuarios-radius:16px;
-  --usuarios-shadow:0 2px 9px rgba(0,0,0,.08);
-}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--usuarios-bg);font-family:Arial,sans-serif;color:#111827;overflow-x:hidden;}
-button,input,select,textarea{font-family:inherit;}
-button{cursor:pointer;}
-/* Layout geral da página */
-.app-layout{min-height:100vh;}
-.usuarios-premium-main{padding:calc(12px * var(--usuarios-zoom)) !important;}
-/* Topo */
-.bdr-topbar{
-  background:radial-gradient(circle at right top,rgba(164,22,26,.12),transparent 35%),linear-gradient(135deg,#fff,#f8fafc)!important;
-  border-left:4px solid var(--usuarios-red)!important;
-  border-radius:var(--usuarios-radius)!important;
-  box-shadow:var(--usuarios-shadow)!important;
-  padding:calc(12px * var(--usuarios-zoom)) calc(14px * var(--usuarios-zoom))!important;
-  margin-bottom:var(--usuarios-gap)!important;
-  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;
-}
-.bdr-topbar-title{font-size:calc(19px * var(--usuarios-zoom))!important;font-weight:900!important;color:var(--usuarios-red)!important;}
-.bdr-topbar-sub{font-size:calc(12px * var(--usuarios-zoom))!important;color:var(--usuarios-muted)!important;margin-top:3px!important;}
-.bdr-top-actions{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;}
-/* Botões */
-.btn,button{border-radius:10px!important;font-size:calc(12px * var(--usuarios-zoom))!important;font-weight:900!important;}
-.btn{height:calc(38px * var(--usuarios-zoom))!important;padding:0 calc(12px * var(--usuarios-zoom))!important;border:0;display:inline-flex;align-items:center;justify-content:center;gap:7px;}
-.btn-red{background:var(--usuarios-red)!important;color:#fff!important;}
-.btn-soft{background:#fff1f2!important;color:var(--usuarios-red)!important;border:1px solid #fee2e2!important;}
-.btn-dark{background:#111827!important;color:#fff!important;}
-.btn-gray{background:#6b7280!important;color:#fff!important;}
-.btn-green{background:#16a34a!important;color:#fff!important;border:none!important;}
-.btn-icon-only{width:calc(38px * var(--usuarios-zoom))!important;min-width:calc(38px * var(--usuarios-zoom))!important;padding:0!important;}
-/* Filtros */
-.filters{display:grid!important;grid-template-columns:1.1fr 1fr 1fr .7fr .9fr!important;gap:var(--usuarios-gap)!important;background:#fff!important;border:1px solid var(--usuarios-line)!important;border-left:4px solid var(--usuarios-red)!important;border-radius:var(--usuarios-radius)!important;padding:calc(10px * var(--usuarios-zoom))!important;box-shadow:var(--usuarios-shadow)!important;margin-bottom:var(--usuarios-gap)!important;}
-.field label{display:block;font-size:calc(11px * var(--usuarios-zoom))!important;font-weight:900;margin:0 0 4px;color:#374151;}
-.field input,.field select,input,select,textarea{border-radius:9px!important;border:1px solid #d1d5db!important;font-size:calc(12px * var(--usuarios-zoom))!important;}
-.field input,.field select{width:100%;height:calc(40px * var(--usuarios-zoom))!important;padding:6px 9px!important;background:#fff;}
-.search-field{position:relative}.search-field i{position:absolute;right:12px;bottom:10px;color:#111827;}
-/* Faixa central */
-.master-strip,.usuario-selecionado-card,.panel,.users-panel,.alert-card,.access-box,.summary-card,.profile-card{background:#fff!important;border:1px solid var(--usuarios-line)!important;border-radius:var(--usuarios-radius)!important;box-shadow:var(--usuarios-shadow)!important;}
-.master-strip{display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;gap:10px!important;border-left:4px solid var(--usuarios-red)!important;padding:calc(11px * var(--usuarios-zoom)) calc(14px * var(--usuarios-zoom))!important;margin-bottom:var(--usuarios-gap)!important;background:radial-gradient(circle at right top,rgba(164,22,26,.10),transparent 35%),linear-gradient(135deg,#fff,#fff7f7)!important;}
-.master-icon{width:calc(46px * var(--usuarios-zoom))!important;height:calc(46px * var(--usuarios-zoom))!important;border-radius:14px!important;background:#fff1f2!important;color:var(--usuarios-red)!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:calc(23px * var(--usuarios-zoom))!important;}
-.master-strip h2{margin:0!important;font-size:calc(18px * var(--usuarios-zoom))!important;color:var(--usuarios-red)!important;font-weight:900!important;}.master-strip p{margin:3px 0 0!important;color:var(--usuarios-muted)!important;font-size:calc(12px * var(--usuarios-zoom))!important;}.master-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important;}
-.usuario-selecionado-card{border-left:4px solid var(--usuarios-red)!important;padding:calc(10px * var(--usuarios-zoom)) calc(13px * var(--usuarios-zoom))!important;margin-bottom:var(--usuarios-gap)!important;}.usuario-selecionado-card span{display:block;font-size:calc(11px * var(--usuarios-zoom));font-weight:900;color:var(--usuarios-muted);text-transform:uppercase}.usuario-selecionado-card strong{display:block;font-size:calc(16px * var(--usuarios-zoom));margin-top:2px}.usuario-selecionado-card small{display:block;color:var(--usuarios-muted);font-size:calc(12px * var(--usuarios-zoom));margin-top:2px}
-/* Painéis */
-.board{display:grid!important;grid-template-columns:1fr 1fr 1.2fr!important;gap:var(--usuarios-gap)!important;margin-bottom:var(--usuarios-gap)!important;align-items:start!important;}.ops-grid{display:grid!important;grid-template-columns:1fr 170px!important;gap:var(--usuarios-gap)!important;}.lower{display:grid!important;grid-template-columns:1fr 1fr 1.2fr!important;gap:var(--usuarios-gap)!important;margin-bottom:var(--usuarios-gap)!important;align-items:start!important;}
-.panel{overflow:hidden!important}.panel-head,.red-head,.user-table-head,.alert-title{min-height:calc(38px * var(--usuarios-zoom))!important;background:#fff!important;color:var(--usuarios-red)!important;border-bottom:1px solid var(--usuarios-line)!important;padding:calc(9px * var(--usuarios-zoom)) calc(12px * var(--usuarios-zoom))!important;font-size:calc(14px * var(--usuarios-zoom))!important;font-weight:900!important;display:flex!important;align-items:center!important;gap:8px!important;}.red-head,.user-table-head{background:var(--usuarios-red)!important;color:#fff!important;}.panel-body,.obras-body,.summary-body,.quick-body{padding:calc(9px * var(--usuarios-zoom))!important;}
-/* Permissões */
-.perm-row{min-height:calc(43px * var(--usuarios-zoom))!important;display:grid!important;grid-template-columns:32px 1fr 44px!important;gap:7px!important;align-items:center!important;border:1px solid #edf0f5!important;border-radius:12px!important;padding:calc(6px * var(--usuarios-zoom))!important;margin-bottom:5px!important;background:#fff!important;transition:none!important;}.perm-row:hover{background:#fffafa!important;border-color:#fecaca!important}.perm-ico{width:calc(30px * var(--usuarios-zoom))!important;height:calc(30px * var(--usuarios-zoom))!important;border-radius:10px!important;background:#fff1f2!important;color:var(--usuarios-red)!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:calc(14px * var(--usuarios-zoom))!important;}.perm-text b{display:block;font-size:calc(12px * var(--usuarios-zoom))!important;line-height:1.1}.perm-text span{display:block;color:var(--usuarios-muted);font-size:calc(10px * var(--usuarios-zoom))!important;line-height:1.15;margin-top:2px}.switch{position:relative;width:calc(40px * var(--usuarios-zoom))!important;height:calc(22px * var(--usuarios-zoom))!important;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#9ca3af;border-radius:999px;transition:.15s}.slider:before{content:"";position:absolute;width:calc(18px * var(--usuarios-zoom))!important;height:calc(18px * var(--usuarios-zoom))!important;left:2px;top:2px;border-radius:50%;background:#fff;transition:.15s}.switch input:checked + .slider{background:#16a34a}.switch input:checked + .slider:before{transform:translateX(calc(18px * var(--usuarios-zoom)))!important;}
-/* Obras, resumo e perfis */
-.obra-list{max-height:155px;overflow:auto}.obra-row{display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:6px;min-height:27px;font-size:calc(12px * var(--usuarios-zoom));}.chk{width:16px;height:16px;accent-color:var(--usuarios-red)}.tag{border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900}.tag-obra{background:#ffedd5;color:#ea580c}.tag-fazenda{background:#fff7ed;color:#f97316}.tag-apoio{background:#dbeafe;color:#2563eb}.tag-cd{background:#dcfce7;color:#15803d}.summary-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}.summary-card{text-align:center;padding:7px!important}.summary-card i{font-size:18px}.summary-card b{font-size:16px}.summary-card span,.access-line{font-size:calc(11px * var(--usuarios-zoom));color:var(--usuarios-muted)}.bar{height:5px;border-radius:999px;background:#e5e7eb;margin-top:7px;overflow:hidden}.bar div{height:100%;border-radius:999px}.access-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.access-box{min-height:80px;padding:8px!important}.current-profile{display:inline-block;background:#dbeafe;color:#2563eb;border-radius:999px;padding:5px 9px;font-weight:900;margin-top:6px;font-size:11px}.quick-grid{display:grid;grid-template-columns:repeat(4,1fr)!important;gap:8px!important}.profile-card{text-align:center;min-height:115px!important;padding:10px 7px!important;transition:none!important;position:relative}.profile-card:hover{transform:none!important}.profile-card i{font-size:24px!important;margin-bottom:5px!important;color:var(--usuarios-red)!important}.profile-card b{display:block;font-size:calc(12px * var(--usuarios-zoom))!important;margin-bottom:4px}.profile-card p{font-size:calc(10px * var(--usuarios-zoom))!important;line-height:1.25;margin:0;color:#475467}.profile-card button{height:27px!important;margin-top:6px!important;font-size:10px!important}.profile-card.active{border:2px solid var(--usuarios-red)!important;background:#fff5f5!important}.profile-card.active:after{content:"✓";position:absolute;right:-6px;top:-6px;width:22px;height:22px;border-radius:50%;background:var(--usuarios-red);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;}
-/* Lista de usuários */
-.users-panel{overflow:hidden!important}.table{width:100%}.tr{display:grid!important;grid-template-columns:2fr .85fr 1.15fr 1.2fr .7fr 1fr 1fr!important;gap:8px!important;align-items:center!important;padding:calc(9px * var(--usuarios-zoom)) calc(12px * var(--usuarios-zoom))!important;border-bottom:1px solid var(--usuarios-line)!important;font-size:calc(12px * var(--usuarios-zoom))!important;transition:none!important}.tr.header{background:#f8fafc!important;color:#374151!important;font-weight:900!important;text-transform:uppercase;font-size:calc(11px * var(--usuarios-zoom))!important}.tr:hover{background:#f9fafb!important}.tr.usuario-ativo{background:#fff1f2!important;border-left:4px solid var(--usuarios-red)!important}.user-cell{display:flex;align-items:center;gap:9px;min-width:0}.user-avatar{width:calc(36px * var(--usuarios-zoom))!important;height:calc(36px * var(--usuarios-zoom))!important;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;overflow:hidden;flex:0 0 auto}.user-avatar img{width:100%;height:100%;object-fit:cover}.user-cell b{display:block;font-size:calc(13px * var(--usuarios-zoom))!important}.user-cell span{font-size:calc(11px * var(--usuarios-zoom))!important;color:var(--usuarios-muted);}.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:5px 8px;font-size:calc(10px * var(--usuarios-zoom))!important;font-weight:900;width:max-content}.badge-blue{background:#dbeafe;color:#2563eb}.badge-green{background:#dcfce7;color:#15803d}.badge-red{background:#fee2e2;color:#dc2626}.badge-orange{background:#ffedd5;color:#ea580c}.badge-gray{background:#f3f4f6;color:#475467}.actions{display:flex;gap:6px;justify-content:flex-end}.icon-btn{width:calc(31px * var(--usuarios-zoom))!important;height:calc(31px * var(--usuarios-zoom))!important;border:0;border-radius:9px;color:#fff;font-size:calc(12px * var(--usuarios-zoom))!important}.icon-blue{background:#2563eb}.icon-yellow{background:#f59e0b}.icon-red{background:#e11d48}.icon-more{background:#fff;color:#111827;border:1px solid #cbd5e1}
-/* Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:99999;display:none;align-items:center;justify-content:center;padding:18px}.modal-bg.ativo{display:flex}.modal{width:min(680px,100%);background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.35);overflow:hidden}.modal-head{background:#fff;border-left:4px solid var(--usuarios-red);border-bottom:1px solid var(--usuarios-line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;color:var(--usuarios-red);font-size:18px}.modal-body{padding:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .wide{grid-column:span 2}.form-grid label{display:block;font-weight:900;font-size:12px;margin-bottom:5px}.form-grid input,.form-grid select{width:100%;height:40px;padding:0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 16px 16px}.close-btn{width:34px;height:34px;border:0;border-radius:10px;background:#fee2e2;color:var(--usuarios-red)}
-/* Topo usuário/notificação */
-.notif-wrap{position:relative}.notif-btn{width:38px!important;height:38px!important;border:0;border-radius:50%;background:#fff;color:#111827;display:flex;align-items:center;justify-content:center;position:relative;padding:0}.notif-badge{position:absolute;top:0;right:0;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center}.notif-dropdown,.dropdown-user{position:absolute;right:0;top:48px;background:#fff;border:1px solid var(--usuarios-line);border-radius:14px;box-shadow:0 18px 35px rgba(15,23,42,.18);display:none;z-index:9999;overflow:hidden}.notif-dropdown.ativo,.dropdown-user.ativo{display:block}.notif-dropdown{width:330px}.notif-head{padding:12px 14px;font-weight:900;color:var(--usuarios-red);background:#fff5f5;border-bottom:1px solid #fecaca}.notif-list{max-height:280px;overflow:auto}.notif-item{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#374151}.user-menu{position:relative;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 12px;border-radius:12px;user-select:none}.user-menu:hover{background:#fff1f2}.user-mini{text-align:right;font-size:13px;pointer-events:none}.user-mini b{display:block}.user-mini small{display:block;color:var(--usuarios-red);font-weight:900}.avatar{width:42px!important;height:42px!important;border-radius:50%;background:linear-gradient(135deg,#fecaca,#fff);border:2px solid #fee2e2;display:flex;align-items:center;justify-content:center;color:var(--usuarios-red);font-size:18px;pointer-events:none}.dropdown-user{min-width:220px;padding:8px}.dropdown-user button{width:100%;border:0;background:#fff;color:#374151;padding:10px 11px;border-radius:9px;text-align:left;display:flex;align-items:center;gap:9px}.dropdown-user button:hover{background:#fff1f2;color:var(--usuarios-red)}.dropdown-user .logout-btn{color:#dc2626}
-/* Logo do menu camuflado: fica invisível, mantendo o espaço */
-.bdr-logo-menu{
-  background:transparent!important;
-  border:none!important;
-  box-shadow:none!important;
-  color:transparent!important;
-}
-
-.bdr-logo-menu img,.bdr-logo-menu i,.bdr-logo-menu span{display:none!important;}
-/* Anti-pisca: remove seleção/caret/efeitos de foco em áreas clicáveis */
-button,button *,.bdr-menu-btn,.bdr-menu-btn *,.user-menu,.user-menu *,.perm-row,.perm-row *,.profile-card,.profile-card *{outline:none!important;user-select:none!important;caret-color:transparent!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important;}
-button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none!important;box-shadow:none!important;}
-@media(max-width:1350px){.board,.lower{grid-template-columns:1fr!important}.ops-grid{grid-template-columns:1fr!important}.quick-grid{grid-template-columns:repeat(2,1fr)!important}.tr{grid-template-columns:1fr!important}.tr.header{display:none!important}.actions{justify-content:flex-start}}
-@media(max-width:900px){.usuarios-premium-main{padding:10px 10px calc(104px + env(safe-area-inset-bottom))!important}.bdr-topbar,.master-strip{display:flex!important;flex-direction:column!important;align-items:flex-start!important}.filters,.board,.lower,.quick-grid,.form-grid{grid-template-columns:1fr!important}.form-grid .wide{grid-column:span 1}.bdr-top-actions{width:100%;justify-content:space-between}.notif-dropdown{right:-80px;width:300px}}
-
-
-/* =========================================================
-   BDR USUÁRIOS - COMPACTO FINAL PARA PUSH
-   ---------------------------------------------------------
-   Ajuste rápido:
-   --usuarios-zoom: diminui/aumenta a tela inteira
-   --usuarios-gap: aproxima/afasta os cards
-========================================================= */
-:root{
-  --usuarios-zoom:.82;
-  --usuarios-gap:6px;
-  --usuarios-radius:14px;
-  --usuarios-card-min:190px;
-}
-.usuarios-premium-main{padding:9px!important;}
-.bdr-topbar{padding:9px 12px!important;margin-bottom:6px!important;min-height:68px!important;}
-.bdr-topbar-title{font-size:17px!important;}
-.bdr-topbar-sub{font-size:11px!important;}
-.filters{padding:7px!important;margin-bottom:6px!important;gap:6px!important;}
-.field label{font-size:10px!important;margin-bottom:3px!important;}
-.field input,.field select{height:32px!important;font-size:11px!important;padding:4px 8px!important;}
-.btn{height:31px!important;padding:0 10px!important;font-size:11px!important;border-radius:9px!important;}
-.btn-icon-only{width:31px!important;min-width:31px!important;}
-.master-strip{padding:8px 10px!important;margin-bottom:6px!important;gap:8px!important;}
-.master-icon{width:36px!important;height:36px!important;font-size:18px!important;border-radius:11px!important;}
-.master-strip h2{font-size:15px!important;line-height:1.1!important;}
-.master-strip p{font-size:10px!important;line-height:1.2!important;}
-.master-actions{gap:5px!important;}
-.usuario-selecionado-card{padding:7px 10px!important;margin-bottom:6px!important;}
-.usuario-selecionado-card span{font-size:10px!important;}
-.usuario-selecionado-card strong{font-size:14px!important;}
-.usuario-selecionado-card small{font-size:10px!important;}
-.board,.lower{gap:6px!important;margin-bottom:6px!important;}
-.ops-grid{gap:6px!important;grid-template-columns:1fr 150px!important;}
-.panel-head,.red-head,.user-table-head,.alert-title{min-height:31px!important;padding:7px 9px!important;font-size:12px!important;}
-.panel-body,.obras-body,.summary-body,.quick-body{padding:7px!important;}
-.perm-row{min-height:34px!important;grid-template-columns:26px 1fr 38px!important;gap:5px!important;padding:4px 6px!important;margin-bottom:3px!important;border-radius:10px!important;}
-.perm-ico{width:24px!important;height:24px!important;font-size:11px!important;border-radius:8px!important;}
-.perm-text b{font-size:10.5px!important;}
-.perm-text span{font-size:9px!important;line-height:1.1!important;}
-.switch{width:34px!important;height:19px!important;}
-.slider:before{width:15px!important;height:15px!important;}
-.switch input:checked + .slider:before{transform:translateX(15px)!important;}
-.obra-list{max-height:126px!important;}
-.obra-row{min-height:23px!important;font-size:10.5px!important;}
-.summary-cards{gap:5px!important;margin-bottom:6px!important;}
-.summary-card{padding:6px!important;}
-.summary-card i{font-size:15px!important;}
-.summary-card b{font-size:14px!important;}
-.access-grid{gap:6px!important;}
-.access-box{min-height:62px!important;padding:7px!important;}
-.quick-grid{gap:6px!important;}
-.profile-card{min-height:86px!important;padding:7px 5px!important;}
-.profile-card i{font-size:18px!important;margin-bottom:3px!important;}
-.profile-card b{font-size:10.5px!important;margin-bottom:2px!important;}
-.profile-card p{font-size:8.5px!important;line-height:1.15!important;}
-.profile-card button{height:23px!important;margin-top:4px!important;font-size:9px!important;}
-.tr{padding:7px 10px!important;font-size:11px!important;gap:6px!important;}
-.tr.header{font-size:10px!important;}
-.user-avatar{width:30px!important;height:30px!important;}
-.user-cell b{font-size:11.5px!important;}
-.user-cell span{font-size:10px!important;}
-.badge{font-size:9px!important;padding:4px 6px!important;}
-.icon-btn{width:27px!important;height:27px!important;font-size:10px!important;}
-.users-panel{margin-top:0!important;}
-.alert-body{padding:8px!important;font-size:10px!important;}
-.alert-shield{width:34px!important;height:34px!important;font-size:16px!important;}
-
-@media(max-width:1350px){
-  .ops-grid{grid-template-columns:1fr!important;}
-}
-
-/* =========================================================
-   BDR FIX LOCAL - ALINHAMENTO IGUAL ENTRADA
-   Mantém a página dentro da largura padrão do layout/menu.
-========================================================= */
-@media(min-width:1201px){
-  .bdr-main,
-  .usuarios-premium-main,
-  main,
-  .content{
-    box-sizing:border-box!important;
-    overflow-x:hidden!important;
-  }
-}
-
-@media(max-width:1200px){
-  .bdr-main,
-  .usuarios-premium-main,
-  main,
-  .content{
-    margin-left:0!important;
-    width:100%!important;
-    max-width:100%!important;
-    overflow-x:hidden!important;
-  }
-}
-
-
-/* BDR V11.1 - sininho global acima dos painéis de usuários */
-.notif-wrap{z-index:999999!important;}
-.notif-dropdown{z-index:999999!important;}
-.notif-item{cursor:pointer!important;}
-
-
-/* =========================================================
-   ATLAS V3.3 - SININHO PADRÃO ÚNICO
-   Igual ao Patrimônio; lógica vem de JS/bdrNotificacoes.js.
-========================================================= */
-.notif-wrap{position:relative!important;z-index:999999!important}
-.notif-btn{
-  width:38px!important;
-  height:38px!important;
-  min-width:38px!important;
-  border:none!important;
-  border-radius:50%!important;
-  background:#fff!important;
-  color:#111827!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  cursor:pointer!important;
-  position:relative!important;
-  box-shadow:none!important;
-  outline:none!important;
-  padding:0!important;
-}
-.notif-btn:hover{background:#fff1f2!important;color:var(--usuarios-red,#a4161a)!important}
-.notif-badge{
-  position:absolute!important;
-  top:1px!important;
-  right:0!important;
-  min-width:17px!important;
-  height:17px!important;
-  padding:0 5px!important;
-  border-radius:999px!important;
-  background:#dc2626!important;
-  color:#fff!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  display:none;
-  align-items:center!important;
-  justify-content:center!important;
-}
-.notif-dropdown{
-  top:48px!important;
-  right:0!important;
-  width:340px!important;
-  z-index:999999!important;
-}
-
-
-/* Permissão de assinatura no card Relatórios / Exportação */
-input.perm[value="PATRIMONIO_CONFERIR_RELATORIO"] + .slider{
-  box-shadow:0 0 0 1px rgba(124,58,237,.16);
-}
-
-
-/* ATLAS USUÁRIOS V4.0 — responsabilidade de transporte */
-.atlas-perm-transporte{position:relative;overflow:hidden}
-.atlas-perm-transporte:before{content:"AÇÃO";position:absolute;right:54px;top:5px;padding:2px 6px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:8px;font-weight:900;letter-spacing:.5px}
-
-</style>
-<link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css?v=20260629-layout-limpo">
-<link rel="stylesheet" href="./CSS/atlas-preferencias-notificacoes.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Usuários</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="./CSS/atlasUsuarios.css?v=20260917-shell">
+<style>html,body{width:100%;height:100%;margin:0;overflow:hidden}body>.bdr-main{width:100%;height:100%;min-height:0}.atlas-shell-module[data-module="usuarios"]{display:block;width:100%;height:100%;min-height:0}</style>
 </head>
-
 <body>
-<script>
-if(typeof verificarLogin === "function"){ verificarLogin(); }
-</script>
-
-<div class="app-layout">
-  <aside class="bdr-sidebar">
-
-  <div class="bdr-brand">
-    <div class="bdr-brand-icon bdr-logo-menu"></div>
-  </div>
-
-  <nav class="bdr-menu">
-
-    <button class="bdr-menu-btn" data-permissao="DASHBOARD_VER" data-tip="Dashboard" onclick="ir('dashboard.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-chart-simple"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="ENTRADA_VER" data-tip="Entrada" onclick="ir('entrada.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-arrow-down-wide-short"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="TRIAGEM_VER" data-tip="Triagem" onclick="ir('triagem.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-vials"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="ESTOQUE_VER" data-tip="Estoque" onclick="ir('estoque.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="PATRIMONIO_VER" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-tags"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="EXPEDICAO_VER" data-tip="Expedição" onclick="ir('expedicao.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-truck-fast"></i></span>
-    </button>
-
-      <!-- MOVIMENTAÇÕES -->
-  <button data-permissao="MOVIMENTACOES_VER" class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
-
-    <button class="bdr-menu-btn" data-permissao="RELATORIOS_VER" data-tip="Relatórios" onclick="ir('relatorios.html')">
-      <span class="bdr-menu-icon"><i class="fa-regular fa-file-lines"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn" data-permissao="EMPRESAS_VER" data-tip="Empresas" onclick="ir('empresa.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-building"></i></span>
-    </button>
-
-    <button class="bdr-menu-btn active" data-permissao="USUARIOS_VER" data-tip="Usuários" onclick="return bdrIrSeguro('usuarios.html')">
-      <span class="bdr-menu-icon"><i class="fa-solid fa-users"></i></span>
-    </button>
-
-  </nav>
-
+<main class="bdr-main">
+<section aria-hidden="true" class="atlas-shell-module" data-module="usuarios">
+<div class="atlas-users-main">
+<section class="atlas-users-workspace">
+<aside class="atlas-users-list-panel">
+<div class="atlas-panel-title"><div><h2>Lista de usuários</h2><span id="totalUsuarios">0 usuários</span></div><button class="atlas-btn primary" id="btnNovoUsuario" type="button"><i class="fa-solid fa-plus"></i> Novo</button></div>
+<div class="atlas-search"><i class="fa-solid fa-magnifying-glass"></i><input id="filtroBusca" placeholder="Buscar nome, usuário ou e-mail..."/></div>
+<div class="atlas-filter-grid">
+<select id="filtroPerfil"><option value="">Todos os perfis</option></select>
+<select id="filtroObraUsuario"><option value="">Todas as obras</option></select>
+<select id="filtroStatusUsuario"><option value="">Status</option><option value="ATIVO">Ativo</option><option value="INATIVO">Inativo</option></select>
+</div>
+<div class="atlas-users-table-head"><span>Usuário</span><span>Perfil</span><span>Obra</span><span>Status</span></div>
+<div class="atlas-users-list" id="listaUsuarios"><div class="atlas-empty">Carregando usuários...</div></div>
+<div class="atlas-pagination" id="paginacaoUsuarios"></div>
 </aside>
-
-  <main class="bdr-main usuarios-premium-main">
-    
-    <section class="bdr-topbar">
-      <div>
-        <div class="bdr-topbar-title">👥 BDR Usuários</div>
-        <div class="bdr-topbar-sub">
-          Selecione um usuário e aplique permissões, menus liberados e obras/setores.
-        </div>
-      </div>
-
-      <div class="bdr-top-actions">
-          <div class="notif-wrap">
-          <button class="notif-btn" type="button" tabindex="-1" onclick="toggleNotificacoes(event);" title="Notificações">
-            <i class="fa-regular fa-bell"></i>
-            <span id="notifBadge" class="notif-badge">0</span>
-          </button>
-
-          <div id="notifDropdown" class="notif-dropdown">
-            <div class="notif-head">🔔 Central de notificações</div>
-            <div id="notifLista" class="notif-list">
-              <div class="notif-item">Nenhuma notificação no momento.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="user-menu" onclick="toggleMenuUsuario(event)">
-          <div class="user-mini">
-            <b id="usuarioNome" tabindex="-1">Olá, -</b>
-            <small id="usuarioPerfil" tabindex="-1">-</small>
-          </div>
-
-          <div class="avatar"><i class="fa-solid fa-user"></i></div>
-
-          <div id="dropdownUser" class="dropdown-user">
-            <button data-permissao="USUARIOS_VER" type="button" onclick="event.stopPropagation(); return bdrIrSeguro('usuarios.html');">
-              <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
-            </button>
-            <button type="button" class="logout-btn" onclick="logoutSeguro(); event.stopPropagation();">
-              <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <section class="filters">
-      <div class="field">
-        <label>Selecione o perfil</label>
-        <select id="filtroPerfil" onchange="renderizarUsuarios()">
-          <option value="">Todos os perfis</option>
-          <option>MASTER</option>
-          <option>ADMIN</option>
-          <option>ALMOXARIFE</option>
-          <option>ALMOXARIFADO</option>
-          <option>OPERADOR</option>
-          <option>GESTOR</option>
-          <option>OBRA</option>
-          <option>CONSULTA</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Empresa (opcional)</label>
-        <select id="filtroEmpresa" onchange="renderizarUsuarios()">
-          <option value="">Todas as empresas</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Obra/Setor (opcional)</label>
-        <select id="filtroObra" onchange="renderizarUsuarios()">
-          <option value="">Todas as obras</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Status</label>
-        <select id="filtroStatus" onchange="renderizarUsuarios()">
-          <option value="">Todos</option>
-          <option value="ATIVO" selected>Ativo</option>
-          <option value="INATIVO">Inativo</option>
-        </select>
-      </div>
-
-      <div class="field search-field">
-        <label>&nbsp;</label>
-        <input id="buscaUsuario" placeholder="Buscar usuário..." oninput="renderizarUsuarios()">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </div>
-    </section>
-
-    <section class="master-strip">
-      <div class="master-icon" onclick="bdrCliqueSecretoOwner(event)" style="cursor:pointer;"><i class="fa-solid fa-shield-halved"></i></div>
-      <div>
-        <h2>Central de Permissões por Usuário</h2>
-        <p>Clique em um usuário na lista, marque as permissões e salve. Não precisa editar dados pessoais.</p>
-      </div>
-      <div class="master-actions">
-        <button class="btn btn-soft btn-icon-only" title="Atualizar dados" onclick="carregarTudo()">
-          <i class="fa-solid fa-rotate"></i>
-        </button>
-
-        <button class="btn btn-red" type="button" data-permissao="USUARIOS_CRIAR" onclick="abrirModalUsuario(null)">
-          <i class="fa-solid fa-user-plus"></i> Novo usuário
-        </button>
-
-        <button class="btn btn-soft" onclick="if(typeof limparSelecaoPermissao==='function'){limparSelecaoPermissao()}else{location.reload()}">
-          <i class="fa-solid fa-eraser"></i> Limpar seleção
-        </button>
-
-        <button class="btn btn-green" onclick="liberarTudo()">
-          <i class="fa-solid fa-shield-check"></i> Liberar tudo
-        </button>
-
-        <button class="btn btn-dark" onclick="aplicarSomenteCD()">
-          <i class="fa-solid fa-shield"></i> Só CD
-        </button>
-
-        <button class="btn btn-gray" onclick="aplicarPropriaObra()">
-          <i class="fa-solid fa-gear"></i> Só própria obra
-        </button>
-
-        <button class="btn btn-red" onclick="salvarPermissoesUsuarioSelecionado()">
-          <i class="fa-solid fa-floppy-disk"></i> Salvar permissões
-        </button>
-
-        <button class="btn btn-red" onclick="bloquearExterno()">
-          <i class="fa-solid fa-lock"></i> Bloquear externo
-        </button>
-      </div>
-    </section>
-
-    <section class="usuario-selecionado-card" id="usuarioSelecionadoCard">
-      <div>
-        <span>Usuário selecionado</span>
-        <strong id="usuarioSelecionadoNome">Nenhum usuário selecionado</strong>
-        <small id="usuarioSelecionadoDetalhe">Clique em um usuário na lista para aplicar permissões.</small>
-      </div>
-    </section>
-
-    <section class="board">
-      <div class="panel">
-        <div class="panel-head"><i class="fa-solid fa-eye"></i> O que pode visualizar</div>
-        <div class="panel-body">
-          <div class="perm-row"><div class="perm-ico"><i class="fa-solid fa-box-open"></i></div><div class="perm-text"><b>Ver estoque do CD</b><span>Itens disponíveis no Centro de Distribuição.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_ESTOQUE_CD"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico"><i class="fa-solid fa-building"></i></div><div class="perm-text"><b>Ver estoque da própria obra</b><span>Itens da obra/setor do usuário logado.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_ESTOQUE_PROPRIA_OBRA"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico"><i class="fa-solid fa-people-arrows"></i></div><div class="perm-text"><b>Ver estoque de outras obras</b><span>Itens disponíveis fora da própria obra.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_ESTOQUE_OUTRAS_OBRAS"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico orange"><i class="fa-solid fa-wrench"></i></div><div class="perm-text"><b>Ver itens EM USO de outras obras</b><span>Equipamentos e ferramentas em uso.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_EM_USO_OUTRAS_OBRAS"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-dollar-sign"></i></div><div class="perm-text"><b>Ver valores e informações financeiras</b><span>Valores patrimoniais e custo dos itens.</span></div><label class="switch"><input type="checkbox" class="perm" value="VER_VALORES"><span class="slider"></span></label></div>
-                    <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico blue"><i class="fa-solid fa-gauge-high"></i></div><div class="perm-text"><b>Menu Dashboard</b><span>Mostrar botão e liberar tela de dashboard.</span></div><label class="switch"><input type="checkbox" class="perm" value="DASHBOARD_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico green"><i class="fa-solid fa-arrow-down-wide-short"></i></div><div class="perm-text"><b>Menu Entrada</b><span>Mostrar botão e liberar tela de entrada.</span></div><label class="switch"><input type="checkbox" class="perm" value="ENTRADA_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico orange"><i class="fa-solid fa-vials"></i></div><div class="perm-text"><b>Menu Triagem</b><span>Mostrar botão e liberar tela de triagem.</span></div><label class="switch"><input type="checkbox" class="perm" value="TRIAGEM_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico green"><i class="fa-solid fa-boxes-stacked"></i></div><div class="perm-text"><b>Menu Estoque</b><span>Mostrar botão e liberar tela de estoque.</span></div><label class="switch"><input type="checkbox" class="perm" value="ESTOQUE_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico"><i class="fa-solid fa-tags"></i></div><div class="perm-text"><b>Menu Patrimônio</b><span>Mostrar botão e liberar tela de patrimônio.</span></div><label class="switch"><input type="checkbox" class="perm" value="PATRIMONIO_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#fff7ed;border-color:#fed7aa;"><div class="perm-ico orange"><i class="fa-solid fa-map-location-dot"></i></div><div class="perm-text"><b>Lançar patrimônio em qualquer obra</b><span>Se desligado, o usuário lança somente na obra vinculada ao cadastro.</span></div><label class="switch"><input type="checkbox" class="perm" value="PATRIMONIO_LANCAR_QUALQUER_OBRA"><span class="slider"></span></label></div>
-<div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico blue"><i class="fa-solid fa-truck-fast"></i></div><div class="perm-text"><b>Menu Expedição</b><span>Mostrar botão e liberar tela de expedição.</span></div><label class="switch"><input type="checkbox" class="perm" value="EXPEDICAO_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico orange"><i class="fa-regular fa-file-lines"></i></div><div class="perm-text"><b>Menu Relatórios</b><span>Mostrar botão e liberar tela de relatórios.</span></div><label class="switch"><input type="checkbox" class="perm" value="RELATORIOS_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#f8fafc;border-color:#dbeafe;"><div class="perm-ico gray"><i class="fa-solid fa-building"></i></div><div class="perm-text"><b>Menu Empresas</b><span>Mostrar botão e liberar tela de empresas/obras.</span></div><label class="switch"><input type="checkbox" class="perm" value="EMPRESAS_VER"><span class="slider"></span></label></div>
-          <div class="perm-row" style="background:#fff1f2;border-color:#fecaca;"><div class="perm-ico"><i class="fa-solid fa-users"></i></div><div class="perm-text"><b>Menu Usuários</b><span>Mostrar botão e liberar tela de usuários.</span></div><label class="switch"><input type="checkbox" class="perm" value="USUARIOS_VER"><span class="slider"></span></label></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><i class="fa-solid fa-cart-shopping"></i> O que pode solicitar</div>
-        <div class="panel-body">
-          <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-building-user"></i></div><div class="perm-text"><b>Solicitar material do CD</b><span>Criar pedido de itens ao CD.</span></div><label class="switch"><input type="checkbox" class="perm" value="SOLICITAR_MATERIAL"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-cart-plus"></i></div><div class="perm-text"><b>Solicitar de outras obras (estoque)</b><span>Pedir itens em estoque de outra obra.</span></div><label class="switch"><input type="checkbox" class="perm" value="SOLICITAR_OUTRAS_OBRAS"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico orange"><i class="fa-solid fa-person-digging"></i></div><div class="perm-text"><b>Solicitar itens EM USO</b><span>Pedir itens que estão em uso em outra obra.</span></div><label class="switch"><input type="checkbox" class="perm" value="SOLICITAR_EM_USO"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-people-group"></i></div><div class="perm-text"><b>Solicitar empréstimo / transferência</b><span>Pedir transferência temporária ou definitiva.</span></div><label class="switch"><input type="checkbox" class="perm" value="SOLICITAR_TRANSFERENCIA"><span class="slider"></span></label></div>
-          <div class="perm-row"><div class="perm-ico blue"><i class="fa-solid fa-bell"></i></div><div class="perm-text"><b>Receber notificações e sininho</b><span>Receber alertas de pedidos e movimentações.</span></div><label class="switch"><input type="checkbox" class="perm" value="RECEBER_NOTIFICACOES"><span class="slider"></span></label></div>
-        </div>
-      </div>
-
-      <div class="ops-grid">
-        <div class="panel">
-          <div class="panel-head"><i class="fa-solid fa-gear"></i> Operações e administração</div>
-          <div class="panel-body">
-            <div class="perm-row"><div class="perm-ico green"><i class="fa-regular fa-clipboard"></i></div><div class="perm-text"><b>Conferir mercadoria</b><span>Liberar conferência na chegada.</span></div><label class="switch"><input type="checkbox" class="perm" value="CONFERIR_MERCADORIA"><span class="slider"></span></label></div>
-            <div class="perm-row"><div class="perm-ico green"><i class="fa-solid fa-cart-flatbed"></i></div><div class="perm-text"><b>Separar pedido</b><span>Bipar prateleira/patrimônio e finalizar separação.</span></div><label class="switch"><input type="checkbox" class="perm" value="SEPARAR_PEDIDO"><span class="slider"></span></label></div>
-            <div class="perm-row"><div class="perm-ico green"><i class="fa-solid fa-truck-ramp-box"></i></div><div class="perm-text"><b>Entregar / enviar material</b><span>Liberar transferência e registrar saída.</span></div><label class="switch"><input type="checkbox" class="perm" value="ENTREGAR_MATERIAL"><span class="slider"></span></label></div>
-            <div class="perm-row atlas-perm-transporte" style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-color:#86efac;">
-              <div class="perm-ico" style="background:#dcfce7;color:#15803d;"><i class="fa-solid fa-truck-fast"></i></div>
-              <div class="perm-text"><b style="color:#166534;">Responsável por retirada e transporte</b><span>Recebe a notificação azul, informa motorista/veículo e coloca o pedido em trânsito.</span></div>
-              <label class="switch"><input type="checkbox" class="perm" value="EXPEDICAO_TRANSPORTE"><span class="slider"></span></label>
-            </div>
-            <div class="perm-row"><div class="perm-ico gray"><i class="fa-regular fa-square-check"></i></div><div class="perm-text"><b>Aprovar pedidos da origem</b><span>Aprovar solicitações quando o item é da sua obra.</span></div><label class="switch"><input type="checkbox" class="perm" value="APROVAR_PEDIDO_ORIGEM"><span class="slider"></span></label></div>
-            <div class="perm-row" style="background:#fff1f2;border-color:#fecaca;"><div class="perm-ico"><i class="fa-solid fa-lock"></i></div><div class="perm-text"><b style="color:#d71920">Gerenciar usuários</b><span>Criar, editar, bloquear e liberar usuários.</span></div><label class="switch"><input type="checkbox" class="perm" value="USUARIOS_PERMISSOES"><span class="slider"></span></label></div>
-            <div class="perm-row" style="background:#fff1f2;border-color:#fecaca;"><div class="perm-ico"><i class="fa-solid fa-lock"></i></div><div class="perm-text"><b>Configurações do sistema</b><span>Acesso às configurações avançadas.</span></div><label class="switch"><input type="checkbox" class="perm" value="CONFIGURACOES_VER"><span class="slider"></span></label></div>
-          </div>
-        </div>
-
-        <div class="alert-card">
-          <div class="alert-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Atenção Master</div>
-          <div class="alert-body">
-            <div class="alert-shield" onclick="bdrCliqueSecretoOwner(event)" style="cursor:pointer;"><i class="fa-solid fa-shield-halved"></i></div>
-            <b>Permissões críticas</b>
-            <p>Apenas perfis MASTER ou ADMIN podem liberar estas opções.</p>
-            <p>• Gerenciar usuários<br>• Configurações do sistema</p>
-            <div class="stars">★★★★★</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="lower">
-      <div class="panel">
-        <div class="red-head"><i class="fa-solid fa-building"></i> Obras / Setores liberados para este usuário</div>
-        <div class="obras-body">
-          <div class="search-mini"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaObraLiberada" placeholder="Buscar obra ou setor..." oninput="renderizarObrasLiberadas()"></div>
-          <div id="listaObrasLiberadas" class="obra-list"></div>
-          <div class="panel-actions">
-            <button class="btn btn-red" onclick="marcarTodasObras(true)"><i class="fa-solid fa-square-check"></i> Marcar todas</button>
-            <button class="btn btn-soft" onclick="marcarTodasObras(false)"><i class="fa-regular fa-square"></i> Desmarcar todas</button>
-            <button class="btn btn-soft" onclick="salvarLiberacoesObras()"><i class="fa-solid fa-check"></i> Salvar liberações</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="red-head"><i class="fa-solid fa-chart-simple"></i> Resumo de permissões deste usuário</div>
-        <div class="summary-body">
-          <div class="summary-cards">
-            <div class="summary-card"><i class="fa-solid fa-eye" style="color:#2563eb"></i><br><b id="sumVis">0</b> / 5<span>Visualizações</span><div class="bar"><div id="barVis" style="width:0;background:#2563eb"></div></div></div>
-            <div class="summary-card"><i class="fa-solid fa-cart-shopping" style="color:#16a34a"></i><br><b id="sumSol">0</b> / 5<span>Solicitações</span><div class="bar"><div id="barSol" style="width:0;background:#16a34a"></div></div></div>
-            <div class="summary-card"><i class="fa-solid fa-gear" style="color:#f43f5e"></i><br><b id="sumOp">0</b> / 6<span>Operações</span><div class="bar"><div id="barOp" style="width:0;background:#f43f5e"></div></div></div>
-          </div>
-
-          <div class="access-grid">
-            <div class="access-box">
-              <b>Acesso atual</b>
-              <div id="resumoAcessoAtual"></div>
-            </div>
-            <div class="access-box">
-              <b><i class="fa-regular fa-bell"></i> Notificações</b>
-              <div style="margin-top:14px;color:#16a34a;font-weight:900" id="resumoNotif">Ativas</div>
-              <hr style="border:0;border-top:1px solid #edf0f5;margin:15px 0">
-              <b>Perfil atual</b><br>
-              <span class="current-profile" id="perfilAtualResumo">-</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="red-head"><i class="fa-solid fa-rocket"></i> Perfis rápidos <small style="font-weight:700">(atalhos inteligentes)</small></div>
-        <div class="quick-body">
-          <div id="quickPerfis" class="quick-grid compact-profiles">
-            <div class="perfil-vazio">Carregando perfis rápidos...</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="users-panel">
-      <div class="user-table-head"><i class="fa-solid fa-user"></i> Lista de usuários cadastrados</div>
-      <div class="table">
-        <div class="tr header">
-          <div>Usuário</div><div>Perfil</div><div>Empresa</div><div>Obra / Setor</div><div>Status</div><div>Último acesso</div><div>Ações</div>
-        </div>
-        <div id="listaUsuarios"></div>
-      </div>
-    </section>
-  </main>
+<section class="atlas-user-detail-panel" id="atlasUserDetailPanel">
+<div class="atlas-no-selection" id="semUsuario"><i class="fa-solid fa-user-check"></i><h2>Selecione um funcionário</h2><p>O cadastro será aberto aqui, sem pular a página.</p></div>
+<div hidden="" id="conteudoUsuario">
+<div class="atlas-selected-header">
+<div class="atlas-selected-main"><div class="atlas-avatar selected" id="selectedAvatar">--</div><div><h2 id="selectedName">-</h2><p id="selectedLogin">-</p><span class="atlas-status active" id="selectedStatus">ATIVO</span></div></div>
+<div class="atlas-selected-meta"><div><small>Perfil atual</small><strong id="selectedProfile">-</strong></div><div><small>Último acesso</small><strong id="selectedLastAccess">Não informado</strong></div><div><small>Obras de atuação</small><strong id="selectedWork">-</strong></div></div>
 </div>
-
-<div id="modalUsuario" class="modal-bg">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitulo">Novo usuário</h3>
-      <button class="close-btn" onclick="fecharModalUsuario()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="usuarioId">
-      <div class="form-grid">
-        <div><label>Nome</label><input id="formNome" placeholder="Nome completo"></div>
-        <div><label>Usuário</label><input id="formUsuario" placeholder="login"></div>
-        <div><label>E-mail</label><input id="formEmail" placeholder="email@bdrmt.com.br"></div>
-        <div>
-          <label>Senha provisória</label>
-          <input id="formSenha" type="password" placeholder="Ex: 123456">
-          <small style="display:block;color:#6b7280;font-size:10px;margin-top:4px;font-weight:800;">
-            Ao definir uma senha aqui, o usuário será obrigado a trocar no primeiro acesso.
-          </small>
-        </div>
-        <div><label>Perfil</label><select id="formPerfil"><option>MASTER</option><option>ADMIN</option><option>ALMOXARIFE</option><option>OPERADOR</option><option>GESTOR</option><option>OBRA</option><option>CONSULTA</option></select></div>
-        <div><label>Status</label><select id="formAtivo"><option value="true">ATIVO</option><option value="false">INATIVO</option></select></div>
-        <div><label>Empresa</label><select id="formEmpresa"><option value="">BDR CONSTRUART</option></select></div>
-        <div><label>Obra / Setor</label><select id="formObra"><option value="">Selecione</option></select></div>
-        <div class="wide"><label>Foto URL</label><input id="formFoto" placeholder="https://..."></div>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-soft" onclick="fecharModalUsuario()">Cancelar</button>
-      <button class="btn btn-red" onclick="salvarUsuario()">Salvar usuário</button>
-    </div>
-  </div>
+<nav class="atlas-tabs excel-tabs" role="tablist">
+<button class="atlas-tab active" data-tab="dados"><i class="fa-regular fa-id-card"></i> Dados</button>
+<button class="atlas-tab" data-tab="permissoes"><i class="fa-solid fa-key"></i> Permissões</button>
+<button class="atlas-tab" data-tab="notificacoes"><i class="fa-regular fa-bell"></i> Notificações</button>
+<button class="atlas-tab" data-tab="obras"><i class="fa-solid fa-building"></i> Obras</button>
+<button class="atlas-tab" data-tab="historico"><i class="fa-solid fa-clock-rotate-left"></i> Histórico</button>
+</nav>
+<div class="atlas-tab-scroll-area">
+<div class="atlas-tab-content active" id="tabDados">
+<div class="atlas-data-hero">
+<div><h3>Dados do funcionário</h3><p>Cadastre a pessoa primeiro e depois avance pelas abas.</p></div>
+<div class="atlas-step-badge">Etapa 1 de 5</div>
 </div>
+<div class="atlas-selected-actions data-actions">
+<button class="atlas-btn primary" id="btnEditarUsuario"><i class="fa-solid fa-pen"></i> Editar dados</button>
+<button class="atlas-btn light" id="btnTrocarSenha"><i class="fa-solid fa-lock"></i> Trocar senha</button>
+<button class="atlas-btn dark" id="btnPerfilRapido"><i class="fa-solid fa-user-gear"></i> Aplicar perfil rápido</button>
+</div>
+<div class="atlas-data-grid" id="dataSummary"></div>
+</div>
+<div class="atlas-tab-content" id="tabPermissoes">
+<div class="atlas-data-hero"><div><h3>Permissões do sistema</h3><p>Defina exatamente o que o funcionário poderá acessar e executar.</p></div><div class="atlas-step-badge">Etapa 2 de 5</div></div>
+<div class="atlas-master-switch"><div><strong>Permissões gerais</strong><span>Habilitar ou desabilitar todas as permissões visíveis.</span></div><label class="atlas-switch"><input id="switchTodasPermissoes" type="checkbox"><span></span></input></label></div>
+<div class="atlas-module-grid" id="permissionModules"></div>
+</div>
+<div class="atlas-tab-content" id="tabNotificacoes">
+<div class="atlas-data-hero"><div><h3>Notificações</h3><p>A Expedição acompanha a responsabilidade do funcionário. Patrimônio e avisos opcionais podem ser escolhidos.</p></div><div class="atlas-step-badge">Etapa 3 de 5</div></div>
+<div class="atlas-notif-intro"><div class="atlas-bell-circle"><i class="fa-solid fa-bell"></i></div><div><strong>Preferências de notificações</strong><p>Escolha os avisos opcionais e o modo de aviso.</p></div><div class="atlas-mode-summary"><small>Modo atual</small><strong id="modoAtualTexto">Som e aviso</strong></div></div>
+<div class="atlas-module-grid notifications" id="notificationModules"></div>
+<section class="atlas-modo-aviso-card">
+<div class="atlas-modo-aviso-topo">
+<div>
+<strong><i class="fa-solid fa-volume-high"></i> Modo de aviso</strong>
+<small>Escolha como este funcionário receberá os avisos.</small>
+</div>
+<button class="atlas-btn light small" id="btnTestarSom" type="button">
+<i class="fa-solid fa-volume-high"></i> Testar som
+                  </button>
+</div>
+<div class="atlas-modo-opcoes">
+<label class="atlas-modo-opcao">
+<input name="notificationMode" type="radio" value="NOTIF_MODO_SOM">
+<span class="atlas-modo-conteudo">
+<span class="atlas-modo-icone"><i class="fa-solid fa-bell"></i></span>
+<span>
+<strong>Som e aviso</strong>
+<small>Tocar som e mostrar no sininho.</small>
+</span>
+</span>
+</input></label>
+<label class="atlas-modo-opcao">
+<input name="notificationMode" type="radio" value="NOTIF_MODO_VISUAL">
+<span class="atlas-modo-conteudo">
+<span class="atlas-modo-icone"><i class="fa-regular fa-bell"></i></span>
+<span>
+<strong>Apenas aviso</strong>
+<small>Mostrar somente a notificação visual.</small>
+</span>
+</span>
+</input></label>
+<label class="atlas-modo-opcao">
+<input name="notificationMode" type="radio" value="NOTIF_MODO_SILENCIOSO">
+<span class="atlas-modo-conteudo">
+<span class="atlas-modo-icone"><i class="fa-solid fa-moon"></i></span>
+<span>
+<strong>Silencioso</strong>
+<small>Sem som; os avisos continuam no sininho.</small>
+</span>
+</span>
+</input></label>
+</div>
+</section>
+</div>
+<div class="atlas-tab-content" id="tabObras">
+<div class="atlas-data-hero"><div><h3>Obras e setores</h3><p>Marque exatamente as obras em que este funcionário poderá visualizar e atuar, conforme as permissões concedidas.</p></div><div class="atlas-step-badge">Etapa 4 de 5</div></div>
+<div class="atlas-work-toolbar"><div class="atlas-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaObrasInline" placeholder="Buscar obra ou setor..."/></div><div><button class="atlas-btn light" id="btnMarcarObrasInline">Marcar todas</button><button class="atlas-btn light" id="btnDesmarcarObrasInline">Desmarcar</button></div></div>
+<div class="atlas-work-list inline" id="listaObrasInline"></div>
+</div>
+<div class="atlas-tab-content" id="tabHistorico">
+<div class="atlas-data-hero"><div><h3>Histórico do usuário</h3><p>Resumo das informações de criação, atualização e último acesso disponíveis atualmente.</p></div><div class="atlas-step-badge">Etapa 5 de 5</div></div>
+<div class="atlas-history-timeline" id="historyTimeline"></div>
+</div>
+</div>
+<footer class="atlas-save-footer"><span id="pendingChangesText">Nenhuma alteração pendente</span><div><button class="atlas-btn light" id="btnDescartar"><i class="fa-solid fa-rotate-left"></i> Limpar alterações</button><button class="atlas-btn primary" id="btnSalvarPermissoes"><i class="fa-solid fa-floppy-disk"></i> Salvar alterações</button></div></footer>
+</div>
+</section>
+</section>
+<div class="atlas-modal-backdrop" hidden="" id="modalUsuario"><div class="atlas-modal"><header><h2 id="modalUsuarioTitulo">Novo usuário</h2><button data-close-modal="modalUsuario">×</button></header><div class="atlas-avatar-editor"><div class="atlas-avatar selected" id="formAvatarPreview">--</div><div><strong>Foto do usuário</strong><small>JPG, PNG ou WebP. A imagem será protegida, recortada e convertida para WebP pelo servidor.</small><label class="atlas-btn light atlas-avatar-upload">Escolher foto<input id="formFotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button class="atlas-btn light" id="btnRemoverFoto" type="button">Remover foto</button></div></div><div class="atlas-form-grid"><label>Nome completo<input id="formNome"/></label><label>Usuário<input id="formUsuario"/></label><label>E-mail<input id="formEmail" type="email"/></label><label>Perfil<select id="formPerfil"></select></label><label>Empresa<select id="formEmpresa"><option value="">Selecione</option></select></label><label>Obras de atuação<button class="atlas-work-picker" id="btnFormObras" type="button"><span id="formObrasResumo">Selecionar obras</span><i class="fa-solid fa-chevron-down"></i></button></label><label>Status<select id="formAtivo"><option value="true">Ativo</option><option value="false">Inativo</option></select></label><label>Senha provisória<input autocomplete="new-password" id="formSenha" type="password"/></label><input id="formId" type="hidden"/></div><footer><button class="atlas-btn light" data-close-modal="modalUsuario">Cancelar</button><button class="atlas-btn primary" id="btnSalvarUsuario">Salvar usuário</button></footer></div></div>
 
-
-
-
-<script>
-/* =========================================================
-   BDR FIX USUÁRIOS - COMPATIBILIDADE OWNER / BOTÕES
-========================================================= */
-window.bdrOwnerClickUsuarios = function(event){
-  if(typeof window.bdrCliqueSecretoOwner === "function"){
-    return window.bdrCliqueSecretoOwner(event);
-  }
-  alert("BDR Owner Core ainda não carregou. Confira JS/bdr-owner-core.js");
-};
-
-if(typeof window.limparSelecaoPermissao !== "function"){
-  window.limparSelecaoPermissao = function(){
-    document.querySelectorAll("input.perm[type='checkbox']").forEach(chk => chk.checked = false);
-    document.querySelectorAll("#listaObrasLiberadas input[type='checkbox']").forEach(chk => chk.checked = false);
-  };
-}
-</script>
-
-<script src="./JS/usuarios-master-premium.js?v=20260714-etiquetas52"></script>
-<script src="./JS/atlasPreferenciasNotificacoes.js"></script>
-<script src="./JS/bdr-usuarios-permissoes-reais.js?v=20260701"></script>
-<script src="./JS/offlineQueue.js"></script>
-<script src="./JS/bdr-owner-core.js"></script>
-
-
-<script src="./JS/bdrNotificacoes.js"></script>
-<script src="./JS/bdrMenuMobileAtivo.js?v=20260702-3"></script>
-
-<script>
-/* =========================================================
-   ATLAS USUÁRIOS — PERMISSÃO DE CONFERÊNCIA
-
-   Coloca a opção dentro do card "Relatórios / Exportação".
-   A tela atual já salva automaticamente todos os checkboxes
-   que possuem class="perm".
-========================================================= */
-(function(){
-  "use strict";
-
-  const PERMISSAO = "PATRIMONIO_CONFERIR_RELATORIO";
-
-  function criarLinhaPermissaoConferencia(){
-    if(document.querySelector(`input.perm[value="${PERMISSAO}"]`)){
-      return;
-    }
-
-    const titulos = Array.from(document.querySelectorAll(
-      ".panel-head, .red-head, .user-table-head, .alert-title, h2, h3"
-    ));
-
-    const tituloRelatorios = titulos.find(el => {
-      const texto = String(el.textContent || "")
-        .trim()
-        .toUpperCase();
-
-      return texto.includes("RELATÓRIOS") &&
-             texto.includes("EXPORTAÇÃO");
-    });
-
-    if(!tituloRelatorios){
-      console.warn(
-        "Atlas Usuários: card Relatórios / Exportação ainda não encontrado."
-      );
-      return;
-    }
-
-    const painel = tituloRelatorios.closest(
-      ".panel, .card, .users-panel, section, div"
-    );
-
-    if(!painel) return;
-
-    const corpo = painel.querySelector(
-      ".panel-body, .modal-body, .permissions-list, .perm-list"
-    ) || tituloRelatorios.nextElementSibling || painel;
-
-    const linha = document.createElement("div");
-    linha.className = "perm-row";
-    linha.style.background = "#faf5ff";
-    linha.style.borderColor = "#d8b4fe";
-    linha.innerHTML = `
-      <div class="perm-ico"
-           style="background:#f3e8ff;color:#7c3aed;">
-        <i class="fa-solid fa-file-signature"></i>
-      </div>
-
-      <div class="perm-text">
-        <b>Registrar conferência patrimonial</b>
-        <span>
-          Mostra o botão de assinatura no relatório patrimonial.
-        </span>
-      </div>
-
-      <label class="switch">
-        <input type="checkbox"
-               class="perm"
-               value="${PERMISSAO}">
-        <span class="slider"></span>
-      </label>
-    `;
-
-    corpo.appendChild(linha);
-
-    /*
-     * Reaplica as permissões do usuário selecionado,
-     * caso a tela já tenha carregado antes da nova linha.
-     */
-    try{
-      if(typeof carregarPermissoesUsuarioSelecionado === "function"){
-        carregarPermissoesUsuarioSelecionado();
-      }else if(typeof marcarPermissoesDoUsuario === "function"){
-        marcarPermissoesDoUsuario();
-      }else if(typeof atualizarTelaPermissoes === "function"){
-        atualizarTelaPermissoes();
-      }
-    }catch(e){
-      console.warn(
-        "Atlas Usuários: permissão adicionada, mas foi necessário aguardar nova seleção do usuário.",
-        e
-      );
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    criarLinhaPermissaoConferencia();
-    setTimeout(criarLinhaPermissaoConferencia, 300);
-    setTimeout(criarLinhaPermissaoConferencia, 900);
-  });
-})();
-</script>
-
-<script>console.log("✅ ATLAS USUÁRIOS V4.0 carregado - permissão de retirada e transporte");</script>
+<div class="atlas-modal-backdrop" hidden id="modalFormObras"><div class="atlas-modal wide atlas-work-picker-modal"><header><div><h2>Obras de atuação</h2><p>Marque as obras em que este funcionário poderá trabalhar.</p></div><button data-close-modal="modalFormObras">×</button></header><div class="atlas-work-picker-tools"><div class="atlas-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaFormObras" placeholder="Buscar obra ou setor..."></div><span id="formObrasContador">0 selecionadas</span></div><div class="atlas-work-list atlas-work-picker-list" id="listaFormObras"></div><footer><button class="atlas-btn light" data-close-modal="modalFormObras">Cancelar</button><button class="atlas-btn primary" id="btnAplicarFormObras" type="button">Aplicar obras</button></footer></div></div>
+<div class="atlas-modal-backdrop" hidden="" id="modalPerfis"><div class="atlas-modal wide"><header><h2>Aplicar perfil rápido</h2><button data-close-modal="modalPerfis">×</button></header><p class="atlas-modal-help">O perfil apenas preenche a tela. Nada será gravado até clicar em <strong>Salvar alterações</strong>.</p><div class="atlas-profile-grid" id="quickProfiles"></div><footer><button class="atlas-btn light" data-close-modal="modalPerfis">Fechar</button></footer></div></div>
+<div class="atlas-modal-backdrop" hidden="" id="modalEditarPerfil"><div class="atlas-modal"><header><h2>Editar perfil rápido</h2><button data-close-modal="modalEditarPerfil">×</button></header><div class="atlas-form-grid"><input id="editProfileId" type="hidden"/><label>Nome do perfil<input id="editProfileName"/></label><label>Descrição<input id="editProfileDescription"/></label></div><p class="atlas-modal-help">O modelo será salvo com as permissões marcadas na tela.</p><footer><button class="atlas-btn light" data-close-modal="modalEditarPerfil">Cancelar</button><button class="atlas-btn primary" id="btnSalvarModeloPerfil">Salvar modelo</button></footer></div></div>
+</div>
+</section>
+</main>
+<script src="./JS/atlasUsuarios.js?v=20260917-shell"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* =========================================================
    ATUALIZADO: USUÁRIOS COM OFFLINE BDR
 ========================================================= */
-console.log("✅ BDR USUÁRIOS PREMIUM V5 carregado - arquivo correto");
+void 0;
 /* =========================================================
    BDR ERP 9.0 - USUÁRIOS MASTER PREMIUM
    Arquivo: JS/usuarios-master-premium.js
@@ -111,7 +111,9 @@ const PERFIS_PADRAO_FALLBACK = [
   {nome:"CONSULTA GERAL", descricao:"Consulta todas as obras sem editar", permissoes:"DASHBOARD_VER,PATRIMONIO_VER,ESTOQUE_VER,RELATORIOS_VER,TODAS_OBRAS_VER"},
   {nome:"ALMOXARIFE", descricao:"Operacional do estoque", permissoes:"DASHBOARD_VER,ESTOQUE_VER,ESTOQUE_ENTRADA,ESTOQUE_SAIDA,ESTOQUE_TRANSFERIR,ENTRADA_VER,TRIAGEM_VER,EXPEDICAO_VER,EXPEDICAO_SEPARAR,EXPEDICAO_ENTREGAR,PATRIMONIO_VER,PATRIMONIO_MOVIMENTAR,PROPRIA_OBRA_VER"},
   {nome:"PATRIMONIO", descricao:"Controle de patrimônio", permissoes:"DASHBOARD_VER,PATRIMONIO_VER,PATRIMONIO_CRIAR,PATRIMONIO_EDITAR,PATRIMONIO_MOVIMENTAR,PATRIMONIO_IMPRIMIR,PATRIMONIO_EXPORTAR,RELATORIOS_VER,TODAS_OBRAS_VER"},
-  {nome:"FINANCEIRO", descricao:"Relatórios e valores", permissoes:"DASHBOARD_VER,RELATORIOS_VER,RELATORIOS_EXPORTAR,VALORES_VER,TODAS_OBRAS_VER"}
+  {nome:"FINANCEIRO", descricao:"Relatórios e valores", permissoes:"DASHBOARD_VER,RELATORIOS_VER,RELATORIOS_EXPORTAR,VALORES_VER,TODAS_OBRAS_VER"},
+  {nome:"SOLICITANTE", descricao:"Solicita e acompanha pedidos", permissoes:"DASHBOARD_VER,PATRIMONIO_VER,EXPEDICAO_VER,SOLICITAR_MATERIAL,RECEBER_NOTIFICACOES,NOTIF_EXPEDICAO_APROVACAO,NOTIF_EXPEDICAO_SEPARACAO,NOTIF_EXPEDICAO_TRANSPORTE,NOTIF_EXPEDICAO_RECEBIMENTO,NOTIF_MODO_SOM,PROPRIA_OBRA_VER"},
+  {nome:"TRANSPORTE", descricao:"Retirada, motorista e trânsito", permissoes:"DASHBOARD_VER,EXPEDICAO_VER,EXPEDICAO_TRANSPORTE,ENTREGAR_MATERIAL,RECEBER_NOTIFICACOES,NOTIF_EXPEDICAO_TRANSPORTE,NOTIF_MODO_SOM,PROPRIA_OBRA_VER"}
 ];
 
 
@@ -310,12 +312,12 @@ async function buscarUsuariosComFallback(){
 
       if(!resp.error && Array.isArray(resp.data) && resp.data.length > 0){
         TABELA_USUARIOS = tabela;
-        console.log("✅ Usuários carregados da tabela:", tabela, resp.data.length);
+        void 0;
         return resp.data;
       }
 
       if(!resp.error && Array.isArray(resp.data)){
-        console.log("⚠️ Tabela existe, mas sem usuários:", tabela);
+        void 0;
       }
 
       if(resp.error){
@@ -399,7 +401,7 @@ async function carregarPerfisRapidos(){
     }
 
     montarMapaPerfisRapidos(ativos);
-    console.log("✅ Perfis rápidos carregados do banco:", ativos.length);
+    void 0;
   }catch(e){
     console.warn("⚠️ Falha inesperada nos perfis rápidos. Usando fallback.", e);
     montarMapaPerfisRapidos(PERFIS_PADRAO_FALLBACK);
@@ -1214,7 +1216,7 @@ async function salvarPermissoesSelecionado(mostrarMsg){
   }
 
   if(mostrarMsg){
-    console.log("Permissões atualizadas.");
+    void 0;
   }
 
   renderizarUsuarios();
@@ -1834,5 +1836,572 @@ window.renderizarQuadroPermissoesNovoBDR = renderizarQuadroPermissoesNovoBDR;
     if(e.target?.id === 'modalPerfilRapido' && typeof fecharModalPerfilRapido === 'function') fecharModalPerfilRapido();
   });
 
-  console.log('✅ BDR USUÁRIOS FINAL V2 carregado');
+  void 0;
+})();
+
+
+/* =========================================================
+   ATLAS USUÁRIOS V6.0 — ESCOPO REAL, OWNER ID 1 E SEM FLASH
+========================================================= */
+(function(){
+  'use strict';
+  const NOTIF=p=>p==='RECEBER_NOTIFICACOES'||p.startsWith('NOTIF_');
+  const norm=v=>Array.isArray(v)?v.map(x=>String(x).trim().toUpperCase()).filter(Boolean):String(v||'').split(/[;,|]/).map(x=>x.trim().toUpperCase()).filter(Boolean);
+  const editor=()=>{try{return usuarioLocal();}catch(e){return null;}};
+  const owner=()=>Number(editor()?.id)===1;
+  const perms=()=>new Set(norm(editor()?.permissoes));
+  const podeGerenciar=()=>owner()||perms().has('USUARIOS_PERMISSOES');
+  const podeConceder=p=>owner()||perms().has(String(p||'').toUpperCase());
+  const proprio=()=>usuarioSelecionado&&Number(usuarioSelecionado.id)===Number(editor()?.id);
+
+  function mostrar(el,sim){if(!el)return;el.hidden=!sim;el.style.display=sim?'':'none';}
+  function aplicar(){
+    const gerencia=podeGerenciar();
+    document.querySelectorAll('input.perm').forEach(c=>{
+      const p=String(c.value||'').toUpperCase();
+      const visivel=gerencia?podeConceder(p):(proprio()&&NOTIF(p));
+      const linha=c.closest('.perm-row,.atlas-notif-opcao,.atlas-notif-modulo');
+      if(linha&&!linha.matches('.atlas-notif-modulo')) linha.classList.toggle('atlas-permissao-oculta',!visivel);
+      c.disabled=!visivel;
+      if(!visivel)c.checked=false;
+    });
+
+    document.querySelectorAll('[data-permissao]').forEach(el=>{
+      const p=String(el.dataset.permissao||'').toUpperCase();
+      if(p.startsWith('USUARIOS_')) mostrar(el,owner()||perms().has(p));
+    });
+
+    if(!gerencia){
+      ['.filters','.master-actions','.users-panel','.lower .panel:first-child','.lower .panel:last-child','.alert-card'].forEach(sel=>document.querySelectorAll(sel).forEach(el=>mostrar(el,false)));
+      document.querySelectorAll('.board>.panel,.ops-grid').forEach(el=>{
+        const temNotif=!!el.querySelector('.perm[value="RECEBER_NOTIFICACOES"],#atlasPreferenciasNotificacoes');
+        if(!temNotif) mostrar(el,false);
+      });
+      const titulo=document.querySelector('.master-strip h2');if(titulo)titulo.textContent='Meu perfil e preferências';
+      const sub=document.querySelector('.master-strip p');if(sub)sub.textContent='Ajuste somente as opções disponibilizadas para o seu usuário.';
+    }
+    document.documentElement.classList.remove('atlas-usuarios-carregando');
+  }
+
+  const salvarOriginal=window.salvarPermissoesSelecionado;
+  window.permissoesMarcadas=function(){
+    const atuais=new Set(norm(usuarioSelecionado?.permissoes));
+    const novas=new Set([...document.querySelectorAll('.perm:checked')].map(c=>String(c.value).toUpperCase()).filter(p=>owner()||podeConceder(p)||(proprio()&&NOTIF(p))));
+    if(!owner()) atuais.forEach(p=>{if(!podeConceder(p)&&!(proprio()&&NOTIF(p)))novas.add(p)});
+    return window.bdrUsuariosExpandirPermissoes?[...new Set(window.bdrUsuariosExpandirPermissoes([...novas]))]:[...novas];
+  };
+  window.salvarPermissoesSelecionado=async function(mostrarMsg=true){
+    if(!podeGerenciar()&&!proprio()){alert('Você não pode alterar outro usuário.');return false;}
+    if(Number(usuarioSelecionado?.id)===1&&!owner()){alert('Somente o OWNER pode alterar o usuário ID 1.');return false;}
+    return await salvarOriginal(mostrarMsg);
+  };
+  window.salvarPermissoesUsuarioSelecionado=()=>window.salvarPermissoesSelecionado(true);
+  window.salvarAlteracoesUsuarioSelecionado=window.salvarPermissoesUsuarioSelecionado;
+
+  const selecionarOriginal=window.selecionarUsuario;
+  window.selecionarUsuario=function(id,opcoes={}){
+    if(!podeGerenciar()&&Number(id)!==Number(editor()?.id))return false;
+    const r=selecionarOriginal(id,opcoes);setTimeout(aplicar,0);return r;
+  };
+
+  const carregarOriginal=window.carregarTudo;
+  window.carregarTudo=async function(){
+    await carregarOriginal();
+    if(!podeGerenciar()&&editor()?.id) window.selecionarUsuario(editor().id,{naoRenderizarLista:true});
+    setTimeout(aplicar,80);
+  };
+
+  const obs=new MutationObserver(()=>{clearTimeout(window.__atlasPermTimer);window.__atlasPermTimer=setTimeout(aplicar,25)});
+  document.addEventListener('DOMContentLoaded',()=>obs.observe(document.body,{childList:true,subtree:true}));
+  window.addEventListener('load',()=>setTimeout(aplicar,100));
+  window.AtlasUsuariosEscopo={aplicar,owner,podeGerenciar,podeConceder};
+  void 0;
+})();
+
+
+/* =========================================================
+   ATLAS USUÁRIOS ORGANIZAÇÃO V2.1
+   Mantém todas as regras e salvamentos da V2.
+   Esta camada apenas organiza a interface já autorizada.
+========================================================= */
+(function(){
+  "use strict";
+
+  if(window.__ATLAS_USUARIOS_ORGANIZACAO_V21__) return;
+  window.__ATLAS_USUARIOS_ORGANIZACAO_V21__ = true;
+
+  function usuarioLogadoOrganizacao(){
+    try{
+      return typeof usuarioLocal === "function"
+        ? usuarioLocal()
+        : JSON.parse(localStorage.getItem("usuario_logado") || "null");
+    }catch(e){
+      return null;
+    }
+  }
+
+  function atualizarCabecalhoSelecionado(){
+    const nome = document.getElementById("usuarioSelecionadoNome");
+    const detalhe = document.getElementById("usuarioSelecionadoDetalhe");
+
+    if(!nome || !detalhe) return;
+
+    if(!window.usuarioSelecionado){
+      nome.textContent = "Nenhum usuário selecionado";
+      detalhe.textContent =
+        "Selecione um usuário para aplicar um perfil rápido ou ajustar permissões.";
+      return;
+    }
+
+    const u = window.usuarioSelecionado;
+    const obra = (window.obras || []).find(
+      item => String(item.id) === String(u.obra_id)
+    );
+
+    nome.textContent = u.nome || u.usuario || "Usuário";
+
+    detalhe.innerHTML = [
+      `Perfil: <b>${String(u.perfil_rapido || u.perfil || "-")}</b>`,
+      `Obra: <b>${obra ? `${obra.codigo_obra || "-"} — ${obra.nome || "-"}` : (u.obra_nome || "-")}</b>`,
+      `Status: <b>${u.ativo === false ? "Inativo" : "Ativo"}</b>`
+    ].join(" &nbsp;•&nbsp; ");
+  }
+
+  function prepararPaineisRecolhiveis(){
+    document.querySelectorAll(".panel").forEach((painel, indice) => {
+      if(painel.dataset.atlasRecolhivel === "1") return;
+
+      const cabecalho = painel.querySelector(
+        ":scope > .panel-head, :scope > .red-head"
+      );
+
+      if(!cabecalho) return;
+
+      painel.dataset.atlasRecolhivel = "1";
+
+      cabecalho.addEventListener("click", evento => {
+        if(evento.target.closest("button,input,label,.switch,a")) return;
+        painel.classList.toggle("atlas-recolhido");
+      });
+
+      /*
+       * Perfis rápidos ficam abertos.
+       * Obras começam recolhidas para reduzir o tamanho da tela.
+       */
+      const texto = String(cabecalho.textContent || "").toUpperCase();
+
+      if(texto.includes("OBRAS / SETORES")){
+        painel.classList.add("atlas-recolhido");
+      }
+    });
+  }
+
+  function removerEspacosDePermissoesOcultas(){
+    document.querySelectorAll(".perm").forEach(input => {
+      const linha = input.closest(
+        ".perm-row,.atlas-notif-opcao"
+      );
+
+      if(!linha) return;
+
+      const invisivel =
+        input.disabled &&
+        !input.checked;
+
+      /*
+       * O escopo de segurança V6 já define atlas-permissao-oculta.
+       * Aqui apenas garante que não sobre espaço visual.
+       */
+      if(linha.classList.contains("atlas-permissao-oculta")){
+        linha.hidden = true;
+        linha.style.display = "none";
+      }else if(!invisivel){
+        linha.hidden = false;
+        linha.style.display = "";
+      }
+    });
+  }
+
+  function aplicarOrganizacao(){
+    prepararPaineisRecolhiveis();
+    atualizarCabecalhoSelecionado();
+    removerEspacosDePermissoesOcultas();
+
+    if(window.AtlasPreferenciasNotificacoes?.sincronizar){
+      window.AtlasPreferenciasNotificacoes.sincronizar();
+    }
+  }
+
+  const selecionarAnterior = window.selecionarUsuario;
+  if(typeof selecionarAnterior === "function"){
+    window.selecionarUsuario = function(id, opcoes={}){
+      const resultado = selecionarAnterior.call(this, id, opcoes);
+      setTimeout(aplicarOrganizacao, 30);
+      return resultado;
+    };
+  }
+
+  const carregarAnterior = window.carregarTudo;
+  if(typeof carregarAnterior === "function"){
+    window.carregarTudo = async function(){
+      const resultado = await carregarAnterior.apply(this, arguments);
+      setTimeout(aplicarOrganizacao, 80);
+      return resultado;
+    };
+  }
+
+  const observer = new MutationObserver(() => {
+    clearTimeout(window.__atlasUsuariosOrganizacaoTimer);
+    window.__atlasUsuariosOrganizacaoTimer =
+      setTimeout(aplicarOrganizacao, 40);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    observer.observe(document.body, {
+      childList:true,
+      subtree:true
+    });
+
+    setTimeout(aplicarOrganizacao, 120);
+  });
+
+  window.addEventListener("load", () => {
+    setTimeout(aplicarOrganizacao, 160);
+  });
+
+  window.AtlasUsuariosOrganizacao = {
+    aplicar:aplicarOrganizacao
+  };
+
+  void 0;
+})();
+
+
+/* =========================================================
+   ATLAS USUÁRIOS MÓDULOS V2.2
+   - abre a redefinição de senha do usuário selecionado;
+   - mantém o formulário atual e o fluxo trocar_senha = true;
+   - recolhe módulos vazios;
+========================================================= */
+(function(){
+  "use strict";
+
+  if(window.__ATLAS_USUARIOS_MODULOS_V22__) return;
+  window.__ATLAS_USUARIOS_MODULOS_V22__ = true;
+
+  window.atlasAbrirTrocaSenhaUsuario = function(){
+    if(!window.usuarioSelecionado){
+      alert("Selecione um usuário primeiro.");
+      return;
+    }
+
+    if(typeof window.abrirModalUsuario !== "function"){
+      alert("A edição de usuário não está disponível.");
+      return;
+    }
+
+    window.abrirModalUsuario(window.usuarioSelecionado.id);
+
+    setTimeout(() => {
+      const senha = document.getElementById("formSenha");
+      if(senha){
+        senha.value = "";
+        senha.focus();
+        senha.scrollIntoView({behavior:"smooth", block:"center"});
+      }
+    }, 120);
+  };
+
+  function ocultarModulosVazios(){
+    document.querySelectorAll(".atlas-modulo-permissoes").forEach(painel => {
+      const visiveis = [...painel.querySelectorAll(".perm-row")].filter(linha => {
+        const style = getComputedStyle(linha);
+        return !linha.hidden &&
+               !linha.classList.contains("atlas-permissao-oculta") &&
+               style.display !== "none";
+      });
+
+      painel.hidden = visiveis.length === 0;
+    });
+  }
+
+  const observer = new MutationObserver(() => {
+    clearTimeout(window.__atlasModulosVaziosTimer);
+    window.__atlasModulosVaziosTimer = setTimeout(ocultarModulosVazios, 40);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    observer.observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:["class","hidden","style","disabled"]
+    });
+    setTimeout(ocultarModulosVazios, 160);
+  });
+
+  window.addEventListener("load", () => setTimeout(ocultarModulosVazios, 200));
+
+  void 0;
+})();
+
+
+
+/* =========================================================
+   ATLAS USUÁRIOS V3.1 — SELEÇÃO REAL DO FUNCIONÁRIO
+   Correções:
+   - editar usuário também seleciona o funcionário;
+   - salvar bloqueia quando ninguém está selecionado;
+   - notificações sincronizam após a seleção;
+   - perfil rápido apenas preenche a tela, sem salvar sozinho.
+========================================================= */
+(function(){
+  "use strict";
+
+  if(window.__ATLAS_USUARIOS_SELECAO_V31__) return;
+  window.__ATLAS_USUARIOS_SELECAO_V31__ = true;
+
+  function usuarioPorId(id){
+    try{
+      return (typeof usuarios !== "undefined" ? usuarios : [])
+        .find(u => Number(u.id) === Number(id)) || null;
+    }catch(error){
+      return null;
+    }
+  }
+
+  function sincronizarPreferencias(){
+    setTimeout(() => {
+      try{
+        window.AtlasPreferenciasNotificacoes?.sincronizar?.();
+      }catch(error){
+        console.warn(
+          "Atlas Usuários: não sincronizou preferências visuais.",
+          error
+        );
+      }
+    }, 40);
+  }
+
+  /*
+   * SELEÇÃO OFICIAL
+   * Mantém todas as proteções já existentes e acrescenta somente
+   * a sincronização visual das notificações.
+   */
+  const selecionarAnterior = window.selecionarUsuario;
+
+  if(typeof selecionarAnterior === "function"){
+    window.selecionarUsuario = function(id, opcoes={}){
+      const resultado = selecionarAnterior(id, opcoes);
+
+      if(resultado !== false){
+        sincronizarPreferencias();
+
+        document
+          .getElementById("usuarioSelecionadoCard")
+          ?.classList.add("atlas-usuario-selecionado-ok");
+      }
+
+      return resultado;
+    };
+
+    if(window.BDRUsuarios){
+      window.BDRUsuarios.selecionarUsuario =
+        window.selecionarUsuario;
+    }
+  }
+
+  /*
+   * O lápis antes abria o modal, mas não selecionava o usuário.
+   * Agora seleciona primeiro e só depois abre a edição.
+   */
+  const abrirModalAnterior = window.abrirModalUsuario;
+
+  if(typeof abrirModalAnterior === "function"){
+    window.abrirModalUsuario = function(id){
+      if(id){
+        const selecionou =
+          typeof window.selecionarUsuario === "function"
+            ? window.selecionarUsuario(id, {
+                naoRenderizarLista:false,
+                rolarParaPermissoes:false,
+                origem:"BOTAO_EDITAR"
+              })
+            : false;
+
+        if(selecionou === false){
+          return;
+        }
+      }
+
+      return abrirModalAnterior(id);
+    };
+  }
+
+  /*
+   * Segurança do botão Salvar permissões.
+   */
+  const salvarAnterior =
+    window.salvarPermissoesSelecionado ||
+    window.salvarPermissoesUsuarioSelecionado;
+
+  window.salvarPermissoesSelecionado =
+    async function(mostrarMsg=true){
+
+      let selecionado = null;
+
+      try{
+        selecionado =
+          typeof usuarioSelecionado !== "undefined"
+            ? usuarioSelecionado
+            : null;
+      }catch(error){}
+
+      if(!selecionado){
+        alert(
+          "Selecione um funcionário na lista antes de salvar as permissões."
+        );
+        return false;
+      }
+
+      if(typeof salvarAnterior !== "function"){
+        alert("A função de salvar permissões não foi carregada.");
+        return false;
+      }
+
+      const resultado = await salvarAnterior(mostrarMsg);
+      sincronizarPreferencias();
+      return resultado;
+    };
+
+  window.salvarPermissoesUsuarioSelecionado = function(){
+    return window.salvarPermissoesSelecionado(true);
+  };
+
+  window.salvarAlteracoesUsuarioSelecionado =
+    window.salvarPermissoesUsuarioSelecionado;
+
+  /*
+   * Perfil rápido:
+   * - preenche as permissões;
+   * - destaca o perfil;
+   * - NÃO salva automaticamente.
+   */
+  window.aplicarPerfilRapido = function(perfil){
+    let selecionado = null;
+
+    try{
+      selecionado =
+        typeof usuarioSelecionado !== "undefined"
+          ? usuarioSelecionado
+          : null;
+    }catch(error){}
+
+    if(!selecionado){
+      alert("Selecione um funcionário primeiro.");
+      return false;
+    }
+
+    const chave =
+      typeof normalizar === "function"
+        ? normalizar(perfil)
+        : String(perfil || "").trim().toUpperCase();
+
+    const lista =
+      typeof PERFIS !== "undefined"
+        ? (PERFIS[chave] || [])
+        : [];
+
+    if(!lista.length){
+      alert(
+        "Perfil rápido sem permissões cadastradas: " + perfil
+      );
+      return false;
+    }
+
+    if(typeof setPermissoes === "function"){
+      setPermissoes(lista);
+    }
+
+    selecionado.perfil_rapido = perfil;
+
+    if(typeof aplicarPerfilVisual === "function"){
+      aplicarPerfilVisual(perfil);
+    }
+
+    if(typeof atualizarUsuarioSelecionadoCard === "function"){
+      atualizarUsuarioSelecionadoCard();
+    }
+
+    if(typeof renderizarPerfisRapidos === "function"){
+      renderizarPerfisRapidos();
+    }
+
+    sincronizarPreferencias();
+
+    void 0;
+
+    return true;
+  };
+
+  if(window.BDRUsuarios){
+    window.BDRUsuarios.aplicarPerfilRapido =
+      window.aplicarPerfilRapido;
+  }
+
+  /*
+   * Botões ficam visualmente bloqueados sem funcionário selecionado.
+   */
+  function atualizarBotoesSelecao(){
+    let temSelecionado = false;
+
+    try{
+      temSelecionado =
+        !!(
+          typeof usuarioSelecionado !== "undefined" &&
+          usuarioSelecionado
+        );
+    }catch(error){}
+
+    document
+      .querySelectorAll(
+        '[onclick*="salvarPermissoesUsuarioSelecionado"],' +
+        '[onclick*="salvarAlteracoesUsuarioSelecionado"]'
+      )
+      .forEach(botao => {
+        botao.disabled = !temSelecionado;
+        botao.title = temSelecionado
+          ? "Salvar permissões do funcionário selecionado"
+          : "Selecione um funcionário primeiro";
+      });
+  }
+
+  const observer = new MutationObserver(() => {
+    clearTimeout(window.__atlasSelecaoBotoesTimer);
+    window.__atlasSelecaoBotoesTimer =
+      setTimeout(atualizarBotoesSelecao, 30);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    observer.observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:["class","disabled"]
+    });
+
+    setTimeout(atualizarBotoesSelecao, 150);
+  });
+
+  document.addEventListener("click", evento => {
+    if(
+      evento.target.closest(
+        "#listaUsuarios .tr, #listaUsuarios .icon-btn"
+      )
+    ){
+      setTimeout(atualizarBotoesSelecao, 60);
+    }
+  });
+
+  void 0;
 })();

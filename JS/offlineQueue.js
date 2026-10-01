@@ -132,7 +132,7 @@ async function salvarOffline(tipo, tabela, dados, opcoes = {}){
     const req = store.add(item);
 
     req.onsuccess = () => {
-      console.log("📦 BDR OFFLINE: salvo na fila", item);
+      void 0;
       bdrMostrarAvisoOffline("📦 Salvo offline. Será sincronizado quando a internet voltar.");
       if(typeof bdrAtualizarStatusGlobal === "function") setTimeout(bdrAtualizarStatusGlobal, 100);
       resolve({ offline:true, data:item, error:null });
@@ -210,11 +210,11 @@ async function sincronizarOffline(){
   const itens = await listarFilaOffline();
 
   if(!itens.length){
-    console.log("✅ BDR OFFLINE: fila vazia.");
+    void 0;
     return;
   }
 
-  console.log(`🔄 BDR OFFLINE: sincronizando ${itens.length} item(ns).`);
+  void 0;
 
   let sincronizadosAgora = 0;
 
@@ -268,7 +268,7 @@ async function sincronizarOffline(){
         sincronizadosAgora++;
         window.dispatchEvent(new CustomEvent("bdrOfflineSincronizado", { detail:item }));
         await removerItemOffline(item.id);
-        console.log("✅ BDR OFFLINE: sincronizado", item.id);
+        void 0;
       }
 
     }catch(e){
@@ -589,7 +589,7 @@ async function contarFilaOffline(){
    [06] EVENTOS / AVISO
 ========================================================= */
 window.addEventListener("online", async () => {
-  console.log("🌐 BDR OFFLINE: internet voltou.");
+  void 0;
 
   const total = await contarFilaOffline().catch(() => 0);
 
@@ -604,7 +604,7 @@ window.addEventListener("online", async () => {
 });
 
 window.addEventListener("offline", () => {
-  console.log("📴 BDR OFFLINE: sistema offline.");
+  void 0;
   bdrMostrarAvisoOffline("📴 Sem internet. As operações serão salvas no aparelho.");
 });
 
@@ -757,4 +757,4 @@ window.addEventListener("offline", () => setTimeout(bdrAtualizarStatusGlobal, 40
 document.addEventListener("DOMContentLoaded", () => setTimeout(bdrAtualizarStatusGlobal, 900));
 window.bdrAtualizarStatusGlobal = bdrAtualizarStatusGlobal;
 
-console.log("✅ BDR offlineQueue.js V5 carregado - payload seguro.");
+void 0;

@@ -193,16 +193,7 @@
     if(!window.AtlasLogistica) return false;
     if(window.AtlasLogistica.__fiscalIntegrado) return true;
 
-    const finalizarOriginal = window.AtlasLogistica.finalizarSeparacao;
     const enviarOriginal = window.AtlasLogistica.enviarPedido;
-
-    if(typeof finalizarOriginal === "function"){
-      window.AtlasLogistica.finalizarSeparacao = async function(pedidoId){
-        const resultado = await finalizarOriginal.call(window.AtlasLogistica,pedidoId);
-        await ajustarStatusDepoisSeparacao(pedidoId);
-        return resultado;
-      };
-    }
 
     if(typeof enviarOriginal === "function"){
       window.AtlasLogistica.enviarPedido = async function(pedidoId,dadosTransporte){
@@ -220,5 +211,5 @@
     setTimeout(integrarLogistica,500);
   }
 
-  console.log("✅ ATLAS FISCAL V1.0 carregado - NF-e paralela e bloqueio de retirada");
+  void 0;
 })();

@@ -9,7 +9,7 @@ if(window.supabase && typeof window.supabase.createClient === "function"){
   });
   window.client = client;
   window.supabaseClient = client;
-  console.log("SUPABASE OK");
+  void 0;
 }else{
   window.client = window.client || null;
   window.supabaseClient = window.supabaseClient || null;

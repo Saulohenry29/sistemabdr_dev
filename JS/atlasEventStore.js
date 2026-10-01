@@ -98,7 +98,7 @@
       }));
     }catch(e){}
 
-    console.log("🧾 AtlasEventStore gravou:", evento, "#" + (data?.id || "?"));
+    void 0;
     return { ok:true, id:data?.id || null, payload };
   }
 
@@ -115,7 +115,7 @@
         gravarEvento(evento, dados);
       });
       AtlasEventStore.ligado = true;
-      console.log("✅ ATLAS EVENT STORE V1.1 ligado ao AtlasEvents.onAny");
+      void 0;
       return true;
     }
 
@@ -125,7 +125,7 @@
       gravarEvento(detail.evento, detail.dados || {});
     });
     AtlasEventStore.ligado = true;
-    console.log("✅ ATLAS EVENT STORE V1.1 ligado via CustomEvent fallback");
+    void 0;
     return true;
   }
 
@@ -137,5 +137,5 @@
 
   setTimeout(ligarEventBus, 50);
 
-  console.log("✅ ATLAS EVENT STORE V1.1 carregado - persistência de eventos");
+  void 0;
 })();

@@ -10,24 +10,30 @@
 
   const base = {
     modal:['./JS/AtlasModal.js'],
-    workflow:['./JS/atlasWorkflow.js'],
+    workflow:['./JS/atlasGestorNotificacoes.js','./JS/atlasWorkflow.js'],
     reservas:['./JS/AtlasGestorReservas.js'],
     logistica:[
       './JS/AtlasModal.js',
+      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js'
     ],
     fiscal:[
       './JS/AtlasModal.js',
+      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
-      './JS/AtlasFiscal.js'
+      './JS/AtlasLogistica.js',
+      './JS/AtlasFiscal.js',
+      './JS/AtlasRomaneio.js'
     ],
     scanner:[
       'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
       './JS/AtlasModal.js',
+      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js',
       './JS/AtlasFiscal.js',
+      './JS/AtlasRomaneio.js',
       './JS/AtlasSeparacaoQR.js'
     ],
     visual:[
@@ -84,7 +90,7 @@
   async function prepararAba(nome){
     if(nome==='solicitacoes') await modulo('fiscal');
     if(nome==='separacao') await modulo('scanner');
-    if(nome==='retirada'||nome==='transito') await modulo('logistica');
+    if(nome==='retirada'||nome==='transito'||nome==='receber') await modulo('logistica');
     return true;
   }
 
@@ -114,9 +120,10 @@
     const mapa={
       iniciarSeparacaoAtlas:'scanner',
       abrirSeparacaoQR:'scanner',
-      finalizarSeparacaoAtlas:'logistica',
+      finalizarSeparacaoAtlas:'fiscal',
       enviarPedidoAtlas:'logistica',
       receberPedidoAtlas:'logistica',
+      confirmarRecebimentoAtlas:'logistica',
       abrirDadosFiscais:'fiscal',
       autorizarTodosAtlas:'fiscal',
       confirmarAprovacaoParcialAtlas:'fiscal',
@@ -176,13 +183,33 @@
         await global.abrirAba?.(aba,btn||null);
       }
 
+      /* Deep-link: abre diretamente o pedido indicado, em qualquer etapa da Expedição. */
+      const pedidoDireto=Number(new URLSearchParams(location.search).get('pedido'));
+      if(Number.isFinite(pedidoDireto) && pedidoDireto > 0){
+        try{ if(typeof global.carregarTudo==='function') await global.carregarTudo(); }catch(_){ }
+        let tentativas=0;
+        const abrirPedido=()=>{
+          tentativas++;
+          const existe=(global.pedidos||[]).some(p=>Number(p.id)===pedidoDireto);
+          const acaoDireta=new URLSearchParams(location.search).get('acao');
+          if(acaoDireta==='romaneio'){
+            modulo('fiscal').then(()=>global.AtlasRomaneio?.abrir?.(pedidoDireto));
+            return;
+          }
+          if(existe && typeof global.abrirDetalhePedidoAtlas==='function'){
+            global.abrirDetalhePedidoAtlas(pedidoDireto);
+            return;
+          }
+          if(tentativas<20) setTimeout(abrirPedido,150);
+        };
+        setTimeout(abrirPedido,80);
+      }
+
       const idle=global.requestIdleCallback||((fn)=>setTimeout(fn,800));
       idle(()=>modulo('visual').catch(console.warn));
       idle(()=>modulo('pwa').catch(console.warn));
 
-      console.log(
-        '✅ ATLAS EXPEDIÇÃO NOVA V1.2 carregada — Fiscal e Workflow sob demanda'
-      );
+      void 0;
     }catch(e){
       esconderLoading();
       console.error('Atlas Expedição Nova: falha na inicialização',e);

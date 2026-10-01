@@ -21,7 +21,7 @@
     if(destino && atual && destino === atual){
       if(typeof fecharUserMenu === "function") fecharUserMenu();
       if(typeof fecharNotificacoes === "function") fecharNotificacoes();
-      console.log("BDR: navegação ignorada, já está em", destino);
+      void 0;
       return false;
     }
 
@@ -48,7 +48,7 @@
       e.stopPropagation();
       if(typeof fecharUserMenu === "function") fecharUserMenu();
       if(typeof fecharNotificacoes === "function") fecharNotificacoes();
-      console.log("BDR: clique ignorado, já está em", destino);
+      void 0;
     }
   }, true);
 })();

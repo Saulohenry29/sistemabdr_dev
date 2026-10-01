@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Atlas - Minha Conta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./CSS/atlasMinhaConta.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../JS/supabaseClient.js"></script>
+
+<main class="account-page">
+  <section class="account-profile">
+    <div class="profile-photo-wrap">
+      <div class="profile-photo" id="accountAvatar"><span id="accountInitials">--</span></div>
+      <button class="photo-action" id="btnAlterarFoto" type="button" title="Alterar foto"><i class="fa-solid fa-camera"></i></button>
+      <input id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+    <div class="profile-main">
+      <div class="profile-title-row"><h1 id="accountName">Minha conta</h1><span class="status-pill" id="accountStatus">ATIVO</span></div>
+      <p id="accountLogin">Carregando...</p>
+      <div class="profile-meta"><span><i class="fa-regular fa-envelope"></i><b id="profileEmail">-</b></span><span><i class="fa-solid fa-user-shield"></i><b id="profileRole">-</b></span></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn secondary" id="btnAlterarFotoTexto" type="button"><i class="fa-solid fa-camera"></i> Alterar foto</button>
+      <button class="btn dark" id="btnTrocarSenha" type="button"><i class="fa-solid fa-key"></i> Trocar senha</button>
+    </div>
+  </section>
+
+  <div class="account-grid">
+    <section class="account-card profile-card">
+      <header><div><h2><i class="fa-regular fa-id-card"></i> Meu perfil</h2><p>Informações da sua conta no Atlas.</p></div><span class="read-pill"><i class="fa-solid fa-lock"></i> Protegido</span></header>
+      <div class="field-grid">
+        <div><small>Nome</small><strong id="fieldNome">-</strong></div>
+        <div><small>Usuário</small><strong id="fieldUsuario">-</strong></div>
+        <div><small>E-mail</small><strong id="fieldEmail">-</strong></div>
+        <div><small>Perfil</small><strong id="fieldPerfil">-</strong></div>
+        <div class="wide"><small>Obra principal</small><strong id="fieldObra">-</strong></div>
+      </div>
+    </section>
+
+    <section class="account-card notifications-card">
+      <header><div><h2><i class="fa-regular fa-bell"></i> Minhas notificações</h2><p>Escolha como deseja receber seus avisos.</p></div></header>
+      <div class="notification-modes">
+        <label><input type="radio" name="notifMode" value="NOTIF_MODO_SOM"><span><i class="fa-solid fa-volume-high"></i><b>Som e aviso</b></span></label>
+        <label><input type="radio" name="notifMode" value="NOTIF_MODO_VISUAL"><span><i class="fa-regular fa-bell"></i><b>Apenas aviso</b></span></label>
+        <label><input type="radio" name="notifMode" value="NOTIF_MODO_SILENCIOSO"><span><i class="fa-solid fa-bell-slash"></i><b>Silencioso</b></span></label>
+      </div>
+      <div class="notification-list" id="notifOptions"></div>
+      <footer class="card-footer"><span id="saveInfo">Nenhuma alteração pendente.</span><button class="btn primary" id="btnSalvarPreferencias" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></footer>
+    </section>
+
+    <section class="account-card works-card">
+      <header class="works-head"><div><h2><i class="fa-solid fa-building"></i> Minhas obras / setores</h2><p>Locais aos quais sua conta possui acesso.</p></div><button class="works-toggle" id="btnToggleWorks" type="button"><span id="worksCount">0 acessos</span><i class="fa-solid fa-chevron-down"></i></button></header>
+      <div class="works-content" id="worksContent" hidden><div class="works-search"><i class="fa-solid fa-magnifying-glass"></i><input id="worksSearch" type="search" placeholder="Buscar obra ou setor..."></div><div class="works-list" id="accountWorks"><div class="empty">Carregando obras...</div></div></div>
+    </section>
+  </div>
+</main>
+<div class="message" id="accountMessage" hidden></div>
+<div class="avatar-editor" id="avatarEditor" hidden aria-hidden="true">
+  <div class="avatar-editor-card" role="dialog" aria-modal="true" aria-labelledby="avatarEditorTitle">
+    <header class="avatar-editor-head">
+      <div><h2 id="avatarEditorTitle"><i class="fa-solid fa-crop-simple"></i> Ajustar foto</h2><p>Arraste a imagem e use o zoom para enquadrar seu rosto.</p></div>
+      <button class="avatar-editor-close" id="btnFecharAvatar" type="button" aria-label="Fechar">×</button>
+    </header>
+    <div class="avatar-editor-body">
+      <div class="avatar-crop" id="avatarCrop">
+        <img id="avatarCropImage" alt="Prévia da foto">
+        <div class="avatar-crop-ring" aria-hidden="true"></div>
+      </div>
+      <div class="avatar-zoom-row">
+        <i class="fa-solid fa-image"></i>
+        <input id="avatarZoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom da foto">
+        <i class="fa-solid fa-magnifying-glass-plus"></i>
+      </div>
+      <small class="avatar-editor-help"><i class="fa-solid fa-hand-pointer"></i> Clique e arraste para reposicionar.</small>
+    </div>
+    <footer class="avatar-editor-actions">
+      <button class="btn secondary" id="btnCancelarAvatar" type="button">Cancelar</button>
+      <button class="btn primary" id="btnSalvarAvatar" type="button"><i class="fa-solid fa-check"></i> Usar esta foto</button>
+    </footer>
+  </div>
+</div>
+
+<script src="./JS/atlasMinhaConta.js"></script>
+</body>
+</html>

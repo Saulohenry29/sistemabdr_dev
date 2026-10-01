@@ -1,8 +1,8 @@
 /*
-  ATLAS / BDR — PATRIMÔNIO V2 OFICIAL
+  ATLAS / BDR — PATRIMÔNIO V2 OFICIAL — DENSIDADE DESKTOP -10%
   Arquivo visual oficial e exclusivo do módulo Patrimônio.
 */
-.obra-ativa{font-size:12px;color:#374151;font-weight:900;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:8px 10px;white-space:nowrap}
+.obra-ativa{font-size:9px;color:#374151;font-weight:900;background:#fff7ed;border:1px solid #fed7aa;border-radius:899.1px;padding:6.3px 8.1px;white-space:nowrap}
 
 
 
@@ -20,7 +20,7 @@
 
 
 
-@keyframes dropdownTop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dropdownTop{from{opacity:0;transform:translateY(-5.4px)}to{opacity:1;transform:translateY(0)}}
 
 
 button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none!important;box-shadow:none!important}button{-webkit-tap-highlight-color:transparent}
@@ -32,8 +32,8 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 .lista-header,
 .linha-patrimonio{
   display:grid;
-  grid-template-columns:38px 170px minmax(230px,1.4fr) minmax(190px,1fr) 150px 140px 130px;
-  gap:12px;
+  grid-template-columns:28.8px 130.5px minmax(176.4px,1.4fr) minmax(145.8px,1fr) 115.2px 107.1px 99.9px;
+  gap:9px;
   align-items:center;
 }
 .pat-codigo{
@@ -42,7 +42,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width:170px;
+  max-width:130.5px;
   display:block;
 }
 .pat-nome{
@@ -50,7 +50,7 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  padding-left:8px;
+  padding-left:6.3px;
   display:block;
 }
 .pat-local,.pat-tipo,.pat-valor,.pat-status{
@@ -60,31 +60,31 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 }
 .bdr-pendente-offline{
   display:inline-flex;
-  margin-left:6px;
-  padding:3px 7px;
-  border-radius:999px;
+  margin-left:5.4px;
+  padding:3px 6.3px;
+  border-radius:899.1px;
   background:#fffbeb;
   color:#92400e;
   border:1px solid #f59e0b;
-  font-size:10px;
+  font-size:9px;
   font-weight:900;
 }
 
 .bdr-check-etiqueta{display:flex;align-items:center;justify-content:center}
-.bdr-check-etiqueta input{width:18px;height:18px;accent-color:#b91c1c;cursor:pointer}
-.bdr-lote-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px}
-.bdr-lote-bar strong{color:#9a3412}.bdr-lote-acoes{display:flex;gap:8px;flex-wrap:wrap}
-.bdr-lote-acoes button{border:0;border-radius:10px;padding:9px 12px;font-weight:900;cursor:pointer}.bdr-lote-imprimir{background:#111827;color:#fff}.bdr-lote-limpar{background:#e5e7eb;color:#374151}
+.bdr-check-etiqueta input{width:16.2px;height:16.2px;accent-color:#b91c1c;cursor:pointer}
+.bdr-lote-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:0 0 10.8px;padding:7.2px 9px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10.8px}
+.bdr-lote-bar strong{color:#9a3412}.bdr-lote-acoes{display:flex;gap:7.2px;flex-wrap:wrap}
+.bdr-lote-acoes button{border:0;border-radius:9px;padding:7.2px 9px;font-weight:900;cursor:pointer}.bdr-lote-imprimir{background:#111827;color:#fff}.bdr-lote-limpar{background:#e5e7eb;color:#374151}
 
 /* Modo elegante de seleção de etiquetas: os checkboxes só aparecem quando o usuário pedir. */
 body:not(.bdr-modo-selecao-etiquetas) .bdr-check-etiqueta{display:none!important}
 body:not(.bdr-modo-selecao-etiquetas) .lista-header,
 body:not(.bdr-modo-selecao-etiquetas) .linha-patrimonio{
-  grid-template-columns:170px minmax(230px,1.4fr) minmax(190px,1fr) 150px 140px 130px;
+  grid-template-columns:130.5px minmax(176.4px,1.4fr) minmax(145.8px,1fr) 115.2px 107.1px 99.9px;
 }
 .bdr-lote-bar{background:linear-gradient(135deg,#f8fafc,#fff)!important;border-color:#e2e8f0!important}
 .bdr-lote-resumo{display:none;color:#9a3412;font-weight:900}
-body.bdr-modo-selecao-etiquetas .bdr-lote-resumo{display:inline-flex;align-items:center;gap:7px}
+body.bdr-modo-selecao-etiquetas .bdr-lote-resumo{display:inline-flex;align-items:center;gap:6.3px}
 .bdr-lote-imprimir{background:#b91c1c!important;color:#fff!important}
 .bdr-lote-selecionar{background:#111827;color:#fff}
 .bdr-lote-configurar{background:#fff;color:#334155;border:1px solid #cbd5e1!important}.bdr-lote-cancelar{display:none;background:#e5e7eb;color:#374151}
@@ -104,17 +104,17 @@ body.bdr-modo-selecao-etiquetas .linha-patrimonio{background:#fffdfd}
 
 
 
-.bdr-manutencao-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
-.bdr-manutencao-kpi{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #f97316;border-radius:14px;padding:11px;box-shadow:0 2px 8px rgba(15,23,42,.06)}
-.bdr-manutencao-kpi strong{display:block;font-size:22px;color:#111827}
-.bdr-manutencao-kpi span{display:block;color:#6b7280;font-size:11px;font-weight:900;margin-top:3px}
-.bdr-manutencao-lista{margin-top:10px;display:grid;gap:7px}
-.bdr-manutencao-item{background:#f8fafc;border-left:4px solid #f97316;border-radius:10px;padding:8px 10px;font-size:12px;color:#374151;line-height:1.45}
+.bdr-manutencao-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(153px,1fr));gap:9px}
+.bdr-manutencao-kpi{background:#fff;border:1px solid #e5e7eb;border-left:3.6px solid #f97316;border-radius:12.6px;padding:9.9px;box-shadow:0 2px 7.2px rgba(15,23,42,.06)}
+.bdr-manutencao-kpi strong{display:block;font-size:19.8px;color:#111827}
+.bdr-manutencao-kpi span{display:block;color:#6b7280;font-size:9.9px;font-weight:900;margin-top:3px}
+.bdr-manutencao-lista{margin-top:9px;display:grid;gap:6.3px}
+.bdr-manutencao-item{background:#f8fafc;border-left:3.6px solid #f97316;border-radius:9px;padding:7.2px 9px;font-size:10.8px;color:#374151;line-height:1.45}
 .bdr-manutencao-item b{color:#111827}
 .bdr-manutencao-item small{color:#6b7280}
-.bdr-manutencao-status{display:inline-flex;padding:3px 8px;border-radius:999px;color:#fff;font-size:10px;font-weight:900;background:#f97316}
+.bdr-manutencao-status{display:inline-flex;padding:3px 7.2px;border-radius:899.1px;color:#fff;font-size:9px;font-weight:900;background:#f97316}
 .bdr-manutencao-status.FECHADA{background:#16a34a}
-.manut-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.manut-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .manut-modal-grid .wide{grid-column:1/-1}
 .manut-modal-grid input,.manut-modal-grid textarea{width:100%}
 .bdr-btn-danger{background:#dc2626!important;color:#fff!important}
@@ -131,16 +131,16 @@ body.bdr-modo-selecao-etiquetas .linha-patrimonio{background:#fffdfd}
   display:none;
   align-items:center;
   justify-content:center;
-  padding:16px;
+  padding:14.4px;
 }
 .bdr-etiqueta-modal-bg.ativo{display:flex}
 
 .bdr-etiqueta-modal{
-  width:min(470px,94vw);
+  width:min(423px,94vw);
   background:#fff;
-  border-radius:18px;
-  box-shadow:0 24px 70px rgba(15,23,42,.34);
-  border-left:4px solid var(--bdr-red,#d71920);
+  border-radius:16.2px;
+  box-shadow:0 21.6px 63px rgba(15,23,42,.34);
+  border-left:3.6px solid var(--bdr-red,#d71920);
   overflow:hidden;
 }
 
@@ -148,24 +148,24 @@ body.bdr-modo-selecao-etiquetas .linha-patrimonio{background:#fffdfd}
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
-  padding:12px 14px;
+  gap:9px;
+  padding:10.8px 12.6px;
   border-bottom:1px solid #e5e7eb;
   background:#fff;
 }
 .bdr-etiqueta-modal-head h2{
   margin:0;
   color:var(--bdr-red,#d71920);
-  font-size:17px;
+  font-size:15.3px;
   font-weight:900;
 }
 .bdr-etiqueta-close{
   border:0;
   background:#fee2e2;
   color:#991b1b;
-  border-radius:12px;
-  width:34px;
-  height:34px;
+  border-radius:10.8px;
+  width:30.6px;
+  height:30.6px;
   font-weight:900;
   cursor:pointer;
   line-height:1;
@@ -174,38 +174,38 @@ body.bdr-modo-selecao-etiquetas .linha-patrimonio{background:#fffdfd}
 
 .bdr-etiqueta-preview-area{
   background:#eef3f8;
-  padding:14px;
+  padding:12.6px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 .bdr-etiqueta-frame{
-  width:360px;
+  width:324px;
   max-width:100%;
   aspect-ratio:55 / 35;
   height:auto;
   border:1px solid #cbd5e1;
-  border-radius:14px;
+  border-radius:12.6px;
   background:#fff;
-  box-shadow:0 8px 24px rgba(15,23,42,.10);
+  box-shadow:0 7.2px 21.6px rgba(15,23,42,.10);
 }
 .bdr-etiqueta-footer{
   display:flex;
   justify-content:center;
-  padding:12px 14px 14px;
+  padding:10.8px 12.6px 12.6px;
   background:#fff;
   border-top:1px solid #e5e7eb;
 }
 .bdr-etiqueta-print-btn{
   border:0;
-  border-radius:12px;
-  padding:10px 18px;
+  border-radius:10.8px;
+  padding:9px 16.2px;
   background:var(--bdr-red,#d71920);
   color:#fff;
   font-weight:900;
   cursor:pointer;
-  font-size:13px;
-  box-shadow:0 8px 18px rgba(215,25,32,.22);
+  font-size:11.7px;
+  box-shadow:0 7.2px 16.2px rgba(215,25,32,.22);
 }
 .bdr-etiqueta-print-btn:hover{filter:brightness(.95);transform:translateY(-1px)}
 
@@ -220,26 +220,26 @@ body.bdr-modo-selecao-etiquetas .linha-patrimonio{background:#fffdfd}
 
 #obraAtivaTexto{display:none!important}
 #cardObraLancamento h3::after{content:""}
-#cardObraLancamento{border-left:4px solid var(--bdr-red,#d71920)}
-#cardObraLancamento h3{margin-bottom:10px!important}
-#cardObraLancamento .lock-row{display:grid;grid-template-columns:minmax(240px,1fr) 120px;gap:10px;align-items:center}
-#btnTravarObra{white-space:nowrap;min-height:38px}
-#cardEntradaPatrimonio{border-left:4px solid #16a34a}
-#cardEntradaPatrimonio h3::after{content:"  • Cadastro";font-size:11px;color:#6b7280;font-weight:800}
-#cardEntradaPatrimonio .grid{gap:12px!important}
-#cardEntradaPatrimonio input,#cardEntradaPatrimonio select,#cardEntradaPatrimonio textarea{min-height:40px}
-#busca{min-height:42px;font-size:14px;border:1px solid #fecaca!important;background:#fffafa!important;font-weight:800}
+#cardObraLancamento{border-left:3.6px solid var(--bdr-red,#d71920)}
+#cardObraLancamento h3{margin-bottom:9px!important}
+#cardObraLancamento .lock-row{display:grid;grid-template-columns:minmax(183.6px,1fr) 91.8px;gap:7.2px;align-items:center}
+#btnTravarObra{white-space:nowrap;min-height:28.8px}
+#cardEntradaPatrimonio{border-left:3.6px solid #16a34a}
+#cardEntradaPatrimonio h3::after{content:"  • Cadastro";font-size:9.9px;color:#6b7280;font-weight:800}
+#cardEntradaPatrimonio .grid{gap:9px!important}
+#cardEntradaPatrimonio input,#cardEntradaPatrimonio select,#cardEntradaPatrimonio textarea{min-height:30.6px}
+#busca{min-height:32.4px;font-size:10.8px;border:1px solid #fecaca!important;background:#fffafa!important;font-weight:800}
 #busca:focus{outline:3px solid rgba(215,25,32,.12);border-color:var(--bdr-red,#d71920)!important}
 #cardAnalyticsManutencao{display:none!important}
-.bdr-lista-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;flex-wrap:wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
-.bdr-lista-tools strong{color:#111827;font-size:13px}.bdr-lista-tools span{color:#6b7280;font-size:12px;font-weight:800}
-.bdr-paginacao{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;flex-wrap:wrap}
-.bdr-paginacao button{border:1px solid #fecaca;background:#fff;color:var(--bdr-red,#d71920);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer}
+.bdr-lista-tools{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:0 0 9px;flex-wrap:wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10.8px;padding:7.2px 9px}
+.bdr-lista-tools strong{color:#111827;font-size:11.7px}.bdr-lista-tools span{color:#6b7280;font-size:10.8px;font-weight:800}
+.bdr-paginacao{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10.8px;flex-wrap:wrap}
+.bdr-paginacao button{border:1px solid #fecaca;background:#fff;color:var(--bdr-red,#d71920);border-radius:9px;padding:6.3px 9px;font-size:9.9px;font-weight:900;cursor:pointer}
 .bdr-paginacao button:disabled{opacity:.45;cursor:not-allowed;background:#f9fafb;color:#9ca3af;border-color:#e5e7eb}
-.bdr-paginacao .pagina-info{font-size:12px;font-weight:900;color:#374151;background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px}
-.linha-patrimonio{transition:.14s ease;background:#fff;border-bottom:1px solid #f1f5f9;padding:10px 8px;border-radius:10px;margin-bottom:4px;cursor:pointer}
-.linha-patrimonio:hover{background:#fff7f7;transform:translateX(2px);box-shadow:0 5px 14px rgba(15,23,42,.06)}
-.lista-header{background:#111827;color:#fff;border-radius:10px;padding:10px 8px;margin-bottom:7px;font-size:12px;font-weight:900}
+.bdr-paginacao .pagina-info{font-size:9.9px;font-weight:900;color:#374151;background:#f8fafc;border:1px solid #e5e7eb;border-radius:899.1px;padding:6.3px 9px}
+.linha-patrimonio{transition:.14s ease;background:#fff;border-bottom:1px solid #f1f5f9;padding:7.2px 6.3px;border-radius:8.1px;margin-bottom:3px;cursor:pointer}
+.linha-patrimonio:hover{background:#fff7f7;transform:translateX(2px);box-shadow:0 4.5px 12.6px rgba(15,23,42,.06)}
+.lista-header{background:#111827;color:#fff;border-radius:9px;padding:7.2px 6.3px;margin-bottom:5.4px;font-size:9px;font-weight:900}
 @media(max-width:900px){#cardObraLancamento .lock-row{grid-template-columns:1fr}.bdr-lista-tools{align-items:flex-start}.linha-patrimonio{padding:12px}}
 
 
@@ -261,10 +261,10 @@ body{
 
 /* Cards mais consistentes */
 .card{
-  border-radius:18px!important;
-  padding:14px!important;
-  border-left-width:5px!important;
-  box-shadow:0 8px 22px rgba(15,23,42,.07)!important;
+  border-radius:13.5px!important;
+  padding:10.8px!important;
+  border-left-width:4.5px!important;
+  box-shadow:0 7.2px 19.8px rgba(15,23,42,.07)!important;
 }
 
 .card:hover{
@@ -273,20 +273,20 @@ body{
 
 /* Obra de lançamento compacta e clara */
 #cardObraLancamento{
-  padding:12px 14px!important;
+  padding:9px 10.8px!important;
   background:linear-gradient(135deg,#fff,#f8fafc)!important;
 }
 
 #cardObraLancamento h3{
-  font-size:15px!important;
+  font-size:9.9px!important;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7.2px;
 }
 
 #cardObraLancamento .lock-row{
-  max-width:720px!important;
-  grid-template-columns:minmax(260px,1fr) 150px!important;
+  max-width:550.8px!important;
+  grid-template-columns:minmax(198.9px,1fr) 115.2px!important;
 }
 
 #obraSelect{
@@ -295,7 +295,7 @@ body{
 }
 
 #btnTravarObra{
-  border-radius:12px!important;
+  border-radius:9px!important;
   font-weight:900!important;
 }
 
@@ -307,21 +307,21 @@ body{
 }
 
 #cardEntradaPatrimonio h3{
-  font-size:16px!important;
+  font-size:10.8px!important;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7.2px;
 }
 
 #cardEntradaPatrimonio h3::after{
   content:"Cadastro diário";
   display:inline-flex;
   align-items:center;
-  padding:4px 9px;
-  border-radius:999px;
+  padding:3.6px 8.1px;
+  border-radius:899.1px;
   background:#dcfce7;
   color:#166534;
-  font-size:10px;
+  font-size:9px;
   font-weight:900;
   text-transform:uppercase;
   letter-spacing:.04em;
@@ -329,27 +329,27 @@ body{
 
 #cardEntradaPatrimonio .grid{
   grid-template-columns:1.15fr .9fr .9fr .9fr .9fr!important;
-  gap:10px!important;
+  gap:7.2px!important;
 }
 
 #cardEntradaPatrimonio input,
 #cardEntradaPatrimonio select,
 #cardEntradaPatrimonio textarea{
-  border-radius:12px!important;
-  min-height:42px!important;
+  border-radius:10.8px!important;
+  min-height:32.4px!important;
   border-color:#dbe3ee!important;
 }
 
 #cardEntradaPatrimonio textarea{
-  min-height:64px!important;
+  min-height:48.6px!important;
 }
 
 #btnGerarPatrimonio{
-  border-radius:12px!important;
-  min-height:40px!important;
-  padding:10px 14px!important;
+  border-radius:10.8px!important;
+  min-height:30.6px!important;
+  padding:7.2px 10.8px!important;
   font-weight:900!important;
-  box-shadow:0 8px 18px rgba(42,157,143,.18)!important;
+  box-shadow:0 7.2px 16.2px rgba(42,157,143,.18)!important;
 }
 
 /* Consulta ganha destaque sem ocupar mais espaço */
@@ -360,23 +360,23 @@ body{
 }
 
 .card:has(#busca) h3{
-  font-size:16px!important;
-  margin-bottom:12px!important;
+  font-size:10.8px!important;
+  margin-bottom:9px!important;
 }
 
 .card:has(#busca) .grid{
-  grid-template-columns:1.25fr .9fr .9fr .9fr!important;
-  gap:10px!important;
+  grid-template-columns:minmax(245px,1.55fr) minmax(180px,1.05fr) minmax(125px,.68fr) minmax(125px,.68fr) minmax(175px,1fr) minmax(145px,.78fr)!important;
+  gap:7.2px!important;
 }
 
 #busca{
-  min-height:44px!important;
+  min-height:33.3px!important;
   border:2px solid #fecaca!important;
   background:#fff!important;
-  font-size:14px!important;
+  font-size:10.8px!important;
   font-weight:900!important;
-  border-radius:13px!important;
-  box-shadow:0 5px 14px rgba(164,22,26,.06)!important;
+  border-radius:9.9px!important;
+  box-shadow:0 4.5px 12.6px rgba(164,22,26,.06)!important;
 }
 
 #busca::placeholder{
@@ -386,7 +386,7 @@ body{
 
 #busca:focus{
   border-color:var(--bdr-red,#a4161a)!important;
-  box-shadow:0 0 0 4px rgba(164,22,26,.10)!important;
+  box-shadow:0 0 0 3.6px rgba(164,22,26,.10)!important;
 }
 
 /* Lista com cara de módulo principal */
@@ -398,17 +398,17 @@ body{
 .card:has(#lista) h3{
   display:flex;
   align-items:center;
-  gap:8px;
-  margin-bottom:12px!important;
+  gap:7.2px;
+  margin-bottom:9px!important;
 }
 
 .card:has(#lista) h3::after{
   content:"30 por página";
-  padding:4px 9px;
-  border-radius:999px;
+  padding:3.6px 8.1px;
+  border-radius:899.1px;
   background:#eef2ff;
   color:#1d4ed8;
-  font-size:10px;
+  font-size:9px;
   font-weight:900;
   text-transform:uppercase;
 }
@@ -417,13 +417,13 @@ body{
 .bdr-lista-tools{
   background:linear-gradient(135deg,#f8fafc,#ffffff)!important;
   border:1px solid #e2e8f0!important;
-  border-radius:14px!important;
-  padding:12px 14px!important;
-  margin-bottom:12px!important;
+  border-radius:12.6px!important;
+  padding:9px 10.8px!important;
+  margin-bottom:9px!important;
 }
 
 .bdr-lista-tools strong{
-  font-size:14px!important;
+  font-size:10.8px!important;
   color:#0f172a!important;
 }
 
@@ -434,56 +434,96 @@ body{
 /* Cabeçalho e linhas mais legíveis */
 .lista-header{
   background:linear-gradient(135deg,#111827,#0f2238)!important;
-  border-radius:12px!important;
-  padding:11px 12px!important;
-  box-shadow:0 8px 18px rgba(15,23,42,.12)!important;
+  border-radius:10.8px!important;
+  padding:8.1px 9px!important;
+  box-shadow:0 7.2px 16.2px rgba(15,23,42,.12)!important;
 }
 
 .linha-patrimonio{
-  min-height:58px!important;
-  border-radius:13px!important;
-  border-left:4px solid #a4161a!important;
-  padding:11px 12px!important;
-  box-shadow:0 3px 10px rgba(15,23,42,.06)!important;
-  margin-bottom:7px!important;
+  min-height:44.1px!important;
+  border-radius:9.9px!important;
+  border-left:3.6px solid #a4161a!important;
+  padding:8.1px 9px!important;
+  box-shadow:0 3px 9px rgba(15,23,42,.06)!important;
+  margin-bottom:5.4px!important;
 }
 
 .linha-patrimonio:hover{
   background:#fff7f7!important;
   transform:translateX(3px)!important;
-  box-shadow:0 9px 20px rgba(15,23,42,.10)!important;
+  box-shadow:0 8.1px 18px rgba(15,23,42,.10)!important;
 }
 
+/* =========================================================
+   LISTAGEM DE PATRIMÔNIOS — TIPOGRAFIA OFICIAL
+   ---------------------------------------------------------
+   ESTE É O PONTO PARA AJUSTAR OS TEXTOS DA LISTAGEM.
+
+   font-size   = tamanho da letra
+   font-weight = peso/negrito (400 normal, 700 negrito, 900 forte)
+   line-height = altura da linha
+
+   Cada informação possui seu próprio seletor para permitir
+   ajuste independente sem usar zoom ou scale.
+========================================================= */
+
+/* CÓDIGO / PAT — exemplo: PAT-14400011 */
 .pat-codigo{
   color:#991b1b!important;
-  font-size:13px!important;
+  font-size:9.9px!important;
+  font-weight:900!important;
 }
 
+/* NOME DO PATRIMÔNIO — exemplo: TESTE PATRIMONIO */
 .pat-nome{
-  font-size:14px!important;
+  font-size:9.7px!important;
+  font-weight:900!important;
   color:#0f172a!important;
 }
 
-.pat-local,.pat-tipo{
+/* OBRA / SETOR — exemplo: SATH */
+.pat-local{
+  font-size:10px!important;
+  font-weight:700!important;
+  line-height:1.15!important;
   color:#334155!important;
 }
 
+/* TIPO — exemplo: OUTRO */
+.pat-tipo{
+  font-size:10px!important;
+  font-weight:700!important;
+  line-height:1.15!important;
+  color:#334155!important;
+}
+
+/* VALOR — exemplo: R$ 0,01 */
 .pat-valor{
+  font-size:10px!important;
+  font-weight:700!important;
+  line-height:1.15!important;
   color:#0f172a!important;
+}
+
+/* STATUS — exemplo: EM USO */
+.pat-status{
+  font-size:9px!important;
+  font-weight:700!important;
+  line-height:1.15!important;
 }
 
 /* Paginação mais refinada */
 .bdr-paginacao{
-  padding-top:8px!important;
+  padding-top:6.3px!important;
 }
 
 .bdr-paginacao button{
-  min-height:38px!important;
-  border-radius:12px!important;
+  min-height:28.8px!important;
+  border-radius:10.8px!important;
 }
 
 .bdr-paginacao .pagina-info{
-  border-radius:12px!important;
+  border-radius:10.8px!important;
   background:#111827!important;
   color:#fff!important;
   border-color:#111827!important;
@@ -491,20 +531,20 @@ body{
 
 /* Modal do patrimônio um pouco mais premium, sem mudar fluxo */
 .modal{
-  border-radius:18px!important;
-  box-shadow:0 26px 70px rgba(15,23,42,.36)!important;
-  border-left:5px solid var(--bdr-red,#a4161a)!important;
+  border-radius:13.5px!important;
+  box-shadow:0 23.4px 63px rgba(15,23,42,.36)!important;
+  border-left:4.5px solid var(--bdr-red,#a4161a)!important;
 }
 
 .modal-info{
-  border-radius:13px!important;
+  border-radius:9.9px!important;
   background:#f8fafc!important;
   border:1px solid #e2e8f0!important;
 }
 
 .acoes button{
-  border-radius:12px!important;
-  min-height:40px!important;
+  border-radius:10.8px!important;
+  min-height:30.6px!important;
 }
 
 /* Responsividade */
@@ -525,23 +565,23 @@ body{
   border-left-color:#0f766e!important;
 }
 #cardObraLancamento h3{
-  margin-bottom:4px!important;
+  margin-bottom:3.6px!important;
 }
 .obra-lock-helper{
-  margin:0 0 10px;
+  margin:0 0 9px;
   color:#475569;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:800;
 }
 #cardObraLancamento .lock-row{
   display:grid!important;
-  grid-template-columns:minmax(260px, 520px) 190px!important;
-  gap:10px!important;
+  grid-template-columns:minmax(234px, 468px) 171px!important;
+  gap:7.2px!important;
   align-items:center!important;
 }
 #obraSelect{
-  height:42px!important;
-  border-radius:13px!important;
+  height:37.8px!important;
+  border-radius:9.9px!important;
   border:2px solid #e2e8f0!important;
   background:#fff!important;
   font-weight:900!important;
@@ -555,8 +595,8 @@ body{
   cursor:not-allowed!important;
 }
 #btnTravarObra{
-  height:42px!important;
-  border-radius:13px!important;
+  height:37.8px!important;
+  border-radius:9.9px!important;
   font-weight:900!important;
   border:0!important;
   transition:.18s ease!important;
@@ -564,12 +604,12 @@ body{
 #btnTravarObra.lock-on{
   background:linear-gradient(135deg,#16a34a,#059669)!important;
   color:#fff!important;
-  box-shadow:0 8px 18px rgba(22,163,74,.24)!important;
+  box-shadow:0 7.2px 16.2px rgba(22,163,74,.24)!important;
 }
 #btnTravarObra.lock-off{
   background:linear-gradient(135deg,#f59e0b,#f97316)!important;
   color:#fff!important;
-  box-shadow:0 8px 18px rgba(249,115,22,.24)!important;
+  box-shadow:0 7.2px 16.2px rgba(249,115,22,.24)!important;
 }
 #btnTravarObra:hover{
   filter:brightness(.97)!important;
@@ -610,26 +650,26 @@ body{
   .modal-info{
     max-height:none!important;
     overflow:visible!important;
-    font-size:14px!important;
+    font-size:12px!important;
     line-height:1.45!important;
   }
 
   .modal textarea,
   .modal select,
   .modal input{
-    font-size:16px!important;
+    font-size:12px!important;
   }
 
   .modal .acoes{
     display:grid!important;
     grid-template-columns:1fr 1fr!important;
-    gap:10px!important;
+    gap:8px!important;
     padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
   }
 
   .modal .acoes button{
     min-height:48px!important;
-    font-size:14px!important;
+    font-size:12px!important;
     border-radius:14px!important;
     white-space:normal!important;
     line-height:1.2!important;
@@ -659,21 +699,21 @@ input, textarea{
 
 .atlas-patrimonio-toast{
   position:fixed;
-  top:16px;
+  top:14.4px;
   left:50%;
-  transform:translate(-50%,-18px);
-  width:min(520px,calc(100vw - 24px));
+  transform:translate(-50%,-16.2px);
+  width:min(468px,calc(100vw - 21.6px));
   z-index:2147483647;
   background:linear-gradient(135deg,#15803d,#16a34a);
   color:#fff;
   border:1px solid rgba(255,255,255,.28);
-  border-radius:16px;
-  padding:13px 16px;
-  box-shadow:0 18px 45px rgba(22,163,74,.30);
+  border-radius:14.4px;
+  padding:11.7px 14.4px;
+  box-shadow:0 16.2px 40.5px rgba(22,163,74,.30);
   opacity:0;
   pointer-events:none;
   transition:.22s ease;
-  font-size:13px;
+  font-size:11.7px;
   font-weight:900;
   line-height:1.4;
 }
@@ -683,16 +723,16 @@ input, textarea{
 }
 .atlas-patrimonio-toast.offline{
   background:linear-gradient(135deg,#b45309,#f59e0b);
-  box-shadow:0 18px 45px rgba(245,158,11,.30);
+  box-shadow:0 16.2px 40.5px rgba(245,158,11,.30);
 }
 .atlas-patrimonio-toast .atlas-toast-titulo{
   display:block;
-  font-size:14px;
+  font-size:12.6px;
   margin-bottom:2px;
 }
 .atlas-patrimonio-toast .atlas-toast-texto{
   display:block;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:800;
   opacity:.96;
 }
@@ -708,15 +748,15 @@ input, textarea{
 
 
 #cardObraLancamento{
-  padding:9px 12px!important;
-  border-left:4px solid #60a5fa!important;
+  padding:8.1px 10.8px!important;
+  border-left:3.6px solid #60a5fa!important;
   background:#eff6ff!important;
 }
 
 #cardObraLancamento h3{
-  margin:0 0 6px!important;
+  margin:0 0 5.4px!important;
   color:#1e3a8a!important;
-  font-size:13px!important;
+  font-size:9.9px!important;
 }
 
 #cardObraLancamento .obra-lock-helper{
@@ -725,36 +765,36 @@ input, textarea{
 
 #cardObraLancamento .lock-row{
   display:grid!important;
-  grid-template-columns:minmax(210px,390px) auto!important;
-  gap:8px!important;
+  grid-template-columns:minmax(189px,351px) auto!important;
+  gap:7.2px!important;
   align-items:center!important;
 }
 
 #obraSelect{
-  height:36px!important;
-  min-height:36px!important;
+  height:32.4px!important;
+  min-height:32.4px!important;
   border:1px solid #bfdbfe!important;
-  border-radius:10px!important;
+  border-radius:9px!important;
   background:#fff!important;
-  font-size:12px!important;
+  font-size:10.8px!important;
   font-weight:850!important;
-  padding:0 34px 0 10px!important;
+  padding:0 30.6px 0 9px!important;
 }
 
 #btnTravarObra{
-  height:34px!important;
-  min-height:34px!important;
-  padding:0 11px!important;
-  border-radius:10px!important;
-  font-size:11px!important;
+  height:30.6px!important;
+  min-height:30.6px!important;
+  padding:0 9.9px!important;
+  border-radius:9px!important;
+  font-size:9.9px!important;
   box-shadow:none!important;
 }
 
 #cardObraLancamento.obra-unica{
   display:flex!important;
   align-items:center!important;
-  gap:8px!important;
-  min-height:40px!important;
+  gap:7.2px!important;
+  min-height:30.6px!important;
 }
 
 #cardObraLancamento.obra-unica h3{
@@ -785,12 +825,12 @@ input, textarea{
 /* Grade principal mais compacta, sem desperdiçar largura. */
 #cardEntradaPatrimonio .grid{
   grid-template-columns:
-    minmax(230px,1.55fr)
-    minmax(170px,.9fr)
-    minmax(155px,.78fr)
-    minmax(155px,.78fr)
-    minmax(170px,.85fr)!important;
-  gap:9px!important;
+    minmax(207px,1.55fr)
+    minmax(153px,.9fr)
+    minmax(139.5px,.78fr)
+    minmax(139.5px,.78fr)
+    minmax(153px,.85fr)!important;
+  gap:8.1px!important;
 }
 
 #cardEntradaPatrimonio input,
@@ -799,28 +839,28 @@ input, textarea{
   border:1px solid #dbe3ee!important;
   background:#fff!important;
   color:#172033!important;
-  border-radius:11px!important;
+  border-radius:9.9px!important;
   box-shadow:none!important;
 }
 
 #cardEntradaPatrimonio input,
 #cardEntradaPatrimonio select{
-  height:38px!important;
-  min-height:38px!important;
-  font-size:12px!important;
-  padding:0 10px!important;
+  height:34.2px!important;
+  min-height:28.8px!important;
+  font-size:10.8px!important;
+  padding:0 9px!important;
 }
 
 #cardEntradaPatrimonio select{
-  max-width:230px;
+  max-width:207px;
   background-color:#f8fbff!important;
   border-color:#bfdbfe!important;
   font-weight:850!important;
 }
 
-#tipo_item{max-width:215px!important}
-#status_inicial{max-width:190px!important}
-#estado_conservacao{max-width:180px!important}
+#tipo_item{max-width:193.5px!important}
+#status_inicial{max-width:171px!important}
+#estado_conservacao{max-width:162px!important}
 
 #cardEntradaPatrimonio select:focus,
 #cardEntradaPatrimonio input:focus,
@@ -835,21 +875,21 @@ input, textarea{
   width:max-content!important;
   max-width:100%!important;
   align-items:center!important;
-  gap:8px!important;
-  padding:8px 11px!important;
+  gap:7.2px!important;
+  padding:7.2px 9.9px!important;
   margin:0!important;
   border:1px solid #fde68a!important;
-  border-radius:11px!important;
+  border-radius:9.9px!important;
   background:#fffbeb!important;
   color:#78350f!important;
-  font-size:12px!important;
+  font-size:10.8px!important;
   font-weight:900!important;
   cursor:pointer!important;
 }
 
 .check-line.atlas-legado input{
-  width:17px!important;
-  height:17px!important;
+  width:15.3px!important;
+  height:15.3px!important;
   min-height:0!important;
   margin:0!important;
   accent-color:#f59e0b!important;
@@ -859,7 +899,7 @@ input, textarea{
 .atlas-legado-wrap{
   display:flex;
   align-items:center;
-  margin:9px 0 2px;
+  margin:8.1px 0 2px;
 }
 
 /* Autocomplete */
@@ -874,18 +914,18 @@ input, textarea{
 
 .atlas-sugestoes{
   position:absolute;
-  top:calc(100% + 5px);
+  top:calc(100% + 4.5px);
   left:0;
   right:0;
   z-index:99999;
   display:none;
-  max-height:245px;
+  max-height:220.5px;
   overflow:auto;
   background:#fff;
   border:1px solid #bfdbfe;
-  border-radius:13px;
-  box-shadow:0 16px 38px rgba(15,23,42,.16);
-  padding:5px;
+  border-radius:11.7px;
+  box-shadow:0 14.4px 34.2px rgba(15,23,42,.16);
+  padding:4.5px;
 }
 
 .atlas-sugestoes.ativo{display:block}
@@ -896,9 +936,9 @@ input, textarea{
   background:#fff!important;
   color:#172033!important;
   text-align:left!important;
-  padding:9px 10px!important;
-  border-radius:9px!important;
-  font-size:12px!important;
+  padding:8.1px 9px!important;
+  border-radius:8.1px!important;
+  font-size:10.8px!important;
   font-weight:850!important;
   cursor:pointer!important;
 }
@@ -913,13 +953,13 @@ input, textarea{
   display:block;
   margin-top:2px;
   color:#64748b;
-  font-size:9px;
+  font-size:8.1px;
   font-weight:800;
 }
 
 /* Campos dinâmicos */
 #camposExtras{
-  grid-template-columns:repeat(auto-fit,minmax(155px,210px))!important;
+  grid-template-columns:repeat(auto-fit,minmax(139.5px,189px))!important;
   align-items:start;
 }
 
@@ -928,15 +968,15 @@ input, textarea{
   background:#f0fdf4!important;
   color:#17211a!important;
   border:1px solid #86efac!important;
-  border-left:5px solid #16a34a!important;
-  box-shadow:0 16px 38px rgba(22,163,74,.18)!important;
+  border-left:4.5px solid #16a34a!important;
+  box-shadow:0 14.4px 34.2px rgba(22,163,74,.18)!important;
 }
 .atlas-patrimonio-toast.offline{
   background:#fffbeb!important;
   color:#422006!important;
   border-color:#fde68a!important;
   border-left-color:#f59e0b!important;
-  box-shadow:0 16px 38px rgba(245,158,11,.16)!important;
+  box-shadow:0 14.4px 34.2px rgba(245,158,11,.16)!important;
 }
 
 /* Um único aviso offline desta página: o aviso global permanece como fonte oficial. */
@@ -987,7 +1027,7 @@ input, textarea{
 /* Cadastro: volta ao padrão estável de cinco campos */
 #cardEntradaPatrimonio .grid{
   grid-template-columns:1.15fr .9fr .9fr .9fr .9fr!important;
-  gap:10px!important;
+  gap:7.2px!important;
   align-items:center!important;
 }
 
@@ -997,7 +1037,7 @@ input, textarea{
 #cardEntradaPatrimonio textarea,
 #cardEntradaPatrimonio select option{
   font-weight:400!important;
-  font-size:12px!important;
+  font-size:10.8px!important;
   color:#334155!important;
 }
 
@@ -1006,13 +1046,13 @@ input, textarea{
   width:100%!important;
   max-width:none!important;
   min-width:0!important;
-  min-height:42px!important;
-  height:42px!important;
+  min-height:32.4px!important;
+  height:37.8px!important;
 }
 
 #cardEntradaPatrimonio textarea{
   width:100%!important;
-  min-height:64px!important;
+  min-height:48.6px!important;
 }
 
 /* Tipo longo cabe sem encolher demais */
@@ -1048,7 +1088,7 @@ input, textarea{
 .atlas-legado-wrap{
   display:flex!important;
   align-items:center!important;
-  margin:8px 0 2px!important;
+  margin:7.2px 0 2px!important;
 }
 
 .check-line.atlas-legado{
@@ -1056,28 +1096,28 @@ input, textarea{
   width:auto!important;
   max-width:max-content!important;
   align-items:center!important;
-  gap:7px!important;
+  gap:6.3px!important;
   padding:0!important;
   border:0!important;
   background:transparent!important;
   color:#475569!important;
-  font-size:12px!important;
+  font-size:10.8px!important;
   font-weight:400!important;
   cursor:pointer!important;
 }
 
 .check-line.atlas-legado input{
-  width:16px!important;
-  height:16px!important;
+  width:14.4px!important;
+  height:14.4px!important;
   min-height:0!important;
   margin:0!important;
 }
 
 /* Obra conserva o padrão antigo e o botão fica proporcional */
 #cardObraLancamento .lock-row{
-  max-width:720px!important;
-  grid-template-columns:minmax(260px,1fr) 120px!important;
-  gap:10px!important;
+  max-width:550.8px!important;
+  grid-template-columns:minmax(234px,1fr) 108px!important;
+  gap:7.2px!important;
 }
 
 #obraSelect{
@@ -1085,16 +1125,16 @@ input, textarea{
 }
 
 #btnTravarObra{
-  width:120px!important;
-  min-width:120px!important;
-  max-width:120px!important;
-  font-size:11px!important;
+  width:108px!important;
+  min-width:108px!important;
+  max-width:108px!important;
+  font-size:9.9px!important;
 }
 
 /* Consulta mantém uma linha alinhada */
 .card:has(#busca) .grid{
   grid-template-columns:1.25fr .9fr .9fr .9fr!important;
-  gap:10px!important;
+  gap:7.2px!important;
 }
 
 /* Celular/tablet: quebra controlada */
@@ -1139,7 +1179,7 @@ input, textarea{
     .78fr
     .58fr
     .82fr!important;
-  gap:10px!important;
+  gap:7.2px!important;
   align-items:center!important;
 }
 
@@ -1154,7 +1194,7 @@ input, textarea{
 .check-line.atlas-legado{
   display:inline-flex!important;
   align-items:center!important;
-  gap:6px!important;
+  gap:5.4px!important;
   width:auto!important;
   max-width:max-content!important;
   padding:0!important;
@@ -1166,12 +1206,12 @@ input, textarea{
 }
 
 .check-line.atlas-legado input{
-  width:15px!important;
-  height:15px!important;
-  min-width:15px!important;
-  min-height:15px!important;
-  max-width:15px!important;
-  max-height:15px!important;
+  width:13.5px!important;
+  height:13.5px!important;
+  min-width:13.5px!important;
+  min-height:13.5px!important;
+  max-width:13.5px!important;
+  max-height:13.5px!important;
   padding:0!important;
   margin:0!important;
   border-radius:3px!important;
@@ -1182,27 +1222,27 @@ input, textarea{
 .atlas-legado-wrap{
   display:flex!important;
   align-items:center!important;
-  min-height:22px!important;
-  margin:8px 0 4px!important;
+  min-height:19.8px!important;
+  margin:7.2px 0 3.6px!important;
 }
 
 /* Botão Confirmar obra: texto inteiro e tamanho proporcional */
 #btnTravarObra{
-  width:112px!important;
-  min-width:112px!important;
-  max-width:112px!important;
-  height:38px!important;
-  min-height:38px!important;
-  padding:0 10px!important;
-  font-size:11px!important;
+  width:100.8px!important;
+  min-width:100.8px!important;
+  max-width:100.8px!important;
+  height:34.2px!important;
+  min-height:28.8px!important;
+  padding:0 9px!important;
+  font-size:9.9px!important;
   font-weight:700!important;
   white-space:nowrap!important;
   overflow:visible!important;
 }
 
 #cardObraLancamento .lock-row{
-  grid-template-columns:minmax(260px,540px) 112px!important;
-  gap:10px!important;
+  grid-template-columns:minmax(234px,486px) 100.8px!important;
+  gap:7.2px!important;
 }
 
 /* Mantém campos sem negrito */
@@ -1215,7 +1255,9 @@ input, textarea{
 #busca::placeholder,
 #filtroObra,
 #filtroStatus,
-#filtroTipo{
+#filtroTipo,
+#filtroUsuario,
+#filtroAntigo{
   font-weight:400!important;
 }
 
@@ -1260,21 +1302,21 @@ input, textarea{
 
 .atlas-legado-wrap{
   display:block!important;
-  margin:10px 0 4px!important;
-  min-height:34px!important;
+  margin:9px 0 3.6px!important;
+  min-height:30.6px!important;
 }
 
 .atlas-legado-toggle{
   display:inline-flex;
   align-items:center;
-  gap:7px;
-  min-height:34px;
-  padding:7px 10px;
+  gap:6.3px;
+  min-height:30.6px;
+  padding:6.3px 9px;
   border:1px solid #dbe3ee;
-  border-radius:10px;
+  border-radius:9px;
   background:#f8fafc;
   color:#475569;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:400;
   cursor:pointer;
   transition:.18s ease;
@@ -1297,16 +1339,16 @@ input, textarea{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:16px;
-  height:16px;
+  width:14.4px;
+  height:14.4px;
   border:1.5px solid currentColor;
   border-radius:50%;
-  font-size:10px;
+  font-size:9px;
   line-height:1;
 }
 
 .atlas-legado-toggle.ativo .atlas-legado-icone{
-  border-radius:4px;
+  border-radius:3.6px;
 }
 
 #checkLegado{
@@ -1315,8 +1357,8 @@ input, textarea{
 
 #camposLegado{
   display:none!important;
-  margin-top:8px!important;
-  grid-template-columns:minmax(250px,380px)!important;
+  margin-top:7.2px!important;
+  grid-template-columns:minmax(225px,342px)!important;
 }
 
 #camposLegado.ativo{
@@ -1332,7 +1374,7 @@ input, textarea{
 }
 
 @keyframes atlasAbrirLegado{
-  from{opacity:0;transform:translateY(-4px)}
+  from{opacity:0;transform:translateY(-3.6px)}
   to{opacity:1;transform:translateY(0)}
 }
 
@@ -1341,8 +1383,8 @@ input, textarea{
 
 #camposLegado{
   display:none!important;
-  margin-top:8px!important;
-  grid-template-columns:minmax(260px,420px)!important;
+  margin-top:7.2px!important;
+  grid-template-columns:minmax(234px,378px)!important;
 }
 
 #camposLegado.ativo{
@@ -1352,11 +1394,11 @@ input, textarea{
 
 #camposLegado input{
   width:100%!important;
-  height:42px!important;
-  min-height:42px!important;
-  padding:0 11px!important;
+  height:37.8px!important;
+  min-height:32.4px!important;
+  padding:0 9.9px!important;
   border:1px solid #fde68a!important;
-  border-radius:11px!important;
+  border-radius:9.9px!important;
   background:#fffbeb!important;
   color:#78350f!important;
   font-weight:400!important;
@@ -1373,27 +1415,27 @@ input, textarea{
 .atlas-opcoes-cadastro{
   display:flex!important;
   align-items:flex-start!important;
-  gap:9px!important;
+  gap:8.1px!important;
   flex-wrap:wrap!important;
-  margin:10px 0 4px!important;
+  margin:9px 0 3.6px!important;
 }
 .atlas-opcoes-cadastro .atlas-legado-wrap,
 .atlas-opcoes-cadastro .atlas-fiscal-wrap{
   display:block!important;
   margin:0!important;
-  min-height:34px!important;
+  min-height:30.6px!important;
 }
 .atlas-fiscal-toggle{
   display:inline-flex;
   align-items:center;
-  gap:7px;
-  min-height:34px;
-  padding:7px 10px;
+  gap:6.3px;
+  min-height:30.6px;
+  padding:6.3px 9px;
   border:1px solid #dbe3ee;
-  border-radius:10px;
+  border-radius:9px;
   background:#f8fafc;
   color:#475569;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:400;
   cursor:pointer;
   transition:.18s ease;
@@ -1413,19 +1455,19 @@ input, textarea{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:16px;
-  height:16px;
+  width:14.4px;
+  height:14.4px;
   border:1.5px solid currentColor;
   border-radius:50%;
-  font-size:10px;
+  font-size:9px;
   line-height:1;
 }
-.atlas-fiscal-toggle.ativo .atlas-fiscal-icone{border-radius:4px}
+.atlas-fiscal-toggle.ativo .atlas-fiscal-icone{border-radius:3.6px}
 #camposFiscais{
   display:none!important;
-  margin-top:8px!important;
-  grid-template-columns:minmax(180px,260px) minmax(220px,340px)!important;
-  gap:10px!important;
+  margin-top:7.2px!important;
+  grid-template-columns:minmax(162px,234px) minmax(198px,306px)!important;
+  gap:7.2px!important;
 }
 #camposFiscais.ativo{
   display:grid!important;
@@ -1433,8 +1475,8 @@ input, textarea{
 }
 #camposFiscais input{
   width:100%!important;
-  height:42px!important;
-  min-height:42px!important;
+  height:37.8px!important;
+  min-height:32.4px!important;
   border:1px solid #bfdbfe!important;
   background:#f8fbff!important;
   color:#1e3a8a!important;
@@ -1443,9 +1485,9 @@ input, textarea{
 #camposFiscais input::placeholder{color:#64748b!important}
 .atlas-edicao-fiscal-titulo{
   grid-column:1/-1;
-  margin:4px 0 -2px;
+  margin:3.6px 0 -2px;
   color:#1e3a8a;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:900;
 }
 @media(max-width:620px){
@@ -1466,14 +1508,14 @@ input, textarea{
 
 #obraBusca{
   width:100%!important;
-  height:38px!important;
-  min-height:38px!important;
-  padding:0 42px 0 11px!important;
+  height:34.2px!important;
+  min-height:28.8px!important;
+  padding:0 37.8px 0 9.9px!important;
   border:1px solid #bfdbfe!important;
-  border-radius:10px!important;
+  border-radius:9px!important;
   background:#fff!important;
   color:#0f172a!important;
-  font-size:12px!important;
+  font-size:10.8px!important;
   font-weight:400!important;
   outline:none!important;
   box-sizing:border-box!important;
@@ -1494,17 +1536,17 @@ input, textarea{
 
 .atlas-obra-combo-seta{
   position:absolute;
-  right:4px;
-  top:4px;
-  width:31px!important;
-  height:30px!important;
-  min-height:30px!important;
+  right:3.6px;
+  top:3.6px;
+  width:27.9px!important;
+  height:27px!important;
+  min-height:27px!important;
   padding:0!important;
   border:0!important;
-  border-radius:8px!important;
+  border-radius:7.2px!important;
   background:transparent!important;
   color:#475569!important;
-  font-size:11px!important;
+  font-size:9.9px!important;
   cursor:pointer!important;
   box-shadow:none!important;
 }
@@ -1521,18 +1563,18 @@ input, textarea{
 
 .atlas-obra-sugestoes{
   position:absolute;
-  top:calc(100% + 5px);
+  top:calc(100% + 4.5px);
   left:0;
   right:0;
   z-index:100000;
   display:none;
-  max-height:260px;
+  max-height:234px;
   overflow:auto;
-  padding:5px;
+  padding:4.5px;
   border:1px solid #bfdbfe;
-  border-radius:12px;
+  border-radius:10.8px;
   background:#fff;
-  box-shadow:0 16px 38px rgba(15,23,42,.18);
+  box-shadow:0 14.4px 34.2px rgba(15,23,42,.18);
 }
 
 .atlas-obra-sugestoes.ativo{
@@ -1543,12 +1585,12 @@ input, textarea{
   display:block;
   width:100%;
   border:0!important;
-  border-radius:8px!important;
+  border-radius:7.2px!important;
   background:#fff!important;
   color:#172033!important;
   text-align:left!important;
-  padding:9px 10px!important;
-  font-size:12px!important;
+  padding:8.1px 9px!important;
+  font-size:10.8px!important;
   font-weight:400!important;
   cursor:pointer!important;
   box-shadow:none!important;
@@ -1561,15 +1603,15 @@ input, textarea{
 }
 
 .atlas-obra-vazio{
-  padding:10px;
+  padding:9px;
   color:#64748b;
-  font-size:12px;
+  font-size:10.8px;
 }
 
 @media(max-width:460px){
   #obraBusca{
     height:40px!important;
-    min-height:40px!important;
+    min-height:34px!important;
   }
 }
 
@@ -1614,36 +1656,36 @@ input, textarea{
   display:none;
   align-items:center;
   justify-content:center;
-  padding:16px;
+  padding:14.4px;
   background:rgba(15,23,42,.72);
 }
 .atlas-config-etiqueta-modal-bg.ativo{display:flex}
 .atlas-config-etiqueta-modal{
-  width:min(1180px,96vw);
-  height:min(820px,94vh);
+  width:min(1062px,96vw);
+  height:min(738px,94vh);
   display:flex;
   flex-direction:column;
   overflow:hidden;
   background:#fff;
-  border-radius:18px;
-  border-left:5px solid var(--bdr-red,#d71920);
-  box-shadow:0 28px 80px rgba(15,23,42,.38);
+  border-radius:16.2px;
+  border-left:4.5px solid var(--bdr-red,#d71920);
+  box-shadow:0 25.2px 72px rgba(15,23,42,.38);
 }
 .atlas-config-etiqueta-modal-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
-  padding:12px 14px;
+  gap:9px;
+  padding:10.8px 12.6px;
   border-bottom:1px solid #e5e7eb;
   color:var(--bdr-red,#d71920);
   background:#fff;
 }
 .atlas-config-etiqueta-modal-head button{
-  width:34px;
-  height:34px;
+  width:30.6px;
+  height:30.6px;
   border:0;
-  border-radius:10px;
+  border-radius:9px;
   background:#fee2e2;
   color:#991b1b;
   font-weight:900;
@@ -1695,19 +1737,19 @@ input, textarea{
 .bdr-etiqueta-help{
   display:block;
   margin-top:3px;
-  font-size:10px;
+  font-size:9px;
   color:#64748b;
   font-weight:800;
 }
 .bdr-etiqueta-footer{
   flex-direction:column;
   align-items:center;
-  gap:9px;
+  gap:8.1px;
 }
 .bdr-etiqueta-status{
-  min-height:18px;
+  min-height:16.2px;
   color:#92400e;
-  font-size:11px;
+  font-size:9.9px;
   font-weight:900;
   text-align:center;
 }
@@ -1720,7 +1762,7 @@ input, textarea{
 }
 
 /* Campo amplo usado nas descrições detalhadas do Imobilizado. */
-.atlas-campo-largo{grid-column:1 / -1;min-height:82px;resize:vertical;}
+.atlas-campo-largo{grid-column:1 / -1;min-height:73.8px;resize:vertical;}
 
 
 /* =========================================================
@@ -1763,33 +1805,33 @@ textarea,
 
 .atlas-autocomplete-lista{
   position:absolute;
-  top:calc(100% + 5px);
+  top:calc(100% + 4.5px);
   left:0;
   right:0;
   z-index:10020;
   display:none;
-  max-height:220px;
+  max-height:198px;
   overflow:auto;
   border:1px solid #dbe3ee;
-  border-radius:11px;
+  border-radius:9.9px;
   background:#fff;
-  box-shadow:0 16px 34px rgba(15,23,42,.16);
+  box-shadow:0 14.4px 30.6px rgba(15,23,42,.16);
 }
 
 .atlas-autocomplete-lista.ativo{display:block}
 
 .atlas-autocomplete-opcao{
   width:100%;
-  min-height:36px;
+  min-height:32.4px;
   display:flex;
   align-items:center;
-  padding:8px 11px;
+  padding:7.2px 9.9px;
   border:0;
   border-bottom:1px solid #f1f5f9;
   border-radius:0!important;
   background:#fff;
   color:#1e293b;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:800;
   text-align:left;
   cursor:pointer;
@@ -1798,23 +1840,23 @@ textarea,
 .atlas-autocomplete-opcao:last-child{border-bottom:0}
 .atlas-autocomplete-opcao:hover,
 .atlas-autocomplete-opcao.ativo{background:#eff6ff;color:#1d4ed8}
-.atlas-autocomplete-vazio{padding:9px 11px;color:#94a3b8;font-size:11px;font-weight:700}
+.atlas-autocomplete-vazio{padding:8.1px 9.9px;color:#94a3b8;font-size:9.9px;font-weight:700}
 
 /* =========================================================
    ATLAS PATRIMÔNIO — VISUALIZAÇÃO DE INATIVOS
 ========================================================= */
 .atlas-inativos-toggle{
-  min-height:40px;
+  min-height:36px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:7px;
-  padding:0 12px;
+  gap:6.3px;
+  padding:0 10.8px;
   border:1px solid #cbd5e1;
-  border-radius:10px;
+  border-radius:9px;
   background:#fff;
   color:#475569;
-  font-size:12px;
+  font-size:10.8px;
   font-weight:850;
   cursor:pointer;
 }
@@ -1914,3 +1956,373 @@ textarea,
   z-index:1!important;
 }
 
+
+
+/* Filtro de etiqueta antiga: toggle compacto no mesmo padrão visual dos botões auxiliares. */
+.btn-filtro-antigo{
+  min-width:0;
+  width:100%;
+  min-height:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:7px;
+  padding:0 10px;
+  border:1px solid #d5deea;
+  border-radius:9px;
+  background:#fff;
+  color:#34445a;
+  font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+  white-space:nowrap;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+.btn-filtro-antigo:hover{background:#f8fafc;border-color:#b8c5d7}
+.btn-filtro-antigo.ativo,
+.btn-filtro-antigo[aria-pressed="true"]{
+  background:#fff5f5;
+  border-color:#c91f2b;
+  color:#a80f1a;
+}
+.filtro-antigo-icone{font-size:14px;line-height:1}
+
+/* Só quebra quando a largura realmente não comportar os seis controles. */
+@media (max-width:1050px){
+  .localizador-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media (max-width:700px){
+  .localizador-grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* =========================================================
+   LOCALIZADOR PATRIMÔNIO — 6 CONTROLES EM UMA ÚNICA LINHA
+   Pesquisa | Obra | Status | Tipo | Cadastrador | Antigo
+   ========================================================= */
+.card:has(#busca) .grid{
+  display:grid!important;
+  grid-template-columns:
+    minmax(250px,1.55fr)
+    minmax(190px,1.05fr)
+    minmax(118px,.62fr)
+    minmax(130px,.70fr)
+    minmax(175px,.95fr)
+    minmax(145px,.72fr)!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+
+/* Select original continua existindo para toda a lógica antiga,
+   mas o usuário usa o combobox pesquisável abaixo. */
+.atlas-combo-native{
+  display:none!important;
+}
+
+.atlas-combo{
+  position:relative;
+  min-width:0;
+  width:100%;
+}
+
+.atlas-combo-input{
+  width:100%!important;
+  height:34px!important;
+  min-height:34px!important;
+  box-sizing:border-box!important;
+  padding:0 30px 0 10px!important;
+  border:1px solid #d5deea!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#27364a!important;
+  font-size:12px!important;
+  font-weight:400!important;
+  outline:none!important;
+}
+
+.atlas-combo-input:focus{
+  border-color:#b5121b!important;
+  box-shadow:0 0 0 2px rgba(181,18,27,.08)!important;
+}
+
+.atlas-combo::after{
+  content:"⌄";
+  position:absolute;
+  right:10px;
+  top:7px;
+  pointer-events:none;
+  color:#5d6878;
+  font-size:14px;
+}
+
+.atlas-combo-menu{
+  display:none;
+  position:absolute;
+  z-index:5000;
+  top:calc(100% + 4px);
+  left:0;
+  width:100%;
+  min-width:100%;
+  max-height:210px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(15,23,42,.16);
+  padding:4px;
+}
+
+.atlas-combo.aberto .atlas-combo-menu{display:block}
+
+.atlas-combo-opcao{
+  display:block;
+  width:100%;
+  border:0;
+  background:transparent;
+  text-align:left;
+  padding:7px 8px;
+  border-radius:6px;
+  color:#172033;
+  font-size:12px;
+  line-height:1.2;
+  cursor:pointer;
+  white-space:normal;
+}
+
+.atlas-combo-opcao:hover,
+.atlas-combo-opcao.ativo{
+  background:#eef4ff;
+}
+
+.atlas-combo-vazio{
+  padding:9px;
+  color:#7a8494;
+  font-size:11px;
+}
+
+/* O botão de patrimônio antigo fica compacto, no mesmo alinhamento. */
+.btn-filtro-antigo{
+  height:34px!important;
+  min-height:34px!important;
+  padding:0 9px!important;
+  font-size:11.5px!important;
+}
+
+/* Notebook/desktop: preservar uma linha enquanto houver espaço útil. */
+@media (min-width:1001px){
+  .card:has(#busca) .grid{
+    grid-template-columns:
+      minmax(220px,1.45fr)
+      minmax(175px,1.05fr)
+      minmax(112px,.60fr)
+      minmax(120px,.66fr)
+      minmax(165px,.92fr)
+      minmax(138px,.70fr)!important;
+  }
+}
+
+/* Só quebra em telas realmente menores. */
+@media (max-width:1000px){
+  .card:has(#busca) .grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media (max-width:620px){
+  .card:has(#busca) .grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+.campo-moeda{display:flex;align-items:center;width:100%;min-width:0;height:40px;box-sizing:border-box;border:1px solid #cbdcf4;border-radius:10px;background:#fff;overflow:hidden}
+.campo-moeda:focus-within{border-color:#75aef7;box-shadow:0 0 0 2px rgba(59,130,246,.08)}
+.campo-moeda-prefixo{flex:0 0 auto;padding:0 8px 0 12px;color:#42536b;font-size:12px;font-weight:800;line-height:1;user-select:none}
+.campo-moeda input{flex:1 1 auto;min-width:0;width:100%;height:100%!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;padding-left:0!important;background:transparent!important}
+#busca{-webkit-appearance:none;appearance:none}
+#busca::-webkit-search-cancel-button,#busca::-webkit-search-decoration,#busca::-webkit-search-results-button,#busca::-webkit-search-results-decoration{-webkit-appearance:none;display:none}
+
+/* O Localizador e seus menus ficam acima da lista seguinte. */
+.card:has(#busca){position:relative!important;z-index:80!important;overflow:visible!important}
+.card:has(#busca):focus-within{z-index:120!important}
+.card:has(#busca) .grid{overflow:visible!important}
+.atlas-combo.aberto{z-index:130!important}
+.atlas-combo-menu{z-index:9999!important}
+#lista{position:relative;z-index:1}
+
+/* Em seleção de etiquetas, qualquer área livre da linha seleciona/desseleciona. */
+body.bdr-modo-selecao-etiquetas .linha-patrimonio{cursor:pointer!important}
+body.bdr-modo-selecao-etiquetas .linha-patrimonio:hover{background:#fff4f4!important;box-shadow:inset 0 0 0 1px rgba(185,28,28,.12)}
+body.bdr-modo-selecao-etiquetas .linha-patrimonio:has(.bdr-etiqueta-check:checked){background:#fff1f2!important;box-shadow:inset 3px 0 0 #b91c1c}
+
+/* Notebook: mantém tudo dentro da área útil, sem zoom ou scale. */
+html,body{max-width:100%;overflow-x:hidden!important}
+.card,.card .grid,.card:has(#busca),.card:has(#busca) .grid{
+  min-width:0!important;max-width:100%!important;box-sizing:border-box!important
+}
+.card:has(#busca) .grid{
+  grid-template-columns:minmax(190px,1.42fr) minmax(155px,1fr) minmax(98px,.56fr) minmax(105px,.60fr) minmax(145px,.88fr) minmax(128px,.70fr)!important;
+  gap:6px!important;width:100%!important
+}
+.card .grid>*,
+.card .grid input,.card .grid select,.card .grid button,
+.card .grid .atlas-combo,.card .grid .campo-moeda{
+  min-width:0!important;max-width:100%!important;box-sizing:border-box!important
+}
+@media (min-width:1001px) and (max-width:1450px){
+  .card:has(#busca) .grid{
+    grid-template-columns:minmax(175px,1.35fr) minmax(145px,.98fr) minmax(92px,.54fr) minmax(98px,.58fr) minmax(135px,.84fr) minmax(120px,.68fr)!important
+  }
+  .card:has(#busca) input,.card:has(#busca) select,.card:has(#busca) button,
+  .card:has(#busca) .atlas-combo-input{font-size:11px!important}
+}
+@media (max-width:1000px){
+  .card:has(#busca) .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:620px){
+  .card:has(#busca) .grid{grid-template-columns:1fr!important}
+}
+#lista,.tabela-patrimonios,.patrimonios-lista{
+  min-width:0!important;max-width:100%!important;box-sizing:border-box!important
+}
+
+/* Combo estável: sem "espasmo" ao trocar/pesquisar opções. */
+.atlas-combo{position:relative!important;min-width:0!important}
+.atlas-combo-menu{
+  position:absolute!important;
+  left:0!important;
+  right:auto!important;
+  top:calc(100% + 4px)!important;
+  width:100%!important;
+  min-width:100%!important;
+  max-width:100%!important;
+  height:220px!important;
+  min-height:220px!important;
+  max-height:220px!important;
+  overflow-y:scroll!important;
+  overflow-x:hidden!important;
+  scrollbar-gutter:stable!important;
+  box-sizing:border-box!important;
+  overscroll-behavior:contain!important;
+}
+.atlas-combo-menu[hidden]{display:none!important}
+.atlas-combo-opcao{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+
+/* A RECEBER: ação discreta para continuar o recebimento na Expedição. */
+.atlas-remessa-acoes{
+  display:flex;
+  justify-content:flex-end;
+  padding-top:12px;
+  margin-top:10px;
+  border-top:1px solid #e5e7eb;
+}
+.atlas-remessa-receber{
+  border:1px solid #d7dde8;
+  background:#fff;
+  color:#172033;
+  border-radius:9px;
+  padding:7px 12px;
+  min-height:34px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+}
+.atlas-remessa-receber:hover{
+  background:#f7f9fc;
+  border-color:#b9c3d3;
+}
+
+
+/* Histórico patrimonial integrado ao modal de detalhes */
+.atlas-patrimonio-info-wrap{position:relative!important;padding-right:52px!important;}
+.atlas-patrimonio-historico-btn{position:absolute!important;top:12px!important;right:12px!important;width:34px!important;height:34px!important;padding:0!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#111827!important;font-size:22px!important;line-height:1!important;display:flex!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;box-shadow:none!important;z-index:2!important;}
+.atlas-patrimonio-historico-btn:hover,.atlas-patrimonio-historico-btn:focus-visible{background:#e2e8f0!important;color:var(--bdr-red,#a4161a)!important;outline:none!important;}
+.atlas-historico-patrimonio-modal{width:min(920px,94vw)!important;max-height:90vh!important;overflow:auto!important;}
+.atlas-historico-subtitulo{margin:-4px 0 14px;color:#64748b;font-size:12px;}
+.atlas-historico-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px;}
+.atlas-historico-resumo>div{padding:9px 10px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc;min-width:0;}
+.atlas-historico-resumo label{display:block;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:2px;}
+.atlas-historico-resumo strong{display:block;font-size:12px;color:#111827;overflow-wrap:anywhere;}
+.atlas-historico-timeline{display:grid;gap:8px;margin-top:8px;}
+.atlas-historico-evento{display:grid;grid-template-columns:112px 14px 1fr;gap:8px;align-items:start;}
+.atlas-historico-data{font-size:10px;color:#64748b;font-weight:800;text-align:right;padding-top:5px;}
+.atlas-historico-eixo{position:relative;min-height:54px;}
+.atlas-historico-eixo:before{content:"";position:absolute;left:6px;top:10px;bottom:-14px;width:2px;background:#e2e8f0;}
+.atlas-historico-evento:last-child .atlas-historico-eixo:before{display:none;}
+.atlas-historico-eixo:after{content:"";position:absolute;left:2px;top:5px;width:10px;height:10px;border-radius:50%;background:#b5121b;border:2px solid #fee2e2;box-sizing:border-box;}
+.atlas-historico-box{border:1px solid #e2e8f0;border-radius:9px;padding:9px 11px;background:#fff;}
+.atlas-historico-box strong{display:block;font-size:11px;color:#0f172a;margin-bottom:3px;}
+.atlas-historico-box span{display:block;font-size:10px;color:#475569;line-height:1.45;white-space:pre-line;}
+.atlas-historico-vazio{padding:22px;text-align:center;border:1px dashed #cbd5e1;border-radius:10px;color:#64748b;background:#f8fafc;}
+@media(max-width:760px){.atlas-historico-resumo{grid-template-columns:1fr 1fr}.atlas-patrimonio-info-wrap{padding-right:44px!important}.atlas-patrimonio-historico-btn{top:8px!important;right:8px!important}.atlas-historico-evento{grid-template-columns:78px 12px 1fr;gap:5px}}
+
+
+.atlas-patrimonio-toast.info{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+  box-shadow:0 16.2px 40.5px rgba(37,99,235,.28);
+}
+
+.atlas-patrimonio-historico-icone{
+  width:28px;
+  height:28px;
+  display:block;
+  overflow:visible;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke:currentColor;
+  stroke-width:2.25;
+}
+
+
+
+/* Detalhes do patrimônio: compacto no desktop, mantendo o fluxo atual. */
+@media(min-width:901px){
+  #modalBg{
+    padding:24px!important;
+  }
+  #modalBg > .modal{
+    width:min(720px,calc(100vw - 48px))!important;
+    max-width:720px!important;
+    max-height:calc(100vh - 48px)!important;
+    padding:18px 20px!important;
+    overflow:auto!important;
+  }
+  #modalBg > .modal h2{
+    margin:0 44px 10px 0!important;
+    font-size:20px!important;
+    line-height:1.15!important;
+  }
+  #modalBg .atlas-patrimonio-info-wrap{
+    padding:11px 12px!important;
+    margin-bottom:10px!important;
+    font-size:11.5px!important;
+    line-height:1.38!important;
+    max-height:220px!important;
+    overflow:auto!important;
+  }
+  #modalBg #atlasControlesPatrimonioAtivo textarea{
+    min-height:58px!important;
+  }
+  #modalBg #atlasControlesPatrimonioAtivo label{
+    font-size:11.5px!important;
+  }
+  #modalBg .acoes{
+    gap:7px!important;
+    margin-top:12px!important;
+  }
+  #modalBg .acoes button{
+    min-height:32px!important;
+    padding:7px 10px!important;
+    font-size:11px!important;
+  }
+}

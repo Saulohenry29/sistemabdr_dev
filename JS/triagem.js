@@ -36,7 +36,7 @@ window.onload = async () => {
 };
 
 window.addEventListener("online", async () => {
-  console.log("BDR: internet voltou, atualizando triagem e sincronizando pendências.");
+  void 0;
   if(window.BDROfflineSync?.sincronizarPendentes){
     await window.BDROfflineSync.sincronizarPendentes();
   }
@@ -44,7 +44,7 @@ window.addEventListener("online", async () => {
 });
 
 window.addEventListener("offline", () => {
-  console.log("BDR: triagem entrou em modo offline.");
+  void 0;
   if(window.BDROfflineSync?.ativarOfflineAuto){
     window.BDROfflineSync.ativarOfflineAuto("evento_offline_triagem");
   }
@@ -54,7 +54,7 @@ window.addEventListener("offline", () => {
 });
 
 window.addEventListener("bdrOnlineRealVoltou", async () => {
-  console.log("BDR: online real voltou, atualizando triagem.");
+  void 0;
   await carregarTriagem();
 });
 
@@ -286,7 +286,7 @@ async function carregarTriagemDoCacheRapido(){
     carregarFiltroMes();
     renderizarTudo();
 
-    console.log(`BDR cache rápido: triagem carregada do IndexedDB (${entradas.length} NF / ${itens.length} itens)`);
+    void 0;
     return true;
   }catch(e){
     console.warn("BDR triagem: falha ao carregar cache rápido:", e?.message || e);
@@ -312,7 +312,7 @@ async function carregarTriagem(){
       enderecos = cache.enderecos || [];
       carregarFiltroMes();
       renderizarTudo();
-      console.log("📦 Triagem carregada do cache local antigo.");
+      void 0;
       return true;
     }
     return false;
@@ -328,7 +328,7 @@ async function carregarTriagem(){
     }
 
     if(cacheOk){
-      console.log("BDR triagem: offline real, mantendo dados do cache.");
+      void 0;
       return;
     }
 
@@ -422,7 +422,7 @@ async function recarregarEnderecosLivres(){
      também não trava o fluxo.
   ========================================================= */
   if(await bdrOfflineRealAsync()){
-    console.log("📴 Triagem offline: usando endereços já carregados na tela.");
+    void 0;
     return;
   }
 
@@ -441,7 +441,7 @@ async function recarregarEnderecosLivres(){
     enderecos = data || [];
   }catch(e){
     if(bdrErroDeInternet(e)){
-      console.log("📴 Triagem sem rede: mantendo endereços já carregados.");
+      void 0;
       return;
     }
 
@@ -827,7 +827,7 @@ async function buscarAprendizadoTriagem(item){
     }) || null;
   }catch(e){
     if(bdrErroDeInternet(e)){
-      console.log("📴 Triagem offline: aprendizado ignorado até a internet voltar.");
+      void 0;
       return null;
     }
     console.warn("Erro ao buscar aprendizado:", e?.message || e);
@@ -881,7 +881,7 @@ async function salvarAprendizadoTriagem(item, destino){
       }]);
   }catch(e){
     if(bdrErroDeInternet(e)){
-      console.log("📴 Triagem offline: aprendizado será ignorado nesta confirmação.");
+      void 0;
       return;
     }
     console.warn("Erro ao salvar aprendizado:", e?.message || e);
@@ -1278,7 +1278,7 @@ async function buscarPatrimonioExistente(codigo){
   if(!codigo) return null;
 
   if(await bdrOfflineRealAsync()){
-    console.log("📴 Offline: não foi possível validar patrimônio existente agora.");
+    void 0;
     return null;
   }
 
@@ -1574,7 +1574,7 @@ async function confirmarItem(itemId){
     await recarregarEnderecosLivres();
   }catch(e){
     if(!bdrErroDeInternet(e)) throw e;
-    console.log("📴 Triagem: prosseguindo com cache local de endereços.");
+    void 0;
   }
 
   const item = itens.find(i => Number(i.id) === Number(itemId));
@@ -1636,7 +1636,7 @@ async function confirmarItem(itemId){
      A sincronização simplificada acontece no offlineQueue.js.
   ========================================================= */
   if(await bdrOfflineRealAsync({forcar:true})){
-    console.log("📦 Triagem: salvando confirmação offline...");
+    void 0;
     await salvarOffline("triagem_confirmar_item", "triagem_materiais", {
       item,
       destino,
@@ -1877,6 +1877,6 @@ document.addEventListener("keydown", function(e){
   }
 });
 
-console.log('✔ BDR TRIAGEM OFFLINE AUTO V4 carregado');
+void 0;
 
-console.log("✔ BDR TRIAGEM OFFLINE AUTO V5 SAFE carregado");
+void 0;

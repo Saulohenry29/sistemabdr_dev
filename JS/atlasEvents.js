@@ -51,7 +51,7 @@
     }
 
     antigo.versao = "1.1-onAny";
-    console.log("✅ ATLAS EVENTS V1.1 aplicado - onAny ativo");
+    void 0;
     return;
   }
 
@@ -127,5 +127,5 @@
     emit
   };
 
-  console.log("✅ ATLAS EVENTS V1.1 carregado - Event Bus com onAny");
+  void 0;
 })();

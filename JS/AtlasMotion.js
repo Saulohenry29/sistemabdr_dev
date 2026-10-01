@@ -61,5 +61,5 @@
   function highlight(el){ run(el, "atlas-motion-highlight", 950); }
 
   window.AtlasMotion = { __loaded:true, versao:"1.1", pop, pulse, shake, highlight };
-  console.log("✅ ATLAS MOTION V1.1 carregado");
+  void 0;
 })();

@@ -17,7 +17,7 @@
   };
 
   function log(...args){
-    if(window.BDR_DEBUG_REALTIME) console.log('[BDR REALTIME]', ...args);
+    if(window.BDR_DEBUG_REALTIME) void 0;
   }
 
   function onlineLocalRapido(){
@@ -108,5 +108,5 @@
   window.bdrIniciarSessaoRealtime = iniciarRealtime;
   window.bdrPararSessaoRealtime = pararRealtime;
 
-  console.log('✅ BDR SESSÃO REALTIME V10.0 carregado - offline safe');
+  void 0;
 })();

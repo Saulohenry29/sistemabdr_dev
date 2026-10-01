@@ -17,7 +17,7 @@ const OWNER_NAME="saulo henrique";
 const CLICK_LIMIT=5;
 const CLICK_WINDOW=2600;
 const VERSION="2.0.0";
-console.log("✅ ATLAS CORE — OWNER MODE V2 carregado");
+void 0;
 
 let clicks=0;
 let clickTimer=null;

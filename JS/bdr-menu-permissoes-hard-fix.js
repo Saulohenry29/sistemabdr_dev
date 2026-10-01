@@ -10,7 +10,7 @@
   if(window.__BDR_MENU_PERMISSOES_HARD_FIX_V1__) return;
   window.__BDR_MENU_PERMISSOES_HARD_FIX_V1__ = true;
 
-  console.log("✅ BDR MENU PERMISSÕES HARD FIX V1 carregado");
+  void 0;
 
   function lerUsuario(){
     try{

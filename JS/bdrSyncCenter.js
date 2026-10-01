@@ -500,5 +500,5 @@
   window.addEventListener("online", atualizar);
   window.addEventListener("offline", atualizar);
 
-  console.log("✅ BDR Sync Center V2.1 carregado");
+  void 0;
 })();

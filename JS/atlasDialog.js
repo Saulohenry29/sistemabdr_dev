@@ -87,8 +87,57 @@
     });
   }
 
-  window.bdrAvisoAtlas = function(mensagem, titulo="Aviso Atlas", tipo){
-    return abrir({mensagem, titulo, tipo, confirmacao:false});
+  function documentoShell(){
+    try{
+      if(window.parent && window.parent !== window && window.parent.document){
+        return window.parent.document;
+      }
+    }catch(_){}
+    return document;
+  }
+
+  function mostrarFeedback(mensagem,tipo,duracao=3600){
+    const doc=documentoShell();
+    const slot=doc.getElementById("atlasFeedbackSlot");
+    if(!slot){
+      // Fora da shell, mantém o aviso Atlas já existente.
+      return abrir({mensagem,tipo,confirmacao:false});
+    }
+
+    let el=doc.getElementById("atlasFeedbackGlobal");
+    if(!el){
+      el=doc.createElement("div");
+      el.id="atlasFeedbackGlobal";
+      el.className="atlas-feedback";
+      el.innerHTML='<span class="atlas-feedback-icon"></span><span class="atlas-feedback-text"></span>';
+      slot.appendChild(el);
+    }
+
+    const classe=tipo || tipoDaMensagem(mensagem);
+    const icone=classe==="success"?"✓":classe==="error"?"×":classe==="warning"?"!":"i";
+    el.className="atlas-feedback "+classe;
+    el.querySelector(".atlas-feedback-icon").textContent=icone;
+    el.querySelector(".atlas-feedback-text").textContent=String(mensagem||"");
+
+    // Reinicia animação sem criar outro componente.
+    void el.offsetWidth;
+    el.classList.add("ativo");
+
+    const host=(doc.defaultView || window);
+    clearTimeout(host.__atlasFeedbackTimer);
+    host.__atlasFeedbackTimer=setTimeout(()=>el.classList.remove("ativo"),Math.max(1200,Number(duracao)||3600));
+    return Promise.resolve(true);
+  }
+
+  window.bdrAvisoAtlas = function(mensagem, titulo="Aviso Atlas", tipo, duracao=3600){
+    return mostrarFeedback(mensagem,tipo || tipoDaMensagem(mensagem),duracao);
+  };
+
+  window.AtlasFeedback={
+    sucesso:(mensagem,duracao)=>mostrarFeedback(mensagem,"success",duracao),
+    erro:(mensagem,duracao)=>mostrarFeedback(mensagem,"error",duracao),
+    aviso:(mensagem,duracao)=>mostrarFeedback(mensagem,"warning",duracao),
+    info:(mensagem,duracao)=>mostrarFeedback(mensagem,"info",duracao)
   };
 
   window.bdrConfirmarAtlas = function(mensagem, titulo="Confirmação Atlas", textoOk="Confirmar"){

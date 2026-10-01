@@ -10,7 +10,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:,">
 <link rel="manifest" href="./manifest.json">
-<title>Atlas - Expedição Nova</title>
+<title>Atlas - Expedição</title>
+<script>
+/* ATLAS: identifica o modo embutido antes do carregamento dos CSS. */
+(function(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('atlas')==='1') document.documentElement.classList.add('atlas-embedded');
+})();
+</script>
+<style>
+/* =========================================================
+   EXPEDIÇÃO - MODO MÓDULO DO ATLAS
+   O shell atlas.html fornece menu e topo. A Expedição entrega
+   somente a área útil quando aberta com ?atlas=1.
+========================================================= */
+html.atlas-embedded{
+  width:100%!important; height:100%!important; min-height:0!important;
+  overflow:hidden!important; background:#f6f7fb!important;
+}
+html.atlas-embedded body{
+  width:100%!important; height:100%!important; min-height:0!important;
+  margin:0!important; padding:0!important; overflow:hidden!important;
+  background:#f6f7fb!important;
+}
+html.atlas-embedded .app-layout{
+  display:block!important; width:100%!important; height:100%!important;
+  min-height:0!important; overflow:hidden!important;
+}
+html.atlas-embedded .bdr-sidebar,
+html.atlas-embedded .bdr-topbar{ display:none!important; }
+html.atlas-embedded .bdr-main{
+  display:block!important; width:100%!important; max-width:none!important;
+  height:100%!important; min-height:0!important; margin:0!important;
+  padding:10px!important; padding-left:0!important; padding-bottom:18px!important;
+  overflow-x:hidden!important; overflow-y:auto!important;
+  overscroll-behavior:contain!important; -webkit-overflow-scrolling:touch!important;
+  box-sizing:border-box!important; background:#f6f7fb!important;
+}
+</style>
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
 <link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css?v=20260724-v11">
 <link rel="stylesheet" href="./CSS/atlas-topbar.css?v=20260724-v3">
@@ -35,6 +72,7 @@
 <script defer src="./JS/bdrNotificacoes.js"></script>
 <script defer src="./JS/bdrMenuPermissoes.js"></script>
 <script defer src="./JS/bdr-menu-ocultar-de-verdade.js"></script>
+<script defer src="./JS/AtlasModal.js"></script>
 <script defer src="./JS/expedicao/expedicaoBoot.js"></script>
 
 <style>
@@ -711,18 +749,18 @@
   display:flex;
   justify-content:center;
   align-items:center;
-  gap:8px;
+  gap:5px;
   flex-wrap:wrap;
-  margin-top:16px;
+  margin-top:9px;
 }
 .atlas-paginacao button{
-  min-height:38px;
+  min-height:28px;
   border:1px solid #dbe3ee;
-  border-radius:10px;
+  border-radius:8px;
   background:#fff;
   color:#334155;
-  padding:8px 12px;
-  font-size:12px;
+  padding:4px 8px;
+  font-size:10px;
   font-weight:900;
   cursor:pointer;
 }
@@ -735,10 +773,10 @@
   cursor:not-allowed;
 }
 .atlas-pagina-atual{
-  min-width:125px;
+  min-width:88px;
   text-align:center;
   color:#0f172a;
-  font-size:12px;
+  font-size:10px;
   font-weight:900;
 }
 @media(max-width:900px){
@@ -760,6 +798,50 @@
 
 
 
+
+/* =========================================================
+   ATLAS EXPEDIÇÃO — DENSIDADE COMPACTA DESKTOP
+   Redução real de dimensões (sem zoom/scale).
+========================================================= */
+@media (min-width: 901px){
+  .kpi-row{gap:8px;margin-bottom:9px;}
+  .kpi{min-height:60px;padding:8px 10px;border-radius:12px;}
+  .kpi strong{font-size:18px;}
+  .kpi span{font-size:10px;margin-top:4px;}
+
+  .tabs{gap:6px;margin-bottom:9px;}
+  .tab-btn{padding:7px 10px;font-size:11px;}
+
+  .card{padding:11px;border-radius:12px;}
+  .exp-head{gap:8px;margin-bottom:8px;}
+  .exp-title h2{font-size:18px;}
+  .exp-title p{font-size:10px;}
+
+  .searchbar{grid-template-columns:1fr 112px 46px;gap:6px;margin-bottom:8px;}
+  .searchbar input{height:34px;padding:0 13px;font-size:11px;}
+  .searchbar button{min-height:34px;font-size:11px;}
+
+  .filtros-grid{gap:7px;}
+  .filtros-grid label{font-size:10px;}
+  .filtros-grid select,.filtros-grid input{min-height:34px;font-size:11px;}
+
+  .chips{gap:6px;margin-bottom:8px;}
+  .chip-exp{padding:6px 9px;font-size:10px;}
+
+  .catalogo-grid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;}
+  .produto-card{border-radius:12px;}
+  .produto-foto{height:88px;}
+  .produto-foto .placeholder{font-size:32px;}
+  .produto-info{padding:8px;}
+  .produto-nome{font-size:11px;line-height:1.18;}
+  .produto-meta,.produto-obra{font-size:9px;}
+
+  .pedido-card{border-radius:11px;}
+  .pedido-top{padding:9px 10px;gap:8px;}
+  .pedido-cod{font-size:11px;}
+  .pedido-small{font-size:9px;}
+  .btn-mini,.atlas-btn-abrir{padding:6px 8px;font-size:10px;border-radius:8px;}
+}
 </style>
 <link rel="stylesheet" href="./CSS/expedicao-nova.css">
 </head>
@@ -895,8 +977,9 @@
       <button class="tab-btn active" data-permissao="EXPEDICAO_VER" onclick="abrirAba('catalogo',this)">🛒 Catálogo</button>
       <button class="tab-btn" data-permissao="EXPEDICAO_APROVAR" onclick="abrirAba('solicitacoes',this)">📋 Solicitações</button>
       <button class="tab-btn" data-permissao="EXPEDICAO_SEPARAR" onclick="abrirAba('separacao',this)">📦 Separação</button>
-      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('retirada',this)">📦 Aguardando retirada</button>
-      <button class="tab-btn" data-permissao="EXPEDICAO_ENTREGAR" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_TRANSPORTE" onclick="abrirAba('retirada',this)">📦 Aguardando saída</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_VER" onclick="abrirAba('transito',this)">🛣 Em trânsito</button>
+      <button class="tab-btn" data-permissao="EXPEDICAO_VER" onclick="abrirAba('receber',this)">📥 A receber</button>
       <button class="tab-btn" data-permissao="EXPEDICAO_VER" onclick="abrirAba('historico',this)">📜 Histórico</button>
     </div>
 
@@ -954,11 +1037,11 @@
             </div>
             <div id="catalogoGrid" class="catalogo-grid"></div>
             <div id="atlasPaginacaoCatalogo" class="atlas-paginacao" aria-label="Paginação do catálogo">
-              <button type="button" id="atlasPrimeiraPagina" onclick="atlasIrPaginaCatalogo(1)">⏮ Primeira</button>
-              <button type="button" id="atlasPaginaAnterior" onclick="atlasMudarPaginaCatalogo(-1)">◀ Anterior</button>
+              <button type="button" id="atlasPaginaAnterior" onclick="atlasMudarPaginaCatalogo(-1)">‹ Anterior</button>
               <span id="atlasPaginaAtual" class="atlas-pagina-atual">Página 1 de 1</span>
-              <button type="button" id="atlasProximaPagina" onclick="atlasMudarPaginaCatalogo(1)">Próxima ▶</button>
-              <button type="button" id="atlasUltimaPagina" onclick="atlasIrUltimaPaginaCatalogo()">Última ⏭</button>
+              <button type="button" id="atlasProximaPagina" onclick="atlasMudarPaginaCatalogo(1)">Próxima ›</button>
+              <button type="button" id="atlasPrimeiraPagina" onclick="atlasIrPaginaCatalogo(1)" hidden aria-hidden="true">Primeira</button>
+              <button type="button" id="atlasUltimaPagina" onclick="atlasIrUltimaPaginaCatalogo()" hidden aria-hidden="true">Última</button>
             </div>
           </div>
         </div>
@@ -968,15 +1051,16 @@
 
     <section id="tab-solicitacoes" class="tab" data-permissao="EXPEDICAO_APROVAR"><div class="card"><h3>📋 Solicitações aguardando autorização</h3><div id="listaSolicitacoes" class="pedido-lista"></div></div></section>
     <section id="tab-separacao" class="tab" data-permissao="EXPEDICAO_SEPARAR"><div class="card"><h3>📦 Separação</h3><div id="listaSeparacao" class="pedido-lista"></div></div></section>
-    <section id="tab-retirada" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>📦 Aguardando retirada</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
-    <section id="tab-transito" class="tab" data-permissao="EXPEDICAO_ENTREGAR"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
+    <section id="tab-retirada" class="tab" data-permissao="EXPEDICAO_TRANSPORTE"><div class="card"><h3>📦 Aguardando saída</h3><div id="listaRetirada" class="pedido-lista"></div></div></section>
+    <section id="tab-transito" class="tab" data-permissao="EXPEDICAO_VER"><div class="card"><h3>🛣 Em trânsito</h3><div id="listaTransito" class="pedido-lista"></div></div></section>
+    <section id="tab-receber" class="tab" data-permissao="EXPEDICAO_VER"><div class="card"><h3>📥 A receber</h3><div id="listaReceber" class="pedido-lista"></div></div></section>
     <section id="tab-historico" class="tab" data-permissao="EXPEDICAO_VER"><div class="card"><h3>📜 Histórico</h3><div id="listaHistorico" class="pedido-lista"></div></div></section>
   </main>
 </div>
 
 <div id="modalCarrinho" class="modal-bg"><div class="modal"><div class="modal-head"><span><i class="fa-solid fa-cart-shopping"></i> Meu carrinho</span><button class="fechar-modal" onclick="fecharModalCarrinho()">X</button></div><div class="modal-body"><div class="cart-modal-panel"><div class="cart-head"><span>Itens selecionados</span><span id="cartQtd">0</span></div><div id="cartItens"></div><textarea id="obsSolicitacao" placeholder="Observação da solicitação..." style="margin-top:8px;min-height:70px"></textarea><button class="btn-submit" data-permissao="EXPEDICAO_VER" onclick="enviarSolicitacao()"><i class="fa-regular fa-paper-plane"></i> Enviar solicitação</button><div class="mini-summary"><div class="mini-box"><strong id="cartResumoItens">0</strong>Itens</div><div class="mini-box"><strong id="cartResumoObras">0</strong>Origens</div></div><div class="info-box">A solicitação será enviada aos responsáveis pela obra/setor de origem. Itens em uso entram como interesse, não como retirada direta.</div></div></div></div></div>
 <div id="modalDetalhe" class="modal-bg"><div class="modal"><div class="modal-head"><span id="modalTitulo">Detalhes</span><button class="fechar-modal" onclick="fecharModalDetalhe()">X</button></div><div class="modal-body" id="modalConteudo"></div></div></div>
-<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Confirmar retirada</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da retirada"></textarea><br><br><button class="btn-ok" data-permissao="EXPEDICAO_ENTREGAR" onclick="confirmarRetiradaModal()">Confirmar retirada</button></div></div></div>
+<div id="modalRetirada" class="modal-bg"><div class="modal"><div class="modal-head"><span>🚚 Preparar envio</span><button class="fechar-modal" onclick="fecharModalRetirada()">X</button></div><div class="modal-body"><div id="retResumoTransporte" style="display:none;margin-bottom:14px;padding:10px 12px;border:1px solid #dbe7f5;border-radius:10px;background:#f5f9ff;color:#17365d;font-size:12px;font-weight:700"></div><input id="retMotorista" placeholder="Motorista / responsável"><br><br><input id="retVeiculo" placeholder="Veículo / transportadora"><br><br><input id="retPlaca" placeholder="Placa"><br><br><textarea id="retObs" placeholder="Observação da saída"></textarea><br><br><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn-ok" data-permissao="EXPEDICAO_TRANSPORTE" onclick="confirmarRetiradaModal()" style="background:#16a34a;color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer">🚚 Enviar remessa</button></div></div></div></div>
 
 
 

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Manutenção | Atlas</title>
+<link rel="stylesheet" href="./CSS/atlasManutencao.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#edf2f7}
+body{font-family:Arial,Helvetica,sans-serif}
+.atlas-manut-root{display:block;width:100%;height:100%;overflow:hidden}
+.atlas-manut-main{height:100%;overflow:hidden}
+</style>
+</head>
+<body class="atlas-manut-page">
+<section class="atlas-manut-root" data-module="manutencao">
+
+<div class="atlas-manut-main">
+  <div class="atlas-manut-kpis">
+    <div class="atlas-manut-kpi"><strong id="manutKpiTotal">0</strong><span>Total de ordens</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiEnvio">0</strong><span>Aguardando envio</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiOrcamento">0</strong><span>Orçamento / aprovação</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiExecucao">0</strong><span>Em execução</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiRetorno">0</strong><span>Aguardando retorno</span></div>
+    <div class="atlas-manut-kpi"><strong id="manutKpiCusto">R$ 0,00</strong><span>Custo registrado</span></div>
+  </div>
+
+  <div class="atlas-manut-central-actions" id="atlasManutAcoesCentral">
+    <div>
+      <strong>Central de Manutenção</strong>
+      <span>Adicione patrimônios à fila e envie vários juntos para o mesmo fornecedor.</span>
+    </div>
+    <div class="atlas-manut-central-buttons">
+      <button type="button" class="atlas-btn light" id="btnManutAdicionar">＋ Adicionar patrimônio</button>
+      <button type="button" class="atlas-btn primary" id="btnManutEnviarSelecionados" disabled>🚚 Enviar selecionados</button>
+    </div>
+  </div>
+
+  <div id="atlasManutencaoApp">
+    <section class="atlas-manut-pane left">
+      <div class="atlas-manut-toolbar">
+        <input id="manutBusca" placeholder="Buscar ordem, patrimônio, fornecedor...">
+        <select id="manutFiltroStatus">
+          <option value="">Todos os status</option>
+          <option value="AGUARDANDO_ENVIO">Aguardando envio</option>
+          <option value="AGUARDANDO_ORCAMENTO">Aguardando orçamento</option>
+          <option value="ORCAMENTO_RECEBIDO">Orçamento recebido</option>
+          <option value="ORCAMENTO_APROVADO">Orçamento aprovado</option>
+          <option value="EM_MANUTENCAO">Em manutenção</option>
+          <option value="AGUARDANDO_RECEBIMENTO">Aguardando recebimento</option>
+          <option value="FINALIZADA">Finalizada</option>
+        </select>
+        <button id="btnManutAtualizar" title="Atualizar" type="button"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+      <div id="manutLista"></div>
+      <div id="manutPaginacao" class="atlas-manut-pagination" aria-label="Paginação das ordens de manutenção"></div>
+    </section>
+
+    <section class="atlas-manut-pane right">
+      <div id="manutDetalhe"><div class="atlas-manut-detail-empty">Selecione uma ordem para acompanhar o fluxo.</div></div>
+    </section>
+  </div>
+</div>
+
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="./JS/supabaseClient.js"></script>
+<script src="./JS/auth.js"></script>
+<script src="./JS/bdrCore.js"></script>
+<script src="./JS/bdrMenuPermissoes.js"></script>
+<script src="./JS/atlasAudio/atlasAudio.js"></script>
+<script src="./JS/atlasGestorNotificacoes.js"></script>
+<script src="./JS/atlasAmbienteDominio.js"></script>
+<script src="./JS/atlasWorkflowManutencao.js"></script>
+<script src="./JS/atlasManutencao.js"></script>
+</body>
+</html>

@@ -16,7 +16,7 @@
   if(window.__BDR_MENU_PADRAO_UNICO_FINAL__) return;
   window.__BDR_MENU_PADRAO_UNICO_FINAL__ = true;
 
-  console.log("✅ BDR MENU PADRÃO ÚNICO FINAL carregado");
+  void 0;
 
   const PAGINAS = {
     "dashboard.html": "DASHBOARD_VER",

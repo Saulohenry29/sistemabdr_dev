@@ -52,7 +52,7 @@ if (!window.client && window.supabase && window.supabase.createClient) {
   window.supabaseClient = window.client;
 }
 
-console.log("✔ BDR CORE 9.1 carregado SAFE OFFLINE");
+void 0;
 
 function formatarStatus(status) {
   const map = {

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BDR Gestao</title>
+<link rel="icon" type="image/png" href="./icons/favicon branco.png">
+<link rel="stylesheet" href="./CSS/layout-bdr.css">
+<link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css">
+<link rel="stylesheet" href="./CSS/atlas-topbar.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{--screen-zoom:1!important;}
+html,body{height:100%!important;min-height:100%!important;margin:0!important;padding:0!important;background:#f6f7fb;overflow:hidden!important;zoom:1!important}
+.bdr-app{height:100vh!important;min-height:0!important;display:flex;align-items:stretch;min-width:0;overflow:hidden!important}
+#atlasMain{min-width:0;flex:1;height:100vh!important;min-height:100vh!important;max-height:none!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;padding-bottom:0!important}
+#atlasHeader{flex:0 0 auto;background:#f6f7fb;position:relative;z-index:30;overflow:hidden;margin:0!important;padding-bottom:0!important}
+#atlasFrameWrap{flex:1 1 0!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:hidden!important;background:#f6f7fb;position:relative}
+.atlas-module-frame{position:absolute;inset:0;width:100%;height:100%!important;min-height:0!important;max-height:none!important;border:0;display:none;background:#f6f7fb}.atlas-module-frame.atlas-active{display:block}
+@media(max-width:768px){
+  body{padding-bottom:0}
+  .bdr-app{height:calc(100dvh - 64px)!important;min-height:0!important}
+  #atlasMain{height:100%!important;min-height:0!important}
+  atlas-menu.bdr-sidebar{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;width:100%!important;height:64px!important;z-index:9999!important}
+  atlas-menu .bdr-brand{display:none!important}
+  atlas-menu .bdr-menu{height:64px!important;display:flex!important;overflow-x:auto!important;overflow-y:hidden!important}
+  atlas-menu .bdr-menu-btn{min-width:62px!important;flex:1 0 62px!important}
+}
+/* Responsivo: mantém o topo limpo; não injeta logo adicional. */
+@media(max-width:1200px){
+  .bdr-app{height:calc(100dvh - var(--bdr-mobile-menu-altura,74px))!important;min-height:0!important;}
+  #atlasMain{height:100%!important;min-height:0!important;}
+  #atlasHeader{padding-left:0!important;}
+  #atlasHeader::before{content:none!important;display:none!important;}
+}
+</style>
+<script src="./JS/componentes/atlasMenu.js" defer></script>
+<script src="./JS/componentes/atlasTopo.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
+<script src="./JS/supabaseClient.js" defer></script>
+<script src="./JS/auth.js" defer></script>
+<script src="./JS/bdrCore.js" defer></script>
+<script src="./JS/atlasAudio/atlasAudio.js" defer></script>
+<script src="./JS/atlasDialog.js" defer></script>
+<script src="./JS/bdrNotificacoes.js" defer></script>
+<script src="./JS/bdrMenuPermissoes.js" defer></script>
+<script src="./JS/atlasTopbar.js" defer></script>
+</head>
+<body class="atlas-shell-page">
+<div class="bdr-app">
+  <atlas-menu></atlas-menu>
+  <main id="atlasMain" class="bdr-main">
+    <div id="atlasHeader"><atlas-topo></atlas-topo></div>
+    <div id="atlasFrameWrap"></div>
+  </main>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  /* Guarda central da shell: enquanto o Atlas usa o login legado,
+     nenhuma rota atlas.html#m=... pode abrir sem uma sessão local válida. */
+  function sessaoLegadaExiste(){
+    for(const chave of ['usuario_logado','usuarioLogado']){
+      try{
+        const bruto=localStorage.getItem(chave);
+        if(!bruto) continue;
+        const u=JSON.parse(bruto);
+        if(u && Number(u.id||0)>0 && u.ativo!==false) return true;
+      }catch(_){}
+    }
+    return false;
+  }
+
+  if(!sessaoLegadaExiste()){
+    try{
+      localStorage.removeItem('usuario_logado');
+      localStorage.removeItem('usuarioLogado');
+    }catch(_){}
+    location.replace('./login.html');
+    return;
+  }
+
+  function usuarioAtualShell(){
+    for(const chave of ['usuario_logado','usuarioLogado']){
+      try{ const u=JSON.parse(localStorage.getItem(chave)||'null'); if(u) return u; }catch(_){ }
+    }
+    return null;
+  }
+  function sincronizarUsuarioTopo(){
+    const u=usuarioAtualShell();
+    const nome=document.getElementById('usuarioNome');
+    const perfil=document.getElementById('usuarioPerfil');
+    const avatar=document.getElementById('usuarioAvatar');
+    if(nome) nome.textContent='Olá, '+(u?.nome || 'usuário');
+    if(perfil) perfil.textContent=u?.perfil || '-';
+    if(avatar){
+      const foto=String(u?.foto_url||'').trim();
+      if(foto){
+        const src=/^https?:\/\//i.test(foto)?foto:'https://arquivos.sathtech.com.br/files/'+foto.replace(/^\/+/,'');
+        avatar.innerHTML='';
+        const img=document.createElement('img');img.src=src;img.alt='';img.referrerPolicy='no-referrer';
+        img.addEventListener('error',()=>{avatar.innerHTML='<i class="fa-solid fa-user"></i>'},{once:true});
+        avatar.appendChild(img);
+      }else avatar.innerHTML='<i class="fa-solid fa-user"></i>';
+    }
+  }
+  function prepararTopoShell(){
+    sincronizarUsuarioTopo();
+    /* Web Components podem terminar de renderizar após o DOMContentLoaded. */
+    let tentativas=0;
+    const timer=setInterval(()=>{
+      sincronizarUsuarioTopo();
+      if(document.getElementById('usuarioNome') || ++tentativas>20) clearInterval(timer);
+    },100);
+  }
+  window.addEventListener('atlas:usuario-atualizado',sincronizarUsuarioTopo);
+  const frameWrap = document.getElementById('atlasFrameWrap');
+  const frames = new Map();
+  let moduloAtivo = null;
+  const titulos={dashboard:['Dashboard','Visão geral do sistema'],entrada:['Entrada','Recebimentos e entradas'],triagem:['Triagem','Triagem de materiais'],estoque:['Estoque','Consulta e movimentação de estoque'],patrimonio:['Patrimônio','Gestão patrimonial'],manutencao:['Manutenção','Gestão de manutenções'],expedicao:['Expedição','Solicitações, separação e retirada'],movimentacoes:['Movimentações','Histórico de movimentações'],relatorios:['Relatórios','Relatórios do sistema'],empresa:['Empresas','Empresas e obras'],usuarios:['Usuários','Usuários e permissões'],'minha-conta':['Minha conta','Perfil, preferências e acessos']};
+  const paginas={dashboard:'dashboard.html',entrada:'entrada.html',triagem:'triagem.html',estoque:'estoque.html',patrimonio:'patrimonio.html',manutencao:'manutencao.html',expedicao:'expedicao.html',movimentacoes:'movimentacoes.html',relatorios:'relatorios.html',empresa:'empresa.html',usuarios:'usuarios.html','minha-conta':'MinhaConta/minha-conta.html'};
+  function prepararPaginas(){
+    const atual=contextoDaUrl().modulo;
+    const prioridade=['dashboard','patrimonio','expedicao','estoque','manutencao','movimentacoes'];
+    const fila=[...prioridade,...Object.keys(paginas)].filter((m,i,a)=>m!==atual&&m!=='manutencao'&&a.indexOf(m)===i);
+    const executar=()=>fila.forEach(m=>{
+      const link=document.createElement('link');
+      link.rel='prefetch'; link.as='document'; link.href=paginas[m];
+      document.head.appendChild(link);
+    });
+    if('requestIdleCallback' in window) requestIdleCallback(executar,{timeout:1800});
+    else setTimeout(executar,700);
+  }
+  function moduloDePagina(p){const n=String(p||'').split('/').pop().split('?')[0].split('#')[0].replace(/\.html$/i,''); return paginas[n]?n:null}
+  function atualizarTopo(m){const x=titulos[m]||[m,'']; const a=document.getElementById('atlasShellTitulo'),b=document.getElementById('atlasShellSubtitulo'); if(a)a.textContent=x[0];if(b)b.textContent=x[1]; document.querySelectorAll('[data-shell-module]').forEach(el=>el.classList.toggle('active',el.dataset.shellModule===m));}
+
+  function fecharOverlaysShell(){
+    try{ window.dispatchEvent(new CustomEvent('atlas:fechar-overlays')); }catch(_){ }
+    try{ document.dispatchEvent(new CustomEvent('atlas:fechar-overlays')); }catch(_){ }
+    // Clique sintético fora do topo: o atlasTopbar fecha o dropdown ativo.
+    try{ document.body.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})); }catch(_){ }
+  }
+
+  function integrarFrame(frame){
+    try{
+      const w=frame.contentWindow,d=frame.contentDocument;
+      w.ir=function(dest){const m=moduloDePagina(dest); if(m){parent.Atlas.navigate(m);return;} w.location.href=dest;};
+
+      // Mensagens comuns pertencem à shell: qualquer alert/aviso do módulo usa o mesmo topo.
+      if(typeof window.bdrAvisoAtlas==="function"){
+        w.alert=(mensagem)=>window.bdrAvisoAtlas(mensagem);
+        w.bdrAvisoAtlas=(mensagem,titulo,tipo,duracao)=>window.bdrAvisoAtlas(mensagem,titulo,tipo,duracao);
+        w.AtlasFeedback=window.AtlasFeedback;
+      }
+      d.addEventListener('click',ev=>{
+        try{ parent.Atlas.closeOverlays(); }catch(_){ }
+        const a=ev.target.closest?.('a[href]'); if(!a)return;
+        const m=moduloDePagina(a.getAttribute('href'));
+        if(m){ev.preventDefault();parent.Atlas.navigate(a.getAttribute('href'));}
+      },true);
+    }catch(err){console.error('Atlas shell: falha ao integrar módulo',err);}
+  }
+
+  function obterFrame(modulo, parametros=''){
+    let frame=frames.get(modulo);
+    if(!frame){
+      frame=document.createElement('iframe');
+      frame.className='atlas-module-frame';
+      frame.dataset.modulo=modulo;
+      frame.title=`Módulo Atlas - ${modulo}`;
+      frame.addEventListener('load',()=>integrarFrame(frame));
+      frameWrap.appendChild(frame);
+      frames.set(modulo,frame);
+    }
+    if(!frame.dataset.carregado){
+      const extras=new URLSearchParams(String(parametros||'').replace(/^\?/,''));
+      extras.set('atlas','1');
+      frame.src=paginas[modulo].split('?')[0]+'?'+extras.toString();
+      frame.dataset.carregado='1';
+      frame.dataset.parametros=String(parametros||'');
+    }else if(parametros && frame.dataset.parametros!==String(parametros)){
+      // Navegação com contexto explícito (ex.: abrir uma remessa) precisa chegar ao módulo.
+      const extras=new URLSearchParams(String(parametros||'').replace(/^\?/,''));
+      extras.set('atlas','1');
+      frame.src=paginas[modulo].split('?')[0]+'?'+extras.toString();
+      frame.dataset.parametros=String(parametros||'');
+    }
+    return frame;
+  }
+
+  function abrir(modulo, push=true, parametros=''){
+    if(!paginas[modulo]) modulo='dashboard';
+    fecharOverlaysShell();
+    atualizarTopo(modulo);
+    const frame=obterFrame(modulo,parametros);
+    frames.forEach((f,m)=>{
+      const ativo=m===modulo;
+      f.classList.toggle('atlas-active',ativo);
+      f.setAttribute('aria-hidden',ativo?'false':'true');
+      try{ f.contentWindow?.dispatchEvent(new CustomEvent(ativo?'atlas:ativar':'atlas:desativar')); }catch(_){ }
+    });
+    moduloAtivo=modulo;
+    if(push) history.pushState({modulo},'',`atlas.html#m=${encodeURIComponent(modulo)}`);
+  }
+
+  window.Atlas={
+    navigate:function(dest){
+      const bruto=String(dest||'');
+      const m=moduloDePagina(bruto)||bruto.toLowerCase();
+      if(paginas[m]){
+        const q=bruto.includes('?')?bruto.slice(bruto.indexOf('?')+1):'';
+        abrir(m,true,q);
+      }else{
+        const f=frames.get(moduloAtivo);
+        if(f) f.src=bruto;
+      }
+    },
+    closeOverlays:fecharOverlaysShell,
+    refresh:function(modulo=moduloAtivo){
+      const f=frames.get(modulo);
+      if(f) try{f.contentWindow.location.reload();}catch(_){ }
+    }
+  };
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-shell-module]'); if(!b)return; e.preventDefault(); abrir(b.dataset.shellModule);});
+  function contextoDaUrl(){
+    const query=new URLSearchParams(location.search);
+    const hash=new URLSearchParams(String(location.hash||'').replace(/^#/, ''));
+    const modulo=(hash.get('m')||query.get('m')||'dashboard').toLowerCase();
+    const extras=new URLSearchParams();
+
+    // Deep-links chegam ao shell como atlas.html?m=expedicao&aba=...&pedido=...
+    // e precisam ser repassados ao iframe do módulo.
+    query.forEach((valor,chave)=>{ if(chave!=='m') extras.set(chave,valor); });
+    hash.forEach((valor,chave)=>{ if(chave!=='m') extras.set(chave,valor); });
+
+    return { modulo, parametros:extras.toString() };
+  }
+  function abrirDaUrl(){
+    const ctx=contextoDaUrl();
+    abrir(ctx.modulo,false,ctx.parametros);
+  }
+  addEventListener('popstate',abrirDaUrl);
+  addEventListener('hashchange',abrirDaUrl);
+  addEventListener('DOMContentLoaded',()=>{ prepararTopoShell(); setTimeout(abrirDaUrl,0); setTimeout(prepararPaginas,250); });
+})();
+</script>
+</body>
+</html>

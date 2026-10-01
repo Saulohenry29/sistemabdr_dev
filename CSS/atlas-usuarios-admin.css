@@ -1,0 +1,21 @@
+/* =========================================================
+   ATLAS USUÁRIOS ADMIN V1.0
+   Mantém o menu/topbar atuais e organiza o conteúdo por abas.
+========================================================= */
+.atlas-users-nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;padding:8px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 6px 18px rgba(15,23,42,.05)}
+.atlas-users-tab{border:0;background:#f8fafc;color:#475569;border-radius:10px;padding:10px 14px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.atlas-users-tab:hover{background:#fff1f2;color:#b91c1c}
+.atlas-users-tab.ativo{background:#b91c1c;color:#fff;box-shadow:0 8px 18px rgba(185,28,28,.22)}
+.atlas-users-section{display:none!important}
+.atlas-users-section.ativo{display:block!important}
+.atlas-owner-badge{display:none;align-items:center;gap:8px;background:linear-gradient(135deg,#111827,#7f1d1d);color:#fff;padding:9px 12px;border-radius:12px;font-weight:900;font-size:12px;box-shadow:0 8px 18px rgba(15,23,42,.18)}
+body.atlas-owner .atlas-owner-badge{display:inline-flex}
+.atlas-owner-open{border:0;background:#fff;color:#991b1b;border-radius:9px;padding:6px 9px;font-weight:900;cursor:pointer}
+.atlas-scope-note{margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;font-size:12px;font-weight:800}
+.atlas-scope-note.owner{border-color:#fecaca;background:#fff1f2;color:#991b1b}
+.perm-row.atlas-permissao-bloqueada{display:none!important}
+.atlas-acao-owner-only{display:none!important}
+body.atlas-owner .atlas-acao-owner-only{display:inline-flex!important}
+.atlas-users-empty-selection{padding:18px;text-align:center;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;font-weight:800}
+.atlas-owner-locked{opacity:.6;pointer-events:none}
+@media(max-width:900px){.atlas-users-nav{position:sticky;top:0;z-index:25;overflow:auto;flex-wrap:nowrap}.atlas-users-tab{white-space:nowrap}.master-actions{gap:6px}.master-actions .btn{font-size:11px;padding:8px 10px}}

@@ -143,7 +143,8 @@ async function alternar(){
 }
 
 function ligarEditor(){
-  el("atlasLoteSemSerie")?.addEventListener("change",atualizarModo);
+  el('atlasLoteSemSerie')?.addEventListener('change',()=>{if(el('atlasLoteSemSerie')?.checked&&el('atlasLoteMesmoNumero'))el('atlasLoteMesmoNumero').checked=false;atualizarModo();});
+  el('atlasLoteMesmoNumero')?.addEventListener('change',()=>{if(el('atlasLoteMesmoNumero')?.checked&&el('atlasLoteSemSerie'))el('atlasLoteSemSerie').checked=false;atualizarModo();});
   el("atlasLoteSeries")?.addEventListener("input",analisar);
   el("atlasLoteSeries")?.addEventListener("scroll",sincronizarRolagem);
   el("atlasLoteQuantidade")?.addEventListener("input",analisar);
@@ -152,7 +153,11 @@ function ligarEditor(){
 
 function linhasEditor(){return String(el("atlasLoteSeries")?.value || "").split(/\r?\n/)}
 function seriesDigitadas(){return linhasEditor().map(v=>v.trim()).filter(Boolean)}
-function quantidade(){return el("atlasLoteSemSerie")?.checked ? Math.max(0,Math.min(MAX_LOTE,Number(el("atlasLoteQuantidade")?.value||0))) : seriesDigitadas().length}
+function modoMesmoNumero(){return el('atlasLoteMesmoNumero')?.checked===true;}
+function quantidade(){
+  if(el('atlasLoteSemSerie')?.checked||modoMesmoNumero()) return Math.max(0,Math.min(MAX_LOTE,Number(el('atlasLoteQuantidade')?.value||0)));
+  return seriesDigitadas().length;
+}
 
 function repetidasNaLista(series){
   const mapa = new Map();
@@ -191,9 +196,9 @@ function renderizarErros(){
 }
 
 function analisar(){
-  const semSerie=el("atlasLoteSemSerie")?.checked===true,total=quantidade(),contador=el("atlasLoteContador"),btn=el("btnGerarPatrimonio");
+  const semSerie=el('atlasLoteSemSerie')?.checked===true,mesmaSerie=modoMesmoNumero(),total=quantidade(),contador=el('atlasLoteContador'),btn=el('btnGerarPatrimonio');
   errosAtuais=[];
-  if(!semSerie){
+  if(!semSerie && !mesmaSerie){
     const primeira=new Map();linhasEditor().forEach((conteudo,indice)=>{
       const serie=String(conteudo||"").trim(),chave=normalizar(serie),linha=indice+1;if(!serie||!chave)return;
       if(primeira.has(chave))errosAtuais.push({tipo:"REPETIDA",linha,mensagem:`${serie} está repetida. Também aparece na linha ${primeira.get(chave)}.`});else primeira.set(chave,linha);
@@ -202,7 +207,8 @@ function analisar(){
   atualizarNumeracao();renderizarErros();
   if(contador){
     contador.className="atlas-lote-contador";
-    if(semSerie){contador.textContent=total?`${total} patrimônios serão criados sem série`:"Informe a quantidade";if(total>=2)contador.classList.add("ok")}
+    if(semSerie){contador.textContent=total?`${total} patrimônios serão criados sem série`:'Informe a quantidade';if(total>=2)contador.classList.add('ok')}
+    else if(mesmaSerie){contador.textContent=total?`${total} patrimônios usarão a mesma série`:'Informe a quantidade';if(total>=2)contador.classList.add('ok')}
     else if(errosAtuais.length){contador.textContent=`${total} série(s) • ${errosAtuais.length} repetida(s)`;contador.classList.add("erro")}
     else if(total){contador.textContent=`✓ ${total} número${total===1?"":"s"} de série detectado${total===1?"":"s"}`;contador.classList.add("ok")}
     else contador.textContent="Nenhum número de série informado";
@@ -211,9 +217,14 @@ function analisar(){
 }
 
 function atualizarModo(){
-  const semSerie=el("atlasLoteSemSerie")?.checked===true;
-  if(el("atlasLoteComSerie"))el("atlasLoteComSerie").hidden=semSerie;
-  if(el("atlasLoteSemSerieCampos"))el("atlasLoteSemSerieCampos").hidden=!semSerie;
+  const semSerie=el('atlasLoteSemSerie')?.checked===true;
+  const mesmaSerie=modoMesmoNumero();
+  if(el('atlasLoteComSerie')) el('atlasLoteComSerie').hidden=semSerie||mesmaSerie;
+  if(el('atlasLoteSemSerieCampos')) el('atlasLoteSemSerieCampos').hidden=!(semSerie||mesmaSerie);
+  const rotulo=el('atlasLoteQuantidadeRotulo');
+  const ajuda=el('atlasLoteQuantidadeAjuda');
+  if(rotulo) rotulo.textContent='Quantidade';
+  if(ajuda) ajuda.textContent=mesmaSerie?'Todos os patrimônios receberão o mesmo número de série.':'Os números de série poderão ser adicionados depois.';
   analisar();
 }
 
@@ -320,10 +331,11 @@ async function salvar(contexto){
     return;
   }
 
-  const semSerie = el("atlasLoteSemSerie")?.checked === true;
-  const series = semSerie
-    ? Array.from({length: quantidade()}, () => null)
-    : seriesDigitadas();
+  const semSerie=el('atlasLoteSemSerie')?.checked===true;
+  const mesmaSerie=modoMesmoNumero();
+  const serieUnica=valorCampo('numero_serie');
+  if(mesmaSerie && !serieUnica){alert('Informe o número de série que será usado em todos os patrimônios.');return;}
+  const series=semSerie?Array.from({length:quantidade()},()=>null):mesmaSerie?Array.from({length:quantidade()},()=>serieUnica):seriesDigitadas();
 
   if(series.length < 2){
     alert("Para usar o cadastro em lote, informe pelo menos 2 patrimônios.");
@@ -335,7 +347,7 @@ async function salvar(contexto){
     return;
   }
 
-  const repetidas = semSerie ? [] : repetidasNaLista(series);
+  const repetidas=(semSerie||mesmaSerie)?[]:repetidasNaLista(series);
   if(repetidas.length){
     analisar();
     const primeiraLinha = atlasLoteErrosAtuais[0]?.linha;
@@ -349,14 +361,12 @@ async function salvar(contexto){
   delete base.numero_serie;
 
   if(!semSerie){
-    const conflitos = await validarBanco(base, series);
+    const conflitos=await validarBanco(base,[...new Set(series.filter(Boolean))]);
     if(conflitos.length){
-      alert(
-        "🚫 Foram encontrados números de série já cadastrados para o mesmo nome, marca e modelo:\n\n" +
-        conflitos.slice(0,10).map(c => `• ${c.serie} → ${c.codigo}`).join("\n") +
-        "\n\nO lote não foi criado."
-      );
-      return;
+      const continuar=typeof bdrConfirmarAtlas==='function'
+        ? await bdrConfirmarAtlas('⚠️ Encontramos série(s) já usadas com o mesmo nome, marca e modelo:\n\n'+conflitos.slice(0,10).map(c=>`• ${c.serie} → ${c.codigo}`).join('\n')+'\n\nIsso é apenas um aviso. Deseja criar o lote mesmo assim?')
+        : confirm('Existem séries repetidas no banco. Criar mesmo assim?');
+      if(!continuar) return;
     }
   }
 
@@ -366,7 +376,7 @@ async function salvar(contexto){
         `Produto: ${base.nome_bem}\n` +
         `Marca: ${base.marca || "-"}\n` +
         `Modelo: ${base.modelo || "-"}\n` +
-        `Séries: ${semSerie ? "serão preenchidas depois" : "uma por patrimônio"}\n\n` +
+        `Séries: ${semSerie?'serão preenchidas depois':mesmaSerie?'o mesmo número em todos':'uma por patrimônio'}\n\n` +
         "Deseja continuar?"
       )
     : confirm(`Criar ${series.length} patrimônios?`);
@@ -464,3 +474,4 @@ async function salvar(contexto){
 
 global.AtlasPatrimonioLote={renderizarCampo,conectar,alternar,abrir,fechar,resetar,atualizarModo,analisar,sincronizarRolagem,irParaLinha,limparSeries,ativo,salvar};
 })(window);
+void 0;

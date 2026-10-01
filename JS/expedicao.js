@@ -254,7 +254,7 @@ async function carregarTudo(){
       window.pedidos = pedidos;
       window.obras = obras;
       renderizarTudo();
-      console.log("📦 Expedição carregada do cache local.");
+      void 0;
       return;
     }
 
@@ -635,18 +635,20 @@ function garantirCssCarrinhoAtlas(){
 
 function atlasToast(msg){
   try{
-    garantirCssCarrinhoAtlas();
-    let t = document.getElementById("atlasToastCarrinho");
-    if(!t){
-      t = document.createElement("div");
-      t.id = "atlasToastCarrinho";
-      t.className = "atlas-toast";
-      document.body.appendChild(t);
+    const texto=String(msg||"")
+      .replace(/<br\s*\/?>/gi," ")
+      .replace(/<[^>]+>/g,"")
+      .replace(/\s+/g," ")
+      .trim();
+    const host=(window.parent && window.parent!==window) ? window.parent : window;
+    const feedback=host.AtlasFeedback || window.AtlasFeedback;
+    if(feedback){
+      if(/erro|indisponível|bloque/i.test(texto)) return feedback.erro(texto,2200);
+      if(/⚠|confira|não foi possível/i.test(texto)) return feedback.aviso(texto,2200);
+      if(/✔|✅|sucesso|adicionado|removido/i.test(texto)) return feedback.sucesso(texto,2200);
+      return feedback.info(texto,2200);
     }
-    t.innerHTML = msg;
-    t.classList.add("ativo");
-    clearTimeout(window.__atlasToastTimer);
-    window.__atlasToastTimer = setTimeout(()=>t.classList.remove("ativo"), 1700);
+    alert(texto);
   }catch(e){}
 }
 
@@ -1882,7 +1884,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
   window.autorizar = window.autorizarTodosAtlas;
   window.negar = window.recusarTodosAtlas;
 
-  console.log("✅ ATLAS SPRINT 2.3 patch Expedição carregado - aprovação parcial");
+  void 0;
 })();
 
 
@@ -2200,7 +2202,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     document.getElementById("modalDetalhe").classList.add("ativo");
   };
 
-  console.log("✅ ATLAS SOLICITAÇÕES COMPACTAS V1.0 carregado");
+  void 0;
 })();
 
 /* =========================================================
@@ -2240,7 +2242,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     try{
       document.querySelectorAll(`button[onclick*="${id}"]`).forEach(btn => { btn.disabled = true; btn.innerText = "Concluindo..."; });
       if(window.AtlasLogistica?.finalizarSeparacao){
-        console.log("📦 Atlas Logística: finalizando separação", id);
+        void 0;
         await window.AtlasLogistica.finalizarSeparacao(id);
       }else if(window.AtlasWorkflow?.finalizarSeparacao){
         await window.AtlasWorkflow.finalizarSeparacao(id);
@@ -2275,7 +2277,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
 
     try{
       if(window.AtlasLogistica?.enviarPedido){
-        console.log("🚚 Atlas Logística: enviando pedido", id, dados);
+        void 0;
         await window.AtlasLogistica.enviarPedido(id, dados);
       }else if(window.AtlasWorkflow?.enviarPedido){
         await window.AtlasWorkflow.enviarPedido(id, dados);
@@ -2311,7 +2313,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
         throw new Error("AtlasLogistica.receberPedido não carregado.");
       }
 
-      console.log("📥 Atlas Logística: recebendo pedido", pedidoId, dadosRecebimento);
+      void 0;
       await window.AtlasLogistica.receberPedido(pedidoId, dadosRecebimento);
 
       if(window.AtlasModal?.sucesso){
@@ -2380,7 +2382,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     }, 60);
   };
 
-  console.log("✅ ATLAS EXPEDIÇÃO SPRINT 3.1.4 carregado - aprovação rápida e fluxo operacional corrigido");
+  void 0;
 })();
 
 
@@ -2594,7 +2596,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     return acoesPedidoAnterior330(p);
   };
 
-  console.log("✅ ATLAS EXPEDIÇÃO SPRINT 3.3.0 carregado - rota + decisão NF-e");
+  void 0;
 })();
 
 
@@ -2870,7 +2872,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
   window.addEventListener("load", () => setTimeout(atlasAplicarTudo, 300));
   window.addEventListener("atlas:owner-mode-changed", () => setTimeout(atlasAplicarTudo, 80));
 
-  console.log("✅ ATLAS EXPEDIÇÃO 3.5.0 carregado — escopo por obra + perfil");
+  void 0;
 })();
 
 

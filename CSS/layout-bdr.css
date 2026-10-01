@@ -21,7 +21,7 @@
   --bdr-muted:#6b7280;
 
   /* Largura do menu lateral */
-  --sidebar-width:72px;
+  --sidebar-width:60px;
 
   /* =====================================================
      CONTROLE DE ZOOM DO SISTEMA INTEIRO
@@ -33,7 +33,7 @@
      0.85 = mais compacto
      0.80 = bem pequeno
   ===================================================== */
-  --screen-zoom:0.85;
+  --screen-zoom:1;
 }
 
 /* =========================================================
@@ -62,7 +62,7 @@ body{
      Ele usa a variável --screen-zoom lá do topo.
      Para mudar tudo, altere só a variável.
   ===================================================== */
-  zoom:var(--screen-zoom);
+  zoom:1;
 }
 
 /* =========================================================
@@ -80,7 +80,7 @@ body{
   margin-left:var(--sidebar-width);
   width:calc(100% - var(--sidebar-width));
   min-height:100vh;
-  padding:12px;
+  padding:8px;
 }
 
 /* =========================================================
@@ -106,7 +106,7 @@ body{
   align-items:center;
 
   /* AQUI VOCÊ DESCE O MENU */
-  padding:40px 0 6px 0;
+  padding:26px 0 6px 0;
 
   z-index:1000;
   box-shadow:4px 0 18px rgba(0,0,0,.18);
@@ -120,8 +120,8 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:16px;
-  margin-top:10px; /* empurra menu um pouco pra baixo */
+  gap:10px;
+  margin-top:6px; /* empurra menu um pouco pra baixo */
 }
 
 .bdr-menu-footer{
@@ -133,14 +133,14 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:12px;
+  gap:8px;
 }
 
 .bdr-menu-btn{
-  width:46px;
-  height:46px;
+  width:40px;
+  height:40px;
   border:none;
-  border-radius:14px;
+  border-radius:12px;
   background:transparent;
   color:white;
   cursor:pointer;
@@ -164,7 +164,7 @@ body{
 
 .bdr-menu-icon i{
   color:white;
-  font-size:18px;
+  font-size:16px;
 }
 
 .bdr-menu-footer{
@@ -205,8 +205,8 @@ body{
     radial-gradient(circle at right top, rgba(164,22,26,.12), transparent 35%),
     linear-gradient(135deg,#ffffff,#f8fafc);
   border-radius:16px;
-  padding:12px 14px;
-  margin-bottom:10px;
+  padding:9px 12px;
+  margin-bottom:8px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -222,14 +222,14 @@ body{
 
 .bdr-topbar-title,
 .hero-title{
-  font-size:19px;
+  font-size:17px;
   font-weight:900;
   color:var(--bdr-red);
 }
 
 .hero-sub{
   color:#4b5563;
-  font-size:12px;
+  font-size:11px;
 }
 
 .hero-right{
@@ -712,6 +712,18 @@ canvas{
 .badge.MANUTENCAO,
 .MANUTENCAO{
   background:#f97316;
+}
+
+.status-EM-TRANSFERENCIA,
+.badge.EM_TRANSFERENCIA,
+.EM_TRANSFERENCIA{
+  background:#7c3aed;
+}
+
+.status-EM-TRANSITO,
+.badge.EM_TRANSITO,
+.EM_TRANSITO{
+  background:#ea580c;
 }
 
 .status-BAIXADO,
@@ -1733,4 +1745,78 @@ main,
     opacity:1 !important;
     visibility:visible !important;
   }
+}
+/* =========================================================
+   ATLAS — DENSIDADE DESKTOP 100% (PADRÃO OFICIAL)
+   Objetivo: aparência equivalente ao navegador em ~90%,
+   mantendo zoom real 100% e coordenadas nativas.
+   NÃO usar zoom/scale neste bloco.
+========================================================= */
+@media (min-width:1201px){
+  :root{
+    --sidebar-width:54px;
+    --screen-zoom:1;
+  }
+
+  html{font-size:13px;}
+  body{font-size:12px; zoom:1 !important;}
+
+  .bdr-main{
+    margin-left:var(--sidebar-width);
+    width:calc(100% - var(--sidebar-width));
+    padding:7px;
+  }
+
+  .bdr-sidebar{
+    width:var(--sidebar-width);
+    padding-top:23px;
+  }
+
+  .bdr-menu{gap:7px; margin-top:5px;}
+  .bdr-menu-btn{width:36px; height:36px; border-radius:11px;}
+  .bdr-menu-icon i{font-size:15px;}
+  .bdr-menu-btn::after{left:52px !important; font-size:11px !important; padding:6px 10px !important;}
+
+  .bdr-topbar,
+  .hero{
+    border-radius:14px;
+    padding:8px 11px;
+    margin-bottom:7px;
+  }
+  .bdr-topbar-title,
+  .hero-title{font-size:15px;}
+  .bdr-topbar-sub,
+  .hero-sub{font-size:10px;}
+
+  .card{
+    border-radius:14px;
+    padding:10px;
+    margin-bottom:9px;
+  }
+  .card h3{margin-bottom:9px; font-size:14px;}
+
+  .grid{grid-template-columns:repeat(auto-fit,minmax(171px,1fr)); gap:7px;}
+
+  input,
+  select,
+  textarea{
+    padding:7px;
+    border-radius:8px;
+    font-size:11px;
+  }
+
+  button{padding:7px 9px; border-radius:7px;}
+  .btn-small{padding:7px 9px; font-size:11px; border-radius:9px;}
+
+  .kpi-grid{gap:7px; margin-bottom:9px;}
+  .kpi{border-radius:14px; padding:8px; min-height:70px;}
+}
+
+/* =========================================================
+   ATLAS SHELL - ALINHAMENTO PADRÃO DOS MÓDULOS EMBUTIDOS
+   O shell já fornece o recuo horizontal da área útil. Evita
+   somar um segundo recuo à esquerda dentro do iframe.
+========================================================= */
+html.atlas-embedded .bdr-main{
+  padding-left:0 !important;
 }

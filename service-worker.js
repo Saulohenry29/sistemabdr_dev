@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-v4.0.5-cache-audio-206-safe";
+const BDR_CACHE_VERSION = "bdr-erp-v4.0.6-cache-response-clone-safe";
 
 const BDR_ASSETS = [
   "./",
@@ -113,7 +113,7 @@ self.addEventListener("fetch", event => {
   if(url.hostname.includes("cdn.jsdelivr.net") || url.hostname.includes("cdnjs.cloudflare.com")){
     event.respondWith(
       caches.match(req).then(cached => cached || fetch(req).then(resp => {
-        bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp);
+        bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp.clone());
         return resp;
       }).catch(() => cached))
     );
@@ -123,7 +123,7 @@ self.addEventListener("fetch", event => {
   if(req.headers.get("accept")?.includes("text/html")){
     event.respondWith(
       fetch(req).then(resp => {
-        bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp);
+        bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp.clone());
         return resp;
       }).catch(async () => await caches.match(req) || await caches.match("./login.html") || await caches.match("./index.html"))
     );
@@ -132,7 +132,7 @@ self.addEventListener("fetch", event => {
 
   event.respondWith(
     fetch(req).then(resp => {
-      bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp);
+      bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp.clone());
       return resp;
     }).catch(async () => await caches.match(req))
   );

@@ -225,7 +225,7 @@ const id =
   params.get("id") ||
   params.get("codigo");
 
-console.log("ID RECEBIDO:", id);
+void 0;
 
 // ======================================
 // CARREGAR DADOS
@@ -249,8 +249,8 @@ async function carregar(){
     .eq("codigo_qr", id)
     .maybeSingle();
 
-  console.log("DADOS:", data);
-  console.log("ERRO:", error);
+  void 0;
+  void 0;
 
   // NÃO ENCONTRADO
   if(error || !data){

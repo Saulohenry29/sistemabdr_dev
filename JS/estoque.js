@@ -311,7 +311,7 @@ if(st === "ESTOQUE" || st === "DISPONIVEL") return "ESTOQUE";
         "Dados carregados do dispositivo. Se houver internet, o sistema atualiza em segundo plano."
       );
 
-      console.log(`BDR cache rápido: estoque carregado do IndexedDB (${itensTodos.length})`);
+      void 0;
       return true;
     }catch(e){
       console.warn("BDR: falha ao carregar cache rápido do estoque:", e);
@@ -351,7 +351,7 @@ if(st === "ESTOQUE" || st === "DISPONIVEL") return "ESTOQUE";
       }
 
       if(cacheOk){
-        console.log("BDR estoque: offline real, mantendo dados do cache.");
+        void 0;
         return;
       }
 
@@ -756,7 +756,7 @@ if(st === "ESTOQUE" || st === "DISPONIVEL") return "ESTOQUE";
     });
 
     window.addEventListener("online", async () => {
-      console.log("BDR: internet voltou, recarregando estoque e sincronizando cache.");
+      void 0;
       if(window.BDROfflineSync?.sincronizarPendentes){
         await window.BDROfflineSync.sincronizarPendentes();
       }
@@ -771,14 +771,14 @@ if(st === "ESTOQUE" || st === "DISPONIVEL") return "ESTOQUE";
     });
 
     window.addEventListener("offline", () => {
-      console.log("BDR: modo offline ativado.");
+      void 0;
       if(window.BDROfflineSync?.atualizarStatusTela){
         window.BDROfflineSync.atualizarStatusTela();
       }
     });
 
     window.addEventListener("bdrOnlineRealVoltou", async () => {
-      console.log("BDR: online real voltou, atualizando estoque.");
+      void 0;
       await carregarDados();
       await iniciarRealtimeSininho();
     });

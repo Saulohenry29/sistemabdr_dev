@@ -24,7 +24,7 @@
   };
 
   function log(...args){
-    if(window.BDR_DEBUG_SYNC) console.log('[BDR SYNC]', ...args);
+    if(window.BDR_DEBUG_SYNC) void 0;
   }
 
   function onlineLocalRapido(){
@@ -325,5 +325,5 @@
   window.BDRSync.limparTudo = limparTudo;
   window.BDRSync.remover = remover;
 
-  console.log('✅ BDR SYNC ENGINE V10.2 carregado - offline first compatível');
+  void 0;
 })();

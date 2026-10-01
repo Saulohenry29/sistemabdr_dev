@@ -11,12 +11,75 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <link href="data:," rel="icon"/>
 <title>BDR Patrimônio</title>
+<script>
+/* ATLAS: identifica o modo embutido antes do carregamento dos CSS. */
+(function(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('atlas')==='1') document.documentElement.classList.add('atlas-embedded');
+})();
+</script>
+<style>
+/* =========================================================
+   PATRIMÔNIO - MODO MÓDULO DO ATLAS
+   Quando aberto com ?atlas=1, o shell fornece menu e topo.
+   A rolagem pertence somente ao .bdr-main deste módulo.
+   Quando patrimonio.html é aberto sozinho, estas regras não atuam.
+========================================================= */
+html.atlas-embedded{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  background:#f6f7fb!important;
+}
+html.atlas-embedded body{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  zoom:1!important;
+  background:#f6f7fb!important;
+}
+html.atlas-embedded .app-layout{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html.atlas-embedded .bdr-sidebar,
+html.atlas-embedded .bdr-topbar{
+  display:none!important;
+}
+html.atlas-embedded .bdr-main{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:10px!important;
+  padding-bottom:18px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  box-sizing:border-box!important;
+  background:#f6f7fb!important;
+}
+
+
+
+</style>
 <!-- CSS visual padrão do sistema -->
 <link href="./CSS/layout-bdr.css" rel="stylesheet"/>
 <link href="./CSS/bdr-fix-menu-final.css?v=20260724-padrao-profissional-v1" rel="stylesheet"/>
 <link href="./CSS/atlas-topbar.css?v=20260724-padrao-profissional-v1" rel="stylesheet"/><link href="./CSS/patrimonio-lote.css?v=20260727-alinhamento-dinamico" rel="stylesheet"/>
 <link href="./CSS/patrimonio-etiquetas-lote.css?v=20260726-v1" rel="stylesheet"/>
 <link href="./CSS/patrimonio.css?v=20260727-layout-final" rel="stylesheet"/>
+<link href="./CSS/patrimonio-remessas.css" rel="stylesheet"/>
 <script src="./JS/atlasDialog.js?v=20260724-padrao-profissional-v1"></script>
 
 <!-- =========================================================
@@ -45,6 +108,94 @@
 
 
 <!-- ATLAS: visual oficial da Topbar -->
+
+<style>
+/* =========================================================
+   ATLAS ETIQUETA INDIVIDUAL RÁPIDA V1
+   A prévia só aparece depois que configuração, dados e QR estão prontos.
+========================================================= */
+#modalEtiquetaBg .bdr-etiqueta-preview-area{
+  position:relative;
+  min-height:245px;
+  overflow:hidden;
+}
+
+#modalEtiquetaBg .bdr-etiqueta-frame{
+  opacity:1;
+  transition:opacity .14s ease;
+}
+
+#modalEtiquetaBg.atlas-etiqueta-carregando .bdr-etiqueta-frame{
+  opacity:0;
+  pointer-events:none;
+}
+
+#modalEtiquetaBg.atlas-etiqueta-carregando .bdr-etiqueta-preview-area::after{
+  content:"Preparando etiqueta...";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eef3f8;
+  color:#475569;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+
+#modalEtiquetaBg.atlas-etiqueta-pronta .bdr-etiqueta-frame{
+  opacity:1;
+}
+
+#statusEtiquetaOficial.pronto{
+  color:#166534!important;
+  font-weight:900!important;
+}
+</style>
+
+<style>
+/* ATLAS Patrimônio — acabamento compacto das ações */
+#btnGerarPatrimonio{
+  min-height:32px!important;
+  padding:6px 11px!important;
+  border-radius:8px!important;
+  font-size:12px!important;
+  line-height:1.1!important;
+}
+.bdr-lote-acoes{gap:6px!important}
+.bdr-lote-acoes button{
+  min-height:30px!important;
+  padding:5px 9px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+}
+/* Em trânsito: visual claro e distinto da Manutenção */
+.pat-status.status-EM-TRANSITO{
+  background:#fff7ed!important;
+  color:#c2410c!important;
+  border:1px solid #fdba74!important;
+  box-shadow:none!important;
+}
+</style>
+
+<style>
+.atlas-a-receber-card{padding:10px 14px!important;border-left:4px solid #f59e0b!important}
+#atlasCardAReceber[hidden],#atlasCardAReceber.atlas-sem-remessa{display:none!important}
+.atlas-a-receber-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.atlas-a-receber-topo h3{margin:0!important;font-size:15px!important}
+#atlasAReceberQtd{font-size:11px;color:#64748b;font-weight:800;white-space:nowrap}
+.atlas-a-receber-linha{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(250px,1.5fr) 150px 38px;gap:12px;align-items:center;min-height:46px;padding:7px 10px;border-top:1px solid #e5e7eb;background:#fff}
+.atlas-a-receber-id{min-width:0}.atlas-a-receber-id strong{display:block;color:#991b1b;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.atlas-a-receber-id span{display:block;color:#334155;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atlas-a-receber-rota{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;font-weight:800;color:#334155}.atlas-a-receber-rota span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.atlas-a-receber-rota b{color:#0f172a;font-size:18px;flex:0 0 auto}
+.atlas-a-receber-status{justify-self:end;font-size:11px;font-weight:900;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:999px;padding:5px 9px;white-space:nowrap}
+.atlas-a-receber-olho{width:34px;height:32px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#0f172a;font-size:16px;cursor:pointer}.atlas-a-receber-olho:hover{background:#f8fafc}
+.atlas-a-receber-ver-todas{display:block;margin:7px 0 0 auto;border:0;background:transparent;color:#991b1b;font-weight:900;cursor:pointer}
+.atlas-remessa-overlay{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}.atlas-remessa-modal{width:min(760px,96vw);max-height:82vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(15,23,42,.25);padding:18px}.atlas-remessa-modal-topo{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding-bottom:12px}.atlas-remessa-modal-topo strong{display:block;font-size:18px;color:#991b1b}.atlas-remessa-modal-topo small{display:block;margin-top:3px;color:#64748b;font-weight:800}.atlas-remessa-modal-topo button{width:34px;height:34px;border:0;border-radius:9px;background:#dc2626;color:#fff;font-size:22px;cursor:pointer}.atlas-remessa-rota{display:flex;align-items:center;justify-content:center;gap:18px;padding:14px;background:#f8fafc;border-radius:12px;margin:14px 0;font-weight:900}.atlas-remessa-rota b{font-size:24px}.atlas-remessa-modal-resumo{font-size:12px;color:#64748b;font-weight:900;margin-bottom:8px}.atlas-remessa-itens>div{display:grid;grid-template-columns:170px 1fr;gap:12px;padding:10px 8px;border-top:1px solid #e5e7eb}.atlas-remessa-itens strong{color:#991b1b}.atlas-remessa-itens span{font-weight:800;color:#334155}
+@media(max-width:800px){.atlas-a-receber-linha{grid-template-columns:1fr 38px}.atlas-a-receber-rota{grid-column:1}.atlas-a-receber-status{grid-column:1;justify-self:start}.atlas-a-receber-olho{grid-column:2;grid-row:1/4}.atlas-remessa-itens>div{grid-template-columns:1fr}.atlas-a-receber-topo{align-items:flex-start;flex-direction:column;gap:2px}}
+</style>
+
 </head>
 <body>
 <!-- ===================================== -->
@@ -190,7 +341,7 @@
 <h3>➕ Novo Patrimônio</h3>
 <div class="grid">
 <div class="atlas-autocomplete-wrap">
-<input autocomplete="off" id="nome_bem" onblur="setTimeout(atlasFecharSugestoesPatrimonio,160)" oninput="atlasAtualizarSugestoesPatrimonio()" onkeydown="atlasTeclaSugestaoPatrimonio(event)" placeholder="Nome do patrimônio. Ex.: Esmerilhadeira"/>
+<input autocomplete="off" id="nome_bem" onfocus="atlasAtualizarSugestoesPatrimonio()" oninput="atlasAtualizarSugestoesPatrimonio()" onkeydown="atlasTeclaSugestaoPatrimonio(event)" onblur="setTimeout(atlasFecharSugestoesPatrimonio,160)" placeholder="Nome do patrimônio. Ex.: Esmerilhadeira"/>
 <div class="atlas-sugestoes" id="atlasSugestoesPatrimonio"></div>
 </div>
 <select id="tipo_item" onchange="mostrarCampos()">
@@ -208,7 +359,7 @@
 </select>
 <select id="status_inicial">
 <option value="ESTOQUE">📦 Estoque</option>
-<option value="EM_USO">👷 Em uso</option>
+<option selected="" value="EM_USO">👷 Em uso</option>
 <option value="MANUTENCAO">🔧 Manutenção</option>
 <option value="BAIXADO">⬇️ Baixado</option>
 </select>
@@ -218,7 +369,7 @@
 <option value="REGULAR">🟡 Regular</option>
 <option value="RUIM">🟠 Ruim</option>
 </select>
-<input id="valor_bem" oninput="mascaraMoeda(this)" placeholder="Valor do bem Ex: 1.350,00" type="text"/>
+<div class="campo-moeda"><span class="campo-moeda-prefixo">R$</span><input id="valor_bem" inputmode="decimal" onkeydown="atlasTeclaMoeda(event,this)" oninput="mascaraMoeda(this)" placeholder="1.350,00" type="text"/></div>
 </div>
 <div class="grid" id="campoOutroTipo" style="display:none;margin-top:8px;">
 <input id="tipo_outro" placeholder="Descreva o tipo do ativo"/>
@@ -259,11 +410,18 @@
       </div>
     </div>
 
-    <label class="atlas-lote-sem-serie">
-      <input id="atlasLoteSemSerie" type="checkbox">
-      <span class="atlas-lote-check-caixa" aria-hidden="true"></span>
-      <span>Itens sem número de série</span>
-    </label>
+    <div class="atlas-lote-modos">
+      <label class="atlas-lote-sem-serie">
+        <input id="atlasLoteSemSerie" type="checkbox">
+        <span class="atlas-lote-check-caixa" aria-hidden="true"></span>
+        <span>Itens sem número de série</span>
+      </label>
+      <label class="atlas-lote-sem-serie">
+        <input id="atlasLoteMesmoNumero" type="checkbox">
+        <span class="atlas-lote-check-caixa" aria-hidden="true"></span>
+        <span>Todos com o mesmo número de série</span>
+      </label>
+    </div>
 
     <div id="atlasLoteComSerie">
       <div class="atlas-editor-series">
@@ -284,9 +442,9 @@
     </div>
 
     <div id="atlasLoteSemSerieCampos" hidden>
-      <label for="atlasLoteQuantidade">Quantidade</label>
+      <label id="atlasLoteQuantidadeRotulo" for="atlasLoteQuantidade">Quantidade</label>
       <input id="atlasLoteQuantidade" type="number" min="2" max="200" value="2" inputmode="numeric">
-      <small>Os números de série poderão ser adicionados depois.</small>
+      <small id="atlasLoteQuantidadeAjuda">Os números de série poderão ser adicionados depois.</small>
     </div>
   </section>
 </template>
@@ -297,7 +455,7 @@
 <div class="card">
 <h3>🔎 Localizar patrimônio</h3>
 <div class="grid">
-<input id="busca" oninput="bdrResetPaginaPatrimonio(); renderizarPatrimonios()" placeholder="Pesquisar por PAT, nome, placa, série, obra, marca..."/>
+<input id="busca" name="atlas_busca_patrimonio" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" oninput="bdrResetPaginaPatrimonio(); renderizarPatrimonios()" placeholder="Pesquisar por PAT, nome, placa, série, obra, marca...">
 <select id="filtroObra" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
 <option value="">Todas as obras/setores</option>
 </select>
@@ -305,6 +463,8 @@
 <option value="">Todos os status</option>
 <option value="ESTOQUE">Estoque</option>
 <option value="EM_USO">Em uso</option>
+<option value="EM_TRANSFERENCIA">Em transferência</option>
+<option value="EM_TRANSITO">Em trânsito</option>
 <option value="MANUTENCAO">Manutenção</option>
 <option value="BAIXADO">Baixado</option>
 <option id="filtroStatusInativo" value="INATIVO" hidden>Inativos</option>
@@ -326,7 +486,15 @@
 <option value="OFICINA">🛠 Equipamento de oficina</option>
 <option value="OUTRO">📦 Outro</option>
 </select>
+<select id="filtroUsuario" onchange="bdrResetPaginaPatrimonio(); renderizarPatrimonios()">
+<option value="">Todos os cadastradores</option>
+</select>
+<button id="filtroAntigo" class="btn-filtro-antigo" type="button" aria-pressed="false" onclick="bdrAlternarFiltroAntigo(this)"><span class="filtro-antigo-icone">⊙</span><span>Patrimônio antigo</span></button>
 </div>
+</div>
+<div class="card atlas-a-receber-card atlas-sem-remessa" id="atlasCardAReceber" data-permissao="PATRIMONIO_VER" hidden>
+<div class="atlas-a-receber-topo"><h3>📦 A receber</h3><span id="atlasAReceberQtd"></span></div>
+<div id="atlasAReceberLista"></div>
 </div>
 <div class="card" data-permissao="PATRIMONIO_VER" id="cardAnalyticsManutencao">
 <h3>🛠 Analytics de Manutenção</h3>
@@ -341,29 +509,54 @@
 <div class="card">
 <h3>📋 Patrimônios cadastrados</h3>
 <div class="bdr-lote-bar">
-<span class="bdr-lote-resumo">🏷 <strong id="bdrQtdEtiquetasSelecionadas">0 etiqueta(s) selecionada(s)</strong></span>
-<span id="bdrLoteAjuda" style="color:#64748b;font-size:12px;font-weight:800;">Imprima uma ou várias etiquetas sem poluir a lista.</span>
+<span class="bdr-lote-resumo">☑ <strong id="bdrQtdEtiquetasSelecionadas">0 patrimônio(s) selecionado(s)</strong></span>
+<span id="bdrLoteAjuda" style="color:#64748b;font-size:12px;font-weight:800;">Selecione patrimônios e depois escolha o que deseja fazer.</span>
 <div class="bdr-lote-acoes">
 <button class="bdr-lote-configurar atlas-owner-inline" data-owner-only="" hidden="" id="btnConfigurarEtiquetas" onclick="abrirModalConfiguracaoEtiqueta()" style="display:none" type="button">⚙ Configurar etiquetas</button>
-<button class="bdr-lote-selecionar" id="bdrBotaoAcaoEtiquetas" onclick="bdrAcaoPrincipalEtiquetas()" type="button">☑ Selecionar etiquetas</button>
-<button class="bdr-lote-cancelar" onclick="bdrCancelarSelecaoEtiquetas()" type="button">Cancelar</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoSelecaoPatrimonio" onclick="bdrEntrarModoSelecaoPatrimonios()" type="button">☑ Selecionar patrimônios</button>
+<button class="bdr-lote-imprimir" id="bdrBotaoAcaoEtiquetas" onclick="bdrImprimirEtiquetasSelecionadas()" style="display:none" type="button">🏷 Etiquetas</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoAcaoRemessa" onclick="bdrEnviarSelecionadosRemessa()" style="display:none" type="button">↔ Transferência</button>
+<button class="bdr-lote-selecionar" id="bdrBotaoAcaoManutencao" onclick="bdrEnviarSelecionadosManutencao()" style="display:none" type="button">🔧 Manutenção</button>
+<button class="bdr-lote-cancelar" id="bdrBotaoCancelarSelecao" onclick="bdrCancelarSelecaoEtiquetas()" type="button">Cancelar</button>
 </div>
 </div>
 <div id="lista"></div>
 </div>
+
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasNovaRemessaModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">
+<div class="atlas-remessa-modal">
+<div class="atlas-remessa-head"><div><h2>↔ Nova Transferência Patrimonial</h2><p>Selecione destino e encaminhe os patrimônios para a Expedição.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">✕</button></div>
+<div class="atlas-remessa-grid">
+<div><label>Código</label><input id="atlasRemessaCodigo" readonly></div>
+<div><label>Status após recebimento</label><select id="atlasRemessaStatusDestino"><option value="MANTER">Manter status anterior</option><option value="EM_USO">Em uso</option><option value="ESTOQUE">Estoque</option></select></div>
+<div><label>Obra de origem</label><select id="atlasRemessaOrigem" disabled><option value="">Origem definida pelos itens selecionados</option></select></div>
+<div><label>Obra de destino</label><select id="atlasRemessaDestino"><option value="">Selecione o destino</option></select></div>
+<div style="display:none"><label>Motorista / transportador</label><input id="atlasRemessaMotorista"></div>
+<div style="display:none"><label>Veículo / placa</label><input id="atlasRemessaVeiculo"><input id="atlasRemessaPlaca"></div>
+<div class="wide"><label>Observação</label><textarea id="atlasRemessaObs" placeholder="Motivo da transferência, referência ou observação..."></textarea></div>
+</div>
+<div class="atlas-remessa-itens atlas-remessa-itens-revisao"><div class="atlas-remessa-itens-tools"><strong id="atlasRemessaSelecionados">0 patrimônio(s) selecionado(s)</strong><span>Itens escolhidos diretamente na tela de Patrimônio.</span></div><div class="atlas-remessa-lista-itens" id="atlasRemessaListaItens"></div></div>
+<div class="atlas-remessa-footer"><span>A transferência será encaminhada para a Expedição. A obra só muda após o recebimento no destino.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.enviar()">↔ Enviar para Expedição</button></div></div>
+</div></div>
+
 </main>
 </div>
 <div class="modal-bg" id="modalBg">
 <div class="modal">
 <button class="fechar" onclick="fecharModal()">X</button>
 <h2 id="modalTitulo">Patrimônio</h2>
-<div class="modal-info" id="modalInfo"></div>
+<div class="modal-info atlas-patrimonio-info-wrap">
+<button class="atlas-patrimonio-historico-btn" id="atlasBtnHistoricoPatrimonio" type="button" title="Ver histórico completo" aria-label="Ver histórico completo" onclick="abrirHistoricoPatrimonioAtual()"><svg class="atlas-patrimonio-historico-icone" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 5h13a4 4 0 0 1 4 4v14H13a4 4 0 0 0-4 4V9a4 4 0 0 0-4-4h4Z"/><path d="M5 5a4 4 0 0 1 4 4v3H5a4 4 0 0 1 0-7Z"/><path d="M9 27a4 4 0 0 1 4-4h14a4 4 0 0 1-4 4H9Z"/><path d="M13 11h9M13 16h9"/></svg></button>
+<div id="modalInfo"></div>
+</div>
+
+<div id="atlasTransferenciaBloqueio" style="display:none;margin:10px 0;padding:11px 12px;border:1px solid #f59e0b;border-left:5px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#78350f;font-size:12px;line-height:1.45;"></div>
 
 <div id="atlasControlesPatrimonioAtivo">
 <label><strong>Justificativa obrigatória da movimentação</strong></label>
 <textarea id="observacaoMov" placeholder="Ex: item enviado para manutenção, troca de setor, baixa por defeito..."></textarea>
 <br/><br/>
-<label>Trocar para outra obra/setor</label>
+<label>Transferir para outra obra/setor</label>
 <select id="novaObraSelect">
 <option value="">Selecione nova obra/setor</option>
 </select>
@@ -373,13 +566,39 @@
 <button class="btn-ok acao-movimentar" onclick="alterarStatus('ESTOQUE')">📦 Voltar Estoque</button>
 <button class="btn-blue acao-movimentar" onclick="alterarStatus('EM_USO')">✅ Colocar Em Uso</button>
 <button class="btn-orange acao-movimentar acao-manutencao" onclick="alterarStatus('MANUTENCAO')">🛠 Manutenção</button>
-<button class="acao-movimentar" onclick="trocarObra()">🔁 Trocar Setor</button>
+<button class="acao-movimentar" onclick="trocarObra()">🔁 Transferir</button>
+<button id="btnCancelarTransferencia" class="btn-gray" onclick="cancelarTransferenciaAtual()" style="display:none">✖ Cancelar transferência</button>
 <button class="btn-gray acao-movimentar" onclick="alterarStatus('BAIXADO')">⬇️ Baixar</button>
 <button class="btn-dark acao-imprimir" onclick="imprimirEtiqueta()">🖨 Etiqueta</button>
 <button class="acao-editar" onclick="abrirEdicao()">✏️ Editar Dados</button>
 <button class="bdr-btn-danger acao-excluir" onclick="excluirPatrimonio()">🗑 Excluir</button>
 <button id="btnReativarPatrimonio" class="btn-ok" onclick="reativarPatrimonio()" style="display:none">♻️ Reativar patrimônio</button>
 </div>
+</div>
+</div>
+<div class="modal-bg" id="modalCancelarTransferenciaBg" style="display:none;z-index:10050;">
+<div class="modal" style="max-width:560px;">
+<button class="fechar" onclick="fecharModalCancelarTransferencia()">X</button>
+<h2 style="margin-bottom:10px;">✖ Cancelar transferência</h2>
+<div id="cancelarTransferenciaResumo" class="modal-info" style="margin-bottom:12px;"></div>
+<div style="margin:0 0 12px;padding:11px 12px;border:1px solid #f59e0b;border-left:5px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#78350f;font-size:12px;line-height:1.45;">
+<strong>⚠️ Atenção</strong><br>Esta ação só é permitida antes da saída. O patrimônio permanecerá na obra de origem e voltará ao status anterior.
+</div>
+<label for="cancelarTransferenciaMotivo"><strong>Motivo do cancelamento *</strong></label>
+<textarea id="cancelarTransferenciaMotivo" maxlength="500" placeholder="Ex: transferência criada para a obra errada, patrimônio selecionado por engano..." style="min-height:100px;margin-top:6px;"></textarea>
+<div id="cancelarTransferenciaErro" style="display:none;margin-top:8px;padding:9px 10px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:12px;font-weight:800;"></div>
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+<button type="button" class="btn-gray" onclick="fecharModalCancelarTransferencia()" style="min-width:120px;">Voltar</button>
+<button type="button" id="btnConfirmarCancelamentoTransferencia" class="bdr-btn-danger" onclick="confirmarCancelamentoTransferencia()" style="min-width:205px;">✖ Cancelar transferência</button>
+</div>
+</div>
+</div>
+<div class="modal-bg" id="atlasHistoricoPatrimonioModal" style="display:none" onclick="if(event.target===this) fecharHistoricoPatrimonioAtual()">
+<div class="modal atlas-historico-patrimonio-modal">
+<button class="fechar" onclick="fecharHistoricoPatrimonioAtual()">X</button>
+<h2 id="atlasHistoricoPatrimonioTitulo">Histórico do patrimônio</h2>
+<p class="atlas-historico-subtitulo">Vida funcional completa: cadastro, movimentações, transferências e manutenções.</p>
+<div id="atlasHistoricoPatrimonioConteudo"></div>
 </div>
 </div>
 <div class="modal-bg" id="modalEdicaoBg">
@@ -411,7 +630,7 @@
 <option value="REGULAR">🟡 Regular</option>
 <option value="RUIM">🟠 Ruim</option>
 </select>
-<input id="edit_valor_bem" oninput="mascaraMoeda(this)" placeholder="Valor do bem Ex: 1.350,00"/>
+<input id="edit_valor_bem" inputmode="decimal" onkeydown="atlasTeclaMoeda(event,this)" oninput="mascaraMoeda(this)" placeholder="Valor do bem Ex: 1.350,00"/>
 <input id="edit_codigo_antigo" placeholder="Código antigo"/>
 <div class="atlas-edicao-fiscal-titulo">Dados fiscais</div>
 <input id="edit_ncm" inputmode="numeric" maxlength="10" oninput="atlasMascaraNCM(this)" placeholder="NCM. Ex.: 84672999"/>
@@ -451,7 +670,7 @@
 </div>
 <div>
 <label><strong>Valor do orçamento</strong></label>
-<input id="manut_valor_orcamento" oninput="mascaraMoeda(this)" placeholder="Ex: 350,00"/>
+<input id="manut_valor_orcamento" inputmode="decimal" onkeydown="atlasTeclaMoeda(event,this)" oninput="mascaraMoeda(this)" placeholder="Ex: 350,00"/>
 </div>
 <div class="wide">
 <label><strong>Descrição do orçamento</strong></label>
@@ -526,7 +745,10 @@
 <script src="./JS/patrimonio/patrimonio-lote.js?v=20260727-alinhamento-dinamico"></script>
 <script src="./JS/patrimonio/patrimonio-etiquetas-lote.js?v=20260726-v1"></script>
 <script src="./JS/atlasGestorNotificacoes.js?v=20260728-patrimonio"></script>
+<script src="./JS/atlasWorkflow.js"></script>
 <script src="./JS/patrimonio/patrimonio.js?v=20260728-reativacao-v1"></script>
+<script src="./JS/patrimonio/patrimonio-remessas.js"></script>
+<script src="./JS/patrimonio/patrimonio-etiqueta-individual.js?v=20260804-v1"></script>
 <script src="./JS/bdrUppercase.js"></script>
 <script src="./JS/patrimonio/patrimonio-permissoes.js?v=20260725-v1"></script>
 <script src="./JS/bdrMenuMobileAtivo.js?v=20260702-3"></script>

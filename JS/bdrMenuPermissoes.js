@@ -96,7 +96,11 @@
     CADASTRAR_PATRIMONIO: "PATRIMONIO_CRIAR",
     EDITAR_PATRIMONIO: "PATRIMONIO_EDITAR",
     ALTERAR_STATUS: "PATRIMONIO_MOVIMENTAR",
-    MOVIMENTAR_PATRIMONIO: "PATRIMONIO_MOVIMENTAR"
+    MOVIMENTAR_PATRIMONIO: "PATRIMONIO_MOVIMENTAR",
+
+    /* Expedição: nomes antigos da interface apontam para as permissões oficiais atuais. */
+    EXPEDICAO_APROVAR: "APROVAR_PEDIDO_ORIGEM",
+    EXPEDICAO_SEPARAR: "SEPARAR_PEDIDO"
   };
 
   function norm(v){
@@ -468,5 +472,5 @@
     iniciar();
   }
 
-  console.log("✅ BDR MENU PERMISSÕES V8 carregado - Owner fix ativo");
+  void 0;
 })();

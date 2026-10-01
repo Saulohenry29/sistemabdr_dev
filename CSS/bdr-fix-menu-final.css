@@ -11,17 +11,28 @@
 ========================================================= */
 
 :root{
-  --sidebar-width:72px;
+  --sidebar-width:61.5px; /* AJUSTE AQUI: largura total do menu lateral desktop */
   --atlas-menu-bg-start:#0f2238;
   --atlas-menu-bg-end:#111827;
   --atlas-menu-z:500;
   --atlas-menu-tooltip-z:600;
   --bdr-mobile-menu-altura:74px;
   --bdr-mobile-menu-btn:48px;
-  --bdr-mobile-menu-icone:18px;
+  --bdr-mobile-menu-icone:17px;
   --bdr-mobile-menu-gap:8px;
   --bdr-mobile-content-bottom:100px;
 }
+
+/* =========================================================
+   AJUSTES RÁPIDOS DO MENU DESKTOP
+   ---------------------------------------------------------
+   --sidebar-width = largura da faixa escura
+   .bdr-menu-btn    = tamanho de cada botão
+   .bdr-menu i      = tamanho dos ícones
+   .bdr-menu gap    = distância vertical entre botões
+
+   IMPORTANTE: não usa zoom nem transform para redimensionar o sistema.
+========================================================= */
 
 /* =========================================================
    1. DESKTOP / NOTEBOOK
@@ -36,9 +47,9 @@
     align-items:center;
     justify-content:flex-start;
     width:var(--sidebar-width);
-    height:calc(100vh / var(--screen-zoom,1));
-    min-height:calc(100vh / var(--screen-zoom,1));
-    padding:60px 0 30px;
+    height:100vh;
+    min-height:100vh;
+    padding:52px 0 24px;
     overflow:visible;
     background:linear-gradient(180deg,var(--atlas-menu-bg-start),var(--atlas-menu-bg-end));
     box-shadow:4px 0 18px rgba(0,0,0,.18);
@@ -52,7 +63,7 @@
     flex-direction:column;
     align-items:center;
     justify-content:flex-start;
-    gap:10px;
+    gap:8px; /* AJUSTE AQUI: distância vertical entre os botões */
     width:var(--sidebar-width);
     margin:0;
     padding:0 0 20px;
@@ -64,18 +75,18 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    flex:0 0 46px;
-    width:46px;
-    height:46px;
-    min-width:46px;
-    min-height:46px;
-    padding:0;
-    border:0;
-    border-radius:14px;
-    background:transparent;
-    color:#fff;
-    cursor:pointer;
-    transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+    flex:0 0 39px;
+    width:39px; /* AJUSTE AQUI: largura do botão */
+    height:39px; /* AJUSTE AQUI: altura do botão */
+    min-width:39px; /* AJUSTE AQUI: largura mínima do botão */
+    min-height:39px; /* AJUSTE AQUI: altura mínima do botão */
+    padding:0; /* AJUSTE AQUI: padding interno do botão */
+    border:0; /* AJUSTE AQUI: borda do botão */
+    border-radius:12px; /* AJUSTE AQUI: arredondamento do botão */
+    background:transparent; /* AJUSTE AQUI: cor de fundo do botão */
+    color:#fff; /* AJUSTE AQUI: cor do ícone do botão */
+    cursor:pointer; /* AJUSTE AQUI: cursor do botão */
+    transition:background .18s ease,transform .18s ease,box-shadow .18s ease; /* AJUSTE AQUI: transição do botão */ 
   }
 
   .bdr-menu-btn:hover{
@@ -89,24 +100,24 @@
   }
 
   .bdr-menu-icon i,
-  .bdr-menu-btn i{font-size:18px;color:#fff;}
+  .bdr-menu-btn i{font-size:15px; /* AJUSTE AQUI: tamanho dos ícones */ color:#fff;}
 
   .bdr-menu-btn[data-tip]::after{
     content:attr(data-tip);
     position:absolute;
-    left:46px;
+    left:44px;
     top:50%;
     z-index:var(--atlas-menu-tooltip-z);
     display:block;
     width:max-content;
     min-width:max-content;
-    padding:8px 14px;
+    padding:7px 11px;
     border:1px solid rgba(255,255,255,.08);
     border-radius:10px;
     background:#111827;
     color:#fff;
     box-shadow:0 10px 24px rgba(0,0,0,.18);
-    font-size:13px;
+    font-size:12px;
     font-weight:800;
     line-height:1.2;
     white-space:nowrap;
@@ -155,35 +166,35 @@
   .bdr-sidebar::-webkit-scrollbar{display:none;}
   .bdr-brand,.bdr-menu-footer{display:none;}
 
-  .bdr-menu{
-    display:flex;
-    flex-direction:row;
-    align-items:center;
-    justify-content:flex-start;
-    gap:var(--bdr-mobile-menu-gap);
-    width:max-content;
-    min-width:max-content;
-    margin:0;
-    padding:0 28px;
+  .bdr-menu{ /* menu inferior */
+    display:flex; /* AJUSTE AQUI: exibição do menu inferior */
+    flex-direction:row; /* AJUSTE AQUI: direção do menu inferior */
+    align-items:center; /* AJUSTE AQUI: alinhamento do menu inferior */
+    justify-content:flex-start; /* AJUSTE AQUI: justificação do menu inferior */
+    gap:var(--bdr-mobile-menu-gap); /* AJUSTE AQUI: distância horizontal entre os botões */
+    width:max-content; /* AJUSTE AQUI: largura do menu inferior */
+    min-width:max-content; /* AJUSTE AQUI: largura mínima do menu inferior */
+    margin:0; /* AJUSTE AQUI: margem do menu inferior */
+    padding:0 28px; /* AJUSTE AQUI: padding do menu inferior */
   }
 
-  .bdr-menu-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex:0 0 var(--bdr-mobile-menu-btn);
-    width:var(--bdr-mobile-menu-btn);
-    height:var(--bdr-mobile-menu-btn);
-    min-width:var(--bdr-mobile-menu-btn);
-    min-height:var(--bdr-mobile-menu-btn);
-    max-width:var(--bdr-mobile-menu-btn);
-    max-height:var(--bdr-mobile-menu-btn);
-    padding:0;
-    border:0;
-    border-radius:15px;
-    background:transparent;
-    color:#fff;
-    transform:none;
+  .bdr-menu-btn{ /* botões do menu inferior */
+    display:flex; /* AJUSTE AQUI: exibição dos botões do menu inferior */
+    align-items:center; /* AJUSTE AQUI: alinhamento dos botões do menu inferior */
+    justify-content:center; /* AJUSTE AQUI: justificação dos botões do menu inferior */
+    flex:0 0 var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: redimensionamento dos botões do menu inferior */
+    width:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: largura dos botões do menu inferior */
+    height:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: altura dos botões do menu inferior */
+    min-width:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: largura mínima dos botões do menu inferior */
+    min-height:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: altura mínima dos botões do menu inferior */
+    max-width:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: largura máxima dos botões do menu inferior */
+    max-height:var(--bdr-mobile-menu-btn); /* AJUSTE AQUI: altura máxima dos botões do menu inferior */
+    padding:0; /* AJUSTE AQUI: padding dos botões do menu inferior */
+    border:0; /* AJUSTE AQUI: borda dos botões do menu inferior */
+    border-radius:15px; /* AJUSTE AQUI: arredondamento dos botões do menu inferior */
+    background:transparent; /* AJUSTE AQUI: fundo dos botões do menu inferior */
+    color:#fff; /* AJUSTE AQUI: cor dos ícones dos botões do menu inferior */
+    transform:none; /* AJUSTE AQUI: transformação dos botões do menu inferior */
   }
 
   .bdr-menu-btn:hover{transform:none;}
