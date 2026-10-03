@@ -16,6 +16,7 @@
   const norm=v=>String(v??"").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
   const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
   const ARQUIVOS_BASE_URL="https://arquivos.sathtech.com.br/files/";
+  const ATLAS_API_BASE_URL="https://arquivos.sathtech.com.br";
   const avatarUrl=v=>{const x=String(v||"").trim();if(!x)return "";if(/^https?:\/\//i.test(x))return x;return ARQUIVOS_BASE_URL+x.replace(/^\/+/,"")};
   const avatarHtml=(u,classe="")=>{const url=avatarUrl(u?.foto_url);return url?`<img class="atlas-avatar-img ${classe}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:esc(initials(u?.nome))};
   let fotoArquivoPendente=null;
@@ -305,7 +306,7 @@
 
   function visibleUsers(){return STATE.users.filter(usuarioDentroDoEscopo)}
   function filteredUsers(){const term=norm($("#filtroBusca").value);const pf=norm($("#filtroPerfil").value);const work=$("#filtroObraUsuario").value;const st=$("#filtroStatusUsuario").value;return visibleUsers().filter(u=>(!term||norm(`${u.nome} ${u.usuario} ${u.email}`).includes(term))&&(!pf||norm(u.perfil)===pf)&&(!work||obrasDoUsuario(u).has(String(work)))&&(!st||(st==="ATIVO")===(u.ativo!==false)))}
-  function fillFilters(){const perf=[...new Set(visibleUsers().map(u=>String(u.perfil||"").trim()).filter(Boolean))].sort();$("#filtroPerfil").innerHTML='<option value="">Todos os perfis</option>'+perf.map(p=>`<option>${esc(p)}</option>`).join("");$("#formPerfil").innerHTML=perf.filter(p=>currentIsOwner()||norm(p)!=="MASTER").map(p=>`<option>${esc(p)}</option>`).join("")||'<option>OPERADOR</option>';const opts=STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");$("#filtroObraUsuario").innerHTML='<option value="">Todas as obras</option>'+opts;$("#formEmpresa").innerHTML='<option value="">Selecione</option>'+STATE.companies.map(e=>`<option value="${e.id}">${esc(e.nome||e.razao_social||e.id)}</option>`).join("")}
+  function fillFilters(){const perf=[...new Set(visibleUsers().map(u=>String(u.perfil||"").trim()).filter(Boolean))].sort();$("#filtroPerfil").innerHTML='<option value="">Todos os perfis</option>'+perf.map(p=>`<option>${esc(p)}</option>`).join("");$("#formPerfil").innerHTML=perf.filter(p=>currentIsOwner()||norm(p)!=="MASTER").map(p=>`<option>${esc(p)}</option>`).join("")||'<option>OPERADOR</option>';const opts=STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");$("#filtroObraUsuario").innerHTML='<option value="">Todas as obras</option>'+opts;$("#formEmpresa").innerHTML='<option value="">Selecione</option>'+STATE.companies.map(e=>`<option value="${e.id}">${esc(e.nome||e.razao_social||e.id)}</option>`).join("");const base=$("#formObraOperacional");if(base)base.innerHTML='<option value="">Sem base operacional</option>'+STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("")}
 
   function renderPagination(totalPages){
     const box = $("#paginacaoUsuarios");
@@ -441,6 +442,25 @@
     renderPagination(pages);
   }
 
+  function criarDraftUsuario(user){
+    return {
+      ...user,
+      permissions:new Set(permsOf(user)),
+      works:obrasDoUsuario(user)
+    };
+  }
+
+  async function carregarObraOperacionalUsuario(user){
+    if(!user?.id) return null;
+    const {data,error}=await db().rpc("atlas_obra_operacional_expedicao",{p_usuario_id:Number(user.id)});
+    if(error){
+      console.warn("Atlas Usuários: não foi possível carregar a base operacional.",error.message);
+      return null;
+    }
+    const linha=Array.isArray(data)?(data[0]||null):data;
+    return linha?.obra_id?Number(linha.obra_id):null;
+  }
+
   function selectUser(id){
     try{
       const user = STATE.users.find(
@@ -464,11 +484,14 @@
 
       STATE.selected = user;
 
-      STATE.draft = {
-        ...user,
-        permissions:new Set(permsOf(user)),
-        works:obrasDoUsuario(user)
-      };
+      STATE.draft = criarDraftUsuario(user);
+      carregarObraOperacionalUsuario(user).then(obraId=>{
+        if(String(STATE.selected?.id)!==String(user.id)) return;
+        user._obra_operacional_id=obraId;
+        STATE.selected._obra_operacional_id=obraId;
+        if(STATE.draft) STATE.draft._obra_operacional_id=obraId;
+        renderData();
+      });
 
       // Relatórios: ao liberar o módulo, aplica o pacote padrão.
       aplicarPadraoRelatorios(STATE.draft.permissions);
@@ -1004,7 +1027,124 @@
 
 
   function activateTab(nome){$$('.atlas-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===nome));$$('.atlas-tab-content').forEach(x=>x.classList.remove('active'));const alvo=$('#tab'+nome.charAt(0).toUpperCase()+nome.slice(1));if(alvo)alvo.classList.add('active');const area=$('.atlas-tab-scroll-area');if(area)area.scrollTop=0}
-  function renderData(){if(!STATE.selected)return;const u=STATE.draft||STATE.selected;const itens=[['Nome completo',u.nome||'-'],['Usuário',u.usuario||'-'],['E-mail',u.email||'Não informado'],['Perfil',u.perfil||'-'],['Empresa',u.empresa_id||'-'],['Obras de atuação',worksText(u)],['Status',u.ativo===false?'INATIVO':'ATIVO'],['Perfil rápido',u.perfil_rapido||'Personalizado']];const el=$('#dataSummary');if(el)el.innerHTML=itens.map(([a,b])=>`<div class="atlas-data-card"><small>${esc(a)}</small><strong>${esc(b)}</strong></div>`).join('')}
+  function authStatusInfo(u){
+    const status=String(u?.auth_status||'LEGADO').trim().toUpperCase();
+    if(status==='ATIVO'&&u?.auth_user_id){
+      return {status:'ATIVO',titulo:'Acesso seguro ativo',descricao:'Esta conta já autentica pelo Supabase Auth.',classe:'active'};
+    }
+    if(status==='AGUARDANDO_ATIVACAO'){
+      return {status:'AGUARDANDO',titulo:'Aguardando ativação',descricao:'A migração foi iniciada e o usuário ainda precisa concluir o acesso seguro.',classe:'pending'};
+    }
+    return {status:'LEGADO',titulo:'Acesso legado',descricao:'O usuário continua entrando normalmente pelo método atual até a migração ser ativada.',classe:'legacy'};
+  }
+
+  function renderAuthStatus(){
+    if(!STATE.selected)return;
+    const u=STATE.draft||STATE.selected;
+    const info=authStatusInfo(u);
+    const titulo=$('#authStatusTitulo');
+    const descricao=$('#authStatusDescricao');
+    const badge=$('#authStatusBadge');
+    const botao=$('#btnAtivarAcessoSeguro');
+    if(titulo) titulo.textContent=info.titulo;
+    if(descricao) descricao.textContent=info.descricao;
+    if(badge){badge.textContent=info.status;badge.className=`atlas-auth-badge ${info.classe}`;}
+    if(botao){
+      const podeAtivar=currentIsOwner()&&info.status==='LEGADO';
+      const podeReenviar=currentIsOwner()&&info.status==='AGUARDANDO';
+      botao.hidden=!(podeAtivar||podeReenviar);
+      botao.disabled=false;
+      botao.innerHTML=podeReenviar
+        ? '<i class="fa-regular fa-bell"></i> Reenviar aviso'
+        : '<i class="fa-solid fa-shield-halved"></i> Ativar acesso seguro';
+      botao.title=podeReenviar
+        ? 'Disponibilizar novamente o aviso de atualização de segurança no sininho deste usuário.'
+        : 'Preparar o acesso seguro deste usuário no BDR Gestão.';
+    }
+  }
+
+  async function reenviarAvisoAcessoSeguro(){
+    if(!currentIsOwner()||!STATE.selected) return;
+    const usuario=STATE.selected;
+    const botao=$('#btnAtivarAcessoSeguro');
+    if(botao){botao.disabled=true;botao.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';}
+    try{
+      const {data:{session},error:erroSessao}=await db().auth.getSession();
+      if(erroSessao||!session?.access_token) throw new Error('Sua sessão segura expirou. Entre novamente.');
+      const resposta=await fetch(`${ATLAS_API_BASE_URL}/api/auth/usuarios/${encodeURIComponent(usuario.id)}/notificar-ativacao`,{
+        method:'POST',
+        headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},
+        body:'{}'
+      });
+      const payload=await resposta.json().catch(()=>({}));
+      if(!resposta.ok||!payload.ok) throw new Error(payload.error||'Não foi possível disponibilizar o aviso.');
+      toast(payload.message||'Aviso de atualização de segurança disponibilizado para o usuário.');
+    }catch(error){
+      toast(error.message||'Não foi possível disponibilizar o aviso.','erro');
+    }finally{
+      renderAuthStatus();
+    }
+  }
+
+  function abrirConfirmacaoAcessoSeguro(){
+    if(!currentIsOwner()||!STATE.selected) return;
+    const info=authStatusInfo(STATE.selected);
+    if(info.status==='AGUARDANDO'){
+      reenviarAvisoAcessoSeguro();
+      return;
+    }
+    const usuario=STATE.selected;
+    const email=String(usuario.email||'').trim();
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      toast('Este usuário precisa ter um e-mail válido antes da ativação do acesso seguro.','aviso');
+      return;
+    }
+    const nome=$('#confirmarAcessoSeguroNome');
+    const emailEl=$('#confirmarAcessoSeguroEmail');
+    if(nome) nome.textContent=usuario.nome||'Usuário';
+    if(emailEl) emailEl.textContent=email;
+    modal('modalConfirmarAcessoSeguro',true);
+  }
+
+  async function ativarAcessoSeguro(){
+    if(!currentIsOwner()||!STATE.selected) return;
+    const usuario=STATE.selected;
+    modal('modalConfirmarAcessoSeguro',false);
+    const botao=$('#btnAtivarAcessoSeguro');
+    const confirmar=$('#btnConfirmarAcessoSeguro');
+    if(botao){botao.disabled=true;botao.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Ativando...';}
+    if(confirmar) confirmar.disabled=true;
+    try{
+      const {data:{session},error:erroSessao}=await db().auth.getSession();
+      if(erroSessao||!session?.access_token) throw new Error('Sua sessão segura expirou. Entre novamente.');
+      const resposta=await fetch(`${ATLAS_API_BASE_URL}/api/auth/usuarios/${encodeURIComponent(usuario.id)}/ativar`,{
+        method:'POST',
+        headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},
+        body:'{}'
+      });
+      const payload=await resposta.json().catch(()=>({}));
+      if(!resposta.ok||!payload.ok) throw new Error(payload.error||'Não foi possível ativar o acesso seguro.');
+      const idx=STATE.users.findIndex(u=>String(u.id)===String(usuario.id));
+      if(idx>=0) STATE.users[idx]={...STATE.users[idx],...payload.user};
+      STATE.selected=idx>=0?STATE.users[idx]:{...STATE.selected,...payload.user};
+      STATE.draft=criarDraftUsuario(STATE.selected);
+
+      // Confirma o estado diretamente na fonte oficial antes de redesenhar.
+      // A resposta da API pode concluir a ativação antes de a tela possuir
+      // todos os campos atualizados do cadastro.
+      await atualizarStatusAuthSelecionado();
+      renderUsers();
+      renderData();
+      toast(payload.message||'Acesso seguro preparado. O usuário poderá concluir a atualização dentro do BDR Gestão.',payload.notificacao_criada===false?'aviso':undefined);
+    }catch(error){
+      toast(error.message||'Não foi possível ativar o acesso seguro.','erro');
+    }finally{
+      if(confirmar) confirmar.disabled=false;
+      if(botao){botao.innerHTML='<i class="fa-solid fa-shield-halved"></i> Ativar acesso seguro';renderAuthStatus();}
+    }
+  }
+
+  function renderData(){if(!STATE.selected)return;const u=STATE.draft||STATE.selected;const itens=[['Nome completo',u.nome||'-'],['Usuário',u.usuario||'-'],['E-mail',u.email||'Não informado'],['Perfil',u.perfil||'-'],['Empresa',u.empresa_id||'-'],['Obras de atuação',worksText(u)],['Base operacional da Expedição',workText(u._obra_operacional_id)||'Não definida'],['Status',u.ativo===false?'INATIVO':'ATIVO'],['Perfil rápido',u.perfil_rapido||'Personalizado']];const el=$('#dataSummary');if(el)el.innerHTML=itens.map(([a,b])=>`<div class="atlas-data-card"><small>${esc(a)}</small><strong>${esc(b)}</strong></div>`).join('');renderAuthStatus()}
   function renderWorksInline(){
     const box=$('#listaObrasInline');
     if(!box)return;
@@ -1277,11 +1417,15 @@
     modal("modalFormObras",true);
   }
 
-  function openUserModal(user=null,focusPassword=false){
+  async function openUserModal(user=null,focusPassword=false){
     if(user&&Number(user.id)===OWNER_ID&&!currentIsOwner())return;
     fotoArquivoPendente=null; removerFotoPendente=false;
     $("#formId").value=user?.id||"";$("#formNome").value=user?.nome||"";$("#formUsuario").value=user?.usuario||"";$("#formEmail").value=user?.email||"";$("#formPerfil").value=user?.perfil||$("#formPerfil option")?.value||"OPERADOR";$("#formEmpresa").value=user?.empresa_id||"";$("#formAtivo").value=String(user?.ativo!==false);$("#formSenha").value="";
     STATE.formWorksDraft=obrasDoUsuario(user||{});
+    const obraOperacional=user?await carregarObraOperacionalUsuario(user):null;
+    if(user) user._obra_operacional_id=obraOperacional;
+    const baseOperacional=$("#formObraOperacional");
+    if(baseOperacional) baseOperacional.value=obraOperacional?String(obraOperacional):"";
     atualizarResumoFormObras();
     if($("#formFotoArquivo")) $("#formFotoArquivo").value="";
     $("#modalUsuarioTitulo").textContent=user?"Editar usuário":"Novo usuário";
@@ -1325,6 +1469,7 @@
       perfil:$("#formPerfil").value,
       empresa_id:$("#formEmpresa").value?Number($("#formEmpresa").value):null,
       obra_id:null,
+      obra_operacional_id:$("#formObraOperacional")?.value?Number($("#formObraOperacional").value):null,
       ativo:$("#formAtivo").value==="true",
       updated_at:new Date().toISOString()
     };
@@ -1337,6 +1482,10 @@
       if(norm(payload.perfil)==="MASTER"){alert("Somente o OWNER ID 1 pode criar ou promover um MASTER.");return}
     }
     if(!payload.nome||!payload.usuario){alert("Informe nome e usuário.");return}
+    if(payload.obra_operacional_id && !STATE.formWorksDraft.has(String(payload.obra_operacional_id))){
+      alert("A base operacional da Expedição também precisa estar marcada nas Obras de atuação.");
+      return;
+    }
     if(senha) Object.assign(payload,{senha,senha_temporaria:true,senha_provisoria:true,trocar_senha:true});
 
     if(!id){
@@ -1362,6 +1511,9 @@
     await load();
     const saved=Array.isArray(r.data)?r.data[0]:r.data;
     if(saved?.id){
+      saved._obra_operacional_id=payload.obra_operacional_id||null;
+      const salvoLocal=STATE.users.find(u=>Number(u.id)===Number(saved.id));
+      if(salvoLocal) salvoLocal._obra_operacional_id=saved._obra_operacional_id;
       selectUser(saved.id);
       if(Number(saved.id)===currentId()){
         const atualizado=STATE.users.find(u=>Number(u.id)===Number(saved.id))||saved;
@@ -1400,7 +1552,16 @@
       if(!campo)return;
       campo.addEventListener(
         id==="filtroBusca"?"input":"change",
-        ()=>{STATE.page=1;renderUsers()}
+        ()=>{
+          STATE.page=1;
+          renderUsers();
+          if(id==="filtroBusca"){
+            const encontrados=filteredUsers();
+            if(encontrados.length===1 && String(STATE.selected?.id)!==String(encontrados[0].id)){
+              selectUser(encontrados[0].id);
+            }
+          }
+        }
       );
     });
     const userList = $("#listaUsuarios");
@@ -1453,6 +1614,8 @@
       openUserModal(STATE.selected,true);
     };
     if($("#btnPerfilRapido"))$("#btnPerfilRapido").onclick=()=>modal("modalPerfis",true);
+    if($("#btnAtivarAcessoSeguro"))$("#btnAtivarAcessoSeguro").onclick=abrirConfirmacaoAcessoSeguro;
+    if($("#btnConfirmarAcessoSeguro"))$("#btnConfirmarAcessoSeguro").onclick=ativarAcessoSeguro;
     if($("#formFotoArquivo"))$("#formFotoArquivo").onchange=e=>{fotoArquivoPendente=e.target.files?.[0]||null;removerFotoPendente=false;atualizarPreviewFoto(STATE.selected)};
     if($("#btnRemoverFoto"))$("#btnRemoverFoto").onclick=()=>{fotoArquivoPendente=null;removerFotoPendente=true;if($("#formFotoArquivo"))$("#formFotoArquivo").value="";atualizarPreviewFoto(STATE.selected)};
     if($("#formNome"))$("#formNome").addEventListener("input",()=>{if(!fotoArquivoPendente&&!STATE.selected?.foto_url)atualizarPreviewFoto(STATE.selected)});
@@ -1652,6 +1815,24 @@
     });
   }
 
+  let atualizandoStatusAuth=false;
+  async function atualizarStatusAuthSelecionado(){
+    if(atualizandoStatusAuth||!STATE.selected?.id||STATE.dirty||!db()) return;
+    atualizandoStatusAuth=true;
+    try{
+      const {data,error}=await db().from("usuarios_sistema")
+        .select("id,auth_status,auth_user_id,auth_ativado_em,auth_ativado_por")
+        .eq("id",Number(STATE.selected.id)).maybeSingle();
+      if(error||!data) return;
+      const idx=STATE.users.findIndex(u=>Number(u.id)===Number(data.id));
+      if(idx>=0) Object.assign(STATE.users[idx],data);
+      Object.assign(STATE.selected,data);
+      if(STATE.draft) Object.assign(STATE.draft,data);
+      renderUsers();
+      renderAuthStatus();
+    }catch(_){ }finally{atualizandoStatusAuth=false;}
+  }
+
   function initTop(){
     const user=current();
     const nome=$("#usuarioNome");
@@ -1664,6 +1845,7 @@
 
   let iniciado=false;
   let ultimoHost=null;
+  let listenersStatusAuthRegistrados=false;
   async function init(){
     const host=document.querySelector('.atlas-shell-module[data-module="usuarios"]');
     if(!host) return;
@@ -1671,6 +1853,11 @@
       ultimoHost=host;
       initTop();
       bind();
+      if(!listenersStatusAuthRegistrados){
+        listenersStatusAuthRegistrados=true;
+        window.addEventListener("focus",atualizarStatusAuthSelecionado);
+        document.addEventListener("visibilitychange",()=>{if(!document.hidden) atualizarStatusAuthSelecionado();});
+      }
     }
     iniciado=true;
     try{await load()}catch(e){document.documentElement.classList.remove("atlas-users-loading");alert(e.message||"Não foi possível carregar usuários.")}

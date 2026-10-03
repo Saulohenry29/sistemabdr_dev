@@ -707,3 +707,36 @@ min-width:32px;
 
 .avatar,.atlas-avatar{overflow:hidden}
 .avatar>img,.atlas-avatar>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:inherit;transform:translateZ(0)}
+
+/* =========================================================
+   BDR GESTÃO — ATUALIZAÇÃO DE SEGURANÇA PENDENTE
+========================================================= */
+.bdr-seguranca-pendente{
+  margin-left:auto;
+  margin-right:18px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-height:42px;
+  padding:7px 13px;
+  border:1px solid #f4c7c9;
+  border-radius:12px;
+  background:#fff7f7;
+  color:#8f151a;
+  cursor:pointer;
+  box-shadow:0 5px 16px rgba(164,22,26,.08);
+  text-align:left;
+}
+.bdr-seguranca-pendente[hidden]{display:none!important}
+.bdr-seguranca-pendente i{font-size:18px}
+.bdr-seguranca-pendente span{display:flex;flex-direction:column;line-height:1.12}
+.bdr-seguranca-pendente b{font-size:12px;white-space:nowrap}
+.bdr-seguranca-pendente small{font-size:11px;color:#b4232a;margin-top:3px}
+.bdr-seguranca-pendente:hover{background:#fff0f0;border-color:#e9a5a8}
+.bdr-seguranca-modal-fundo{position:fixed;inset:0;z-index:12000;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:20px}
+.bdr-seguranca-modal{width:min(470px,100%);background:#fff;border-radius:18px;padding:26px;box-shadow:0 24px 70px rgba(15,23,42,.28);border-top:5px solid #a4161a}
+.bdr-seguranca-modal h2{margin:0 0 10px;color:#8f151a;font-size:21px}.bdr-seguranca-modal p{margin:0;color:#475569;font-size:14px;line-height:1.55}
+.bdr-seguranca-acoes{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}.bdr-seguranca-acoes button{border-radius:9px;padding:11px 15px;font-weight:800;cursor:pointer}
+.bdr-seguranca-depois{background:#fff;border:1px solid #d7dce3;color:#334155}.bdr-seguranca-agora{background:#a4161a;border:1px solid #a4161a;color:#fff}
+@media(max-width:900px){.bdr-seguranca-pendente{margin-right:8px}.bdr-seguranca-pendente b{display:none}.bdr-seguranca-pendente small{margin:0;white-space:nowrap}}
+@media(max-width:640px){.bdr-seguranca-pendente span{display:none}.bdr-seguranca-pendente{padding:9px 11px;margin-right:4px}}

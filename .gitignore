@@ -1,5 +1,35 @@
-*.stackdump
+# Dependencias e logs
 node_modules/
-.env
 *.log
 *.stackdump
+
+# Segredos e ambientes locais
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Credenciais e arquivos privados
+senha/
+segredos/
+secrets/
+credentials/
+credenciais/
+*credentials*.json
+*credenciais*.json
+
+# Backups que podem conter dados/segredos
+*.bak
+*.backup
+*.dump
+*.sql.gz
+
+# Sistema/editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json

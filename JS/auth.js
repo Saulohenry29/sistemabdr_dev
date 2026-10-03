@@ -39,7 +39,7 @@ function destinoPadraoBDR(usuario){
 }
 
 async function buscarUsuarioLoginBDR(db, login){
-  const campos = "id,nome,usuario,email,senha,perfil,empresa_id,obra_id,ativo,permissoes,obras_liberadas,foto_url,telefone,cargo,senha_provisoria,trocar_senha,senha_temporaria,auth_user_id,owner_sistema";
+  const campos = "id,nome,usuario,email,senha,perfil,empresa_id,obra_id,ativo,permissoes,obras_liberadas,foto_url,telefone,cargo,senha_provisoria,trocar_senha,senha_temporaria,auth_user_id,auth_status,owner_sistema";
 
   let resp = await db
     .from("usuarios_sistema")
@@ -108,7 +108,7 @@ async function fazerLogin(){
       return;
     }
 
-    const migrado = Boolean(usuario.auth_user_id);
+    const migrado = String(usuario.auth_status || "LEGADO").toUpperCase() === "ATIVO" && Boolean(usuario.auth_user_id);
 
     if(migrado){
       // O login visível pode ser "saulo"; o Auth usa o e-mail vinculado internamente.
@@ -152,6 +152,15 @@ async function fazerLogin(){
         .update({ ultimo_login: new Date().toISOString() })
         .eq("id", usuario.id);
     }catch(_e){}
+
+    const migracaoSeguraPendente =
+      String(usuarioSessao.auth_status || "").toUpperCase() === "AGUARDANDO_ATIVACAO" &&
+      Boolean(usuarioSessao.auth_user_id);
+
+    if(migracaoSeguraPendente){
+      window.location.href = "alterar-senha.html";
+      return;
+    }
 
     if(!migrado && senhaEhTemporariaBDR(usuarioSessao)){
       window.location.href = "alterar-senha.html";

@@ -14,6 +14,11 @@
 
         <div id="atlasFeedbackSlot" class="atlas-feedback-slot" aria-live="polite" aria-atomic="true"></div>
 
+        <button id="bdrSegurancaPendente" class="bdr-seguranca-pendente" type="button" hidden>
+          <i class="fa-solid fa-shield-halved"></i>
+          <span><b>Atualização de segurança pendente</b><small>Concluir agora</small></span>
+        </button>
+
         <div class="bdr-top-actions">
           <div class="notif-wrap">
             <button class="notif-btn" type="button" title="Notificações"

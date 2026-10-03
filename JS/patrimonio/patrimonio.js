@@ -276,8 +276,12 @@ function bdrAvisoSalvoTablet(texto="Salvo no tablet. Está pendente de sincroniz
 }
 
 function usuarioAtual(){
-  const u = localStorage.getItem("usuario_logado");
-  return u ? JSON.parse(u) : null;
+  try{
+    const u = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+    return u ? JSON.parse(u) : null;
+  }catch(_){
+    return null;
+  }
 }
 
 function carregarUsuarioTopo(){
@@ -4737,6 +4741,14 @@ async function salvarEdicaoPatrimonio(){
 }
 
 async function iniciar(){
+  // Antes de aplicar permissões ou montar a lista de obras, atualiza o
+  // contexto do usuário autenticado a partir da fonte oficial. Assim,
+  // alterações de obras/permissões feitas por um administrador passam a
+  // valer no próximo carregamento do módulo sem depender de logout/cache.
+  if(window.BDRAcessoObras?.sincronizarUsuarioAtual){
+    await window.BDRAcessoObras.sincronizarUsuarioAtual();
+  }
+
   if(!bloquearPatrimonioSemPermissaoBDR()) return;
   aplicarMenuPorPermissaoBDR();
 

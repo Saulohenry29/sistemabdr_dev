@@ -435,6 +435,20 @@
   }
 
   function mostrarToast(texto){
+    const mensagem = texto || '🔔 Nova movimentação no Atlas';
+
+    // Dentro da shell, usa o feedback global do Atlas para manter o mesmo padrão visual
+    // das mensagens de sucesso exibidas no topo do sistema.
+    try{
+      const host = (window.parent && window.parent !== window) ? window.parent : window;
+      const feedback = host.AtlasFeedback || window.AtlasFeedback;
+      if(feedback?.sucesso){
+        feedback.sucesso(mensagem, 4200);
+        return;
+      }
+    }catch(_){ }
+
+    // Páginas legadas fora da shell mantêm o aviso próprio já existente.
     let toast = document.getElementById('bdrNotifToastForte');
     if(!toast){
       toast = document.createElement('div');
@@ -443,7 +457,7 @@
       document.body.appendChild(toast);
     }
 
-    toast.textContent = texto || '🔔 Nova movimentação no Atlas';
+    toast.textContent = mensagem;
     toast.classList.add('ativo');
     clearTimeout(window.__bdrNotifToastTimer);
     window.__bdrNotifToastTimer = setTimeout(() => toast.classList.remove('ativo'), 4200);
@@ -1095,6 +1109,17 @@
         if(selecao) return;
 
         if(item.classList.contains('bdr-notif-acao') && link){
+          const notificacao = BDR_NOTIF.notificacoesCache.find(n => String(n?.id) === String(id));
+          const tipo = String(notificacao?.tipo || '').toUpperCase();
+
+          if(tipo === 'ACESSO_SEGURO_ATIVACAO'){
+            const dropdown = dropdownEl();
+            if(dropdown){ dropdown.classList.remove('ativo','show'); dropdown.setAttribute('aria-hidden','true'); }
+            if(typeof window.bdrAbrirModalSeguranca === 'function') window.bdrAbrirModalSeguranca();
+            else window.dispatchEvent(new CustomEvent('bdr:abrir-seguranca'));
+            return;
+          }
+
           await marcarNotificacaoComoLida(id, link);
         }
       });

@@ -105,16 +105,90 @@ html,body{height:100%!important;min-height:100%!important;margin:0!important;pad
       }else avatar.innerHTML='<i class="fa-solid fa-user"></i>';
     }
   }
-  function prepararTopoShell(){
+  function segurancaPendente(u=usuarioAtualShell()){
+    return String(u?.auth_status||'').toUpperCase()==='AGUARDANDO_ATIVACAO' && Boolean(u?.auth_user_id);
+  }
+
+  function sincronizarAvisoSeguranca(){
+    const botao=document.getElementById('bdrSegurancaPendente');
+    if(!botao) return false;
+
+    const pendente=segurancaPendente();
+    botao.hidden=!pendente;
+    botao.onclick=pendente ? ()=>abrirModalSeguranca() : null;
+    return pendente;
+  }
+
+  function abrirModalSeguranca(){
+    const u=usuarioAtualShell();
+    if(!segurancaPendente(u)) return false;
+
+    // O aviso do topo pertence ao estado da conta e nunca depende do modal.
+    sincronizarAvisoSeguranca();
+
+    const existente=document.querySelector('.bdr-seguranca-modal-fundo');
+    if(existente) return true;
+
+    const fundo=document.createElement('div');
+    fundo.className='bdr-seguranca-modal-fundo';
+    fundo.innerHTML=`<div class="bdr-seguranca-modal" role="dialog" aria-modal="true" aria-labelledby="bdrSegTitulo">
+      <h2 id="bdrSegTitulo">🔐 Atualização de segurança — BDR Gestão</h2>
+      <p>Sua conta está pronta para o novo acesso seguro. Para concluir, crie sua nova senha. Você pode continuar utilizando o BDR Gestão normalmente até finalizar esta atualização.</p>
+      <div class="bdr-seguranca-acoes">
+        <button type="button" class="bdr-seguranca-depois">Fazer depois</button>
+        <button type="button" class="bdr-seguranca-agora">Criar nova senha</button>
+      </div>
+    </div>`;
+    fundo.querySelector('.bdr-seguranca-depois').onclick=()=>{
+      fundo.remove();
+      sincronizarAvisoSeguranca();
+    };
+    fundo.querySelector('.bdr-seguranca-agora').onclick=()=>{location.href='./alterar-senha.html';};
+    document.body.appendChild(fundo);
+    return true;
+  }
+
+  window.bdrAbrirModalSeguranca=abrirModalSeguranca;
+  window.addEventListener('bdr:abrir-seguranca', abrirModalSeguranca);
+
+  function prepararAvisoSeguranca(){
+    const u=usuarioAtualShell();
+    const pendente=sincronizarAvisoSeguranca();
+    if(!pendente || !u?.id) return;
+
+    // Esta chave controla SOMENTE a abertura automática do modal nesta sessão.
+    // O aviso permanente do topo continua visível enquanto a conta estiver aguardando ativação.
+    const chave=`bdr_seguranca_modal_${u.id}`;
+    if(sessionStorage.getItem(chave)==='1') return;
+    sessionStorage.setItem(chave,'1');
+    abrirModalSeguranca();
+  }
+
+  function sincronizarShellUsuario(){
     sincronizarUsuarioTopo();
-    /* Web Components podem terminar de renderizar após o DOMContentLoaded. */
+    prepararAvisoSeguranca();
+  }
+
+  function prepararTopoShell(){
+    sincronizarShellUsuario();
+
+    /* O topo é um Web Component: reaplica o estado assim que ele estiver definido/renderizado. */
+    if(window.customElements?.whenDefined){
+      customElements.whenDefined('atlas-topo').then(()=>{
+        requestAnimationFrame(sincronizarShellUsuario);
+      });
+    }
+
     let tentativas=0;
     const timer=setInterval(()=>{
-      sincronizarUsuarioTopo();
-      if(document.getElementById('usuarioNome') || ++tentativas>20) clearInterval(timer);
+      sincronizarShellUsuario();
+      const topoPronto=document.getElementById('usuarioNome') && document.getElementById('bdrSegurancaPendente');
+      if(topoPronto || ++tentativas>20) clearInterval(timer);
     },100);
   }
-  window.addEventListener('atlas:usuario-atualizado',sincronizarUsuarioTopo);
+  window.addEventListener('atlas:usuario-atualizado',sincronizarShellUsuario);
+  window.addEventListener('focus',sincronizarAvisoSeguranca);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) sincronizarAvisoSeguranca(); });
   const frameWrap = document.getElementById('atlasFrameWrap');
   const frames = new Map();
   let moduloAtivo = null;
