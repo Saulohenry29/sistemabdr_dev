@@ -146,7 +146,7 @@ async function salvarOperacaoPatrimonioOffline(tipo, tabela, dados, opcoes={}){
 }
 
 
-async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
+async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}, contexto={}){
   /*
     REGRA NOVA:
     - Com internet real: grava direto no Supabase.
@@ -156,7 +156,9 @@ async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}){
     mesmo online. Por isso o patrimônio ficava como pendente/fila.
   */
 
-  const onlineReal = await patrimonioOnlineReal();
+  const onlineReal = typeof contexto.onlineReal === "boolean"
+    ? contexto.onlineReal
+    : await patrimonioOnlineReal();
 
   if(onlineReal && db()){
     const { data, error } = await db()
@@ -494,7 +496,7 @@ function bdrExtrairSequencialPatrimonio(codigo_qr, codigoObra){
   return Number(final) || 0;
 }
 
-async function bdrProximoSequencialObra(obra){
+async function bdrProximoSequencialObra(obra, contexto={}){
   const codigoObra = bdrCodigoObraLimpo(obra?.codigo_obra);
 
   if(!codigoObra){
@@ -504,7 +506,9 @@ async function bdrProximoSequencialObra(obra){
   const prefixoCodigo = "PAT-" + codigoObra;
   let maior = 0;
 
-  const onlineReal = await patrimonioOnlineReal();
+  const onlineReal = typeof contexto.onlineReal === "boolean"
+    ? contexto.onlineReal
+    : await patrimonioOnlineReal();
 
   if(onlineReal){
     const { data, error } = await db()
@@ -1224,35 +1228,36 @@ function atlasChaveCatalogoPatrimonio(item){
 }
 
 async function atlasCarregarCatalogoGlobalPatrimonio(){
-  try{
-    if(!db()) return;
-    const {data,error}=await db()
-      .from('patrimonio')
-      .select('id,nome_bem,marca,modelo')
-      .neq('ativo',false)
-      .limit(5000);
+  // `carregarPatrimonios()` já traz os registros completos e os grava no
+  // IndexedDB. O catálogo reaproveita essa mesma fonte, evitando uma segunda
+  // consulta ao Supabase e mantendo as sugestões disponíveis offline.
+  let fonte = Array.isArray(patrimonios) ? patrimonios : [];
 
-    if(error) throw error;
-
-    const mapa=new Map();
-    (data||[]).forEach(item=>{
-      const nome=String(item?.nome_bem||'').trim();
-      if(!nome) return;
-      const registro={
-        id:item.id,
-        nome_bem:nome.toUpperCase(),
-        marca:String(item?.marca||'').trim().toUpperCase(),
-        modelo:String(item?.modelo||'').trim().toUpperCase()
-      };
-      const chave=atlasChaveCatalogoPatrimonio(registro);
-      if(chave && !mapa.has(chave)) mapa.set(chave,registro);
-    });
-    atlasCatalogoGlobalPatrimonio=[...mapa.values()]
-      .sort((a,b)=>a.nome_bem.localeCompare(b.nome_bem,'pt-BR'));
-  }catch(e){
-    console.warn('Atlas Patrimônio: catálogo global indisponível; usando dados locais.',e?.message||e);
-    atlasCatalogoGlobalPatrimonio=[];
+  if(!fonte.length && window.BDROfflineDB?.lerTabela){
+    try{
+      fonte = await BDROfflineDB.lerTabela("patrimonio") || [];
+    }catch(e){
+      console.warn("Atlas Patrimônio: cache do catálogo indisponível.",e?.message||e);
+      fonte = [];
+    }
   }
+
+  const mapa=new Map();
+  (fonte||[]).forEach(item=>{
+    const nome=String(item?.nome_bem||'').trim();
+    if(!nome) return;
+    const registro={
+      id:item.id,
+      nome_bem:nome.toUpperCase(),
+      marca:String(item?.marca||'').trim().toUpperCase(),
+      modelo:String(item?.modelo||'').trim().toUpperCase()
+    };
+    const chave=atlasChaveCatalogoPatrimonio(registro);
+    if(chave && !mapa.has(chave)) mapa.set(chave,registro);
+  });
+
+  atlasCatalogoGlobalPatrimonio=[...mapa.values()]
+    .sort((a,b)=>a.nome_bem.localeCompare(b.nome_bem,'pt-BR'));
 }
 
 function atlasCatalogoNomesPatrimonio(){
@@ -1370,20 +1375,43 @@ async function atlasEscolherSugestaoPatrimonioIndice(indice){
     return;
   }
 
-  try{
-    const {data,error}=await db()
-      .from('patrimonio')
-      .select('*')
-      .eq('id',item.id)
-      .single();
-    if(error) throw error;
-    await atlasAplicarPatrimonioComoModelo(data);
-  }catch(e){
-    console.error('Atlas Patrimônio: não foi possível carregar os dados da sugestão.',e);
-    atlasDefinirCampoSeExiste('nome_bem',item.nome_bem);
-    atlasDefinirCampoSeExiste('marca',item.marca);
-    atlasDefinirCampoSeExiste('modelo',item.modelo);
+  // O registro completo já foi carregado por carregarPatrimonios() e fica no
+  // IndexedDB. Usá-lo primeiro mantém o autopreenchimento instantâneo/offline.
+  let registro=(patrimonios||[]).find(p=>String(p?.id)===String(item.id))||null;
+
+  if(!registro && window.BDROfflineDB?.lerTabela){
+    try{
+      const cache=await BDROfflineDB.lerTabela('patrimonio')||[];
+      registro=cache.find(p=>String(p?.id)===String(item.id))||null;
+    }catch(e){
+      console.warn('Atlas Patrimônio: não foi possível ler o modelo do cache.',e?.message||e);
+    }
   }
+
+  if(registro){
+    await atlasAplicarPatrimonioComoModelo(registro);
+    return;
+  }
+
+  // Fallback apenas para um item que não esteja no conjunto/cache local.
+  if(navigator.onLine !== false && db()){
+    try{
+      const {data,error}=await db()
+        .from('patrimonio')
+        .select('*')
+        .eq('id',item.id)
+        .single();
+      if(error) throw error;
+      await atlasAplicarPatrimonioComoModelo(data);
+      return;
+    }catch(e){
+      console.error('Atlas Patrimônio: não foi possível carregar os dados da sugestão.',e);
+    }
+  }
+
+  atlasDefinirCampoSeExiste('nome_bem',item.nome_bem);
+  atlasDefinirCampoSeExiste('marca',item.marca);
+  atlasDefinirCampoSeExiste('modelo',item.modelo);
 }
 
 function atlasEscolherSugestaoPatrimonioDados(dadosCodificados){
@@ -1805,7 +1833,7 @@ async function bdrBaseDuplicidadePatrimonio(){
   }
 }
 
-async function bdrBuscarIdentificadorFortePatrimonio(campo, valorCampo){
+async function bdrBuscarIdentificadorFortePatrimonio(campo, valorCampo, contexto={}){
   const bruto=String(valorCampo||'').trim();
   if(bdrCampoVazioOuGenerico(bruto)) return [];
 
@@ -1821,7 +1849,10 @@ async function bdrBuscarIdentificadorFortePatrimonio(campo, valorCampo){
 
   // Consulta dirigida: não depende da paginação/limite da listagem de patrimônios.
   try{
-    if(await patrimonioOnlineReal() && db()){
+    const onlineReal = typeof contexto.onlineReal === "boolean"
+      ? contexto.onlineReal
+      : await patrimonioOnlineReal();
+    if(onlineReal && db()){
       const {data,error}=await db()
         .from("patrimonio")
         .select("id,codigo_qr,nome_bem,placa,renavam,chassi,numero_serie,codigo_antigo,obra_id,localizacao,ativo")
@@ -1847,7 +1878,7 @@ async function bdrBuscarIdentificadorFortePatrimonio(campo, valorCampo){
   return [...unicos.values()];
 }
 
-async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={}){
+async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={},contexto={}){
   const lista=await bdrBaseDuplicidadePatrimonio();
   const bloqueios=[];
   const alertas=[];
@@ -1856,7 +1887,7 @@ async function bdrVerificarDuplicidadePatrimonio(dados,opcoes={}){
   // Placa, RENAVAM e chassi precisam ser validados contra o banco inteiro,
   // e não contra a página/lista parcial que estiver carregada na tela.
   for(const campo of ["placa","renavam","chassi"]){
-    const encontrados=await bdrBuscarIdentificadorFortePatrimonio(campo,dados[campo]);
+    const encontrados=await bdrBuscarIdentificadorFortePatrimonio(campo,dados[campo],contexto);
     encontrados.forEach(p=>{
       if(dados.id && String(p.id)===String(dados.id)) return;
       bloqueios.push({motivo:`${campo.toUpperCase()} já cadastrado`,patrimonio:p});
@@ -2074,7 +2105,15 @@ async function gerarPatrimonio(){
     obra_id: obra.id ? Number(obra.id) : null
   };
 
-  const podeContinuarDuplicidade = await bdrVerificarDuplicidadePatrimonio(dadosParaValidarDuplicidade, { confirmar:true });
+  // Uma única decisão de conectividade vale para toda esta gravação.
+  // Evita repetir o teste de rede durante duplicidade, sequencial e INSERT.
+  const onlineRealCadastro = await patrimonioOnlineReal();
+
+  const podeContinuarDuplicidade = await bdrVerificarDuplicidadePatrimonio(
+    dadosParaValidarDuplicidade,
+    { confirmar:true },
+    { onlineReal:onlineRealCadastro }
+  );
   if(!podeContinuarDuplicidade){
     window.__BDR_PATRIMONIO_SALVANDO__ = false;
     bdrSetGerandoPatrimonio(false);
@@ -2085,7 +2124,7 @@ let sequencial = 1;
 let codigo_qr = "";
 
 try{
-  sequencial = await bdrProximoSequencialObra(obra);
+  sequencial = await bdrProximoSequencialObra(obra, { onlineReal:onlineRealCadastro });
   codigo_qr = bdrMontarCodigoPatrimonio(obra.codigo_obra, sequencial);
 }catch(e){
   console.error(e);
@@ -2160,7 +2199,7 @@ usuario_cadastro:
   const resp = await bdrSalvarPrimeiroNoTablet("patrimonio", patrimonio, {
     acao:"CADASTRO_PATRIMONIO",
     codigo_qr
-  });
+  }, { onlineReal:onlineRealCadastro });
 
   if(resp.error){
     console.error(resp.error);

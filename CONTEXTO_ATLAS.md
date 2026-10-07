@@ -841,3 +841,13 @@ solução correta sem remendos.
 - Imagens de referência: `atlas_imagens_referencia` é carregada e associada por chave marca+modelo. Para tolerar diferenças apenas de acentos, espaços e pontuação, a chave é normalizada antes da comparação.
 - Regra de diagnóstico aprendida: em comportamentos globais de formulário, inspecionar `getEventListeners(document)` antes de procurar módulo por módulo.
 
+
+## Diagnóstico 2026-10-07 — Patrimônio offline e desempenho
+- Checkpoint DEV informado pelo usuário: commit `65db806` em `origin/dev`; produção (`oficial`) não foi tocada.
+- Cursor/uppercase, filtros pesquisáveis e Obra de lançamento foram testados e aprovados antes desse checkpoint.
+- O cadastro offline já possui IndexedDB/fila e foi comprovado funcionando; não criar uma segunda fila/cache paralelo.
+- Causa do autopreenchimento incompleto offline: o catálogo de sugestões guardava apenas `id/nome_bem/marca/modelo` e, ao escolher um item, fazia uma nova consulta `.select('*')` ao Supabase. Sem rede, restavam apenas os três campos básicos.
+- Correção consolidada: o catálogo reutiliza os patrimônios completos já carregados por `carregarPatrimonios()`/IndexedDB; ao escolher uma sugestão, usa primeiro o registro completo em memória/cache e só consulta o Supabase como fallback quando o registro não existe localmente.
+- Melhoria de desempenho do Gerar Patrimônio: uma única decisão de conectividade é obtida no início da gravação e reaproveitada na validação de duplicidade, geração do sequencial e INSERT/fila offline, evitando testes de conectividade repetidos dentro da mesma operação.
+- A proteção de duplicidade e a geração de sequencial permanecem preservadas. Não substituir por `maior + 1` puramente local no modo online sem solução transacional/concorrente.
+- A ordenação visual das obras foi percebida como não lógica e permanece estacionada para diagnóstico posterior.
