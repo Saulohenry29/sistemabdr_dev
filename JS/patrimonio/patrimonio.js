@@ -795,6 +795,24 @@ function atlasIniciarComboObras(){
     if(!input.disabled) atlasFiltrarObras(input.value);
   });
 
+  // A obra atualmente selecionada é estado do seletor, não texto de pesquisa.
+  // Na primeira edição, limpa o rótulo exibido antes de deixar o navegador
+  // inserir/apagar o conteúdo digitado pelo usuário.
+  input.addEventListener("beforeinput", (evento) => {
+    if(input.disabled || !select.value) return;
+
+    const obraSelecionada = atlasObraSelecionadaAtual();
+    if(!obraSelecionada) return;
+
+    if(input.value === atlasTextoObra(obraSelecionada) && (
+      evento.inputType.startsWith("insert") ||
+      evento.inputType.startsWith("delete")
+    )){
+      input.value = "";
+      select.value = "";
+    }
+  });
+
   input.addEventListener("input", () => {
     select.value = "";
     atlasFiltrarObras(input.value);
@@ -5030,6 +5048,20 @@ window.AtlasPatrimonioAPI = Object.freeze({
       fecharTodos(combo);
       combo.classList.add("aberto");
       montarMenu(combo, select, "");
+    });
+
+    // A opção genérica (valor vazio) é estado do filtro, não texto de pesquisa.
+    // Ao começar a digitar/apagar, remove esse rótulo antes da edição nativa do navegador.
+    input.addEventListener("beforeinput", (e) => {
+      if(input.disabled || String(select.value || "") !== "") return;
+
+      const rotuloPadrao = textoOpcaoSelecionada(select);
+      if(input.value === rotuloPadrao && (
+        e.inputType.startsWith("insert") ||
+        e.inputType.startsWith("delete")
+      )){
+        input.value = "";
+      }
     });
 
     // Só filtra quando o usuário realmente digita.

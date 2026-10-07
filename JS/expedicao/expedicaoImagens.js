@@ -36,7 +36,11 @@
   }
 
   function normalizar(v){
-    return String(v??'').trim().toUpperCase();
+    return String(v??'')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g,'');
   }
 
   function chave(marca,modelo){

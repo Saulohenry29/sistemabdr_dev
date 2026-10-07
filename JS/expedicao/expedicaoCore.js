@@ -491,6 +491,7 @@ async function carregarCatalogo(){
   }
 
   itensCatalogo = lista.filter(i => !["BAIXADO","QUEBRADO"].includes(normalStatus(i.status)));
+  window.itensCatalogo = itensCatalogo;
   atualizarKPIs();
 }
 
