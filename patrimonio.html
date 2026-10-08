@@ -369,7 +369,7 @@ html.atlas-embedded .bdr-main{
 <option value="REGULAR">🟡 Regular</option>
 <option value="RUIM">🟠 Ruim</option>
 </select>
-<div class="campo-moeda"><span class="campo-moeda-prefixo">R$</span><input id="valor_bem" inputmode="decimal" onkeydown="atlasTeclaMoeda(event,this)" oninput="mascaraMoeda(this)" placeholder="1.350,00" type="text"/></div>
+<div class="campo-moeda"><span class="campo-moeda-prefixo">R$</span><input id="valor_bem" autocomplete="off" data-lpignore="true" data-1p-ignore="true" inputmode="decimal" onkeydown="atlasTeclaMoeda(event,this)" oninput="mascaraMoeda(this)" placeholder="1.350,00" type="text"/></div>
 </div>
 <div class="grid" id="campoOutroTipo" style="display:none;margin-top:8px;">
 <input id="tipo_outro" placeholder="Descreva o tipo do ativo"/>

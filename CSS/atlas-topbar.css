@@ -638,12 +638,12 @@ min-width:32px;
    Módulos não definem posição, cor ou desenho do aviso.
 ========================================================= */
 .atlas-feedback-slot{
-  position:absolute;
+  position:fixed;
   left:50%;
-  top:50%;
-  z-index:calc(var(--atlas-z-topbar) + 5);
+  top:16px;
+  z-index:2147483000;
   width:min(560px,42vw);
-  transform:translate(-50%,-50%);
+  transform:translateX(-50%);
   pointer-events:none;
   display:flex;
   justify-content:center;
@@ -698,9 +698,9 @@ min-width:32px;
   .atlas-feedback-slot{
     left:12px;
     right:12px;
-    top:100%;
+    top:calc(env(safe-area-inset-top, 0px) + 12px);
     width:auto;
-    transform:translateY(8px);
+    transform:none;
   }
   .atlas-feedback{width:100%;justify-content:center}
 }

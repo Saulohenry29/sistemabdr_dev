@@ -851,3 +851,11 @@ solução correta sem remendos.
 - Melhoria de desempenho do Gerar Patrimônio: uma única decisão de conectividade é obtida no início da gravação e reaproveitada na validação de duplicidade, geração do sequencial e INSERT/fila offline, evitando testes de conectividade repetidos dentro da mesma operação.
 - A proteção de duplicidade e a geração de sequencial permanecem preservadas. Não substituir por `maior + 1` puramente local no modo online sem solução transacional/concorrente.
 - A ordenação visual das obras foi percebida como não lógica e permanece estacionada para diagnóstico posterior.
+
+
+### Seletores mobile do cadastro patrimonial (teste local pendente)
+- Os selects tipo_item, status_inicial e estado_conservacao mantêm seus valores/eventos originais, mas apresentam opções em menu responsivo no mobile. Desktop mantém selects nativos.
+- valor_bem solicita desativação de autocomplete do navegador; navegador pode ignorar essa preferência.
+- Testar no Chrome modo dispositivo e no PWA real antes de Git/produção.
+
+- Autocomplete Marca/Modelo: os dois wrappers tinham o mesmo z-index e o segundo (Modelo) encobria a lista do primeiro. A regra oficial agora eleva somente o campo com foco (:focus-within), mantendo os outros atrás; testar visualmente no PWA antes do Git.

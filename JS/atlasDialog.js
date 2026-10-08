@@ -104,6 +104,12 @@
       return abrir({mensagem,tipo,confirmacao:false});
     }
 
+    // O aviso pertence ao documento da shell, não ao fluxo do cabeçalho.
+    // Mantemos o mesmo elemento visual e o mesmo temporizador em desktop e PWA.
+    if(slot.parentElement !== doc.body){
+      doc.body.appendChild(slot);
+    }
+
     let el=doc.getElementById("atlasFeedbackGlobal");
     if(!el){
       el=doc.createElement("div");

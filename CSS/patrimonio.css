@@ -1881,11 +1881,16 @@ textarea,
 
 .atlas-autocomplete-campo{
   position:relative!important;
-  z-index:40!important;
+  z-index:1!important;
+}
+
+/* O campo ativo deve ficar acima dos campos irmãos na mesma grade. */
+.atlas-autocomplete-campo:focus-within{
+  z-index:2!important;
 }
 
 .atlas-autocomplete-lista{
-  z-index:50!important;
+  z-index:3!important;
 }
 
 .card:has(#busca),
@@ -2326,3 +2331,31 @@ html,body{max-width:100%;overflow-x:hidden!important}
     font-size:11px!important;
   }
 }
+
+
+/* Cadastro mobile: opções internas do Atlas sem popup nativo fora da viewport. */
+.atlas-mobile-select-trigger { display:none; }
+@media (max-width:700px) {
+  select.atlas-mobile-select-original { display:none!important; }
+  .atlas-mobile-select-trigger {
+    display:block; width:100%; min-height:42px; padding:10px 34px 10px 12px;
+    border:1px solid #cbd8e8; border-radius:9px; background:#f8fbff;
+    color:#1c304b; text-align:left; font:inherit; font-size:16px;
+    position:relative; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .atlas-mobile-select-trigger:after { content:"⌄"; position:absolute; right:12px; top:8px; font-size:20px; }
+  .atlas-mobile-select-trigger:focus-visible { outline:2px solid #397bce; outline-offset:2px; }
+}
+.atlas-mobile-select-menu {
+  position:fixed; z-index:2147483000; box-sizing:border-box;
+  overflow-y:auto; overscroll-behavior:contain; background:#fff;
+  border:1px solid #cbd8e8; border-radius:10px;
+  box-shadow:0 10px 28px rgba(10,34,64,.2); padding:4px;
+}
+.atlas-mobile-select-option {
+  display:block; width:100%; padding:11px 12px; min-height:42px;
+  border:0; border-radius:7px; background:transparent; color:#1b304b;
+  text-align:left; font:inherit; font-size:15px; white-space:normal;
+}
+.atlas-mobile-select-option.selecionado { background:#eaf2ff; color:#174f9b; font-weight:700; }
+.atlas-mobile-select-option:focus-visible { outline:2px solid #397bce; }

@@ -5206,3 +5206,109 @@ window.AtlasPatrimonioAPI = Object.freeze({
   campo.addEventListener("focus", removerCaixasDoNome, true);
 })();
 
+
+
+/* Seletores do cadastro: apresentação responsiva, mantendo o select original
+   como fonte única de valores e eventos de negócio. */
+(function atlasSeletoresCadastroMobile() {
+  const ids = ["tipo_item", "status_inicial", "estado_conservacao"];
+  const media = window.matchMedia("(max-width: 700px)");
+  let aberto = null;
+
+  function fechar() {
+    if (!aberto) return;
+    aberto.menu.remove();
+    aberto.botao.setAttribute("aria-expanded", "false");
+    aberto = null;
+  }
+
+  function posicionar() {
+    if (!aberto) return;
+    const rect = aberto.botao.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const altura = viewport ? viewport.height : window.innerHeight;
+    const topo = viewport ? viewport.offsetTop : 0;
+    const largura = viewport ? viewport.width : window.innerWidth;
+    const esquerda = viewport ? viewport.offsetLeft : 0;
+    const margem = 10;
+    const limiteInferior = topo + altura - margem;
+    const espacoAbaixo = limiteInferior - rect.bottom;
+    const espacoAcima = rect.top - topo - margem;
+    const acima = espacoAbaixo < 185 && espacoAcima > espacoAbaixo;
+    const disponivel = Math.max(90, acima ? espacoAcima - 6 : espacoAbaixo - 6);
+    const alturaMenu = Math.min(280, disponivel);
+    aberto.menu.style.maxHeight = `${alturaMenu}px`;
+    aberto.menu.style.width = `${Math.min(rect.width, largura - margem * 2)}px`;
+    aberto.menu.style.left = `${Math.max(esquerda + margem, Math.min(rect.left, esquerda + largura - margem - rect.width))}px`;
+    aberto.menu.style.top = `${acima ? Math.max(topo + margem, rect.top - alturaMenu - 5) : rect.bottom + 5}px`;
+  }
+
+  function iniciar(select) {
+    if (!select || select.dataset.atlasMobileSelect === "ativo") return;
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "atlas-mobile-select-trigger";
+    botao.setAttribute("aria-haspopup", "listbox");
+    botao.setAttribute("aria-expanded", "false");
+    botao.setAttribute("aria-label", select.getAttribute("aria-label") || select.options[0]?.textContent.trim() || "Selecionar");
+    select.insertAdjacentElement("afterend", botao);
+    select.classList.add("atlas-mobile-select-original");
+    select.dataset.atlasMobileSelect = "ativo";
+
+    function atualizar() {
+      botao.textContent = select.selectedOptions[0]?.textContent.trim() || "Selecione";
+      botao.disabled = select.disabled;
+    }
+    atualizar();
+    select.addEventListener("change", atualizar);
+    const observer = new MutationObserver(atualizar);
+    observer.observe(select, {childList:true, subtree:true, attributes:true, attributeFilter:["disabled"]});
+
+    botao.addEventListener("click", () => {
+      if (!media.matches || select.disabled) return;
+      if (aberto?.botao === botao) { fechar(); return; }
+      fechar();
+      const menu = document.createElement("div");
+      menu.className = "atlas-mobile-select-menu";
+      menu.setAttribute("role", "listbox");
+      menu.setAttribute("aria-label", botao.getAttribute("aria-label"));
+      [...select.options].forEach(option => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "atlas-mobile-select-option";
+        item.setAttribute("role", "option");
+        item.setAttribute("aria-selected", String(option.selected));
+        item.textContent = option.textContent.trim();
+        item.disabled = option.disabled;
+        if (option.selected) item.classList.add("selecionado");
+        item.addEventListener("click", () => {
+          if (select.value !== option.value) {
+            select.value = option.value;
+            select.dispatchEvent(new Event("change", {bubbles:true}));
+          }
+          atualizar();
+          fechar();
+          botao.focus({preventScroll:true});
+        });
+        menu.appendChild(item);
+      });
+      document.body.appendChild(menu);
+      aberto = {menu, botao};
+      botao.setAttribute("aria-expanded", "true");
+      posicionar();
+      menu.querySelector(".selecionado")?.scrollIntoView({block:"nearest"});
+    });
+  }
+
+  document.addEventListener("pointerdown", event => {
+    if (aberto && !aberto.menu.contains(event.target) && !aberto.botao.contains(event.target)) fechar();
+  }, true);
+  document.addEventListener("keydown", event => { if (event.key === "Escape") fechar(); });
+  window.addEventListener("resize", posicionar);
+  window.addEventListener("scroll", fechar, true);
+  window.visualViewport?.addEventListener("resize", posicionar);
+  media.addEventListener("change", fechar);
+  const carregar = () => ids.forEach(id => iniciar(document.getElementById(id)));
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", carregar);
+  else carregar();
+})();
