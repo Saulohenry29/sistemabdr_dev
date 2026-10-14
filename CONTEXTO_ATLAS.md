@@ -901,3 +901,11 @@ solução correta sem remendos.
 - Escala proporcional para 384×240 pixels, margem de 4 px; sem retries automáticos.
 - **Pendente validar fisicamente**: fidelidade visual (tipografia, espaçamentos, QR legível) e conclusão da impressão B1; se divergente, interromper e ajustar o rasterizador, sem alterar a etiqueta original.
 - Risco conhecido: Canvas 2D não reproduz automaticamente todo CSS (letter-spacing e detalhes tipográficos podem variar); validação visual obrigatória antes de produção.
+
+
+## Diagnóstico Bluefy / iPhone — conexão B1 (14/10/2026)
+- Windows Chrome imprime etiqueta individual com sucesso; QR legível. Bluefy detecta a B1, mas a conexão de Minha conta não finalizava nem permitia repetir com clareza.
+- A implementação anterior de Minha conta chamava requestDevice sem optionalServices e considerava sucesso apenas pelo GATT conectado, sem validar serviço/characteristic de impressão.
+- Corrigido em `MinhaConta/JS/atlasMinhaConta.js`: autoriza serviço GATT NIIMBOT no seletor, verifica characteristic, limpa conexão em falhas, reabilita botão no finally e mostra erro/cancelamento.
+- Esta correção não altera driver de impressão, formato da etiqueta, fluxo Elgin/HP, banco ou RLS. Testar em DEV no Bluefy; ainda não validado fisicamente no iPhone.
+- Atenção: conexão em Minha conta e driver de impressão são sessões separadas, com possível disputa pelo mesmo periférico; unificar gerenciamento de sessão em evolução posterior.

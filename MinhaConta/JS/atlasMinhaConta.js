@@ -41,34 +41,55 @@
     const conectada=Boolean(impressoraBLE?.gatt?.connected);
     status.className=`printer-status${conectada&&b1?" connected":""}`;
     status.textContent=!b1?"Impressão padrão":conectada?"Bluetooth conectado":"Bluetooth desconectado";
-    info.textContent=conectada?`${impressoraBLE.name||"NIIMBOT B1"} conectada neste navegador. Impressão ainda não habilitada.`:"Impressora desconectada. Conecte a B1 para validar o Bluetooth.";
+    info.textContent=conectada?`${impressoraBLE.name||"NIIMBOT B1"} conectada neste navegador. Impressão individual disponível na tela de patrimônio.`:"Impressora desconectada. Conecte a B1 para validar o Bluetooth.";
     connect.hidden=conectada;disconnect.hidden=!conectada;
   }
   function atualizarDetalhesImpressora(){
     const details=$("#accountPrinterDetails");if(details)details.hidden=impressoraSelecionada()!=="niimbot-b1";
     atualizarEstadoBLE();
   }
+  // A B1 precisa ter seu serviço GATT autorizado no seletor Web Bluetooth.
+  // Uma conexão só é considerada pronta após abrir serviço e característica.
+  const B1_SERVICO="e7810a71-73ae-499d-8c15-faa9aef0c3f2";
+  const B1_CARACTERISTICA="bef8d6c9-9c21-4c9e-b632-bd58c1009f9f";
+  let conectandoImpressora=false;
   async function conectarImpressora(){
     const btn=$("#btnConnectPrinter");
-    if(!navigator.bluetooth?.requestDevice)return mensagem("Bluetooth Web indisponível neste navegador. No iPhone, tente pelo Bluefy.",true);
+    if(conectandoImpressora)return;
+    if(!navigator.bluetooth?.requestDevice){mensagem("Bluetooth Web indisponível neste navegador. No iPhone, utilize o Bluefy.",true);return}
     if(impressoraBLE?.gatt?.connected){atualizarEstadoBLE();return}
-    btn.disabled=true;
+    conectandoImpressora=true;
+    if(btn)btn.disabled=true;
+    let device=null;
     try{
-      // O seletor é acionado diretamente pelo clique; nenhum dispositivo é conectado silenciosamente.
-      const device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:"B1"},{namePrefix:"NIIMBOT"}]});
-      if(impressoraBLE&&impressoraBLE!==device)impressoraBLE.removeEventListener("gattserverdisconnected",atualizarEstadoBLE);
+      device=await navigator.bluetooth.requestDevice({
+        filters:[{namePrefix:"B1"},{namePrefix:"NIIMBOT"}],
+        optionalServices:[B1_SERVICO]
+      });
+      const servidor=await device.gatt.connect();
+      const servico=await servidor.getPrimaryService(B1_SERVICO);
+      await servico.getCharacteristic(B1_CARACTERISTICA);
+      if(impressoraBLE&&impressoraBLE!==device){
+        impressoraBLE.removeEventListener("gattserverdisconnected",atualizarEstadoBLE);
+      }
       impressoraBLE=device;
       impressoraBLE.addEventListener("gattserverdisconnected",atualizarEstadoBLE);
-      await device.gatt.connect();
       atualizarEstadoBLE();
-      mensagem("Bluetooth conectado. Próxima etapa: impressão direta da etiqueta.");
+      mensagem("NIIMBOT B1 conectada e serviço Bluetooth disponível.");
     }catch(e){
+      if(device?.gatt?.connected)device.gatt.disconnect();
+      impressoraBLE=null;
       atualizarEstadoBLE();
-      if(e?.name!=="NotFoundError")mensagem(`Não foi possível conectar: ${e?.message||"verifique o Bluetooth"}`,true);
-    }finally{btn.disabled=false}
+      mensagem(e?.name==="NotFoundError"?"Seleção cancelada. Você pode tentar conectar novamente.":`Falha na conexão Bluetooth: ${e?.message||e?.name||"erro desconhecido"}. Tente novamente.`,true);
+    }finally{
+      conectandoImpressora=false;
+      if(btn)btn.disabled=false;
+      atualizarEstadoBLE();
+    }
   }
   function desconectarImpressora(){
     if(impressoraBLE?.gatt?.connected)impressoraBLE.gatt.disconnect();
+    impressoraBLE=null;
     atualizarEstadoBLE();
   }
   function salvarImpressora(){
