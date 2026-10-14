@@ -870,3 +870,34 @@ solução correta sem remendos.
 - HIPÓTESE A TESTAR: o retorno da linha recém-inserida exigia política SELECT e contribuía para a rejeição RLS. Não considerar resolvido antes de testar no DEV e consultar histórico.
 - Pendência de arquitetura: consolidar atualização cadastral e histórico numa transação no servidor, e definir autorização por ação (editar, transferir, inativar), sem permitir acesso indevido entre obras.
 - Não criar políticas RLS adicionais às cegas. Não aplicar em produção sem aprovação.
+
+## Preferência de impressão em Minha conta (14/10/2026)
+- Primeira etapa DEV: seção **Minhas impressoras** na Minha conta, sem alterar impressão de etiquetas existente.
+- Opções: impressora padrão do sistema (seleção inicial) ou NIIMBOT B1 (50 × 30 mm).
+- Persistência local por `usuarios_sistema.id` e por origem/navegador em `localStorage` (`atlas:impressora:<id>`); não sincroniza entre dispositivos.
+- Seleção da B1 é apenas preferência nesta etapa; **não** conecta Bluetooth nem altera `window.print()`; isso será feito após validação da biblioteca e impressão real.
+- Nenhuma alteração de banco de dados, RLS, permissões de obras, impressão convencional ou ambiente de produção.
+- Próximos passos: validar visual/salvamento no DEV, integrar driver BLE B1 preservando o modelo original e testar offline, impressão individual e em lote.
+
+## Minha conta — configuração de impressoras e teste BLE (14/10/2026)
+- DEV: opções visuais por cartões para impressão convencional ou NIIMBOT B1; preferência existente preservada em `localStorage` por usuário.
+- Conexão BLE experimental por `navigator.bluetooth.requestDevice` após clique, filtros `B1`/`NIIMBOT`, GATT connect/disconnect, indicador de estado e tratamento de desconexão. **Não é ainda impressão**; nenhum envio de comandos à impressora.
+- A conexão BLE é temporária por página/dispositivo e pode cair em segundo plano. A lista de nomes anunciados deve ser validada em Windows, Android e Bluefy antes de expandir os filtros.
+- A impressão convencional (Elgin/HP) permanece intacta; seleção B1 ainda não altera os botões de impressão.
+- Sem mudanças em Supabase, RLS, produção ou obras. Próxima etapa: driver B1 e rasterização da etiqueta existente, com teste físico e offline.
+
+## NIIMBOT B1 - primeiro teste físico DEV (14/10/2026)
+- Driver original movido da raiz para `JS/impressao/niimbot.js`, carregado em `patrimonio.html`.
+- Preferência local `atlas:impressora:<usuario.id>` roteia SOMENTE a impressão individual para a B1; impressoras convencionais continuam em `window.print()`.
+- `JS/impressao/atlasEtiquetaImagemB1.js` rasteriza o DOM da etiqueta oficial com SVG foreignObject e escala proporcionalmente para 384x240 pixels (50x30 mm). Imagens incorporadas como data URLs. QR, legibilidade, borda e compatibilidade de navegadores exigem teste físico.
+- Um clique inicia pareamento BLE com `Niimbot.connect()`; `printImage()` imprime uma cópia, sem repetição automática. Falha/incerteza exige inspeção física antes de tentar novamente.
+- Não há sincronização de preferências entre dispositivos. BLE não é conexão simultânea multiusuário; outros aparelhos precisam se conectar quando a B1 estiver livre.
+- Offline NÃO validado; fontes, logo, QR, driver e página precisam estar em cache antes de desconectar a internet.
+- NÃO alterar produção, SQL, RLS ou perfil da Elgin/HP. Testar em DEV uma etiqueta antes de avançar para lote.
+
+## NIIMBOT B1 — correção de canvas contaminado (14/10/2026)
+- Diagnóstico em teste DEV: conexão BLE ocorreu, mas exportação de SVG `foreignObject` via canvas falhou com `Tainted canvases may not be exported`.
+- Substituída integralmente a rasterização por desenho direto no Canvas 2D, usando geometria e estilos computados da etiqueta oficial, imagem da engrenagem e QR existentes; sem `foreignObject`, sem `fetch` adicional, sem alterar o driver BLE ou a impressão padrão.
+- Escala proporcional para 384×240 pixels, margem de 4 px; sem retries automáticos.
+- **Pendente validar fisicamente**: fidelidade visual (tipografia, espaçamentos, QR legível) e conclusão da impressão B1; se divergente, interromper e ajustar o rasterizador, sem alterar a etiqueta original.
+- Risco conhecido: Canvas 2D não reproduz automaticamente todo CSS (letter-spacing e detalhes tipográficos podem variar); validação visual obrigatória antes de produção.

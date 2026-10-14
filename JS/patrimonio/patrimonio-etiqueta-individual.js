@@ -213,6 +213,41 @@
       );
   }
 
+  let imprimindoB1 = false;
+  function preferenciaB1(){
+    try {
+      const raw = localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado");
+      const usuario = JSON.parse(raw || "null");
+      return !!usuario?.id && localStorage.getItem(`atlas:impressora:${usuario.id}`) === "niimbot-b1";
+    } catch (_) { return false; }
+  }
+  async function imprimirB1(frame){
+    if(imprimindoB1) return;
+    const api = global.Niimbot;
+    if(!api?.isSupported()) {
+      global.atlasAvisoEtiqueta?.("Bluetooth indisponível neste navegador. No iPhone, use o Bluefy.");
+      return;
+    }
+    imprimindoB1 = true;
+    const botao = document.getElementById("btnImprimirEtiquetaOficial");
+    if(botao) botao.disabled = true;
+    try {
+      // A solicitação de pareamento começa diretamente no clique do usuário.
+      const model = { name_prefixes:["B1", "NIIMBOT"], task:"b1", density:3, label_type:1, speed:3 };
+      const size = { w_px:384, h_px:240, dpi:203 };
+      await api.connect(model);
+      const imagem = await frame.contentWindow.AtlasEtiquetaImagemB1.gerar();
+      await api.printImage(imagem, {model,size,copies:1});
+      global.atlasAvisoEtiqueta?.("Etiqueta enviada à NIIMBOT B1. Confira a impressão.");
+      fechar();
+    } catch (error) {
+      console.error("ATLAS B1: impressão não confirmada",error);
+      global.atlasAvisoEtiqueta?.(`Impressão B1 não confirmada: ${error.message || error}. Não reenvie sem conferir a impressora.`);
+    } finally {
+      imprimindoB1 = false;
+      if(botao) botao.disabled = false;
+    }
+  }
   function imprimir(){
     if(!etiquetaPronta){
       if(typeof global.atlasAvisoEtiqueta === "function"){
@@ -230,6 +265,10 @@
       return;
     }
 
+    if(preferenciaB1()){
+      imprimirB1(frame);
+      return;
+    }
     try{
       frame.contentWindow.focus();
       frame.contentWindow.postMessage(

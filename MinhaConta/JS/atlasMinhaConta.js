@@ -22,6 +22,65 @@
   function renderAvatar(){const box=$("#accountAvatar"),url=avatarUrl(usuario?.foto_url);box.innerHTML="";if(url){const img=document.createElement("img");img.src=url;img.alt="Foto do perfil";img.referrerPolicy="no-referrer";img.onerror=()=>{box.innerHTML=`<span>${esc(iniciais(usuario?.nome))}</span>`};box.appendChild(img)}else box.innerHTML=`<span>${esc(iniciais(usuario?.nome))}</span>`}
   function renderDados(){const nome=usuario?.nome||usuario?.usuario||"Usuário";$("#accountName").textContent=nome;$("#accountLogin").textContent=usuario?.usuario?`@${usuario.usuario}`:"Conta Atlas";$("#accountStatus").textContent=usuario?.ativo===false?"INATIVO":"ATIVO";$("#profileEmail").textContent=usuario?.email||"-";$("#profileRole").textContent=usuario?.perfil||"-";$("#fieldNome").textContent=nome;$("#fieldUsuario").textContent=usuario?.usuario||"-";$("#fieldEmail").textContent=usuario?.email||"-";$("#fieldPerfil").textContent=usuario?.perfil||"-";$("#fieldObra").textContent=usuario?.obra_id?nomeObra(usuario.obra_id):"Nenhuma obra principal";renderAvatar()}
   function renderNotificacoes(){const box=$("#notifOptions");box.innerHTML=NOTIFICACOES_EDITAVEIS.map(([p,t,d])=>`<label class="notif-option"><span><strong>${esc(t)}</strong><small>${esc(d)}</small></span><input type="checkbox" data-notif="${p}" ${permissoesOriginais.has(p)?"checked":""}></label>`).join("");const modo=MODOS.find(x=>permissoesOriginais.has(x))||"NOTIF_MODO_SOM";const r=$(`input[name="notifMode"][value="${modo}"]`);if(r)r.checked=true;$$('[data-notif],input[name="notifMode"]').forEach(el=>el.addEventListener("change",()=>{alterado=true;$("#saveInfo").textContent="Alterações ainda não salvas."}))}
+  // Preferência local isolada por usuário; nenhuma alteração no fluxo convencional de impressão.
+  let impressoraBLE=null;
+  function chaveImpressora(){return `atlas:impressora:${String(usuario?.id||"")}`}
+  function impressoraSelecionada(){return $('input[name="accountPrinter"]:checked')?.value||"sistema"}
+  function renderImpressora(){
+    if(!usuario?.id)return;
+    let valor="sistema";
+    try{if(localStorage.getItem(chaveImpressora())==="niimbot-b1")valor="niimbot-b1"}catch(_){}
+    const radio=$(`input[name="accountPrinter"][value="${valor}"]`);
+    if(radio)radio.checked=true;
+    atualizarDetalhesImpressora();
+  }
+  function atualizarEstadoBLE(){
+    const status=$("#printerStatus"),info=$("#printerConnectionInfo"),connect=$("#btnConnectPrinter"),disconnect=$("#btnDisconnectPrinter");
+    if(!status||!info||!connect||!disconnect)return;
+    const b1=impressoraSelecionada()==="niimbot-b1";
+    const conectada=Boolean(impressoraBLE?.gatt?.connected);
+    status.className=`printer-status${conectada&&b1?" connected":""}`;
+    status.textContent=!b1?"Impressão padrão":conectada?"Bluetooth conectado":"Bluetooth desconectado";
+    info.textContent=conectada?`${impressoraBLE.name||"NIIMBOT B1"} conectada neste navegador. Impressão ainda não habilitada.`:"Impressora desconectada. Conecte a B1 para validar o Bluetooth.";
+    connect.hidden=conectada;disconnect.hidden=!conectada;
+  }
+  function atualizarDetalhesImpressora(){
+    const details=$("#accountPrinterDetails");if(details)details.hidden=impressoraSelecionada()!=="niimbot-b1";
+    atualizarEstadoBLE();
+  }
+  async function conectarImpressora(){
+    const btn=$("#btnConnectPrinter");
+    if(!navigator.bluetooth?.requestDevice)return mensagem("Bluetooth Web indisponível neste navegador. No iPhone, tente pelo Bluefy.",true);
+    if(impressoraBLE?.gatt?.connected){atualizarEstadoBLE();return}
+    btn.disabled=true;
+    try{
+      // O seletor é acionado diretamente pelo clique; nenhum dispositivo é conectado silenciosamente.
+      const device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:"B1"},{namePrefix:"NIIMBOT"}]});
+      if(impressoraBLE&&impressoraBLE!==device)impressoraBLE.removeEventListener("gattserverdisconnected",atualizarEstadoBLE);
+      impressoraBLE=device;
+      impressoraBLE.addEventListener("gattserverdisconnected",atualizarEstadoBLE);
+      await device.gatt.connect();
+      atualizarEstadoBLE();
+      mensagem("Bluetooth conectado. Próxima etapa: impressão direta da etiqueta.");
+    }catch(e){
+      atualizarEstadoBLE();
+      if(e?.name!=="NotFoundError")mensagem(`Não foi possível conectar: ${e?.message||"verifique o Bluetooth"}`,true);
+    }finally{btn.disabled=false}
+  }
+  function desconectarImpressora(){
+    if(impressoraBLE?.gatt?.connected)impressoraBLE.gatt.disconnect();
+    atualizarEstadoBLE();
+  }
+  function salvarImpressora(){
+    if(!usuario?.id)return mensagem("Entre na sua conta para salvar a impressora.",true);
+    const valor=impressoraSelecionada();
+    if(!["sistema","niimbot-b1"].includes(valor))return mensagem("Impressora inválida.",true);
+    try{
+      localStorage.setItem(chaveImpressora(),valor);
+      $("#printerSaveInfo").textContent="Preferência salva neste dispositivo.";
+      mensagem("Preferência de impressora salva neste dispositivo.");
+    }catch(_){mensagem("Não foi possível salvar a preferência neste navegador.",true)}
+  }
   function renderObras(filtro=""){const ids=obraIds(usuario),box=$("#accountWorks");$("#worksCount").textContent=`${ids.length} ${ids.length===1?"acesso":"acessos"}`;const q=String(filtro).trim().toLowerCase(),vis=ids.filter(id=>nomeObra(id).toLowerCase().includes(q));box.innerHTML=vis.length?vis.map(id=>`<span class="work-chip"><i class="fa-solid fa-building"></i>${esc(nomeObra(id))}</span>`).join(""):`<div class="empty">${ids.length?"Nenhum acesso encontrado.":"Nenhuma obra/setor liberado."}</div>`}
   function fecharEditorAvatar(){
     const modal=$("#avatarEditor");
@@ -91,8 +150,8 @@
     crop?.addEventListener("pointerup",soltar);crop?.addEventListener("pointercancel",soltar);
     $("#btnSalvarAvatar")?.addEventListener("click",async()=>{try{await enviarAvatar(await gerarAvatarRecortado())}catch(e){mensagem(e?.message||"Não foi possível preparar a foto.",true)}});
     global.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#avatarEditor")?.hidden)fecharEditorAvatar()});
-    $("#btnTrocarSenha")?.addEventListener("click",()=>parent.location.href="../alterar-senha.html");$("#btnSalvarPreferencias")?.addEventListener("click",salvarPreferencias);$("#btnToggleWorks")?.addEventListener("click",()=>{const c=$("#worksContent"),b=$("#btnToggleWorks");c.hidden=!c.hidden;b.classList.toggle("open",!c.hidden)});$("#worksSearch")?.addEventListener("input",e=>renderObras(e.target.value));global.addEventListener("beforeunload",e=>{if(alterado){e.preventDefault();e.returnValue=""}})
+    $("#btnTrocarSenha")?.addEventListener("click",()=>parent.location.href="../alterar-senha.html");$("#btnSalvarPreferencias")?.addEventListener("click",salvarPreferencias);$$(`input[name="accountPrinter"]`).forEach(r=>r.addEventListener("change",()=>{$("#printerSaveInfo").textContent="Preferência ainda não salva.";atualizarDetalhesImpressora()}));$("#btnConnectPrinter")?.addEventListener("click",conectarImpressora);$("#btnDisconnectPrinter")?.addEventListener("click",desconectarImpressora);$("#btnSavePrinter")?.addEventListener("click",salvarImpressora);$("#btnToggleWorks")?.addEventListener("click",()=>{const c=$("#worksContent"),b=$("#btnToggleWorks");c.hidden=!c.hidden;b.classList.toggle("open",!c.hidden)});$("#worksSearch")?.addEventListener("input",e=>renderObras(e.target.value));global.addEventListener("beforeunload",e=>{if(alterado){e.preventDefault();e.returnValue=""}})
   }
-  async function iniciar(){if(!await carregarUsuarioAtual())return;await carregarObras();renderDados();renderNotificacoes();renderObras();eventos()}
+  async function iniciar(){if(!await carregarUsuarioAtual())return;await carregarObras();renderDados();renderNotificacoes();renderImpressora();renderObras();eventos()}
   global.AtlasMinhaConta={iniciar,salvarPreferencias};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",iniciar);else iniciar();
 })(window);

@@ -53,6 +53,23 @@
       <footer class="card-footer"><span id="saveInfo">Nenhuma alteração pendente.</span><button class="btn primary" id="btnSalvarPreferencias" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></footer>
     </section>
 
+    <section class="account-card printer-card" aria-labelledby="printerSettingsTitle">
+      <header><div><h2 id="printerSettingsTitle"><i class="fa-solid fa-print"></i> Minhas impressoras</h2><p>Escolha como suas etiquetas serão impressas neste dispositivo.</p></div><span class="printer-status" id="printerStatus" role="status">Impressão padrão</span></header>
+      <div class="printer-settings">
+        <div class="printer-choice" role="group" aria-label="Impressora preferida">
+          <label class="printer-option"><input type="radio" name="accountPrinter" value="sistema" checked><span class="printer-option-icon"><i class="fa-solid fa-desktop"></i></span><span><strong>Impressora do sistema</strong><small>Elgin, HP ou outra impressora instalada</small></span><i class="fa-solid fa-circle-check printer-selected"></i></label>
+          <label class="printer-option"><input type="radio" name="accountPrinter" value="niimbot-b1"><span class="printer-option-icon"><i class="fa-brands fa-bluetooth-b"></i></span><span><strong>NIIMBOT B1</strong><small>Bluetooth · Etiqueta 50 × 30 mm</small></span><i class="fa-solid fa-circle-check printer-selected"></i></label>
+        </div>
+        <div id="accountPrinterDetails" class="printer-details" hidden>
+          <div class="printer-device"><div><strong><i class="fa-solid fa-print"></i> NIIMBOT B1</strong><p id="printerConnectionInfo">Impressora desconectada.</p></div><span class="printer-paper">50 × 30 mm</span></div>
+          <div class="printer-device-actions"><button class="btn dark" id="btnConnectPrinter" type="button"><i class="fa-brands fa-bluetooth-b"></i> Conectar Bluetooth</button><button class="btn secondary" id="btnDisconnectPrinter" type="button" hidden>Desconectar</button></div>
+          <small>Conectar apenas identifica a B1. A impressão direta será integrada após o teste da conexão. O iPhone precisa de um navegador compatível, como o Bluefy.</small>
+        </div>
+        <small class="printer-help"><i class="fa-solid fa-circle-info"></i> A preferência fica salva por usuário neste navegador. A autorização Bluetooth é específica deste aparelho.</small>
+      </div>
+      <footer class="card-footer"><span id="printerSaveInfo">Impressão atual preservada.</span><button class="btn primary" id="btnSavePrinter" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar preferência</button></footer>
+    </section>
+
     <section class="account-card works-card">
       <header class="works-head"><div><h2><i class="fa-solid fa-building"></i> Minhas obras / setores</h2><p>Locais aos quais sua conta possui acesso.</p></div><button class="works-toggle" id="btnToggleWorks" type="button"><span id="worksCount">0 acessos</span><i class="fa-solid fa-chevron-down"></i></button></header>
       <div class="works-content" id="worksContent" hidden><div class="works-search"><i class="fa-solid fa-magnifying-glass"></i><input id="worksSearch" type="search" placeholder="Buscar obra ou setor..."></div><div class="works-list" id="accountWorks"><div class="empty">Carregando obras...</div></div></div>
