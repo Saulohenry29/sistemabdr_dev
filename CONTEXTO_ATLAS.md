@@ -859,3 +859,14 @@ solução correta sem remendos.
 - Testar no Chrome modo dispositivo e no PWA real antes de Git/produção.
 
 - Autocomplete Marca/Modelo: os dois wrappers tinham o mesmo z-index e o segundo (Modelo) encobria a lista do primeiro. A regra oficial agora eleva somente o campo com foco (:focus-within), mantendo os outros atrás; testar visualmente no PWA antes do Git.
+
+
+## Diagnóstico de histórico de patrimônio — 2026-10-14
+- Edição cadastral atualiza `public.patrimonio` e depois grava `CORRECAO_CADASTRAL` em `public.movimentacoes`, em operações separadas. Se a segunda falha, a edição já pode ter sido persistida.
+- Erro observado: HTTP 403 / PostgreSQL 42501, `new row violates row-level security policy for table "movimentacoes"`.
+- Requisição autenticada com OWNER válido; exemplo patrimônio 3328, empresa 20, obra 33, com payload coincidente.
+- `movimentacoes` possui política INSERT para `authenticated` validando patrimônio, empresa e acesso à obra; políticas SELECT existentes são somente para `anon`. A requisição de histórico utilizava `.insert(...).select()` e `Prefer: return=representation`.
+- Ajuste mínimo no arquivo oficial `JS/patrimonio/patrimonio.js`: para `movimentacoes`, INSERT sem `.select()`. Outras tabelas mantêm retorno de dados.
+- HIPÓTESE A TESTAR: o retorno da linha recém-inserida exigia política SELECT e contribuía para a rejeição RLS. Não considerar resolvido antes de testar no DEV e consultar histórico.
+- Pendência de arquitetura: consolidar atualização cadastral e histórico numa transação no servidor, e definir autorização por ação (editar, transferir, inativar), sem permitir acesso indevido entre obras.
+- Não criar políticas RLS adicionais às cegas. Não aplicar em produção sem aprovação.

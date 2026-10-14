@@ -161,10 +161,12 @@ async function bdrSalvarPrimeiroNoTablet(tabela, payload, meta={}, contexto={}){
     : await patrimonioOnlineReal();
 
   if(onlineReal && db()){
-    const { data, error } = await db()
-      .from(tabela)
-      .insert([payload])
-      .select();
+    // Movimentações não precisam retornar a linha inserida.
+    // Evita exigir SELECT RLS apenas para registrar o histórico.
+    const consulta = db().from(tabela).insert([payload]);
+    const { data, error } = tabela === "movimentacoes"
+      ? await consulta
+      : await consulta.select();
 
     return {
       offlineFirst:false,
@@ -4777,7 +4779,7 @@ async function salvarEdicaoPatrimonio(){
       : p
   );
 
-  await gravarMovimentacao({
+  const historicoGravado = await gravarMovimentacao({
     patrimonio_id: patrimonioSelecionado.id,
     empresa_id: patrimonioSelecionado.empresa_id,
     obra_origem_id: patrimonioSelecionado.obra_id,
@@ -4790,6 +4792,11 @@ async function salvarEdicaoPatrimonio(){
 
   if(respEdicao.offlineFirst){
     bdrAvisoSalvoTablet("Correção cadastral salva offline. Será sincronizada automaticamente quando a internet voltar.");
+  }else if(historicoGravado){
+    atlasAvisoPatrimonio(
+      "Patrimônio atualizado",
+      "Dados e histórico da alteração salvos com sucesso."
+    );
   }
 
   fecharEdicao();
