@@ -162,7 +162,7 @@ async function fazerLogin(){
       return;
     }
 
-    if(!migrado && senhaEhTemporariaBDR(usuarioSessao)){
+    if(senhaEhTemporariaBDR(usuarioSessao)){
       window.location.href = "alterar-senha.html";
       return;
     }

@@ -909,3 +909,12 @@ solução correta sem remendos.
 - Corrigido em `MinhaConta/JS/atlasMinhaConta.js`: autoriza serviço GATT NIIMBOT no seletor, verifica characteristic, limpa conexão em falhas, reabilita botão no finally e mostra erro/cancelamento.
 - Esta correção não altera driver de impressão, formato da etiqueta, fluxo Elgin/HP, banco ou RLS. Testar em DEV no Bluefy; ainda não validado fisicamente no iPhone.
 - Atenção: conexão em Minha conta e driver de impressão são sessões separadas, com possível disputa pelo mesmo periférico; unificar gerenciamento de sessão em evolução posterior.
+
+### Diagnóstico 2026-10-16 — troca obrigatória de senha
+
+- `usuarios_sistema` possui RLS ativo; somente políticas SELECT observadas. A atualização direta do navegador via `.update().select().single()` não é adequada e produziu erro de coerção JSON.
+- Pablo Pelle id 35: `auth_status=ATIVO`, `auth_user_id` preenchido, flags de senha provisória ainda ativas. Lucas Souza id 36: `AGUARDANDO_ATIVACAO`, com `auth_user_id`. Lucas Richard id 31: registro LEGADO com mesmo e-mail do id 36; não mesclar/excluir sem análise.
+- A página `alterar-senha.html` já usa a sessão Supabase Auth para `auth.updateUser({password})`, seguida da rota autenticada `/api/auth/concluir-ativacao`.
+- Correção: após a troca de senha confirmada, a rota conclui as flags `senha_provisoria`, `senha_temporaria`, `trocar_senha` no registro vinculado ao `auth_user_id` autenticado; migração interna também conclui as flags. Exigir ao menos oito caracteres na troca Auth.
+- Publicação: alterar-senha.html vai ao frontend DEV; servidor/server.js exige implantação separada no serviço Node backend. Não publicar apenas o frontend sem o backend. Testar primeiro com contas de teste e conferir que as flags mudaram; não gravar senha em texto puro via SQL.
+- Pendente: fluxo administrativo de redefinição pelo OWNER ainda requer implementação/auditoria dedicada; não confundir com a troca de senha autenticada entregue aqui.

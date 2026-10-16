@@ -24,7 +24,7 @@ label{display:block;margin-top:14px;margin-bottom:5px;font-weight:bold}
 .btn{width:100%;margin-top:20px;padding:14px;background:#a4161a;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}.btn:hover{background:#7d1013}.btn:disabled{opacity:.65;cursor:not-allowed}
 .btn-sec{width:100%;margin-top:8px;padding:12px;background:#f3f4f6;color:#111827;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer}
 #mensagem{text-align:center;color:red;margin-top:14px;font-weight:800;font-size:13px}.info{background:#fff7ed;border-left:4px solid #f97316;border-radius:10px;padding:10px;color:#7c2d12;font-size:12px;line-height:1.45}
-.usuario-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-bottom:12px;color:#374151;font-size:13px}.usuario-box b{color:#111827}.oculto{display:none}
+.sucesso-senha{text-align:center;padding:12px 0 4px}.sucesso-senha h2{font-size:22px;color:#15803d;margin:12px 0}.sucesso-senha p{color:#374151;font-size:14px;line-height:1.55}.sucesso-senha .simbolo{font-size:42px;color:#15803d}.usuario-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-bottom:12px;color:#374151;font-size:13px}.usuario-box b{color:#111827}.oculto{display:none}
 </style>
 </head>
 <body>
@@ -58,6 +58,12 @@ label{display:block;margin-top:14px;margin-bottom:5px;font-weight:bold}
     <button class="btn-sec" type="button" onclick="sair()">Sair</button>
     <div id="mensagem"></div>
   </form>
+  <section id="confirmacaoSenha" class="sucesso-senha oculto" role="status" aria-live="polite">
+    <div class="simbolo" aria-hidden="true">&#10003;</div>
+    <h2>Senha alterada com sucesso!</h2>
+    <p>Sua nova senha foi cadastrada. Por segurança, entre novamente com suas credenciais.</p>
+    <button type="button" class="btn" onclick="location.href='login.html'">Ir para o login</button>
+  </section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="JS/supabaseClient.js"></script>
@@ -65,6 +71,7 @@ label{display:block;margin-top:14px;margin-bottom:5px;font-weight:bold}
 const ATLAS_AUTH_API = "https://arquivos.sathtech.com.br";
 let modoAcessoSeguro = false;
 let modoMigracaoInterna = false;
+let modoTrocaAuth = false;
 let sessaoAcessoSeguro = null;
 
 function bancoBDR(){ return window.client || window.supabaseClient || window.clientSupabase || null; }
@@ -72,6 +79,19 @@ function usuarioLocalBDR(){ try{return JSON.parse(localStorage.getItem("usuario_
 function msg(txt, cor="red"){ const el=document.getElementById("mensagem"); if(el){el.style.color=cor;el.innerText=txt||"";} }
 function destinoPadraoBDR(usuario){ const perms=String(usuario?.permissoes||"").toUpperCase(); if(perms.includes("DASHBOARD_VER"))return "atlas.html#m=dashboard";if(perms.includes("PATRIMONIO_VER"))return "atlas.html#m=patrimonio";if(perms.includes("ESTOQUE_VER"))return "atlas.html#m=estoque";if(perms.includes("EXPEDICAO_VER"))return "atlas.html#m=expedicao";if(perms.includes("RELATORIOS_VER"))return "atlas.html#m=relatorios";return "atlas.html#m=dashboard"; }
 async function sair(){ try{await bancoBDR()?.auth?.signOut();}catch(_e){} localStorage.removeItem("usuario_logado");localStorage.removeItem("usuarioLogado");localStorage.removeItem("perfil_usuario");location.href="login.html"; }
+async function mostrarConfirmacaoSenha(){
+  try{await bancoBDR()?.auth?.signOut();}catch(_e){}
+  localStorage.removeItem("usuario_logado");
+  localStorage.removeItem("usuarioLogado");
+  localStorage.removeItem("perfil_usuario");
+  document.getElementById("formAlterarSenha").classList.add("oculto");
+  document.getElementById("usuarioBox").classList.add("oculto");
+  document.getElementById("infoPagina").classList.add("oculto");
+  document.getElementById("tituloPagina").classList.add("oculto");
+  document.getElementById("subtituloPagina").classList.add("oculto");
+  document.getElementById("confirmacaoSenha").classList.remove("oculto");
+}
+
 
 async function obterSessaoDoConvite(banco){
   const url = new URL(window.location.href);
@@ -90,6 +110,16 @@ async function prepararPagina(){
 
   try{ sessaoAcessoSeguro=await obterSessaoDoConvite(banco); }catch(_e){ sessaoAcessoSeguro=null; }
 
+  const usuarioLocal=usuarioLocalBDR();
+  if(sessaoAcessoSeguro?.user && usuarioLocal?.auth_user_id === sessaoAcessoSeguro.user.id &&
+      String(usuarioLocal.auth_status || '').toUpperCase() === 'ATIVO'){
+    modoTrocaAuth=true;
+    document.getElementById("tituloPagina").innerText="Troca obrigatória de senha";
+    document.getElementById("subtituloPagina").innerText="Confirme sua senha provisória e escolha uma senha pessoal.";
+    document.getElementById("nomeUsuario").innerText=usuarioLocal.nome||usuarioLocal.usuario||"-";
+    document.getElementById("perfilUsuario").innerText=usuarioLocal.perfil||"-";
+    return;
+  }
   if(sessaoAcessoSeguro?.user){
     modoAcessoSeguro=true;
     document.getElementById("tituloPagina").innerText="Ativar acesso seguro";
@@ -137,7 +167,7 @@ function configurarCamposSenha(){
   const validacao=document.getElementById('validacaoConfirmacao');
 
   function validarVisualmente(){
-    const minimo=modoMigracaoInterna?8:6;
+    const minimo=(modoMigracaoInterna||modoAcessoSeguro)?8:6;
     const valorNova=nova.value;
     const valorConfirmacao=confirmar.value;
 
@@ -182,21 +212,19 @@ async function salvarAcessoSeguro(){
   const banco=bancoBDR();
   const novaSenha=document.getElementById("novaSenha").value;
   const confirmarSenha=document.getElementById("confirmarSenha").value;
-  if(novaSenha.length<6){msg("A nova senha precisa ter no mínimo 6 caracteres.");return;}
+  if(novaSenha.length<8){msg("A nova senha precisa ter no mínimo 8 caracteres.");return;}
   if(novaSenha!==confirmarSenha){msg("As senhas não coincidem. Verifique e tente novamente.");return;}
 
   const btn=document.getElementById("btnSalvar"); btn.disabled=true;
   try{
-    const {error:erroSenha}=await banco.auth.updateUser({password:novaSenha});
-    if(erroSenha){msg("Não foi possível definir a nova senha: "+erroSenha.message);return;}
-
     const {data:sessaoData,error:erroSessao}=await banco.auth.getSession();
     const token=sessaoData?.session?.access_token;
     if(erroSessao || !token){msg("Senha definida, mas a sessão de ativação expirou. Entre novamente pelo link recebido.");return;}
 
     const resposta=await fetch(`${ATLAS_AUTH_API}/api/auth/concluir-ativacao`,{
       method:"POST",
-      headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"}
+      headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},
+      body:JSON.stringify({nova_senha:novaSenha})
     });
     const retorno=await resposta.json().catch(()=>({}));
     if(!resposta.ok){msg(retorno.error||"A senha foi definida, mas não foi possível concluir a ativação no Atlas.");return;}
@@ -236,26 +264,53 @@ async function salvarMigracaoInterna(){
   }finally{btn.disabled=false;}
 }
 
-async function salvarSenhaLegada(){
+async function salvarTrocaAuth(){
   const banco=bancoBDR(); const usuario=usuarioLocalBDR();
-  const senhaAtual=document.getElementById("senhaAtual").value; const novaSenha=document.getElementById("novaSenha").value; const confirmarSenha=document.getElementById("confirmarSenha").value;
-  if(!usuario?.id){msg("Sessão expirada. Faça login novamente.");return;}
-  if(novaSenha.length<6){msg("A nova senha precisa ter no mínimo 6 caracteres.");return;}
-  if(novaSenha===senhaAtual){msg("A nova senha precisa ser diferente da senha provisória.");return;}
-  if(novaSenha!==confirmarSenha){msg("As senhas não coincidem. Verifique e tente novamente.");return;}
-
-  const {data:cadastro,error:erroLeitura}=await banco.from("usuarios_sistema").select("id,senha").eq("id",usuario.id).maybeSingle();
-  if(erroLeitura || !cadastro){msg("Não foi possível validar a senha atual.");return;}
-  if(String(cadastro.senha||"")!==String(senhaAtual)){msg("Senha atual incorreta.");return;}
-
-  const {data,error}=await banco.from("usuarios_sistema").update({senha:novaSenha,senha_temporaria:false,senha_provisoria:false,trocar_senha:false,updated_at:new Date().toISOString()}).eq("id",usuario.id).select("id,nome,usuario,email,perfil,empresa_id,obra_id,ativo,permissoes,obras_liberadas,foto_url,telefone,cargo,senha_provisoria,trocar_senha,senha_temporaria,auth_user_id,auth_status,owner_sistema").single();
-  if(error){msg("Erro ao alterar senha: "+error.message);return;}
-  const atualizado={...usuario,...data}; delete atualizado.senha;
-  localStorage.setItem("usuario_logado",JSON.stringify(atualizado));localStorage.setItem("usuarioLogado",JSON.stringify(atualizado));
-  msg("Senha alterada com sucesso. Entrando no sistema...","green");setTimeout(()=>location.href=destinoPadraoBDR(atualizado),900);
+  const senhaAtual=document.getElementById("senhaAtual").value;
+  const novaSenha=document.getElementById("novaSenha").value;
+  const confirmarSenha=document.getElementById("confirmarSenha").value;
+  if(!usuario?.id || !senhaAtual){msg("Informe sua senha atual.");return;}
+  if(novaSenha.length<8 || novaSenha.length>128 || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Confira a nova senha: 8 a 128 caracteres, diferente da atual e com confirmação igual.");return;}
+  const btn=document.getElementById("btnSalvar");btn.disabled=true;
+  try{
+    const {data}=await banco.auth.getSession();
+    if(!data?.session?.access_token){msg("Sessão segura expirada. Faça login novamente.");return;}
+    const {data:retorno,error:erroFuncao}=await banco.functions.invoke('atlas-senhas',{
+      body:{acao:'trocar-auth',senha_atual:senhaAtual,nova_senha:novaSenha}
+    });
+    if(erroFuncao){
+      let detalhe='Não foi possível alterar a senha.';
+      try{const resposta=await erroFuncao.context?.json?.();detalhe=resposta?.error||detalhe;}catch(_e){}
+      msg(detalhe);return;
+    }
+    if(!retorno?.ok){msg(retorno?.error||'Não foi possível alterar a senha.');return;}
+    await mostrarConfirmacaoSenha();
+  }catch(_e){msg("Falha de comunicação com o serviço seguro.");}finally{btn.disabled=false;}
 }
 
-async function salvarNovaSenha(){ msg(""); if(modoAcessoSeguro) return salvarAcessoSeguro(); if(modoMigracaoInterna) return salvarMigracaoInterna(); return salvarSenhaLegada(); }
+async function salvarSenhaLegada(){
+  const usuario=usuarioLocalBDR();
+  const senhaAtual=document.getElementById("senhaAtual").value;
+  const novaSenha=document.getElementById("novaSenha").value;
+  const confirmarSenha=document.getElementById("confirmarSenha").value;
+  if(!usuario?.id || !senhaAtual){msg("Sessão expirada ou senha atual ausente.");return;}
+  if(novaSenha.length<8 || novaSenha.length>128 || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Confira a nova senha: 8 a 128 caracteres, diferente da atual e com confirmação igual.");return;}
+  const btn=document.getElementById("btnSalvar");btn.disabled=true;
+  try{
+    const {data:retorno,error:erroFuncao}=await bancoBDR().functions.invoke('atlas-senhas',{
+      body:{acao:'trocar-legado',usuario_id:usuario.id,senha_atual:senhaAtual,nova_senha:novaSenha}
+    });
+    if(erroFuncao){
+      let detalhe='Não foi possível alterar a senha legada.';
+      try{const resposta=await erroFuncao.context?.json?.();detalhe=resposta?.error||detalhe;}catch(_e){}
+      msg(detalhe);return;
+    }
+    if(!retorno?.ok){msg(retorno?.error||"Não foi possível alterar a senha.");return;}
+    await mostrarConfirmacaoSenha();
+  }catch(_e){msg("Falha de comunicação com o serviço seguro.");}finally{btn.disabled=false;}
+}
+
+async function salvarNovaSenha(){ msg(""); if(modoTrocaAuth) return salvarTrocaAuth(); if(modoAcessoSeguro) return salvarAcessoSeguro(); if(modoMigracaoInterna) return salvarMigracaoInterna(); return salvarSenhaLegada(); }
 document.addEventListener("DOMContentLoaded",async()=>{await prepararPagina();configurarCamposSenha();});
 document.getElementById("formAlterarSenha").addEventListener("submit",e=>{e.preventDefault();salvarNovaSenha();});
 </script>

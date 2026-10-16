@@ -1227,15 +1227,6 @@
         updated_at:new Date().toISOString()
       };
 
-      try{
-      if(fotoArquivoPendente) payload.foto_url=await enviarAvatarAtlas(fotoArquivoPendente);
-      else if(removerFotoPendente) payload.foto_url=null;
-      else if(id){
-        const existente=STATE.users.find(u=>String(u.id)===String(id));
-        if(existente?.foto_url) payload.foto_url=existente.foto_url;
-      }
-    }catch(e){alert("Não foi possível enviar a foto: "+(e?.message||e));return}
-
     const r=await db().rpc("atlas_usuarios_salvar",{
         p_acao:"ATUALIZAR",
         p_usuario_id:Number(STATE.selected.id),
@@ -1486,7 +1477,10 @@
       alert("A base operacional da Expedição também precisa estar marcada nas Obras de atuação.");
       return;
     }
-    if(senha) Object.assign(payload,{senha,senha_temporaria:true,senha_provisoria:true,trocar_senha:true});
+    // Edição: senha é operação separada, autorizada pelo backend e não pelo RPC de cadastro.
+    if(senha && !id) Object.assign(payload,{senha,senha_temporaria:true,senha_provisoria:true,trocar_senha:true});
+    if(senha && id && !currentIsOwner()) { alert("Somente o OWNER pode redefinir senhas de funcionários."); return; }
+    if(senha && id && senha.length < 8) { alert("A senha provisória precisa ter pelo menos 8 caracteres."); return; }
 
     if(!id){
       if(!senha){alert("Informe uma senha provisória para o novo usuário.");return}
@@ -1499,13 +1493,44 @@
       });
     }
 
+    // O JS identifica o tipo de conta; a alteração e a autorização ocorrem no backend.
+    // LEGADO mantém a senha em usuarios_sistema; ATIVO usa Supabase Auth.
+    // Ambos passam pelo endpoint autorizado do OWNER, nunca por RPC público de senha.
+    if(id && senha){
+      const alvo=STATE.users.find(u=>Number(u.id)===Number(id));
+      if(!alvo){alert("Funcionário não encontrado na lista carregada.");return;}
+      const status=String(alvo.auth_status||'LEGADO').trim().toUpperCase();
+      const tipo=status==='ATIVO' && alvo.auth_user_id ? 'ATIVO'
+        : status==='LEGADO' && !alvo.auth_user_id ? 'LEGADO' : null;
+      if(!tipo){alert("Estado de autenticação inconsistente ou ativação pendente. Nenhuma senha foi alterada.");return;}
+      try{
+        const {data:{session},error:erroSessao}=await db().auth.getSession();
+        if(erroSessao || !session?.access_token) throw new Error("Entre novamente com a conta OWNER para redefinir a senha.");
+        const {data:retorno,error:erroFuncao}=await db().functions.invoke('atlas-senhas',{
+          body:{acao:'redefinir',usuario_id:Number(id),senha}
+        });
+        if(erroFuncao){
+          let detalhe='A Edge Function atlas-senhas não respondeu corretamente. Verifique a publicação e os logs.';
+          try{const resposta=await erroFuncao.context?.json?.(); detalhe=resposta?.error||detalhe;}catch(_e){}
+          throw new Error(detalhe);
+        }
+        if(!retorno?.ok) throw new Error(retorno?.error||'Não foi possível redefinir a senha.');
+      }catch(erro){
+        alert("A senha NÃO foi redefinida e o cadastro NÃO foi salvo: "+erro.message);
+        return;
+      }
+    }
+
     const r=await db().rpc("atlas_usuarios_salvar",{
       p_acao:id?"ATUALIZAR":"CRIAR",
       p_usuario_id:id?Number(id):null,
       p_dados:payload,
       p_executor_id:currentId()
     });
-    if(r.error){alert("Erro ao salvar usuário: "+r.error.message);return}
+    if(r.error){
+      alert((id && senha ? "A senha foi redefinida, mas os demais dados do cadastro NÃO foram salvos: " : "Erro ao salvar usuário: ")+r.error.message);
+      return;
+    }
 
     modal("modalUsuario",false);
     await load();
