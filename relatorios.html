@@ -11,10 +11,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#222}
-header{background:#fff;border-bottom:3px solid #a4161a;padding:12px 15px;display:flex;justify-content:space-between;align-items:center}
 .layout{display:flex}
-.sidebar{width:200px;background:#2c3e50;min-height:100vh;padding:10px}
-.menu-btn{width:100%;margin:5px 0;padding:9px;background:#1f2d3a;color:white;border:none;border-radius:5px;cursor:pointer;text-align:left}
 .content{flex:1;padding:12px}
 .card{background:white;border-radius:8px;padding:14px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .card h3{margin:0 0 8px;color:#a4161a}
@@ -42,7 +39,6 @@ button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a416
 
 @media(max-width:768px){
   .layout{flex-direction:column}
-  .sidebar{width:100%;min-height:auto}
 }
 
 /* Seleção múltipla de obras/setores para exportação */
@@ -939,28 +935,11 @@ header{
   display:flex;
 }
 
-.sidebar{
-  display:none !important;
-}
-
 .content{
-  margin-left:var(--sidebar-width);
-  width:calc(100% - var(--sidebar-width));
-  padding:12px;
-}
-
-.relatorio-topbar{
-  background:
-    radial-gradient(circle at right top, rgba(164,22,26,.12), transparent 35%),
-    linear-gradient(135deg,#ffffff,#f8fafc);
-  border-radius:16px;
-  padding:12px 14px;
-  margin-bottom:10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  box-shadow:0 3px 14px rgba(0,0,0,.08);
-  border-left:4px solid #a4161a;
+  margin-left:0;
+  width:100%;
+  min-width:0;
+  padding:12px 0 0;
 }
 
 .relatorio-title{
@@ -1100,11 +1079,6 @@ input,select{
     grid-template-columns:1fr !important;
   }
 
-  .relatorio-topbar{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
-  }
 }
 
 @media print{
@@ -1402,150 +1376,9 @@ button,
 <!-- ===================================== -->
 <!-- FIM BLOQUEIO DE LOGIN                 -->
 <!-- ===================================== -->
-<header>
-  <b>📄 BDR - Relatórios</b>
-  <span id="dataAtual"></span>
-</header>
-
-<aside class="bdr-sidebar">
-  <div class="bdr-brand">
-  <div class="bdr-brand-icon bdr-logo-menu">
-    <img src="./IMG/logo.png" alt="BDR">
-  </div>
-</div>
-  </div>
-
- <!-- MENU PRINCIPAL FIXO -->
- <nav class="bdr-menu">
-
-  <!-- DASHBOARD -->
-  <button class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')" data-permissao="DASHBOARD_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-chart-simple"></i>
-    </span>
-  </button>
-
-  <!-- ENTRADA -->
-  <button class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')" data-permissao="ENTRADA_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-arrow-down-wide-short"></i>
-    </span>
-  </button>
-
-  <!-- TRIAGEM -->
-  <button class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')" data-permissao="TRIAGEM_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-vials"></i>
-    </span>
-  </button>
-
-  <!-- Estoque -->
-  <button class="bdr-menu-btn" data-tip="Estoque" onclick="ir('estoque.html')" data-permissao="ESTOQUE_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-boxes-stacked"></i>
-    </span>
-  </button>
-
-  <!-- PATRIMÔNIO -->
-  <button class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')" data-permissao="PATRIMONIO_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-tags"></i>
-    </span>
-  </button>
-
-  <!-- EXPEDIÇÃO -->
-   <button class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')" data-permissao="EXPEDICAO_VER">
-     <span class="bdr-menu-icon">
-       <i class="fa-solid fa-truck-fast"></i>
-      </span>
-    </button>
-
-    <!-- MOVIMENTAÇÕES -->
-  <button data-permissao="MOVIMENTACOES_VER" class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>
-
-  
-  <!-- RELATÓRIOS -->
-  <button class="bdr-menu-btn active" data-tip="Relatórios" onclick="ir('relatorios.html')" data-permissao="RELATORIOS_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-regular fa-file-lines"></i>
-    </span>
-  </button>
-
-  <!-- EMPRESAS -->
-  <button class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')" data-permissao="EMPRESAS_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-building"></i>
-    </span>
-  </button>
-
-  <!-- USUÁRIOS -->
-  <button class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')" data-permissao="USUARIOS_VER">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-users"></i>
-    </span>
-  </button>
-
-</nav>
-
-</aside>
-
 <div class="layout">
 
-<div class="sidebar">
-  <button class="menu-btn" onclick="ir('dashboard.html')" data-permissao="DASHBOARD_VER">📊 Torre de Controle</button>
-  <button class="menu-btn" onclick="ir('patrimonio.html')" data-permissao="PATRIMONIO_VER">📦 Patrimônio</button>
-  <button class="menu-btn" onclick="ir('empresa.html')" data-permissao="EMPRESAS_VER">🏢 Empresas</button>
-  <button class="menu-btn" onclick="ir('movimentacoes.html')" data-permissao="RELATORIOS_VER">🔁 Movimentações</button>
-  <button class="menu-btn" onclick="ir('relatorios.html')" data-permissao="RELATORIOS_VER">📄 Relatórios</button>
-  <button class="menu-btn" onclick="logout()">🚪 Sair</button>
-</div>
-
 <div class="content">
-
-<div class="relatorio-topbar">
-  <div>
-    <div class="relatorio-title">📄 BDR Relatórios</div>
-    <div class="relatorio-sub">Relatório gerencial de patrimônios, filtros, exportação e impressão.</div>
-  </div>
-
-  <div class="bdr-top-actions">
-    <div class="notif-wrap">
-      <button class="notif-btn" type="button" tabindex="-1" onmousedown="event.preventDefault()" onclick="toggleNotificacoes(event); this.blur();" title="Notificações">
-        <i class="fa-regular fa-bell"></i>
-        <span id="notifBadge" class="notif-badge">0</span>
-      </button>
-
-      <div id="notifDropdown" class="notif-dropdown">
-        <div class="notif-head">🔔 Central de notificações</div>
-        <div id="notifLista" class="notif-list">
-          <div class="notif-item">Nenhuma notificação no momento.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="user-menu" onclick="toggleMenuUsuario(event)">
-      <div class="user-mini">
-        <b id="usuarioNome" tabindex="-1">Olá, -</b>
-        <small id="usuarioPerfil" tabindex="-1">-</small>
-      </div>
-      <div class="avatar"><i class="fa-solid fa-user"></i></div>
-
-      <div id="dropdownUser" class="dropdown-user">
-        <button type="button" onclick="ir('usuarios.html'); event.stopPropagation();">
-          <i class="fa-solid fa-user-gear"></i> Meu perfil / usuários
-        </button>
-
-        <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();">
-          <i class="fa-solid fa-right-from-bracket"></i> Sair do sistema
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="kpi-relatorio-grid">
   <div class="kpi-relatorio">
@@ -1629,7 +1462,7 @@ button,
             onclick="abrirRelatoriosAssinados()">
       📚 Relatórios assinados
     </button>
-    <button class="btn-relatorio btn-excel" data-permissao="RELATORIOS_EXPORTAR" onclick="exportarCSV()">📊 Exportar Excel/CSV</button>
+    <button class="btn-relatorio btn-excel" data-permissao="RELATORIOS_EXPORTAR" onclick="exportarCSV()">📊 Exportar Excel</button>
     <button class="btn-relatorio btn-blue" data-permissao="SIENGE_EXPORTAR" onclick="exportarSiengeCSV()">🏗 Exportar CSV Sienge</button>
     <button class="btn-relatorio btn-print" data-permissao="SIENGE_EXPORTAR" onclick="abrirModalSienge()">⚙️ Códigos Sienge</button>
   </div>
@@ -2103,21 +1936,6 @@ function nomePatrimonio(id){
 async function carregarDados(){
 
   if(!aplicarPermissoesRelatoriosBDR()) return;
-
-  document.getElementById("dataAtual").innerText =
-    new Date().toLocaleDateString("pt-BR");
-
-  const usuarioTopo = JSON.parse(localStorage.getItem("usuario_logado") || "null");
-  const elUsuarioNome = document.getElementById("usuarioNome");
-  const elUsuarioPerfil = document.getElementById("usuarioPerfil");
-
-  if(elUsuarioNome){
-    elUsuarioNome.innerText = usuarioTopo ? "Olá, " + usuarioTopo.nome : "Olá, usuário";
-  }
-
-  if(elUsuarioPerfil){
-    elUsuarioPerfil.innerText = usuarioTopo ? (usuarioTopo.perfil || "-") : "-";
-  }
 
   if(!db()){
     alert("Supabase não carregado.");
@@ -3304,66 +3122,155 @@ function atualizarKPIsRelatorio(){
   if(elManutencao) elManutencao.innerText = manutencao;
 }
 
-function exportarCSV(){
-
-  if(!exigirPermissaoRelatoriosBDR("RELATORIOS_EXPORTAR", "Você não tem permissão para exportar Excel/CSV.")) return;
-
-  if(filtradosAtuais.length === 0){
-    alert("Nenhum dado para exportar.");
+async function exportarCSV(){
+  if(!exigirPermissaoRelatoriosBDR("RELATORIOS_EXPORTAR", "Você não tem permissão para exportar Excel.")) return;
+  if(!filtradosAtuais.length){ alert("Nenhum dado para exportar."); return; }
+  if(typeof ExcelJS === "undefined"){
+    alert("A biblioteca de formatação do Excel não carregou. Verifique sua conexão e tente novamente.");
     return;
   }
 
-  const linhas = [];
-
-  linhas.push([
-    "Codigo",
-    "Patrimonio",
-    "Tipo",
-    "Status",
-    "Obra_Setor",
-    "Marca",
-    "Modelo",
-    "Serie_Placa",
-    "Data_Hora_Cadastro",
-    "Cadastrado_Por"
-  ]);
-
-  filtradosAtuais.forEach(p => {
-    linhas.push([
-      p.codigo_qr || "",
-      p.nome_bem || "",
-      p.tipo_item || "",
-      p.status || "",
-      p.localizacao || "",
-      p.marca || "",
-      p.modelo || "",
-      p.numero_serie || p.placa || "",
-      formatarDataHoraCadastroPatrimonio(p),
-      p.usuario_cadastro || p.cadastrado_por || ""
-    ]);
+  const usuario = JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");
+  const responsavel = usuario?.nome || usuario?.usuario || "-";
+  const emitidoEm = new Date().toLocaleString("pt-BR", {timeZone:"America/Cuiaba"});
+  const valorNumero = p => {
+    const bruto = p?.valor_bem ?? p?.valor_aquisicao ?? p?.valor;
+    if(bruto == null || String(bruto).trim() === "") return null;
+    const texto = String(bruto).trim().replace(/[^\d,.-]/g, "");
+    const numero = Number(texto.includes(",") ? texto.replace(/\./g, "").replace(",", ".") : texto);
+    return Number.isFinite(numero) ? numero : null;
+  };
+  const nomeObra = p => {
+    const obra = obras.find(o => String(o.id) === String(p.obra_id));
+    return obra ? `${obra.codigo_obra || obra.codigo_sienge || "-"} - ${obra.nome || "-"}` : (p.localizacao || "-");
+  };
+  const corVermelha = "A4161A", corEscura = "111827", corCinza = "64748B";
+  const moeda = '"R$" #,##0.00';
+  const borda = {top:{style:"thin",color:{argb:"FFD1D5DB"}},bottom:{style:"thin",color:{argb:"FFD1D5DB"}},left:{style:"thin",color:{argb:"FFD1D5DB"}},right:{style:"thin",color:{argb:"FFD1D5DB"}}};
+  const livro = new ExcelJS.Workbook();
+  livro.creator = "BDR Gestão - Atlas";
+  livro.created = new Date();
+  const aba = livro.addWorksheet("Patrimônios", {views:[{state:"frozen",ySplit:9}]});
+  aba.properties.defaultRowHeight = 18;
+  aba.columns = [
+    {width:6},{width:21},{width:43},{width:19},{width:17},{width:22},
+    {width:20},{width:23},{width:16},{width:23},{width:26}
+  ];
+  const mesclar = (intervalo, texto, tamanho, cor) => {
+    aba.mergeCells(intervalo);
+    const cel = aba.getCell(intervalo.split(":")[0]);
+    cel.value = texto;
+    cel.font = {name:"Arial",size:tamanho,bold:true,color:{argb:"FF"+cor}};
+    cel.alignment = {vertical:"middle"};
+  };
+  mesclar("A1:H1","BDR CONSTRUART",15,corVermelha);
+  mesclar("A2:H2","RELATÓRIO DE ATIVIDADES PATRIMONIAIS",17,corEscura);
+  aba.mergeCells("I1:K1");
+  aba.getCell("I1").value = `Emitido em ${emitidoEm}`;
+  aba.getCell("I1").font = {name:"Arial",size:9,color:{argb:"FF"+corCinza}};
+  aba.getCell("I1").alignment = {horizontal:"right"};
+  aba.getRow(1).height = 23;
+  aba.getRow(2).height = 30;
+  for(let c=1;c<=11;c++) aba.getRow(3).getCell(c).border = {bottom:{style:"medium",color:{argb:"FF"+corVermelha}}};
+  aba.getRow(3).height=7;
+  const campo = (linha,coluna,rotulo,valor,ate) => {
+    aba.mergeCells(linha,coluna,linha,ate);
+    const cel=aba.getRow(linha).getCell(coluna);
+    cel.value = {richText:[{text:rotulo+" ",font:{bold:true}},{text:String(valor??"-")}]};
+    cel.font = {name:"Arial",size:10,color:{argb:"FF"+corEscura}};
+    cel.alignment={vertical:"middle",wrapText:true};
+  };
+  campo(4,1,"Obra(s)/setor(es):",nomesObrasRelatorioAtual(),6);
+  campo(4,7,"Período filtrado:",periodoFiltroRelatorioTexto(),11);
+  campo(5,1,"Período efetivo dos lançamentos:",periodoEfetivoLancamentos(),6);
+  campo(5,7,"Relatório emitido por:",responsavel,11);
+  campo(6,1,"Total de patrimônios:",filtradosAtuais.length,6);
+  aba.getRow(4).height=27; aba.getRow(5).height=27; aba.getRow(6).height=23;
+  aba.mergeCells("A7:K7");
+  const descricao=aba.getCell("A7");
+  descricao.value="Relação dos patrimônios cadastrados no Atlas/BDR, contendo data, valor, identificação, usuário responsável e obra/setor de lançamento.";
+  descricao.font={name:"Arial",size:9,italic:true,color:{argb:"FF"+corCinza}};
+  descricao.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FAFC"}};
+  descricao.border={left:{style:"medium",color:{argb:"FF"+corVermelha}}};
+  descricao.alignment={vertical:"middle",indent:1,wrapText:true};
+  aba.getRow(7).height=28;
+  aba.getRow(8).height=9;
+  const cabecalho=["Nº","Identificação","Patrimônio","Tipo","Status","Marca","Modelo","Série/Placa","Valor","Data do cadastro","Cadastrado por"];
+  aba.getRow(9).values=cabecalho;
+  aba.getRow(9).height=29;
+  aba.getRow(9).eachCell(c=>{
+    c.font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corEscura}};
+    c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFE5E7EB"}};
+    c.border=borda;
+    c.alignment={vertical:"middle",wrapText:true};
   });
+  const porObra=new Map();
+  filtradosAtuais.forEach((p,i)=>{
+    const obra=nomeObra(p),valor=valorNumero(p);
+    const row=aba.addRow([i+1,codigoManualBDR(p)||"-",p.nome_bem||"-",p.tipo_item||"-",String(p.status||"-").replaceAll("_"," "),p.marca||"-",p.modelo||"-",p.numero_serie||p.placa||"-",valor,formatarDataHoraCadastroPatrimonio(p),p.usuario_cadastro||p.cadastrado_por||"-"]);
+    row.height=31;
+    row.eachCell({includeEmpty:true},c=>{
+      c.font={name:"Arial",size:9,color:{argb:"FF"+corEscura}};
+      c.border=borda;
+      c.alignment={vertical:"middle",wrapText:true};
+      if(i%2===1) c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FAFC"}};
+    });
+    row.getCell(9).numFmt=moeda;
+    const t=porObra.get(obra)||{quantidade:0,valor:0,semValor:0};
+    t.quantidade++;
+    if(valor===null)t.semValor++;else t.valor+=valor;
+    porObra.set(obra,t);
+  });
+  const ultima=9+filtradosAtuais.length;
+  aba.autoFilter={from:"A9",to:`K${ultima}`};
+  aba.mergeCells(ultima+1,1,ultima+1,8);
+  aba.getCell(ultima+1,1).value="VALOR TOTAL DOS PATRIMÔNIOS";
+  aba.getCell(ultima+1,1).font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corEscura}};
+  aba.getCell(ultima+1,1).alignment={horizontal:"right",vertical:"middle"};
+  aba.getCell(ultima+1,9).value={formula:`SUM(I10:I${ultima})`};
+  aba.getCell(ultima+1,9).numFmt=moeda;
+  aba.getCell(ultima+1,9).font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corVermelha}};
+  aba.getRow(ultima+1).height=27;
+  aba.pageSetup={paperSize:9,orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,showGridLines:false,printTitlesRow:"1:9",margins:{left:.2,right:.2,top:.4,bottom:.4,header:.15,footer:.15}};
+  aba.pageSetup.printArea=`A1:K${ultima+1}`;
 
-  const csv = linhas
-    .map(linha =>
-      linha.map(campo =>
-        `"${String(campo).replace(/"/g,'""')}"`
-      ).join(";")
-    )
-    .join("\n");
+  const resumo=livro.addWorksheet("Resumo por obra",{views:[{state:"frozen",ySplit:5}]});
+  resumo.columns=[{width:48},{width:19},{width:24},{width:20}];
+  resumo.mergeCells("A1:D1");
+  resumo.getCell("A1").value="BDR CONSTRUART";
+  resumo.getCell("A1").font={name:"Arial",size:15,bold:true,color:{argb:"FF"+corVermelha}};
+  resumo.mergeCells("A2:D2");
+  resumo.getCell("A2").value="RESUMO PATRIMONIAL POR OBRA";
+  resumo.getCell("A2").font={name:"Arial",size:16,bold:true,color:{argb:"FF"+corEscura}};
+  resumo.getRow(2).height=29;
+  for(let c=1;c<=4;c++)resumo.getRow(3).getCell(c).border={bottom:{style:"medium",color:{argb:"FF"+corVermelha}}};
+  resumo.getRow(4).values=["Obras conforme filtros do relatório"];
+  resumo.getRow(5).values=["Obra/Setor","Quantidade","Valor total (R$)","Itens sem valor"];
+  resumo.getRow(5).eachCell(c=>{c.font={name:"Arial",bold:true,color:{argb:"FF"+corEscura}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFE5E7EB"}};c.border=borda;});
+  [...porObra.entries()].sort((a,b)=>b[1].valor-a[1].valor).forEach(([obra,t],i)=>{
+    const row=resumo.addRow([obra,t.quantidade,t.valor,t.semValor]);
+    row.getCell(3).numFmt=moeda;
+    row.eachCell(c=>{c.border=borda;c.font={name:"Arial",size:10};if(i%2)c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FAFC"}};});
+  });
+  const total=[...porObra.values()].reduce((acc,t)=>({q:acc.q+t.quantidade,v:acc.v+t.valor,s:acc.s+t.semValor}),{q:0,v:0,s:0});
+  const totalRow=resumo.addRow(["TOTAL GERAL",total.q,total.v,total.s]);
+  totalRow.getCell(3).numFmt=moeda;
+  totalRow.eachCell(c=>{c.font={name:"Arial",bold:true,color:{argb:"FF"+corVermelha}};c.border=borda;});
+  resumo.autoFilter={from:"A5",to:`D${totalRow.number-1}`};
+  resumo.pageSetup={paperSize:9,orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:1};
 
-  const blob = new Blob(
-    ["\uFEFF" + csv],
-    { type:"text/csv;charset=utf-8;" }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = "relatorio_patrimonios.csv";
-  a.click();
-
-  URL.revokeObjectURL(url);
+  try{
+    const buffer=await livro.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=url;link.download="relatorio_patrimonios.xlsx";
+    document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),10000);
+  }catch(erro){
+    console.error("Falha ao gerar Excel patrimonial:",erro);
+    alert("Não foi possível gerar o Excel. Consulte o console para detalhes.");
+  }
 }
 
 function limparNumero(valor){
@@ -4461,48 +4368,7 @@ function exportarSiengeCSV(){
   URL.revokeObjectURL(url);
 }
 
-function toggleMenuUsuario(event){
-  if(event) event.stopPropagation();
-  document.getElementById("dropdownUser")?.classList.toggle("ativo");
-  document.getElementById("notifDropdown")?.classList.remove("ativo");
-}
 
-function toggleNotificacoesRelatorioAntigo(event){
-  // BDR V11.1: função antiga mantida fora do fluxo.
-  // O onclick usa a função global window.toggleNotificacoes do JS/bdrNotificacoes.js.
-  if(event) event.stopPropagation();
-  document.getElementById("notifDropdown")?.classList.toggle("ativo");
-  document.getElementById("dropdownUser")?.classList.remove("ativo");
-}
-
-function fecharMenusTopo(){
-  document.getElementById("dropdownUser")?.classList.remove("ativo");
-  document.getElementById("notifDropdown")?.classList.remove("ativo");
-}
-
-document.addEventListener("click", fecharMenusTopo);
-
-function atualizarNotificacoesRelatorioAntigo(lista){
-  const badge = document.getElementById("notifBadge");
-  const box = document.getElementById("notifLista");
-  if(!badge || !box) return;
-
-  const total = lista.length;
-  badge.innerText = total > 9 ? "9+" : total;
-  badge.style.display = total > 0 ? "inline-flex" : "none";
-
-  if(total === 0){
-    box.innerHTML = `<div class="notif-item">Nenhuma notificação no momento.</div>`;
-    return;
-  }
-
-  box.innerHTML = lista.map(n => `
-    <div class="notif-item" onclick="${n.acao || ''}">
-      <strong>${n.titulo}</strong>
-      <span>${n.texto}</span>
-    </div>
-  `).join("");
-}
 
 function gerarNotificacoesRelatorio(){
   const semValor = patrimonios.filter(p => !Number(p.valor_bem || 0)).length;
@@ -4733,6 +4599,7 @@ function limparFormularioSiengeBDR(){
 carregarDados();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="./JS/sienge-insumos-fallback.js"></script>
 <script src="./JS/sienge.js"></script>
 
