@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-v4.0.6-cache-response-clone-safe";
+const BDR_CACHE_VERSION = "bdr-erp-v4.0.7-etiqueta-offline-teste";
 
 const BDR_ASSETS = [
   "./",
@@ -44,6 +44,9 @@ const BDR_ASSETS = [
   "./JS/atlasPrintCenter.js",
   "./JS/atlasQRCode/qrcode.min.js",
   "./JS/atlasQRCode.js",
+  "./JS/impressao/atlasEtiquetaImagemB1.js",
+  "./JS/impressao/niimbot.js",
+  "./JS/patrimonio/patrimonio-etiqueta-individual.js",
 
   "./JS/entrada.js",
   "./JS/triagem.js",

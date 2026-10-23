@@ -4,6 +4,7 @@
 
   const STATE={users:[],works:[],companies:[],profiles:[],selected:null,draft:null,page:1,pageSize:8,table:"usuarios_sistema",dirty:false,worksDraft:new Set(),expeditionWorksDraft:new Set(),formWorksDraft:new Set(),formWorksTemp:new Set()};
   const OWNER_ID=1;
+  const USUARIOS_COLUNAS="id,nome,usuario,perfil,empresa_id,obra_id,ativo,criado_em,email,criado_por,atualizado_em,permissoes,updated_at,ultimo_login,foto_url,telefone,cargo,senha_provisoria,trocar_senha,data_reset_senha,perfil_rapido,senha_temporaria,obras_liberadas,observacao_acesso,auth_user_id,owner_sistema,auth_status,auth_ativado_em,auth_ativado_por";
   const $=(s,c=document)=>c.querySelector(s); const $$=(s,c=document)=>[...c.querySelectorAll(s)];
   function hostWindow(){
     try{
@@ -111,6 +112,13 @@
 
   function obrasDoUsuario(u){
     const ids=new Set();
+    // Os vinculos de usuario_obras sao a referencia para a listagem.
+    // Os campos legados continuam considerados apenas quando ainda nao ha
+    // vinculos carregados para o registro.
+    if(Array.isArray(u?._obras_vinculadas)){
+      u._obras_vinculadas.forEach(id=>ids.add(String(id)));
+      return ids;
+    }
     if(u?.obra_id!=null&&String(u.obra_id).trim()) ids.add(String(u.obra_id));
     String(u?.obras_liberadas||"").split(",").map(x=>x.trim()).filter(Boolean).forEach(id=>ids.add(String(id)));
     return ids;
@@ -140,9 +148,9 @@
   const canManagePermissions=()=>currentIsOwner()||hasCurrentPerm("USUARIOS_PERMISSOES");
   const isOwnSelected=()=>Number(STATE.selected?.id||0)===currentId();
   const selectedIsOwner=()=>Number(STATE.selected?.id||0)===OWNER_ID;
-  const canEditSelected=()=>currentIsOwner()||(canEditUsers()&&!isOwnSelected()&&!selectedIsOwner());
-  const canManageSelectedAccess=()=>currentIsOwner()||(canManagePermissions()&&!isOwnSelected()&&!selectedIsOwner());
-  const canCreateUsers=()=>currentIsOwner()||hasCurrentPerm("USUARIOS_CRIAR");
+  const canEditSelected=()=>currentIsOwner()||(canEditUsers()&&!isOwnSelected()&&!selectedIsOwner()&&!!STATE.selected&&!STATE.selected._consulta_resumida&&norm(STATE.selected.perfil)!=="MASTER"&&(norm(current()?.perfil)!=="GESTOR"||["ADMIN","ALMOXARIFE"].includes(norm(STATE.selected.perfil))));
+  const canManageSelectedAccess=()=>currentIsOwner()||(canManagePermissions()&&!isOwnSelected()&&!selectedIsOwner()&&!!STATE.selected&&!STATE.selected._consulta_resumida&&norm(STATE.selected.perfil)!=="MASTER"&&(norm(current()?.perfil)!=="GESTOR"||["ADMIN","ALMOXARIFE"].includes(norm(STATE.selected.perfil))));
+  const canCreateUsers=()=>currentIsOwner()||(["MASTER","GESTOR"].includes(norm(current()?.perfil))&&hasCurrentPerm("USUARIOS_CRIAR"));
 
   /*
     Preferências pessoais:
@@ -171,7 +179,7 @@
     {id:"EXPEDICAO",title:"🚚 Expedição",access:"EXPEDICAO_VER",items:[["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_FISCAL","Fiscal / Romaneio e NF-e"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"]]},
     {id:"ESTOQUE",title:"📚 Estoque / Entrada",items:[["ESTOQUE_VER","Acessar estoque"],["ESTOQUE_ENTRADA","Entrada"],["ESTOQUE_SAIDA","Saída"],["ESTOQUE_TRANSFERIR","Transferir"],["ENTRADA_VER","Tela de entrada"],["TRIAGEM_VER","Triagem"]]},
     {id:"EMPRESAS",title:"🏢 Empresas / Obras",items:[["EMPRESAS_VER","Visualizar"],["EMPRESAS_CRIAR","Criar"],["EMPRESAS_EDITAR","Editar"],["EMPRESAS_INATIVAR","Inativar/reativar"],["EMPRESAS_EXCLUIR","Excluir"]]},
-    {id:"USUARIOS",title:"👥 Usuários / Administração",items:[["USUARIOS_VER","Visualizar usuários"],["USUARIOS_CRIAR","Criar usuários"],["USUARIOS_EDITAR","Editar usuários"],["USUARIOS_BLOQUEAR","Bloquear usuários"],["USUARIOS_PERMISSOES","Gerenciar permissões"],["CONFIGURACOES_VER","Configurações"]]}
+    {id:"USUARIOS",title:"👥 Usuários / Administração",items:[["USUARIOS_VER","Visualizar usuários"],["USUARIOS_CRIAR","Criar usuários"],["USUARIOS_EDITAR","Editar usuários"],["USUARIOS_BLOQUEAR","Bloquear usuários"],["USUARIOS_PERMISSOES","Gerenciar permissões"],["USUARIOS_OBRAS","Gerenciar vínculos de obras (em preparação)"],["USUARIOS_HISTORICO","Consultar histórico administrativo"],["CONFIGURACOES_VER","Configurações"]]}
   ];
 
   function aplicarPadraoRelatorios(permissoes){
@@ -249,18 +257,86 @@
 
   async function loadSafe(table,order="nome"){try{const r=await db().from(table).select("*").order(order);if(r.error)throw r.error;return r.data||[]}catch(e){console.warn("Atlas Usuários:",table,e.message||e);return[]}}
 
-  async function loadUsersScoped(table){
-    try{
-      let q=db().from(table).select("*").order("nome");
-      if(!currentIsOwner()){
-        const ids=[...idsObrasPermitidasAtual()].map(Number).filter(Number.isFinite);
-        if(!ids.length) return [];
-        q=q.in("obra_id",ids);
+  async function adminSupabase(corpo){
+    const {data,error}=await db().functions.invoke("atlas-admin-usuarios",{body:corpo});
+    if(error){
+      let mensagem=error.message||"Falha na administração de funcionários.";
+      try{const detalhe=await error.context?.json?.(); mensagem=detalhe?.erro||detalhe?.error||mensagem;}catch(_){ }
+      throw new Error(mensagem);
+    }
+    if(data?.sucesso!==true) throw new Error(data?.erro||"Operação não confirmada pelo servidor.");
+    return data;
+  }
+
+  async function loadUsersScoped(){
+    const cliente=db();
+    const owner=currentIsOwner();
+    if(!owner && norm(current()?.perfil)==="GESTOR"){
+      const sessao=await cliente.auth.getSession();
+      if(sessao.error||!sessao.data?.session) throw new Error("GESTOR exige sessão Supabase Auth. A listagem legada foi bloqueada por segurança.");
+    }
+
+    // Listagem autenticada do MASTER: o servidor valida a identidade e as
+    // obras compartilhadas. A RPC não fornece dados para editar permissões.
+    if(!owner){
+      const sessao=await cliente.auth.getSession();
+      if(sessao.error) throw sessao.error;
+      if(sessao.data?.session){
+        const resultado=await cliente.rpc("atlas_usuarios_listar_autorizados");
+        if(resultado.error) throw resultado.error;
+        return (resultado.data||[]).map(u=>({
+          ...u,
+          _consulta_resumida:true,
+          _obras_vinculadas:u.obras_compartilhadas||[]
+        }));
       }
-      const r=await q;
-      if(r.error) throw r.error;
-      return (r.data||[]).filter(usuarioDentroDoEscopo);
-    }catch(e){console.warn("Atlas Usuários:",table,e.message||e);return []}
+    }
+
+    // Mantém o fluxo existente do OWNER e das sessões legadas.
+    // A migração do login legado exige uma etapa de segurança separada.
+    const obrasPermitidas=owner?null:[...idsObrasPermitidasAtual()].map(Number).filter(Number.isFinite);
+    if(!owner&&!obrasPermitidas.length) return [];
+
+    // Nunca selecionar senha: o cadastro legado ainda possui essa coluna.
+    // A consulta obedece a RLS; nao usar chaves privilegiadas no navegador.
+    let vinculos=[];
+    let idsUsuarios=null;
+    if(!owner){
+      const resposta=await cliente.from("usuario_obras")
+        .select("usuario_id,obra_id").in("obra_id",obrasPermitidas);
+      if(resposta.error) throw resposta.error;
+      vinculos=resposta.data||[];
+      idsUsuarios=[...new Set(vinculos.map(v=>Number(v.usuario_id)).filter(Number.isFinite))];
+      if(!idsUsuarios.length) return [];
+    }
+
+    let consulta=cliente.from("usuarios_sistema").select(USUARIOS_COLUNAS).order("nome");
+    if(!owner) consulta=consulta.in("id",idsUsuarios);
+    const resultado=await consulta;
+    if(resultado.error) throw resultado.error;
+    const usuarios=resultado.data||[];
+
+    if(owner&&usuarios.length){
+      // Para o OWNER, carregar os vinculos de todos os usuarios retornados.
+      const ids=usuarios.map(u=>u.id);
+      for(let i=0;i<ids.length;i+=200){
+        const r=await cliente.from("usuario_obras")
+          .select("usuario_id,obra_id").in("usuario_id",ids.slice(i,i+200));
+        if(r.error) throw r.error;
+        vinculos.push(...(r.data||[]));
+      }
+    }
+
+    const mapa=new Map();
+    vinculos.forEach(v=>{
+      const chave=String(v.usuario_id);
+      if(!mapa.has(chave)) mapa.set(chave,new Set());
+      mapa.get(chave).add(String(v.obra_id));
+    });
+    return usuarios.map(u=>({
+      ...u,
+      _obras_vinculadas:mapa.has(String(u.id))?[...mapa.get(String(u.id))]:null
+    })).filter(usuarioDentroDoEscopo);
   }
 
   async function load(){
@@ -294,19 +370,21 @@
       ? empresasAux
       : empresasAux.filter(e=>empresasPermitidas.has(String(e.id)));
 
-    STATE.users=await loadUsersScoped("usuarios_sistema");
-    if(!STATE.users.length){STATE.table="usuarios";STATE.users=await loadUsersScoped("usuarios")}
+    STATE.table="usuarios_sistema";
+    STATE.users=await loadUsersScoped();
     STATE.profiles=perfisAux;
     STATE.profiles=STATE.profiles
       .filter(p=>p.ativo!==false)
       .filter(p=>currentIsOwner()||norm(p.nome)!=="MASTER")
       .map(p=>currentIsOwner()?p:{...p,permissoes:normalizarPermissoesPerfilRapido(p.permissoes).filter(permissaoConcedivelAtual).join(",")});
-    fillFilters();renderUsers();renderProfiles();document.documentElement.classList.remove("atlas-users-loading");
+    fillFilters();renderUsers();renderProfiles();
+    if($("#btnNovoUsuario")) $("#btnNovoUsuario").hidden=!canCreateUsers();
+    document.documentElement.classList.remove("atlas-users-loading");
   }
 
-  function visibleUsers(){return STATE.users.filter(usuarioDentroDoEscopo)}
+  function visibleUsers(){return STATE.users.filter(u=>norm(current()?.perfil)==="GESTOR" ? (["ADMIN","ALMOXARIFE"].includes(norm(u.perfil)) && String(u.empresa_id)===String(current()?.empresa_id)) : (u._consulta_resumida||usuarioDentroDoEscopo(u)))}
   function filteredUsers(){const term=norm($("#filtroBusca").value);const pf=norm($("#filtroPerfil").value);const work=$("#filtroObraUsuario").value;const st=$("#filtroStatusUsuario").value;return visibleUsers().filter(u=>(!term||norm(`${u.nome} ${u.usuario} ${u.email}`).includes(term))&&(!pf||norm(u.perfil)===pf)&&(!work||obrasDoUsuario(u).has(String(work)))&&(!st||(st==="ATIVO")===(u.ativo!==false)))}
-  function fillFilters(){const perf=[...new Set(visibleUsers().map(u=>String(u.perfil||"").trim()).filter(Boolean))].sort();$("#filtroPerfil").innerHTML='<option value="">Todos os perfis</option>'+perf.map(p=>`<option>${esc(p)}</option>`).join("");$("#formPerfil").innerHTML=perf.filter(p=>currentIsOwner()||norm(p)!=="MASTER").map(p=>`<option>${esc(p)}</option>`).join("")||'<option>OPERADOR</option>';const opts=STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");$("#filtroObraUsuario").innerHTML='<option value="">Todas as obras</option>'+opts;$("#formEmpresa").innerHTML='<option value="">Selecione</option>'+STATE.companies.map(e=>`<option value="${e.id}">${esc(e.nome||e.razao_social||e.id)}</option>`).join("");const base=$("#formObraOperacional");if(base)base.innerHTML='<option value="">Sem base operacional</option>'+STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("")}
+  function fillFilters(){const perf=[...new Set([...visibleUsers().map(u=>String(u.perfil||"").trim()),"ADMIN","ALMOXARIFE",...(currentIsOwner()?["MASTER","GESTOR"]:[])].filter(Boolean))].sort();$("#filtroPerfil").innerHTML='<option value="">Todos os perfis</option>'+perf.map(p=>`<option>${esc(p)}</option>`).join("");$("#formPerfil").innerHTML=perf.filter(p=>currentIsOwner()||(["ADMIN","ALMOXARIFE"].includes(norm(p)))).map(p=>`<option>${esc(p)}</option>`).join("")||'<option>ALMOXARIFE</option>';const opts=STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");$("#filtroObraUsuario").innerHTML='<option value="">Todas as obras</option>'+opts;$("#formEmpresa").innerHTML='<option value="">Selecione</option>'+STATE.companies.map(e=>`<option value="${e.id}">${esc(e.nome||e.razao_social||e.id)}</option>`).join("");const base=$("#formObraOperacional");if(base)base.innerHTML='<option value="">Sem base operacional</option>'+STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("")}
 
   function renderPagination(totalPages){
     const box = $("#paginacaoUsuarios");
@@ -426,7 +504,7 @@
             </span>
 
             <span class="atlas-work-cell">
-              ${esc(workText(user.obra_id))}
+              ${esc(worksText(user))}
             </span>
 
             <span class="atlas-status
@@ -461,7 +539,7 @@
     return linha?.obra_id?Number(linha.obra_id):null;
   }
 
-  function selectUser(id){
+  async function selectUser(id){
     try{
       const user = STATE.users.find(
         item => String(item.id) === String(id)
@@ -480,6 +558,21 @@
         !currentIsOwner()
       ){
         return false;
+      }
+
+      if(user._consulta_resumida){
+        try{
+          const {data:resposta,error:erroConsulta}=await db().functions.invoke("atlas-admin-usuarios",{
+            body:{acao:"consultar",usuario_id:Number(user.id)}
+          });
+          if(erroConsulta||resposta?.sucesso!==true||!resposta?.funcionario){
+            throw new Error(resposta?.erro||erroConsulta?.message||"Falha ao consultar funcionário.");
+          }
+          Object.assign(user,resposta.funcionario,{_consulta_resumida:false});
+        }catch(error){
+          // Sem dados completos, exibir apenas informações públicas da listagem.
+          toast("Ficha em modo de consulta: "+error.message,"info");
+        }
       }
 
       STATE.selected = user;
@@ -1154,7 +1247,7 @@
 
     box.innerHTML=STATE.works
       .filter(w=>norm(workText(w.id)).includes(termo))
-      .map(w=>`<label class="atlas-work-row"><input class="work-inline-check" type="checkbox" value="${w.id}" ${STATE.worksDraft.has(String(w.id))?'checked':''} ${bloqueado?'disabled':''}><span>${esc(workText(w.id))}</span></label>`)
+      .map(w=>`<label class="atlas-work-row"><input class="work-inline-check" type="checkbox" value="${w.id}" ${STATE.expeditionWorksDraft.has(String(w.id))?'checked':''} ${bloqueado?'disabled':''}><span>${esc(workText(w.id))}</span></label>`)
       .join('')||'<div class="atlas-empty">Nenhuma obra encontrada.</div>';
 
     if($("#btnMarcarObrasInline")) $("#btnMarcarObrasInline").disabled=bloqueado;
@@ -1322,12 +1415,23 @@
       updated_at:new Date().toISOString()
     };
 
-    const r=await db().rpc("atlas_usuarios_salvar",{
-      p_acao:"ATUALIZAR",
-      p_usuario_id:Number(STATE.selected.id),
-      p_dados:payload,
-      p_executor_id:currentId()
-    });
+    let r;
+    if(!currentIsOwner()){
+      try{
+        if(norm(payload.perfil)!==norm(STATE.selected.perfil))
+          throw new Error("Alteração de perfil hierárquico deve ser feita pelo OWNER.");
+        if([...STATE.worksDraft].sort().join(",")!==[...obrasDoUsuario(STATE.selected)].sort().join(","))
+          throw new Error("Alteração de obras requer transação segura e ainda não está disponível.");
+        const retorno=await adminSupabase({acao:"editar",usuario_id:Number(STATE.selected.id),
+          alteracoes:{permissoes:[...p],perfil_rapido:payload.perfil_rapido}});
+        r={data:retorno.funcionario,error:null};
+      }catch(erro){r={error:erro}}
+    }else{
+      r=await db().rpc("atlas_usuarios_salvar",{
+        p_acao:"ATUALIZAR",p_usuario_id:Number(STATE.selected.id),
+        p_dados:payload,p_executor_id:currentId()
+      });
+    }
 
     if(r.error){
       setSaving(false);
@@ -1389,6 +1493,20 @@
     if(resumo) resumo.textContent=qtd?`${qtd} obra${qtd===1?"":"s"} selecionada${qtd===1?"":"s"}`:"Selecionar obras";
   }
 
+  // A base de Expedição é uma das obras do funcionário e da empresa escolhida.
+  function sincronizarBaseOperacional(){
+    const base=$("#formObraOperacional");
+    if(!base)return;
+    const empresa=String($("#formEmpresa")?.value||"");
+    const obras=STATE.works.filter(w=>STATE.formWorksDraft.has(String(w.id)) && String(w.empresa_id)===empresa);
+    const anterior=base.value;
+    base.innerHTML='<option value="">Selecione a base operacional</option>'+obras.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");
+    if(obras.some(w=>String(w.id)===anterior))base.value=anterior;
+    else if(obras.length===1)base.value=String(obras[0].id);
+    else base.value="";
+    base.disabled=obras.length===0;
+  }
+
   function renderFormObras(){
     const box=$("#listaFormObras");
     if(!box) return;
@@ -1409,18 +1527,41 @@
   }
 
   async function openUserModal(user=null,focusPassword=false){
+    if(user?(!canEditSelected()):(!canCreateUsers()))return;
     if(user&&Number(user.id)===OWNER_ID&&!currentIsOwner())return;
     fotoArquivoPendente=null; removerFotoPendente=false;
-    $("#formId").value=user?.id||"";$("#formNome").value=user?.nome||"";$("#formUsuario").value=user?.usuario||"";$("#formEmail").value=user?.email||"";$("#formPerfil").value=user?.perfil||$("#formPerfil option")?.value||"OPERADOR";$("#formEmpresa").value=user?.empresa_id||"";$("#formAtivo").value=String(user?.ativo!==false);$("#formSenha").value="";
+    $("#formId").value=user?.id||"";$("#formNome").value=user?.nome||"";$("#formUsuario").value=user?.usuario||"";$("#formEmail").value=user?.email||"";$("#formPerfil").value=user?.perfil||$("#formPerfil option")?.value||"ALMOXARIFE";$("#formEmpresa").value=user?.empresa_id||"";$("#formAtivo").value=String(user?.ativo!==false);$("#formSenha").value="";
     STATE.formWorksDraft=obrasDoUsuario(user||{});
     const obraOperacional=user?await carregarObraOperacionalUsuario(user):null;
     if(user) user._obra_operacional_id=obraOperacional;
     const baseOperacional=$("#formObraOperacional");
     if(baseOperacional) baseOperacional.value=obraOperacional?String(obraOperacional):"";
+    sincronizarBaseOperacional();
     atualizarResumoFormObras();
     if($("#formFotoArquivo")) $("#formFotoArquivo").value="";
     $("#modalUsuarioTitulo").textContent=user?"Editar usuário":"Novo usuário";
-    atualizarPreviewFoto(user); modal("modalUsuario",true);if(focusPassword)setTimeout(()=>$("#formSenha").focus(),80)
+    const senhaLabel=$("#formSenha")?.closest("label");
+    if(senhaLabel){
+      senhaLabel.hidden=!user || !currentIsOwner();
+      let botao=senhaLabel.querySelector("#btnRedefinirSenhaSeparada");
+      if(!botao){
+        botao=document.createElement("button");
+        botao.type="button";
+        botao.id="btnRedefinirSenhaSeparada";
+        botao.className="btn btn-secondary";
+        botao.style.marginTop="8px";
+        senhaLabel.appendChild(botao);
+        botao.onclick=redefinirSenhaSeparada;
+      }
+      const info=authStatusInfo(user);
+      botao.textContent=info.status==='ATIVO'?"Gerar senha provisória (Supabase Auth)":info.status==='LEGADO'?"Redefinir senha (legado)":"Ativação pendente — redefinição indisponível";
+      botao.disabled=info.status==='AGUARDANDO';
+      const aviso=senhaLabel.querySelector("#avisoSenhaSeparada")||document.createElement("small");
+      aviso.id="avisoSenhaSeparada";
+      aviso.textContent="A senha é alterada separadamente. Salvar usuário não altera a senha.";
+      if(!aviso.parentNode)senhaLabel.appendChild(aviso);
+    }
+    atualizarPreviewFoto(user); modal("modalUsuario",true);if(focusPassword&&user)setTimeout(()=>$("#formSenha").focus(),80)
   }
   async function enviarAvatarAtlas(arquivo){
     const client=db();
@@ -1433,6 +1574,33 @@
     if(!resposta.ok||!body?.file?.path) throw new Error(body?.error||`Falha no envio da foto (HTTP ${resposta.status}).`);
     return body.file.path;
   }
+  async function redefinirSenhaSeparada(){
+    const id=Number($("#formId")?.value);
+    const senha=$("#formSenha")?.value||"";
+    if(!currentIsOwner()||!Number.isSafeInteger(id)||id<=0){alert("Somente o OWNER pode redefinir senhas.");return;}
+    if(senha.length<8||senha.length>128){alert("Informe uma senha provisória de 8 a 128 caracteres.");return;}
+    if(!confirm("Redefinir SOMENTE a senha deste funcionário? Outras alterações do formulário não serão salvas."))return;
+    const botao=$("#btnRedefinirSenhaSeparada");
+    if(botao)botao.disabled=true;
+    try{
+      const {data:{session},error:erroSessao}=await db().auth.getSession();
+      if(erroSessao||!session?.access_token)throw new Error("Sessão Supabase Auth inválida. Entre novamente.");
+      const {data:retorno,error:erroFuncao}=await db().functions.invoke("atlas-senhas",{
+        body:{acao:"redefinir",usuario_id:id,senha}
+      });
+      if(erroFuncao){
+        let detalhe="Não foi possível contatar o serviço de senhas.";
+        try{const resposta=await erroFuncao.context?.json?.();detalhe=resposta?.error||detalhe;}catch(_e){}
+        throw new Error(detalhe);
+      }
+      if(!retorno?.ok)throw new Error(retorno?.error||"Redefinição não confirmada.");
+      $("#formSenha").value="";
+      alert(retorno.message||"Senha provisória definida. O funcionário deverá trocá-la no próximo acesso.");
+      await load();
+    }catch(erro){alert("Senha não redefinida: "+erro.message);}
+    finally{if(botao)botao.disabled=false;}
+  }
+
   async function saveUser(){
     const id=$("#formId").value;
 
@@ -1468,22 +1636,28 @@
     const senha=$("#formSenha").value.trim();
 
     if(!currentIsOwner()){
-      if([...STATE.formWorksDraft].some(id=>!obraPermitidaAtual(id))){alert("Você só pode vincular usuários às suas obras liberadas.");return}
+      if(!id && [...STATE.formWorksDraft].some(obraId=>!obraPermitidaAtual(obraId))){alert("Você só pode vincular usuários às suas obras liberadas.");return}
       if(payload.empresa_id&&!empresaPermitidaAtual(payload.empresa_id)){alert("Você só pode vincular usuários às suas empresas liberadas.");return}
-      if(norm(payload.perfil)==="MASTER"){alert("Somente o OWNER ID 1 pode criar ou promover um MASTER.");return}
+      if(["MASTER","GESTOR"].includes(norm(payload.perfil))){alert("Somente o OWNER ID 1 pode cadastrar MASTER ou GESTOR.");return}
     }
     if(!payload.nome||!payload.usuario){alert("Informe nome e usuário.");return}
+    if(!payload.empresa_id){alert("Selecione a empresa do funcionário.");return}
+    const obrasSelecionadas=[...STATE.formWorksDraft].map(id=>STATE.works.find(w=>String(w.id)===String(id)));
+    if(obrasSelecionadas.some(w=>!w || String(w.empresa_id)!==String(payload.empresa_id))){
+      alert("As obras de atuação precisam pertencer à empresa selecionada. Ajuste as obras ou a empresa.");return;
+    }
+    if(!id && !payload.obra_operacional_id){alert("Selecione a base operacional da Expedição.");return}
     if(payload.obra_operacional_id && !STATE.formWorksDraft.has(String(payload.obra_operacional_id))){
       alert("A base operacional da Expedição também precisa estar marcada nas Obras de atuação.");
       return;
     }
     // Edição: senha é operação separada, autorizada pelo backend e não pelo RPC de cadastro.
-    if(senha && !id) Object.assign(payload,{senha,senha_temporaria:true,senha_provisoria:true,trocar_senha:true});
+    // Novos usuários nunca recebem senha legada.
     if(senha && id && !currentIsOwner()) { alert("Somente o OWNER pode redefinir senhas de funcionários."); return; }
     if(senha && id && senha.length < 8) { alert("A senha provisória precisa ter pelo menos 8 caracteres."); return; }
 
     if(!id){
-      if(!senha){alert("Informe uma senha provisória para o novo usuário.");return}
+      if(!payload.email){alert("Informe o e-mail do funcionário para enviar a ativação segura.");return}
       const prof=STATE.profiles.find(p=>norm(p.nome)===norm(payload.perfil));
       const perfilPerms=normalizarPermissoesPerfilRapido(prof?.permissoes||"").filter(permissaoConcedivelAtual);
       Object.assign(payload,{
@@ -1493,34 +1667,68 @@
       });
     }
 
-    // O JS identifica o tipo de conta; a alteração e a autorização ocorrem no backend.
-    // LEGADO mantém a senha em usuarios_sistema; ATIVO usa Supabase Auth.
-    // Ambos passam pelo endpoint autorizado do OWNER, nunca por RPC público de senha.
+    // Redefinição é ação independente, nunca parte de Salvar usuário.
     if(id && senha){
-      const alvo=STATE.users.find(u=>Number(u.id)===Number(id));
-      if(!alvo){alert("Funcionário não encontrado na lista carregada.");return;}
-      const status=String(alvo.auth_status||'LEGADO').trim().toUpperCase();
-      const tipo=status==='ATIVO' && alvo.auth_user_id ? 'ATIVO'
-        : status==='LEGADO' && !alvo.auth_user_id ? 'LEGADO' : null;
-      if(!tipo){alert("Estado de autenticação inconsistente ou ativação pendente. Nenhuma senha foi alterada.");return;}
-      try{
-        const {data:{session},error:erroSessao}=await db().auth.getSession();
-        if(erroSessao || !session?.access_token) throw new Error("Entre novamente com a conta OWNER para redefinir a senha.");
-        const {data:retorno,error:erroFuncao}=await db().functions.invoke('atlas-senhas',{
-          body:{acao:'redefinir',usuario_id:Number(id),senha}
-        });
-        if(erroFuncao){
-          let detalhe='A Edge Function atlas-senhas não respondeu corretamente. Verifique a publicação e os logs.';
-          try{const resposta=await erroFuncao.context?.json?.(); detalhe=resposta?.error||detalhe;}catch(_e){}
-          throw new Error(detalhe);
-        }
-        if(!retorno?.ok) throw new Error(retorno?.error||'Não foi possível redefinir a senha.');
-      }catch(erro){
-        alert("A senha NÃO foi redefinida e o cadastro NÃO foi salvo: "+erro.message);
-        return;
-      }
+      alert("Para redefinir a senha, use o botão próprio. Salvar usuário não altera credenciais.");
+      return;
     }
 
+    if(!id){
+      try{
+        const {data:{session},error:erroSessao}=await db().auth.getSession();
+        if(erroSessao || !session?.access_token) throw new Error("Para criar funcionários é necessário entrar com uma conta Supabase Auth autorizada.");
+        const permissoesCadastro=String(payload.permissoes||"").split(",").map(p=>p.trim().toUpperCase()).filter(Boolean);
+        if(!STATE.formWorksDraft.size) throw new Error("Selecione pelo menos uma obra de atuação.");
+        if(!permissoesCadastro.length) throw new Error("O perfil escolhido não possui permissões definidas. Configure um perfil rápido antes de cadastrar.");
+        if(!["ADMIN","ALMOXARIFE","MASTER","GESTOR"].includes(norm(payload.perfil))) throw new Error("Perfil incompatível com o cadastro seguro.");
+        if(norm(current()?.perfil)==="GESTOR"&&! ["ADMIN","ALMOXARIFE"].includes(norm(payload.perfil))) throw new Error("GESTOR só pode cadastrar ADMIN ou ALMOXARIFE.");
+        if(payload.ativo!==true) throw new Error("Cadastro inicial de usuário inativo ainda não está disponível no fluxo seguro.");
+        if(fotoArquivoPendente) throw new Error("Cadastre primeiro o funcionário; o envio da foto será feito após a criação.");
+        const {data:retorno,error:erroFuncao}=await db().functions.invoke("atlas-admin-usuarios",{
+          method:"POST",
+          body:{
+            nome:payload.nome,usuario:payload.usuario,email:payload.email,perfil:payload.perfil,
+            empresa_id:payload.empresa_id,permissoes:permissoesCadastro,
+            obra_operacional_id:payload.obra_operacional_id,
+            obras:[...STATE.formWorksDraft].map(Number)
+          }
+        });
+        if(erroFuncao){
+          let detalhe=erroFuncao.message||"Falha na Edge Function de cadastro.";
+          try{const corpoErro=await erroFuncao.context?.json?.();detalhe=corpoErro?.erro||corpoErro?.error||detalhe;}catch(_){ }
+          throw new Error(detalhe);
+        }
+        if(retorno?.sucesso!==true||!retorno?.funcionario?.id) throw new Error(retorno?.erro||"A Edge Function não confirmou o cadastro.");
+        modal("modalUsuario",false);
+        await load();
+        await selectUser(retorno.funcionario.id);
+        if(retorno.senha_provisoria){
+          alert("Funcionário criado no Supabase Auth.\n\nSenha provisória (exibida uma única vez): "+retorno.senha_provisoria+"\n\nA troca obrigatória de senha ainda precisa ser validada antes de liberar o acesso.");
+        }
+        toast(retorno.mensagem||"Usuário criado no Supabase Auth.");
+      }catch(erro){alert("Cadastro seguro não concluído: "+erro.message)}
+      return;
+    }
+
+    if(id && !currentIsOwner()){
+      try{
+        const alteracoes={nome:payload.nome,usuario:payload.usuario,email:payload.email};
+        if(payload.ativo!==STATE.selected.ativo){
+          if(!hasCurrentPerm("USUARIOS_BLOQUEAR"))throw new Error("Sem permissão para bloquear ou reativar usuários.");
+          alteracoes.ativo=payload.ativo;
+        }
+        // O formulário também permite escolher obras; não fingir que essa mudança foi salva.
+        if([...STATE.formWorksDraft].sort().join(",")!==[...obrasDoUsuario(STATE.selected)].sort().join(","))
+          throw new Error("A edição de vínculos de obras ainda não está disponível com segurança.");
+        const retorno=await adminSupabase({acao:"editar",usuario_id:Number(id),alteracoes});
+        Object.assign(STATE.selected,retorno.funcionario);
+        modal("modalUsuario",false);
+        await load();
+        await selectUser(id);
+        toast("Dados cadastrais atualizados.");
+      }catch(erro){alert("Alteração não concluída: "+erro.message)}
+      return;
+    }
     const r=await db().rpc("atlas_usuarios_salvar",{
       p_acao:id?"ATUALIZAR":"CRIAR",
       p_usuario_id:id?Number(id):null,
@@ -1644,6 +1852,7 @@
     if($("#formFotoArquivo"))$("#formFotoArquivo").onchange=e=>{fotoArquivoPendente=e.target.files?.[0]||null;removerFotoPendente=false;atualizarPreviewFoto(STATE.selected)};
     if($("#btnRemoverFoto"))$("#btnRemoverFoto").onclick=()=>{fotoArquivoPendente=null;removerFotoPendente=true;if($("#formFotoArquivo"))$("#formFotoArquivo").value="";atualizarPreviewFoto(STATE.selected)};
     if($("#formNome"))$("#formNome").addEventListener("input",()=>{if(!fotoArquivoPendente&&!STATE.selected?.foto_url)atualizarPreviewFoto(STATE.selected)});
+    if($("#formEmpresa")) $("#formEmpresa").addEventListener("change",sincronizarBaseOperacional);
     if($("#btnFormObras")) $("#btnFormObras").onclick=abrirFormObras;
     if($("#buscaFormObras")) $("#buscaFormObras").oninput=renderFormObras;
     $("#listaFormObras")?.addEventListener("change",event=>{
@@ -1654,6 +1863,7 @@
     if($("#btnAplicarFormObras")) $("#btnAplicarFormObras").onclick=()=>{
       STATE.formWorksDraft=new Set(STATE.formWorksTemp);
       atualizarResumoFormObras();
+      sincronizarBaseOperacional();
       modal("modalFormObras",false);
     };
     if($("#btnSalvarUsuario"))$("#btnSalvarUsuario").onclick=saveUser;
@@ -1803,10 +2013,10 @@
       if(!canManageSelectedAccess()) return;
 
       event.target.checked
-        ? STATE.worksDraft.add(event.target.value)
-        : STATE.worksDraft.delete(event.target.value);
+        ? STATE.expeditionWorksDraft.add(event.target.value)
+        : STATE.expeditionWorksDraft.delete(event.target.value);
 
-      STATE.draft.obras_liberadas=[...STATE.worksDraft].join(",");
+      // Destinos de Expedição não modificam as Obras de atuação.
       setDirty();
       renderSummary();
     });
@@ -1814,8 +2024,7 @@
     if($("#btnMarcarObrasInline")){
       $("#btnMarcarObrasInline").onclick=()=>{
         if(!canManageSelectedAccess()) return;
-        STATE.worksDraft=new Set(STATE.works.map(work=>String(work.id)));
-        STATE.draft.obras_liberadas=[...STATE.worksDraft].join(",");
+        STATE.expeditionWorksDraft=new Set(STATE.works.map(work=>String(work.id)));
         renderWorksInline();
         setDirty();
         renderSummary();
@@ -1825,8 +2034,7 @@
     if($("#btnDesmarcarObrasInline")){
       $("#btnDesmarcarObrasInline").onclick=()=>{
         if(!canManageSelectedAccess()) return;
-        STATE.worksDraft.clear();
-        STATE.draft.obras_liberadas="";
+        STATE.expeditionWorksDraft.clear();
         renderWorksInline();
         setDirty();
         renderSummary();

@@ -2204,10 +2204,10 @@ html,body{max-width:100%;overflow-x:hidden!important}
   width:100%!important;
   min-width:100%!important;
   max-width:100%!important;
-  height:220px!important;
-  min-height:220px!important;
+  height:auto!important;
+  min-height:0!important;
   max-height:220px!important;
-  overflow-y:scroll!important;
+  overflow-y:auto!important;
   overflow-x:hidden!important;
   scrollbar-gutter:stable!important;
   box-sizing:border-box!important;

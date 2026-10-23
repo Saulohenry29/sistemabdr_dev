@@ -13,7 +13,7 @@
 "use strict";
 
 const CACHE = new Map();
-const URL_BASE_PADRAO = "https://saulohenry29.github.io/sistemaBDR/etiqueta.html?id=";
+const URL_BASE_PADRAO = "https://www.bdrgestao.com.br/etiqueta.html?id=";
 
 function texto(v){ return String(v ?? "").trim(); }
 function normalizarTamanho(v, padrao=220){

@@ -240,7 +240,10 @@ async function carregarTudo(){
 
   try{
     await carregarContextoOperacionalExpedicao();
-    const ob = await db().from("obras").select("*").eq("ativa",true).order("nome");
+    // Os nomes das obras da Expedição seguem o escopo autorizado no servidor.
+    // Não altera o escopo de atuação do Patrimônio nem a consulta dos itens.
+    const ob = await db().rpc("atlas_obras_destino_expedicao");
+    if(ob.error) throw ob.error;
     obras = ob.data || [];
     await Promise.all([carregarCatalogo(), carregarPedidos()]);
     salvarCacheExpedicao();
@@ -460,7 +463,7 @@ async function carregarCatalogo(){
   if(!pat.error){
     lista.push(...(pat.data || []).map(p=>({
       origem_tabela:"patrimonio", id:p.id, codigo:p.codigo_qr, nome:p.nome_bem || "Patrimônio", descricao:p.nome_bem || "Patrimônio", tipo:"PATRIMONIO",
-      status:normalStatus(p.status), qtd:1, obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:p.localizacao || nomeObra(p.obra_id),
+      status:normalStatus(p.status), qtd:1, obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:nomeObra(p.obra_id),
       localizacao:p.localizacao_fisica || p.endereco_codigo || p.localizacao || "-", marca:p.marca, modelo:p.modelo, valor:p.valor_bem, foto_url:p.foto_url,
       estado:p.estado_conservacao || "-", patrimonio_id:p.id, raw:p
     })));
@@ -476,9 +479,25 @@ async function carregarCatalogo(){
     })));
   }
 
-  if(!podeVerOutras()){
-    const minhaObra = String(u?.obra_id || "");
-    lista = lista.filter(i => ["", minhaObra].includes(String(i.obra_id || "")) || String(i.obra_id || "") === "1" || String(i.obra_nome||"").toUpperCase().includes("CD"));
+  // A consulta do catálogo respeita as obras de atuação e as obras de Expedição
+  // autorizadas no cadastro. Nome/localização nunca concede acesso a outra obra.
+  if(Number(u?.id) !== 1){
+    const [vinculos, cadastro] = await Promise.all([
+      db().from("usuario_obras").select("obra_id").eq("usuario_id",u.id),
+      db().from("usuarios_sistema").select("permissoes").eq("id",u.id).maybeSingle()
+    ]);
+    if(vinculos.error) throw vinculos.error;
+    if(cadastro.error) throw cadastro.error;
+    if(!cadastro.data) throw new Error("Escopo da Expedição indisponível para este usuário.");
+
+    const ids = new Set((vinculos.data || []).map(v => String(v.obra_id)).filter(Boolean));
+    const tokens = String(cadastro.data.permissoes || "")
+      .toUpperCase().split(/[;,|]/).map(v => v.trim());
+    tokens.forEach(token => {
+      const match = /^EXPEDICAO_OBRA_([1-9]\d*)$/.exec(token);
+      if(match) ids.add(match[1]);
+    });
+    lista = lista.filter(item => ids.has(String(item.obra_id || "")));
   }
 
   // Atlas 2.8.1: antes de renderizar, recalcula disponibilidade real.
@@ -3232,9 +3251,24 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     return atlasNaObraDestinoOperacional(p);
   }
 
+  // As obras extras configuradas em Permissões > Empresas / obras visíveis
+  // servem somente à CONSULTA na Expedição. Nunca concedem operação na origem,
+  // recebimento no destino ou acesso administrativo ao patrimônio.
+  function atlasObrasVisiveisExpedicao(){
+    const ids = new Set(atlasObrasUsuario());
+    for(const permissao of atlasPermissoes()){
+      const match = /^EXPEDICAO_OBRA_([1-9]\d*)$/.exec(permissao);
+      if(match) ids.add(Number(match[1]));
+    }
+    return ids;
+  }
+
   function atlasPodeAcompanhar(p){
     if(atlasOwnerGlobal()) return true;
-    return atlasPedidoDoUsuario(p) || atlasMesmaObraOrigem(p) || atlasMesmaObraDestino(p);
+    const visiveis = atlasObrasVisiveisExpedicao();
+    return atlasPedidoDoUsuario(p)
+      || visiveis.has(atlasObraOrigem(p))
+      || visiveis.has(atlasObraDestino(p));
   }
 
   window.AtlasExpedicaoPermissoes = Object.freeze({
@@ -3578,8 +3612,11 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     const mapaObras = new Map();
     lista.forEach(item => {
       const valor = obraDoItem(item);
-      const rotulo = obraNomeDoItem(item);
-      if(valor && !mapaObras.has(valor)) mapaObras.set(valor, rotulo || valor);
+      const cadastro = (window.obras || []).find(o => String(o.id) === valor);
+      const rotulo = cadastro
+        ? `${cadastro.codigo_obra || "-"} - ${cadastro.nome || "-"}`
+        : `Obra ${valor} (cadastro não encontrado)`;
+      if(valor && !mapaObras.has(valor)) mapaObras.set(valor, rotulo);
     });
     const obrasOrdenadas = Array.from(mapaObras.entries())
       .map(([valor,rotulo]) => ({valor,rotulo}))

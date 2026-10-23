@@ -21,6 +21,7 @@
   function fmtData(v){ if(!v)return '-'; const d=new Date(v); return isNaN(d)?texto(v):d.toLocaleString('pt-BR',{timeZone:'America/Cuiaba',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function obras(){ return Array.isArray(api().obras?.()) ? api().obras() : []; }
   function patrimonios(){ return Array.isArray(api().listar?.()) ? api().listar() : []; }
+  function destinosTransferencia(){ return Array.isArray(api().destinosTransferencia?.()) ? api().destinosTransferencia() : []; }
   function obra(id){ return obras().find(o=>String(o.id)===String(id)); }
   function obraNome(id){ const o=obra(id); return o?.nome || o?.setor_obra || o?.descricao || `Obra ${id||'-'}`; }
   function empresaId(){ const u=usuario(); return Number(u.empresa_id || 17); }
@@ -73,9 +74,9 @@
     alert('O módulo de Remessas Patrimoniais está pronto, mas falta executar o SQL supabase/atlas_remessas_patrimonio.sql no Supabase. O Patrimônio normal continua funcionando.');
   }
 
-  function opcoesObra(selected){
+  function opcoesObra(selected, lista=obras()){
     const mobile=window.matchMedia?.('(max-width:760px)')?.matches;
-    return obras().map(o=>{
+    return lista.map(o=>{
       const nomeCompleto=(o.codigo_obra?o.codigo_obra+' - ':'')+(o.nome||o.setor_obra||'Obra');
       const nomeExibido=mobile && nomeCompleto.length>38 ? nomeCompleto.slice(0,35).trimEnd()+'…' : nomeCompleto;
       return `<option value="${esc(o.id)}" title="${esc(nomeCompleto)}" ${String(o.id)===String(selected||'')?'selected':''}>${esc(nomeExibido)}</option>`;
@@ -256,7 +257,7 @@
     document.getElementById('atlasRemessaCodigo').value=gerarCodigo();
     document.getElementById('atlasRemessaOrigem').innerHTML='<option value="">Origem definida pelos itens selecionados</option>'+opcoesObra(origem);
     document.getElementById('atlasRemessaOrigem').value=origem||'';
-    document.getElementById('atlasRemessaDestino').innerHTML='<option value="">Selecione o destino</option>'+opcoesObra();
+    document.getElementById('atlasRemessaDestino').innerHTML='<option value="">Selecione o destino</option>'+opcoesObra(null,destinosTransferencia());
     document.getElementById('atlasRemessaMotorista').value='';
     document.getElementById('atlasRemessaVeiculo').value='';
     document.getElementById('atlasRemessaPlaca').value='';
@@ -441,7 +442,8 @@
     if(!state.itensSelecionados.size) return alert('Selecione pelo menos um patrimônio.');
     const itens=patrimonios().filter(p=>state.itensSelecionados.has(String(p.id))).map(p=>({patrimonio_id:Number(p.id)}));
     const u=usuario();
-    const origemObj=obra(origem), destinoObj=obra(destino);
+    const origemObj=obra(origem), destinoObj=destinosTransferencia().find(o=>texto(o.id)===destino);
+    if(!destinoObj) return aviso('Obra de destino não autorizada em Obras Expedição.');
     const codigo=texto(document.getElementById('atlasRemessaCodigo').value)||gerarCodigo();
     const statusEscolhido=texto(document.getElementById('atlasRemessaStatusDestino').value);
     const statusDestino=statusEscolhido==='MANTER'?'':statusEscolhido;

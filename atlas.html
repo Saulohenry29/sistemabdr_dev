@@ -264,6 +264,7 @@ html,body{height:100%!important;min-height:100%!important;margin:0!important;pad
   }
 
   function abrir(modulo, push=true, parametros=''){
+    if(!acessoShellLiberado) return;
     if(!paginas[modulo]) modulo='dashboard';
     fecharOverlaysShell();
     atualizarTopo(modulo);
@@ -280,6 +281,7 @@ html,body{height:100%!important;min-height:100%!important;margin:0!important;pad
 
   window.Atlas={
     navigate:function(dest){
+      if(!acessoShellLiberado) return;
       const bruto=String(dest||'');
       const m=moduloDePagina(bruto)||bruto.toLowerCase();
       if(paginas[m]){
@@ -314,9 +316,71 @@ html,body{height:100%!important;min-height:100%!important;margin:0!important;pad
     const ctx=contextoDaUrl();
     abrir(ctx.modulo,false,ctx.parametros);
   }
-  addEventListener('popstate',abrirDaUrl);
-  addEventListener('hashchange',abrirDaUrl);
-  addEventListener('DOMContentLoaded',()=>{ prepararTopoShell(); setTimeout(abrirDaUrl,0); setTimeout(prepararPaginas,250); });
+  // A shell não carrega módulos até validar a conta Auth no servidor.
+  // O fluxo legado permanece separado durante a migração gradual.
+  let acessoShellLiberado=false;
+  function redirecionarShell(destino){ location.replace('./'+destino); }
+  async function validarAcessoShell(){
+    const usuario=usuarioAtualShell();
+    if(!usuario || Number(usuario.id)<=0 || usuario.ativo===false){
+      redirecionarShell('login.html');
+      return false;
+    }
+    const status=String(usuario.auth_status||'LEGADO').toUpperCase();
+    const usaAuth=status==='ATIVO' && Boolean(usuario.auth_user_id);
+    if(!usaAuth){
+      // Não migra usuários legados automaticamente.
+      if(status==='ATIVO' || (status!=='LEGADO' && status!=='AGUARDANDO_ATIVACAO')){
+        redirecionarShell('login.html');
+        return false;
+      }
+      if(typeof senhaEhTemporariaBDR==='function' && senhaEhTemporariaBDR(usuario)){
+        redirecionarShell('alterar-senha.html');
+        return false;
+      }
+      return true;
+    }
+    const db=window.client||window.supabaseClient;
+    if(!db?.auth){ redirecionarShell('login.html'); return false; }
+    try{
+      const {data:identidade,error:erroIdentidade}=await db.auth.getUser();
+      if(erroIdentidade || !identidade?.user ||
+         String(identidade.user.id).toLowerCase()!==String(usuario.auth_user_id).toLowerCase()){
+        redirecionarShell('login.html');
+        return false;
+      }
+      const {data:atual,error:erroConsulta}=await db.from('usuarios_sistema')
+        .select('id,ativo,auth_status,auth_user_id,senha_temporaria,senha_provisoria,trocar_senha')
+        .eq('id',usuario.id).eq('auth_user_id',identidade.user.id).maybeSingle();
+      if(erroConsulta || !atual || atual.ativo!==true ||
+         String(atual.auth_status||'').toUpperCase()!=='ATIVO'){
+        redirecionarShell('login.html');
+        return false;
+      }
+      if(typeof senhaEhTemporariaBDR==='function' && senhaEhTemporariaBDR(atual)){
+        // Atualiza o cache para a página de troca reconhecer o estado atual.
+        const sincronizado={...usuario,...atual};
+        localStorage.setItem('usuario_logado',JSON.stringify(sincronizado));
+        localStorage.setItem('usuarioLogado',JSON.stringify(sincronizado));
+        redirecionarShell('alterar-senha.html');
+        return false;
+      }
+      return true;
+    }catch(erro){
+      console.error('Atlas: falha ao validar acesso seguro',erro);
+      redirecionarShell('login.html');
+      return false;
+    }
+  }
+  addEventListener('popstate',()=>{if(acessoShellLiberado) abrirDaUrl();});
+  addEventListener('hashchange',()=>{if(acessoShellLiberado) abrirDaUrl();});
+  addEventListener('DOMContentLoaded',async()=>{
+    if(!await validarAcessoShell()) return;
+    acessoShellLiberado=true;
+    prepararTopoShell();
+    abrirDaUrl();
+    setTimeout(prepararPaginas,250);
+  });
 })();
 </script>
 </body>

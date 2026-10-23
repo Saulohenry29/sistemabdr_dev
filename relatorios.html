@@ -2017,7 +2017,8 @@ let dadosPatrimonios = patResp.data || [];
 let dadosMovimentacoes = movResp.data || [];
 
 /* DADOS: filtra por permissão nova, não por perfil. */
-const podeTodasObras = temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
+const podeTodasObras = temPermissaoRelatoriosBDR("RELATORIOS_TODAS_OBRAS", usuario)
+  || temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
 const podePropriaObra = temPermissaoRelatoriosBDR("PROPRIA_OBRA_VER", usuario);
 
 if(usuario && !podeTodasObras){
@@ -3084,14 +3085,39 @@ function renderizarTodosItensParaImpressao(){
     </tr>`;
   });
 }
-function imprimirRelatorio(){
+/* Dialogo institucional Atlas: evita confirmacoes nativas do navegador. */
+function confirmarRelatorioAtlas(mensagem, titulo="Confirmação do relatório"){
+  return new Promise(resolve=>{
+    const anterior=document.getElementById("atlasDialogoRelatorio");
+    if(anterior) anterior.remove();
+    const fundo=document.createElement("div");
+    fundo.id="atlasDialogoRelatorio";
+    fundo.style.cssText="position:fixed;inset:0;z-index:2147483646;background:rgba(15,23,42,.64);display:flex;align-items:center;justify-content:center;padding:18px";
+    fundo.innerHTML=`<section role="alertdialog" aria-modal="true" aria-labelledby="atlasDialogoTitulo" aria-describedby="atlasDialogoMensagem" style="background:#fff;width:min(440px,100%);border-radius:16px;box-shadow:0 24px 75px #0f172a55;overflow:hidden;border-top:5px solid #a4161a;font-family:Arial,sans-serif">
+      <header style="padding:22px 24px 8px"><h2 id="atlasDialogoTitulo" style="font-size:19px;color:#991b1b;margin:0"></h2></header>
+      <p id="atlasDialogoMensagem" style="padding:0 24px;color:#334155;font-size:14px;line-height:1.55;white-space:pre-line"></p>
+      <footer style="display:flex;justify-content:flex-end;gap:10px;padding:16px 24px 22px;background:#f8fafc"><button type="button" data-resposta="nao" style="padding:10px 18px;border:1px solid #cbd5e1;background:white;border-radius:9px;font-weight:700;cursor:pointer">Cancelar</button><button type="button" data-resposta="sim" style="padding:10px 18px;border:0;background:#a4161a;color:white;border-radius:9px;font-weight:700;cursor:pointer">Continuar</button></footer>
+    </section>`;
+    fundo.querySelector("#atlasDialogoTitulo").textContent=titulo;
+    fundo.querySelector("#atlasDialogoMensagem").textContent=mensagem;
+    document.body.appendChild(fundo);
+    const anteriorFoco=document.activeElement;
+    const concluir=(valor)=>{document.removeEventListener("keydown",tecla);fundo.remove();anteriorFoco?.focus?.();resolve(valor)};
+    const tecla=e=>{if(e.key==="Escape"){e.preventDefault();concluir(false)}else if(e.key==="Tab"){const botoes=[...fundo.querySelectorAll("button")];const i=botoes.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();botoes[1].focus()}else if(!e.shiftKey&&i===1){e.preventDefault();botoes[0].focus()}}};
+    document.addEventListener("keydown",tecla);
+    fundo.querySelector('[data-resposta="nao"]').onclick=()=>concluir(false);
+    fundo.querySelector('[data-resposta="sim"]').onclick=()=>concluir(true);
+    fundo.querySelector('[data-resposta="nao"]').focus();
+  });
+}
+async function imprimirRelatorio(){
   removerRodapesAntigosConferencia();
   if(!exigirPermissaoRelatoriosBDR("RELATORIOS_EXPORTAR","Você não tem permissão para imprimir/exportar relatórios.")) return;
   if(filtradosAtuais.length===0){alert("Nenhum patrimônio encontrado para imprimir.");return}
   atualizarCabecalhoDocumentoRelatorio();
   const possuiAssinatura=aplicarConferenciaNaImpressao(conferenciaAtualRelatorio);
   if(!possuiAssinatura){
-    const continuar=confirm("Este relatório ainda não possui conferência assinada. Deseja imprimir sem assinatura?");
+    const continuar=await confirmarRelatorioAtlas("Este relatório ainda não possui conferência assinada. Deseja imprimir sem assinatura?", "Imprimir sem assinatura?");
     if(!continuar)return;
   }
   const tituloAnterior=document.title;
@@ -3153,8 +3179,8 @@ async function exportarCSV(){
   const aba = livro.addWorksheet("Patrimônios", {views:[{state:"frozen",ySplit:9}]});
   aba.properties.defaultRowHeight = 18;
   aba.columns = [
-    {width:6},{width:21},{width:43},{width:19},{width:17},{width:22},
-    {width:20},{width:23},{width:16},{width:23},{width:26}
+    {width:6},{width:21},{width:43},{width:19},{width:17},{width:33},
+    {width:22},{width:20},{width:23},{width:16},{width:19},{width:26}
   ];
   const mesclar = (intervalo, texto, tamanho, cor) => {
     aba.mergeCells(intervalo);
@@ -3163,15 +3189,15 @@ async function exportarCSV(){
     cel.font = {name:"Arial",size:tamanho,bold:true,color:{argb:"FF"+cor}};
     cel.alignment = {vertical:"middle"};
   };
-  mesclar("A1:H1","BDR CONSTRUART",15,corVermelha);
-  mesclar("A2:H2","RELATÓRIO DE ATIVIDADES PATRIMONIAIS",17,corEscura);
-  aba.mergeCells("I1:K1");
-  aba.getCell("I1").value = `Emitido em ${emitidoEm}`;
-  aba.getCell("I1").font = {name:"Arial",size:9,color:{argb:"FF"+corCinza}};
-  aba.getCell("I1").alignment = {horizontal:"right"};
+  mesclar("A1:I1","BDR CONSTRUART",15,corVermelha);
+  mesclar("A2:I2","RELATÓRIO DE ATIVIDADES PATRIMONIAIS",17,corEscura);
+  aba.mergeCells("J1:L1");
+  aba.getCell("J1").value = `Emitido em ${emitidoEm}`;
+  aba.getCell("J1").font = {name:"Arial",size:9,color:{argb:"FF"+corCinza}};
+  aba.getCell("J1").alignment = {horizontal:"right"};
   aba.getRow(1).height = 23;
   aba.getRow(2).height = 30;
-  for(let c=1;c<=11;c++) aba.getRow(3).getCell(c).border = {bottom:{style:"medium",color:{argb:"FF"+corVermelha}}};
+  for(let c=1;c<=12;c++) aba.getRow(3).getCell(c).border = {bottom:{style:"medium",color:{argb:"FF"+corVermelha}}};
   aba.getRow(3).height=7;
   const campo = (linha,coluna,rotulo,valor,ate) => {
     aba.mergeCells(linha,coluna,linha,ate);
@@ -3181,12 +3207,12 @@ async function exportarCSV(){
     cel.alignment={vertical:"middle",wrapText:true};
   };
   campo(4,1,"Obra(s)/setor(es):",nomesObrasRelatorioAtual(),6);
-  campo(4,7,"Período filtrado:",periodoFiltroRelatorioTexto(),11);
+  campo(4,7,"Período filtrado:",periodoFiltroRelatorioTexto(),12);
   campo(5,1,"Período efetivo dos lançamentos:",periodoEfetivoLancamentos(),6);
-  campo(5,7,"Relatório emitido por:",responsavel,11);
+  campo(5,7,"Relatório emitido por:",responsavel,12);
   campo(6,1,"Total de patrimônios:",filtradosAtuais.length,6);
   aba.getRow(4).height=27; aba.getRow(5).height=27; aba.getRow(6).height=23;
-  aba.mergeCells("A7:K7");
+  aba.mergeCells("A7:L7");
   const descricao=aba.getCell("A7");
   descricao.value="Relação dos patrimônios cadastrados no Atlas/BDR, contendo data, valor, identificação, usuário responsável e obra/setor de lançamento.";
   descricao.font={name:"Arial",size:9,italic:true,color:{argb:"FF"+corCinza}};
@@ -3195,7 +3221,7 @@ async function exportarCSV(){
   descricao.alignment={vertical:"middle",indent:1,wrapText:true};
   aba.getRow(7).height=28;
   aba.getRow(8).height=9;
-  const cabecalho=["Nº","Identificação","Patrimônio","Tipo","Status","Marca","Modelo","Série/Placa","Valor","Data do cadastro","Cadastrado por"];
+  const cabecalho=["Nº","Identificação","Patrimônio","Tipo","Status","Obra/Setor","Marca","Modelo","Série/Placa","Valor","Data do cadastro","Cadastrado por"];
   aba.getRow(9).values=cabecalho;
   aba.getRow(9).height=29;
   aba.getRow(9).eachCell(c=>{
@@ -3207,32 +3233,33 @@ async function exportarCSV(){
   const porObra=new Map();
   filtradosAtuais.forEach((p,i)=>{
     const obra=nomeObra(p),valor=valorNumero(p);
-    const row=aba.addRow([i+1,codigoManualBDR(p)||"-",p.nome_bem||"-",p.tipo_item||"-",String(p.status||"-").replaceAll("_"," "),p.marca||"-",p.modelo||"-",p.numero_serie||p.placa||"-",valor,formatarDataHoraCadastroPatrimonio(p),p.usuario_cadastro||p.cadastrado_por||"-"]);
-    row.height=31;
+    const row=aba.addRow([i+1,codigoManualBDR(p)||"-",p.nome_bem||"-",p.tipo_item||"-",String(p.status||"-").replaceAll("_"," "),obra,p.marca||"-",p.modelo||"-",p.numero_serie||p.placa||"-",valor,formatarDataHoraCadastroPatrimonio(p),p.usuario_cadastro||p.cadastrado_por||"-"]);
+    row.height=Math.max(29, Math.ceil(String(p.nome_bem||"").length/36)*13+8,Math.ceil(obra.length/30)*13+8);
     row.eachCell({includeEmpty:true},c=>{
       c.font={name:"Arial",size:9,color:{argb:"FF"+corEscura}};
       c.border=borda;
       c.alignment={vertical:"middle",wrapText:true};
       if(i%2===1) c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FAFC"}};
     });
-    row.getCell(9).numFmt=moeda;
+    row.getCell(10).numFmt=moeda;
     const t=porObra.get(obra)||{quantidade:0,valor:0,semValor:0};
     t.quantidade++;
     if(valor===null)t.semValor++;else t.valor+=valor;
     porObra.set(obra,t);
   });
   const ultima=9+filtradosAtuais.length;
-  aba.autoFilter={from:"A9",to:`K${ultima}`};
-  aba.mergeCells(ultima+1,1,ultima+1,8);
+  aba.autoFilter={from:"A9",to:`L${ultima}`};
+  aba.mergeCells(ultima+1,1,ultima+1,9);
   aba.getCell(ultima+1,1).value="VALOR TOTAL DOS PATRIMÔNIOS";
   aba.getCell(ultima+1,1).font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corEscura}};
   aba.getCell(ultima+1,1).alignment={horizontal:"right",vertical:"middle"};
-  aba.getCell(ultima+1,9).value={formula:`SUM(I10:I${ultima})`};
-  aba.getCell(ultima+1,9).numFmt=moeda;
-  aba.getCell(ultima+1,9).font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corVermelha}};
+  aba.getCell(ultima+1,10).value={formula:`SUM(J10:J${ultima})`};
+  aba.getCell(ultima+1,10).numFmt=moeda;
+  aba.getCell(ultima+1,10).font={name:"Arial",size:10,bold:true,color:{argb:"FF"+corVermelha}};
   aba.getRow(ultima+1).height=27;
   aba.pageSetup={paperSize:9,orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,showGridLines:false,printTitlesRow:"1:9",margins:{left:.2,right:.2,top:.4,bottom:.4,header:.15,footer:.15}};
-  aba.pageSetup.printArea=`A1:K${ultima+1}`;
+  aba.headerFooter.oddFooter="&LBDR Gestão | Atlas&R Página &P de &N";
+  aba.pageSetup.printArea=`A1:L${ultima+1}`;
 
   const resumo=livro.addWorksheet("Resumo por obra",{views:[{state:"frozen",ySplit:5}]});
   resumo.columns=[{width:48},{width:19},{width:24},{width:20}];

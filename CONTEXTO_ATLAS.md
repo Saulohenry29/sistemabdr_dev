@@ -918,3 +918,67 @@ solução correta sem remendos.
 - Correção: após a troca de senha confirmada, a rota conclui as flags `senha_provisoria`, `senha_temporaria`, `trocar_senha` no registro vinculado ao `auth_user_id` autenticado; migração interna também conclui as flags. Exigir ao menos oito caracteres na troca Auth.
 - Publicação: alterar-senha.html vai ao frontend DEV; servidor/server.js exige implantação separada no serviço Node backend. Não publicar apenas o frontend sem o backend. Testar primeiro com contas de teste e conferir que as flags mudaram; não gravar senha em texto puro via SQL.
 - Pendente: fluxo administrativo de redefinição pelo OWNER ainda requer implementação/auditoria dedicada; não confundir com a troca de senha autenticada entregue aqui.
+
+
+## Cadastro seguro de novos usuários — implementação local em avaliação (2026-10-20)
+- Alterações preparadas em `servidor/server.js` e `JS/atlasUsuarios.js` (não publicadas nem testadas contra o Supabase real).
+- Cadastro novo deixa de chamar `atlas_usuarios_salvar(CRIAR)` e passa a exigir Bearer Supabase Auth na rota `POST /api/auth/usuarios`. Nesta primeira etapa, somente OWNER autenticado cria novos usuários.
+- Backend verifica formato dos dados, empresa/obras e duplicidades; cria identidade Auth, cadastro Atlas `AGUARDANDO_ATIVACAO` e vínculos em `usuario_obras`; tenta enviar recuperação de senha com redirect configurado para o primeiro acesso. Não cria senha legada.
+- A edição de contas existentes continua no fluxo anterior; **a vulnerabilidade de autorização do RPC `atlas_usuarios_salvar` ainda precisa ser corrigida no banco** antes de delegar administração a MASTER.
+- PENDENTE: confirmar esquema real das tabelas (`obras`, `usuarios_sistema`, `usuario_obras`, `atlas_usuario_obras`) e permissões do service role; testar envio de e-mail, redirect e conclusão da ativação; validar reversão em falhas parciais; testes OWNER/Master/legado.
+- **Não publicar em produção sem esses testes.**
+
+
+## Administração de usuários delegada — preparação local (2026-10-20)
+- Alterações locais ainda NÃO implantadas nem validadas contra Supabase em execução.
+- `servidor/server.js`: middleware `contextoAdministrativo` valida executor Auth pelo `auth_user_id`, consulta permissões e vínculos em `usuario_obras` via backend, sem aceitar `p_executor_id` do navegador.
+- `POST /api/auth/usuarios`: deixa de exigir exclusivamente OWNER; requer `USUARIOS_CRIAR`, proíbe MASTER/OWNER e concessão de permissões/obras fora do escopo. Cadastro continua exigindo e-mail e usa Auth com convite; não cria senha legada.
+- `GET /api/admin/usuarios/:id`: busca dados completos autorizados, sem coluna `senha`. `PATCH /api/admin/usuarios/:id`: atualiza campos cadastrais, status ou permissões com verificações independentes de `USUARIOS_EDITAR`, `USUARIOS_BLOQUEAR` e `USUARIOS_PERMISSOES`; impede editar OWNER, si próprio e MASTER por delegados.
+- `JS/atlasUsuarios.js`: seleção de resumo tenta carregar ficha completa; caso indisponível, mantém consulta resumida sem edição; MASTER pode abrir cadastro quando tem `USUARIOS_CRIAR`; alterações cadastrais/permissões delegadas passam pelo backend autenticado.
+- LIMITAÇÕES: alteração de vínculos de obras continua bloqueada até existir transação atômica; redefinição de senhas e encerramento de sessões delegados NÃO implementados; histórico administrativo dedicado NÃO implementado; login legado não foi migrado. A proteção do RPC legado `atlas_usuarios_salvar` requer revisão independente, não resolvida por esta alteração.
+- Implantar somente em desenvolvimento e testar permissões positivas/negativas, perfis, obras, cadastro Auth e rollback antes de produção.
+
+
+## Preparação de hierarquia GESTOR (não publicada) — 2026-10-21
+- Usuário informou ter executado ADD COLUMN gestor_id bigint e criado FK usuarios_sistema_gestor_id_fkey NOT VALID (convalidated=false). Não há confirmação independente da coluna neste ambiente.
+- Proposta: GESTOR só lista subordinados diretos com gestor_id igual ao ID autenticado, perfil ADMIN/ALMOXARIFE e mesma empresa. MASTER mantém listagem por obras compartilhadas; OWNER mantém escopo integral.
+- Preparação local: SQL de substituição de atlas_usuarios_listar_autorizados, ajuste de validação de perfil GESTOR no cadastro de OWNER, bloqueio preventivo de criação e edição pelo GESTOR no navegador.
+- PENDÊNCIAS BLOQUEANTES: autorização segura de GET/PATCH/DELETE para GESTOR no servidor; atribuição de gestor_id em fluxo autenticado e auditável; verificar políticas RLS e RPCs legadas; testes de integração com contas Auth e legadas; validar troca de senha provisória. Não publicar como funcionalidade concluída.
+- Não houve alteração no banco ou deploy por esta preparação.
+
+
+### Consulta de ficha administrativa pela Edge Function (preparação local, 21/10/2026)
+- Implementada localmente a ação POST `acao: consultar` na Edge Function `atlas-admin-usuarios`, com verificação de token Supabase Auth, permissões administrativas e escopo OWNER/MASTER/GESTOR no servidor.
+- `JS/atlasUsuarios.js` passa a usar essa ação para carregar fichas resumidas; a resposta mantém `_obras_vinculadas` e não inclui `gestor_id`.
+- **Ainda não publicado nem testado em produção.** A edição (PATCH), ativação e migração de senha continuam dependendo da API doméstica.
+- Pendência: auditar e migrar edição com transação para vínculos de obras e sincronização de email no Auth; validar catálogo completo de permissões do cadastro.
+
+
+### Expedição / Patrimônio — revisão local de escopos (22/10/2026)
+- Diagnóstico confirmado no catálogo da Thayanne: 126 itens exibidos, 124 associados a `obra_id=1`, um a `8` e um a `20`; rótulos eram inconsistentes porque `patrimonio.localizacao` substituía o nome da obra e o filtro admitia indiscriminadamente `obra_id=1` ou nomes contendo `CD`.
+- Alterações locais preparadas, ainda **não validadas funcionalmente**: `expedicaoCore.js` usa nome oficial de `obras`, monta opções pelo ID oficial e limita itens às obras de `usuario_obras` e permissões explícitas `EXPEDICAO_OBRA_<id>` consultadas em `usuarios_sistema` (OWNER global); `patrimonio.js` não descarta destinos expressamente autorizados por divergência com `empresa_id` da sessão.
+- Nenhum SQL ou dado alterado. Sintaxe JavaScript validada. Pendência obrigatória antes de publicar: testar com Thayanne as obras 22/33/17, fluxo individual e lote, e verificar que as RPCs do Supabase autorizam a transferência entre empresas quando prevista pela permissão; cliente não substitui validação de acesso no servidor.
+
+### Cadastro seguro — base operacional (preparação local, 22/10/2026)
+- Diagnóstico confirmado: `usuarios_sistema` tem `obra_id`, não `obra_operacional_id`; RPC `atlas_admin_criar_usuario` atualmente grava `v_obras[1]` (lista ordenada), ignorando a base escolhida.
+- Preparado localmente (não publicado): `JS/atlasUsuarios.js` restringe a base às obras de atuação da empresa selecionada, escolhe automaticamente quando só há uma opção e envia `obra_operacional_id` ao criar.
+- Preparado localmente (não publicado): Edge Function `atlas-admin-usuarios` valida base pertencente às obras, coloca a base na primeira posição de `p_obras` e delega catálogo de permissões à RPC (que mantém verificações de catálogo e escopo).
+- Script SQL de implantação revisa a função existente **sem mudar a assinatura**, para gravar `p_obras[1]` em `usuarios_sistema.obra_id`; preserva o restante da definição existente e falha se o trecho esperado não existir. Necessário revisar a função vigente antes de executar.
+- Pendente: implantação coordenada SQL → Edge Function → frontend; testes reais com conta fictícia, perfil/permissões, uma ou várias obras, troca de senha e edição legada. Não afirmar funcionamento em produção antes dos testes.
+
+## Cadastro e senhas — integração preparada em 2026-10-22 (pendente de implantação)
+
+- Código preparado, não publicado nem testado em ambiente Supabase real.
+- Novo funcionário: Edge `atlas-admin-usuarios` cria conta Auth e usa a RPC transacional existente. A base escolhida é enviada primeiro em `p_obras`; o SQL de implantação altera a gravação de `usuarios_sistema.obra_id` para usar `p_obras[1]`, validado como obra permitida. Não acrescenta coluna.
+- Formulário restringe a base às obras selecionadas da empresa; com apenas uma obra, seleciona automaticamente. Confere empresa das obras antes de cadastrar.
+- Edge de cadastro valida formato das permissões; a RPC existente permanece como catálogo definitivo e autoriza concessões conforme escopo do executor.
+- Redefinição de senha passa a ter botão independente no modal do funcionário, visível somente ao OWNER. O backend `atlas-senhas` publicado decide LEGADO ou ATIVO; o JS não migra contas automaticamente. O botão de salvar usuário não redefine senha.
+- `atlas-senhas` e `atlas_trocar_senha_legada_segura` não foram modificadas neste pacote. A senha legada permanece em texto claro no mecanismo atual, uma dívida de segurança a eliminar quando terminar a migração.
+- A implantação exige revisão do SQL, atualização coordenada da RPC e da Edge de cadastro, validação de sintaxe, testes locais e teste de cadastro controlado. O SQL existente usa substituição exata da definição da RPC e falha sem alterar se o texto não corresponder.
+- Não afirmar que o fluxo de troca obrigatória Auth ou legado foi validado ponta a ponta sem teste efetivo.
+
+
+### Cadastro com base operacional explícita (preparado; não implantado)
+- RPC nova `atlas_admin_criar_usuario_com_base` recebe `p_obra_operacional_id` e valida pertencimento a `v_obras`, preservando a função antiga.
+- Edge `atlas-admin-usuarios` passa a chamar a nova RPC; implantar SQL antes da Edge.
+- SQL não executado; testes reais de Supabase pendentes.

@@ -364,13 +364,45 @@ function usuarioPodeVerTodasObras(){
   return usuarioOwnerBDR(usuarioAtual());
 }
 
+// Escopos independentes: atuação (Patrimônio) e destinos (Expedição/Transferência).
+// A sessão não amplia o escopo quando a consulta atualizada não foi concluída.
+let atlasObrasAtuacaoCarregadas = null;
+let atlasObrasDestinoTransferencia = [];
+let atlasObrasTransferenciaCarregadas = [];
 function idsObrasAtuacaoUsuarioBDR(){
   const u=usuarioAtual();
   if(!u) return [];
-  const ids=new Set();
-  if(u.obra_id!=null && String(u.obra_id).trim()) ids.add(String(u.obra_id).trim());
-  String(u.obras_liberadas||"").split(/[;,|]/).map(x=>x.trim()).filter(Boolean).forEach(id=>ids.add(String(id)));
-  return [...ids];
+  if(usuarioOwnerBDR(u)) return [];
+  return atlasObrasAtuacaoCarregadas ? [...atlasObrasAtuacaoCarregadas] : [];
+}
+
+async function atlasCarregarEscoposPatrimonio(){
+  const u=usuarioAtual();
+  atlasObrasAtuacaoCarregadas=new Set();
+  atlasObrasDestinoTransferencia=[];
+  atlasObrasTransferenciaCarregadas=[];
+  if(!u || usuarioOwnerBDR(u)) return;
+  if(!db()){
+    console.warn("Patrimônio: sem conexão para consultar escopos; acesso restrito.");
+    return;
+  }
+  try{
+    const [vinculos, cadastro] = await Promise.all([
+      db().from("usuario_obras").select("obra_id").eq("usuario_id",u.id),
+      db().from("usuarios_sistema").select("permissoes,empresa_id").eq("id",u.id).maybeSingle()
+    ]);
+    if(vinculos.error) throw vinculos.error;
+    if(cadastro.error) throw cadastro.error;
+    if(!cadastro.data) throw new Error("Cadastro do usuário não encontrado");
+    atlasObrasAtuacaoCarregadas=new Set((vinculos.data||[]).map(v=>String(v.obra_id)).filter(Boolean));
+    const tokens=String(cadastro.data.permissoes||"").split(/[;,|]/).map(v=>v.trim().toUpperCase());
+    const ids=new Set(tokens.filter(t=>/^EXPEDICAO_OBRA_\d+$/.test(t)).map(t=>t.slice("EXPEDICAO_OBRA_".length)));
+    atlasObrasDestinoTransferencia=[...ids];
+  }catch(erro){
+    console.error("Patrimônio: não foi possível confirmar os escopos de acesso.",erro);
+    atlasObrasAtuacaoCarregadas=new Set();
+    atlasObrasDestinoTransferencia=[];
+  }
 }
 
 function usuarioPodeLancarQualquerObra(){
@@ -898,87 +930,51 @@ function atlasIniciarComboObras(){
 
 
 async function carregarObras(){
+  await atlasCarregarEscoposPatrimonio();
+  const u=usuarioAtual();
+  const owner=usuarioOwnerBDR(u);
 
-  const limitarObrasAoUsuario = () => {
-    const u=usuarioAtual();
-    if(usuarioOwnerBDR(u)) return;
+  // O catálogo de destinos é independente do escopo administrativo de Patrimônio.
+  // A RPC consulta as permissões do usuário autenticado no servidor, sem ampliar a RLS de obras.
+  const preencher = (todas, destinosAutorizados=[]) => {
     const permitidas=new Set(idsObrasAtuacaoUsuarioBDR());
-    obras=(obras||[]).filter(o=>permitidas.has(String(o.id)));
-  };
-
-  const preencherSelectObras = () => {
-    limitarObrasAoUsuario();
-    const select = document.getElementById("obraSelect");
-    const novaSelect = document.getElementById("novaObraSelect");
-
+    obras=owner ? todas : todas.filter(o=>permitidas.has(String(o.id)));
+    atlasObrasTransferenciaCarregadas=owner ? todas : destinosAutorizados;
+    const select=document.getElementById("obraSelect");
+    const novaSelect=document.getElementById("novaObraSelect");
     if(!select || !novaSelect) return;
-
-    select.innerHTML = `<option value="">Selecione a obra/setor</option>`;
-    novaSelect.innerHTML = `<option value="">Selecione nova obra/setor</option>`;
-
-    obras.forEach(o => {
-      const texto = `${o.codigo_obra || "-"} - ${o.nome || "-"}`;
-      select.innerHTML += `<option value="${o.id}">${texto}</option>`;
-      novaSelect.innerHTML += `<option value="${o.id}">${texto}</option>`;
-    });
-
+    select.replaceChildren(new Option("Selecione a obra/setor", ""));
+    novaSelect.replaceChildren(new Option("Selecione nova obra/setor", ""));
+    obras.forEach(o=>select.add(new Option(`${o.codigo_obra||"-"} - ${o.nome||"-"}`,String(o.id))));
+    atlasObrasTransferenciaCarregadas.forEach(o=>novaSelect.add(new Option(`${o.codigo_obra||"-"} - ${o.nome||"-"}`,String(o.id))));
     preencherFiltroObraPatrimonio();
-
     atlasIniciarComboObras();
     atlasAtualizarComboObras();
-
-    // Cadastro novo respeita a obra vinculada do usuário.
-    // O select de movimentação (novaObraSelect) continua livre para enviar para outra obra.
     aplicarRegraObraLancamentoBDR();
   };
 
   try{
-    const onlineReal = await patrimonioOnlineReal();
-
-    if(!onlineReal){
-      obras = await BDROfflineDB.lerTabela("obras") || [];
-      const usuario = usuarioAtual();
-      if(usuario && !usuarioOwnerBDR(usuario)){
-        const permitidas = new Set(idsObrasAtuacaoUsuarioBDR());
-        obras = obras.filter(o => permitidas.has(String(o.id)));
-      }
-      preencherSelectObras();
+    if(!await patrimonioOnlineReal()){
+      // Sem sessão autenticada, não inferir destinos a partir do cache administrativo.
+      preencher(await BDROfflineDB.lerTabela("obras")||[]);
       mostrarAvisoModoOffline();
       return;
     }
-
-    const { data, error } = await db()
-      .from("obras")
-      .select("*")
-      .eq("ativa", true)
-      .order("nome");
-
-    if(error) throw error;
-
-    obras = data || [];
-
-    const usuario = usuarioAtual();
-    if(usuario && !usuarioOwnerBDR(usuario)){
-      const permitidas = new Set(idsObrasAtuacaoUsuarioBDR());
-      obras = obras.filter(o => permitidas.has(String(o.id)));
-    }
-
-    if(window.BDROfflineDB?.salvarTabela){
-      await BDROfflineDB.salvarTabela("obras", obras);
-    }
-
-    preencherSelectObras();
-
-  }catch(e){
-    console.warn("Patrimônio: falha ao carregar obras online, usando cache:", e.message || e);
-    obras = await BDROfflineDB.lerTabela("obras") || [];
-    const usuario = usuarioAtual();
-    if(usuario && !usuarioOwnerBDR(usuario)){
-      const permitidas = new Set(idsObrasAtuacaoUsuarioBDR());
-      obras = obras.filter(o => permitidas.has(String(o.id)));
-    }
-    preencherSelectObras();
-    BDR_PATRIMONIO_ONLINE_REAL = false;
+    const cliente=db();
+    const [consultaObras, consultaDestinos]=await Promise.all([
+      cliente.from("obras").select("*").eq("ativa",true).order("nome"),
+      owner ? Promise.resolve({data:[],error:null}) : cliente.rpc("atlas_obras_destino_expedicao")
+    ]);
+    if(consultaObras.error) throw consultaObras.error;
+    // Falha na RPC não deve habilitar destinos por fallback de cache ou empresa.
+    if(consultaDestinos.error) console.error("Patrimônio: destinos de transferência indisponíveis.",consultaDestinos.error);
+    const todas=consultaObras.data||[];
+    if(window.BDROfflineDB?.salvarTabela) await BDROfflineDB.salvarTabela("obras",todas);
+    preencher(todas,consultaDestinos.error ? [] : (consultaDestinos.data||[]));
+  }catch(erro){
+    console.warn("Patrimônio: usando cache de obras; destinos de transferência indisponíveis.",erro);
+    preencher(await BDROfflineDB.lerTabela("obras")||[]);
+    BDR_PATRIMONIO_ONLINE_REAL=false;
     mostrarAvisoModoOffline();
   }
 }
@@ -3587,7 +3583,7 @@ async function registrarEntradaManutencaoBDR(motivo){
     codigo_patrimonio: patrimonioSelecionado.codigo_qr || patrimonioSelecionado.codigo_antigo || null,
     nome_patrimonio: patrimonioSelecionado.nome_bem || null,
     obra_id: patrimonioSelecionado.obra_id || null,
-    status: "ABERTA",
+    status: "AGUARDANDO_ENVIO",
     motivo,
     usuario_abertura: usuario?.nome || "Usuário não identificado"
   };
@@ -3840,7 +3836,7 @@ async function trocarObra(){
     return;
   }
 
-  const novaObra = obras.find(o => String(o.id) === String(novaObraId));
+  const novaObra = atlasObrasTransferenciaCarregadas.find(o => String(o.id) === String(novaObraId));
   if(!novaObra){
     alert("Obra destino não encontrada.");
     return;
@@ -4952,6 +4948,7 @@ iniciar();
 window.AtlasPatrimonioAPI = Object.freeze({
   listar: () => patrimonios,
   obras: () => obras,
+  destinosTransferencia: () => [...atlasObrasTransferenciaCarregadas],
   selecionado: () => patrimonioSelecionado,
   recarregar: () => carregarPatrimonios(),
   renderizar: () => renderizarPatrimonios()
