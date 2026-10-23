@@ -1542,6 +1542,44 @@
     $("#modalUsuarioTitulo").textContent=user?"Editar usuário":"Novo usuário";
     const senhaLabel=$("#formSenha")?.closest("label");
     if(senhaLabel){
+      // A senha provisória é exibida apenas durante esta edição.
+      let controles=senhaLabel.querySelector("#atlasSenhaControles");
+      if(!controles){
+        controles=document.createElement("div");
+        controles.id="atlasSenhaControles";
+        controles.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px";
+        const olho=document.createElement("button");
+        olho.type="button";olho.id="atlasMostrarSenha";
+        olho.style.cssText="border:1px solid #d5dce6;background:#fff;color:#344054;border-radius:9px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer";
+        olho.textContent="Mostrar senha";
+        olho.onclick=()=>{
+          const campo=$("#formSenha");
+          const mostrar=campo.type==="password";
+          campo.type=mostrar?"text":"password";
+          olho.textContent=mostrar?"Ocultar senha":"Mostrar senha";
+          olho.setAttribute("aria-pressed",String(mostrar));
+        };
+        const copiar=document.createElement("button");
+        copiar.type="button";copiar.id="atlasCopiarSenha";
+        copiar.style.cssText="border:1px solid #d5dce6;background:#fff;color:#344054;border-radius:9px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer";
+        copiar.textContent="Copiar senha";
+        copiar.onclick=async()=>{
+          const valor=$("#formSenha")?.value||"";
+          if(!valor){alert("Digite uma senha provisória primeiro.");return;}
+          try{
+            await navigator.clipboard.writeText(valor);
+            copiar.textContent="Copiada ✓";
+            setTimeout(()=>{if(copiar.isConnected)copiar.textContent="Copiar senha";},2000);
+          }catch(_){alert("Não foi possível copiar automaticamente. Selecione o campo para copiar.");}
+        };
+        controles.append(olho,copiar);
+        senhaLabel.appendChild(controles);
+      }
+      $("#formSenha").type="password";
+      const olho=senhaLabel.querySelector("#atlasMostrarSenha");
+      if(olho){olho.textContent="Mostrar senha";olho.setAttribute("aria-pressed","false");}
+      const copiar=senhaLabel.querySelector("#atlasCopiarSenha");
+      if(copiar)copiar.textContent="Copiar senha";
       senhaLabel.hidden=!user || !currentIsOwner();
       let botao=senhaLabel.querySelector("#btnRedefinirSenhaSeparada");
       if(!botao){
@@ -1549,16 +1587,17 @@
         botao.type="button";
         botao.id="btnRedefinirSenhaSeparada";
         botao.className="btn btn-secondary";
-        botao.style.marginTop="8px";
+        botao.style.cssText="display:block;margin-top:12px;padding:11px 16px;border:0;border-radius:9px;background:#a30e1a;color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;max-width:100%;white-space:normal";
         senhaLabel.appendChild(botao);
         botao.onclick=redefinirSenhaSeparada;
       }
       const info=authStatusInfo(user);
-      botao.textContent=info.status==='ATIVO'?"Gerar senha provisória (Supabase Auth)":info.status==='LEGADO'?"Redefinir senha (legado)":"Ativação pendente — redefinição indisponível";
+      botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Redefinir senha (legado)":"Ativação pendente — redefinição indisponível";
       botao.disabled=info.status==='AGUARDANDO';
       const aviso=senhaLabel.querySelector("#avisoSenhaSeparada")||document.createElement("small");
       aviso.id="avisoSenhaSeparada";
-      aviso.textContent="A senha é alterada separadamente. Salvar usuário não altera a senha.";
+      aviso.textContent="Digite a senha (8 a 128 caracteres) e clique em Definir. Depois da confirmação, use Mostrar ou Copiar. Salvar usuário não altera credenciais.";
+      aviso.style.cssText="display:block;margin-top:8px;font-size:12px;line-height:1.5;color:#667085";
       if(!aviso.parentNode)senhaLabel.appendChild(aviso);
     }
     atualizarPreviewFoto(user); modal("modalUsuario",true);if(focusPassword&&user)setTimeout(()=>$("#formSenha").focus(),80)
@@ -1594,8 +1633,13 @@
         throw new Error(detalhe);
       }
       if(!retorno?.ok)throw new Error(retorno?.error||"Redefinição não confirmada.");
-      $("#formSenha").value="";
-      alert(retorno.message||"Senha provisória definida. O funcionário deverá trocá-la no próximo acesso.");
+      // Não apagar a senha antes de o administrador poder conferi-la e copiá-la.
+      // openUserModal limpa o campo ao reabrir o formulário.
+      const campoSenha=$("#formSenha");
+      if(campoSenha)campoSenha.type="password";
+      const botaoOlho=$("#atlasMostrarSenha");
+      if(botaoOlho){botaoOlho.textContent="Mostrar senha";botaoOlho.setAttribute("aria-pressed","false");}
+      toast("Senha provisória definida. Confira e copie antes de fechar este formulário.");
       await load();
     }catch(erro){alert("Senha não redefinida: "+erro.message);}
     finally{if(botao)botao.disabled=false;}

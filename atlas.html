@@ -338,6 +338,25 @@ html,body{height:100%!important;min-height:100%!important;margin:0!important;pad
         redirecionarShell('alterar-senha.html');
         return false;
       }
+      // O cache local pode ter sido criado antes da redefinição administrativa.
+      // Consulte os indicadores atuais antes de liberar qualquer módulo legado.
+      const bancoLegado=window.client||window.supabaseClient;
+      if(!bancoLegado){redirecionarShell('login.html');return false;}
+      try{
+        const {data:atual,error}=await bancoLegado.from('usuarios_sistema')
+          .select('id,ativo,auth_status,auth_user_id,senha_temporaria,senha_provisoria,trocar_senha')
+          .eq('id',usuario.id).maybeSingle();
+        if(error||!atual||atual.ativo!==true){redirecionarShell('login.html');return false;}
+        if(String(atual.auth_status||'LEGADO').toUpperCase()!=='LEGADO' || atual.auth_user_id){
+          redirecionarShell('login.html');return false;
+        }
+        if(typeof senhaEhTemporariaBDR==='function' && senhaEhTemporariaBDR(atual)){
+          const sincronizado={...usuario,...atual};
+          localStorage.setItem('usuario_logado',JSON.stringify(sincronizado));
+          localStorage.setItem('usuarioLogado',JSON.stringify(sincronizado));
+          redirecionarShell('alterar-senha.html');return false;
+        }
+      }catch(erro){console.error('Atlas: falha na validação legada',erro);redirecionarShell('login.html');return false;}
       return true;
     }
     const db=window.client||window.supabaseClient;
