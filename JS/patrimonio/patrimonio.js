@@ -677,6 +677,15 @@ function atlasNormalizarBuscaObra(valor){
     .trim();
 }
 
+// Ordenação natural por código: 04, 10, 720, 735, 10001.
+function atlasOrdenarObrasPorCodigo(lista){
+  const comparador = new Intl.Collator("pt-BR", {numeric:true, sensitivity:"base"});
+  return [...(lista || [])].sort((a,b) =>
+    comparador.compare(String(a.codigo_obra ?? ""), String(b.codigo_obra ?? "")) ||
+    comparador.compare(String(a.nome ?? ""), String(b.nome ?? ""))
+  );
+}
+
 function atlasTextoObra(obra){
   return `${obra?.codigo_obra || "-"} - ${obra?.nome || "-"}`;
 }
@@ -929,6 +938,135 @@ function atlasIniciarComboObras(){
 }
 
 
+// Seletor visual de destino. O select original continua sendo a fonte do ID
+// lido pelo fluxo de transferência e mantém somente os destinos autorizados.
+let atlasDestinoUI = null;
+function atlasSincronizarDestinoTransferencia(){
+  const select = document.getElementById("novaObraSelect");
+  if(!select) return;
+  if(!atlasDestinoUI){
+    const campo = document.createElement("div");
+    campo.className = "atlas-destino-combo";
+    const busca = document.createElement("input");
+    busca.type = "search";
+    busca.className = "atlas-destino-busca";
+    busca.placeholder = "Pesquisar código ou nome da obra...";
+    busca.autocomplete = "off";
+    busca.setAttribute("aria-label", "Pesquisar obra ou setor de destino");
+    busca.setAttribute("aria-expanded", "false");
+    const seta = document.createElement("button");
+    seta.type = "button";
+    seta.className = "atlas-destino-seta";
+    seta.textContent = "⌄";
+    seta.setAttribute("aria-label", "Mostrar obras de destino");
+    const lista = document.createElement("div");
+    lista.className = "atlas-destino-lista";
+    lista.setAttribute("role", "listbox");
+    lista.hidden = true;
+    campo.append(busca,seta);
+    select.insertAdjacentElement("afterend",campo);
+    document.body.appendChild(lista);
+    atlasDestinoUI = {select,campo,busca,seta,lista,aberto:false};
+
+    const fechar = () => {
+      lista.hidden = true;
+      atlasDestinoUI.aberto = false;
+      busca.setAttribute("aria-expanded","false");
+    };
+    const posicionar = () => {
+      if(!atlasDestinoUI.aberto) return;
+      const r = campo.getBoundingClientRect();
+      const margem = 8;
+      const abaixo = window.innerHeight-r.bottom-margem;
+      const acima = r.top-margem;
+      const abrirAcima = abaixo < 175 && acima > abaixo;
+      const altura = Math.max(80,Math.min(210,(abrirAcima ? acima : abaixo)-8));
+      lista.style.left = Math.max(margem,r.left)+"px";
+      lista.style.width = Math.min(r.width,window.innerWidth-2*margem)+"px";
+      lista.style.maxHeight = altura+"px";
+      lista.style.top = (abrirAcima ? Math.max(margem,r.top-altura-4) : Math.min(window.innerHeight-margem,r.bottom+4))+"px";
+    };
+    const renderizar = () => {
+      const termo = atlasNormalizarBuscaObra(busca.value);
+      lista.replaceChildren();
+      const itens = [...select.options].filter(op => op.value && (
+        !termo || atlasNormalizarBuscaObra(op.textContent).includes(termo)
+      ));
+      if(!itens.length){
+        const vazio = document.createElement("div");
+        vazio.className = "atlas-destino-vazio";
+        vazio.textContent = "Nenhuma obra encontrada";
+        lista.appendChild(vazio);
+      }
+      itens.forEach(op => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "atlas-destino-opcao";
+        item.setAttribute("role","option");
+        item.setAttribute("aria-selected",String(select.value===op.value));
+        item.textContent = op.textContent;
+        if(select.value===op.value) item.classList.add("selecionada");
+        item.addEventListener("click",() => {
+          select.value = op.value;
+          select.dispatchEvent(new Event("change",{bubbles:true}));
+          busca.value = op.textContent;
+          fechar();
+          busca.focus();
+        });
+        lista.appendChild(item);
+      });
+      lista.hidden = false;
+      atlasDestinoUI.aberto = true;
+      busca.setAttribute("aria-expanded","true");
+      posicionar();
+    };
+    busca.addEventListener("focus",() => { if(!busca.disabled){busca.value="";renderizar();} });
+    busca.addEventListener("input",renderizar);
+    busca.addEventListener("keydown", e => {
+      if(e.key==="Escape"){
+        fechar();
+        busca.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+      }else if(e.key==="ArrowDown"){
+        e.preventDefault();
+        if(!atlasDestinoUI.aberto) renderizar();
+        lista.querySelector("button")?.focus();
+      }else if(e.key==="Enter" && atlasDestinoUI.aberto){
+        e.preventDefault();
+        lista.querySelector("button")?.click();
+      }
+    });
+    lista.addEventListener("keydown", e => {
+      if(e.key==="Escape") {fechar();busca.focus();}
+      if(e.key==="ArrowDown" || e.key==="ArrowUp"){
+        e.preventDefault();
+        const botoes = [...lista.querySelectorAll("button")];
+        const indice = botoes.indexOf(document.activeElement);
+        botoes[Math.max(0,Math.min(botoes.length-1,indice+(e.key==="ArrowDown"?1:-1)))]?.focus();
+      }
+    });
+    seta.addEventListener("click",() => {
+      if(atlasDestinoUI.aberto){fechar();}
+      else{busca.focus();busca.value="";renderizar();}
+    });
+    document.addEventListener("pointerdown", e => {
+      if(!campo.contains(e.target) && !lista.contains(e.target)) fechar();
+    });
+    window.addEventListener("resize",posicionar);
+    window.addEventListener("scroll",posicionar,true);
+    select.addEventListener("change",() => {
+      busca.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+    });
+    atlasDestinoUI.fechar = fechar;
+  }
+  const ui = atlasDestinoUI;
+  ui.fechar();
+  ui.campo.hidden = select.style.display==="none" || select.disabled;
+  ui.busca.disabled = select.disabled;
+  ui.seta.disabled = select.disabled;
+  ui.busca.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+  select.classList.add("atlas-destino-select-original");
+}
+
 async function carregarObras(){
   await atlasCarregarEscoposPatrimonio();
   const u=usuarioAtual();
@@ -938,8 +1076,8 @@ async function carregarObras(){
   // A RPC consulta as permissões do usuário autenticado no servidor, sem ampliar a RLS de obras.
   const preencher = (todas, destinosAutorizados=[]) => {
     const permitidas=new Set(idsObrasAtuacaoUsuarioBDR());
-    obras=owner ? todas : todas.filter(o=>permitidas.has(String(o.id)));
-    atlasObrasTransferenciaCarregadas=owner ? todas : destinosAutorizados;
+    obras=atlasOrdenarObrasPorCodigo(owner ? todas : todas.filter(o=>permitidas.has(String(o.id))));
+    atlasObrasTransferenciaCarregadas=atlasOrdenarObrasPorCodigo(owner ? todas : destinosAutorizados);
     const select=document.getElementById("obraSelect");
     const novaSelect=document.getElementById("novaObraSelect");
     if(!select || !novaSelect) return;
@@ -951,6 +1089,7 @@ async function carregarObras(){
     atlasIniciarComboObras();
     atlasAtualizarComboObras();
     aplicarRegraObraLancamentoBDR();
+    atlasSincronizarDestinoTransferencia();
   };
 
   try{
@@ -2598,10 +2737,56 @@ function textoBuscaPatrimonio(p){
     ${p.usuario_cadastro || ""}
     ${p.origem_cadastro || ""}
     ${p.valor_bem || ""}
+    ${p.numero_nfe || ""}
+    ${p.ncm || ""}
   `;
 }
 
 
+
+// Pesquisa por relevância, considerando também os campos do cadastro completo.
+// Mantém a pesquisa restrita ao conjunto já autorizado e carregado para o usuário.
+function bdrCamposPesquisaPatrimonio(p){
+  return [
+    {rotulo:"Nome", peso:100, valor:p.nome_bem},
+    {rotulo:"Código PAT", peso:85, valor:p.codigo_qr},
+    {rotulo:"Código antigo", peso:80, valor:p.codigo_antigo},
+    {rotulo:"Código", peso:75, valor:p.codigo_bem || p.patrimonio},
+    {rotulo:"Número de série", peso:70, valor:p.numero_serie || p.serie},
+    {rotulo:"Placa", peso:70, valor:p.placa},
+    {rotulo:"Chassi", peso:70, valor:p.chassi || p.numero_chassi},
+    {rotulo:"NF-e", peso:65, valor:p.numero_nfe},
+    {rotulo:"NCM", peso:60, valor:p.ncm},
+    {rotulo:"Marca", peso:55, valor:p.marca},
+    {rotulo:"Modelo", peso:55, valor:p.modelo},
+    {rotulo:"Obra / setor", peso:25, valor:[p.localizacao,p.obra_nome,p.codigo_obra].filter(Boolean).join(" ")},
+    {rotulo:"Cadastrador", peso:20, valor:p.usuario_cadastro},
+    {rotulo:"Outros dados", peso:10, valor:[p.tipo_item,p.tipo_outro,p.status,p.renavam,p.cor,p.combustivel,p.ano_fabricacao,p.ano_modelo,p.horimetro,p.quilometragem,p.estado_conservacao,p.observacao,p.origem_cadastro,p.valor_bem].filter(v=>v!==null&&v!==undefined).join(" ")}
+  ];
+}
+
+function bdrRelevanciaBuscaPatrimonio(p, texto){
+  if(!texto) return {pontos:0, rotulo:""};
+  const termos=String(texto).trim().split(/\s+/).map(normalizarBuscaPatrimonio).filter(Boolean);
+  if(!termos.length) return {pontos:0, rotulo:""};
+  const campos=bdrCamposPesquisaPatrimonio(p).map(c=>({...c, normalizado:normalizarBuscaPatrimonio(c.valor)}));
+  // Todas as palavras precisam existir, mesmo que em campos diferentes.
+  if(!termos.every(t=>campos.some(c=>c.normalizado.includes(t)))) return null;
+  const inteiro=normalizarBuscaPatrimonio(texto);
+  let melhor=null;
+  for(const campo of campos){
+    const valor=campo.normalizado;
+    if(!valor) continue;
+    let pontos=0;
+    if(valor===inteiro) pontos=campo.peso+30;
+    else if(valor.startsWith(inteiro)) pontos=campo.peso+20;
+    else if(valor.includes(inteiro)) pontos=campo.peso+10;
+    else if(termos.every(t=>valor.includes(t))) pontos=campo.peso+5;
+    else if(termos.some(t=>valor.includes(t))) pontos=campo.peso;
+    if(pontos>0 && (!melhor || pontos>melhor.pontos)) melhor={pontos,rotulo:campo.rotulo};
+  }
+  return melhor;
+}
 
 function bdrResetPaginaPatrimonio(){
   bdrPatrimonioPaginaAtual = 1;
@@ -2701,17 +2886,22 @@ function renderizarPatrimonios(){
   lista.innerHTML = "";
 
   const filtrados = patrimonios.filter(p => {
-    const textoBusca = normalizarBuscaPatrimonio(textoBuscaPatrimonio(p));
     const estadoAtivoCorreto = atlasMostrarInativos ? p.ativo === false : p.ativo !== false;
-
     return estadoAtivoCorreto &&
-      (!busca || textoBusca.includes(busca)) &&
       (!filtroObra || String(p.obra_id || "") === String(filtroObra)) &&
       (!filtroStatus || p.status === filtroStatus) &&
       (!filtroTipo || p.tipo_item === filtroTipo) &&
       (!filtroUsuario || bdrNomeCadastradorPatrimonio(p.usuario_cadastro) === filtroUsuario) &&
-      (!filtroAntigo || String(p.codigo_antigo || "").trim() !== "");
+      (!filtroAntigo || String(p.codigo_antigo || "").trim() !== "") &&
+      (!busca || bdrRelevanciaBuscaPatrimonio(p, buscaOriginal) !== null);
   });
+
+  // Ordenar antes de paginar: resultados pelo nome vêm antes dos encontrados pela obra.
+  const correspondencias = new Map();
+  if(busca){
+    filtrados.forEach(p=>correspondencias.set(p,bdrRelevanciaBuscaPatrimonio(p,buscaOriginal)));
+    filtrados.sort((a,b)=>(correspondencias.get(b)?.pontos||0)-(correspondencias.get(a)?.pontos||0));
+  }
 
   const total = filtrados.length;
   const porPagina = bdrPatrimonioPorPagina;
@@ -2750,12 +2940,17 @@ function renderizarPatrimonios(){
       .replaceAll("Ç", "C")
       .replaceAll("Ã", "A");
 
+    const correspondencia = busca ? correspondencias.get(p) : null;
+    const encontradoPor = correspondencia?.rotulo && correspondencia.rotulo !== "Nome"
+      ? `Encontrado por: ${atlasEscaparHtml(correspondencia.rotulo)}` : "";
+
     const infoExtra = [
       p.placa ? "Placa: " + p.placa : "",
       p.renavam ? "RENAVAM: " + p.renavam : "",
       p.chassi ? "Chassi: " + p.chassi : "",
       p.numero_serie ? "Série: " + p.numero_serie : "",
-      p.ano_modelo ? "Ano mod: " + p.ano_modelo : ""
+      p.ano_modelo ? "Ano mod: " + p.ano_modelo : "",
+      encontradoPor
     ].filter(Boolean).join(" | ");
 
     lista.innerHTML += `
@@ -3222,6 +3417,7 @@ async function abrirModal(id){
 
   document.getElementById("observacaoMov").value = "";
   document.getElementById("novaObraSelect").value = "";
+  atlasSincronizarDestinoTransferencia();
 
   aplicarPermissoesTela();
 
@@ -3417,6 +3613,7 @@ function aplicarPermissoesTela(){
   if(novaObraSelect){
     novaObraSelect.style.display = podeMovimentar ? "" : "none";
     novaObraSelect.disabled = !podeMovimentar;
+    atlasSincronizarDestinoTransferencia();
   }
 
   atlasAtualizarBotaoInativos();

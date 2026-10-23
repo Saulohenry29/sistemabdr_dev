@@ -1782,6 +1782,20 @@ body *:not(input):not(textarea):not([contenteditable="true"]) {
   user-select: none;
 }
 
+/* Seleção de texto permitida no modal de detalhes do patrimônio.
+   Mantém o cursor de texto oculto fora dos campos editáveis. */
+#modalBg .modal h1,
+#modalBg .modal h2,
+#modalBg .modal h3,
+#modalBg .modal h4,
+#modalBg .modal .modal-info,
+#modalBg .modal .modal-info *,
+#modalBg .modal .atlas-patrimonio-info-wrap,
+#modalBg .modal .atlas-patrimonio-info-wrap * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
 input,
 textarea,
 [contenteditable="true"] {
@@ -2359,3 +2373,17 @@ html,body{max-width:100%;overflow-x:hidden!important}
 }
 .atlas-mobile-select-option.selecionado { background:#eaf2ff; color:#174f9b; font-weight:700; }
 .atlas-mobile-select-option:focus-visible { outline:2px solid #397bce; }
+
+/* Destino da transferência: seletor pesquisável e contido na viewport. */
+#novaObraSelect.atlas-destino-select-original{display:none!important}
+.atlas-destino-combo{position:relative;display:flex;align-items:center;width:100%;min-width:0;border:1px solid #cbd5e1;border-radius:9px;background:#fff;min-height:39px;box-sizing:border-box}
+.atlas-destino-combo[hidden]{display:none!important}
+.atlas-destino-combo:focus-within{border-color:#b5121b;box-shadow:0 0 0 2px rgba(181,18,27,.1)}
+.atlas-destino-busca{flex:1;min-width:0;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;padding:10px 12px!important;font-size:13px;color:#172033}
+.atlas-destino-seta{border:0;background:transparent;color:#64748b;padding:8px 13px;cursor:pointer;font-size:18px}
+.atlas-destino-lista{position:fixed;z-index:2147483000;overflow-y:auto;overscroll-behavior:contain;border:1px solid #cbd5e1;border-radius:9px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.18);box-sizing:border-box;padding:4px}
+.atlas-destino-lista[hidden]{display:none!important}
+.atlas-destino-opcao{display:block;width:100%;border:0;border-radius:6px;background:#fff;color:#172033;text-align:left;padding:10px 11px;cursor:pointer;font-size:12px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.atlas-destino-opcao:hover,.atlas-destino-opcao:focus-visible{background:#f1f5f9;outline:none}
+.atlas-destino-opcao.selecionada{background:#fef2f2;color:#991b1b;font-weight:700}
+.atlas-destino-vazio{padding:13px;color:#64748b;font-size:12px;text-align:center}
