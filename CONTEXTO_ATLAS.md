@@ -982,3 +982,48 @@ solução correta sem remendos.
 - RPC nova `atlas_admin_criar_usuario_com_base` recebe `p_obra_operacional_id` e valida pertencimento a `v_obras`, preservando a função antiga.
 - Edge `atlas-admin-usuarios` passa a chamar a nova RPC; implantar SQL antes da Edge.
 - SQL não executado; testes reais de Supabase pendentes.
+
+
+## Expedição — preparação local da permissão (24/10/2026)
+
+- Pedido 55 EXP-2026-561000-89 confirmado EM_TRANSITO de obra 22 para 33, saída por Thayanne; recebimento ainda não registrado.
+- Thayanne ID 2 tem acesso a ambas em usuario_obras e Supabase Auth vinculado.
+- Nesta etapa, apenas catálogo visual de permissões inclui EXPEDICAO_RECEBER_PROPRIA_REMESSA.
+- PENDENTE: validação obrigatória no servidor, seleção segura da obra de destino, conferência física e correção da RPC atlas_receber_pedido. NÃO habilitar ou testar recebimento real ainda.
+
+
+## Estoque — gerenciador local de estruturas (27/10/2026)
+
+- Analisado ZIP completo `atlas_shell_reinicio_limpo(20261027-181040).zip`: estoque, entrada, enderecamento e prateleiras 3D existem; endereçamento atual usa padrão R-F-P-C-N.
+- Alterados diretamente `estoque.html` e `JS/estoque.js` para incluir botão Gerenciar estruturas dentro das ações rápidas e modal com tipos PP/PA/MZ, códigos sequenciais e níveis automáticos `PP01-N01` etc.
+- **Somente protótipo operacional de planejamento local:** dados persistidos em `localStorage` sob `ATLAS_ESTRUTURAS_RASCUNHO_LOCAL`, com exportação JSON e exclusão de rascunhos. Não usa Supabase, não altera saldos, não integra ao 3D, não cria endereços reais e não possui vínculo de produto.
+- Pendente: validar visualmente na Shell; modelar persistência por obra/empresa, permissões e endereços sem conflito com R-F-P-C-N; backup antes de mudanças de banco; integrar inventário inicial com conferência de saldos, sem duplicação.
+
+
+### Gerenciador de estruturas — colunas e níveis (27/10/2026)
+- Ajuste local em `estoque.html` e `JS/estoque.js`: cadastro de quantidade de colunas (1–100) e níveis (1–30), prévia em matriz, endereços `PP01-C02-N05` e equivalentes PA/MZ. N01 representa o chão.
+- PP01 do CD: lateral direita, 12 colunas × 4 níveis = 48 endereços. A orientação física da numeração das colunas ainda depende de confirmação.
+- Rascunhos antigos sem campo `colunas` continuam legíveis como 1 coluna, sem alteração automática do armazenamento.
+- Sem Supabase, sem movimentação de estoque, sem integração 3D. Testar no navegador antes de publicar.
+
+
+### Gerenciador de estruturas — orientação espelhada (2026-10-27)
+- Acrescentado checkbox **Espelhado** individual por estrutura PP/PA/MZ no rascunho local.
+- A prévia exibe colunas na ordem inversa quando marcado, sem renumerar códigos ou alterar endereços, saldos ou produtos.
+- O estado `espelhado` é salvo no rascunho local e incluído na exportação JSON; registros antigos sem o campo equivalem a não espelhados.
+- Integração com mapa 3D e Supabase continua pendente.
+
+
+### Gerenciador local — N01 no chão e edição (2026-10-27)
+- Checkbox `Nível 01 começa no chão`, marcado por padrão. Desmarcado significa N01 na primeira posição elevada, sem mudar códigos.
+- Estruturas existentes sem o campo `nivel01Chao` são interpretadas como N01 no chão.
+- Botão Editar permite ajustar rascunhos existentes; aviso de sucesso após criar ou editar. Corrigido alinhamento do checkbox e nomenclatura Porta-Paletes.
+- **Limitação conhecida:** prateleiras irregulares (quantidade de níveis diferente por coluna) ainda não são suportadas. Não criar posições físicas inexistentes.
+- Apenas localStorage; nenhuma integração com banco, 3D ou saldos.
+
+
+### Prévia 3D das estruturas locais (2026-10-28)
+- Em `prateleiras-3d.html`, botão **Estruturas do CD (teste)** lê `ATLAS_ESTRUTURAS_RASCUNHO_LOCAL` do navegador e desenha PP/PA/MZ no Three.js existente.
+- Respeita colunas, níveis, espelhamento e posições inativas. Clique em posição azul consulta código de planejamento. Posição inativa é cinza e não clicável.
+- Posicionamento espacial inicial por texto `direita`/`esquerda` e centro; não é levantamento dimensional real do CD. Não persiste nem integra endereços/saldos ao Supabase.
+- Modo legado do Endereçamento 3D preservado no botão Ativar 3D.

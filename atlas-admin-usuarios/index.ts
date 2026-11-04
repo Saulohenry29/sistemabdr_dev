@@ -119,6 +119,11 @@ function validarObras(valor: unknown): number[] {
   return [...new Set(resultado)];
 }
 
+function senhaAtlasValida(valor: unknown): valor is string {
+  if (typeof valor !== "string" || valor.length < 8 || valor.length > 128 || /[\u0000-\u001f\u007f]/.test(valor)) return false;
+  return [/[a-z]/.test(valor), /[A-Z]/.test(valor), /[0-9]/.test(valor), /[^A-Za-z0-9]/.test(valor)].filter(Boolean).length >= 2;
+}
+
 serve(async (req: Request): Promise<Response> => {
   const origemRequisicao = req.headers.get("origin");
   if (origemRequisicao && !ORIGENS.has(origemRequisicao)) {
@@ -201,10 +206,83 @@ serve(async (req: Request): Promise<Response> => {
   let consulta: Record<string, unknown> | null = null;
   try {
     const entrada = await req.clone().json();
-    if (entrada && typeof entrada === "object" && !Array.isArray(entrada) && ["consultar", "editar"].includes(String(entrada.acao))) {
+    if (entrada && typeof entrada === "object" && !Array.isArray(entrada) && ["consultar", "editar", "redefinir_senha", "concluir_senha_provisoria"].includes(String(entrada.acao))) {
       consulta = entrada as Record<string, unknown>;
     }
   } catch { /* O cadastro existente trata seu corpo abaixo. */ }
+
+  // Troca pessoal: token autenticado, senha atual comprovada e indicador protegido em app_metadata.
+  if (consulta?.acao === "concluir_senha_provisoria") {
+    const atual = consulta.senha_atual;
+    const nova = consulta.nova_senha;
+    if (typeof atual !== "string" || !senhaAtlasValida(nova) || atual === nova)
+      return responder(req, 400, { erro: "Informe a senha atual e uma nova senha de 8 a 128 caracteres, com pelo menos 2 tipos de caracteres." });
+    const { data: conta, error: erroConta } = await admin.auth.admin.getUserById(executorAuthId);
+    if (erroConta || !conta?.user || conta.user.app_metadata?.atlas_troca_senha_pendente !== true)
+      return responder(req, 403, { erro: "Não há troca obrigatória pendente nesta conta." });
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    if (!anonKey || !conta.user.email) return responder(req, 503, { erro: "Verificação de senha indisponível." });
+    const verificador = createClient(URL, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: validacao, error: erroAtual } = await verificador.auth.signInWithPassword({ email: conta.user.email, password: atual });
+    if (erroAtual || validacao?.user?.id !== executorAuthId)
+      return responder(req, 401, { erro: "Senha provisória incorreta." });
+    const { error: erroTroca } = await admin.auth.admin.updateUserById(executorAuthId, {
+      password: nova,
+      app_metadata: { ...(conta.user.app_metadata ?? {}), atlas_troca_senha_pendente: false },
+    });
+    if (erroTroca) return responder(req, 503, { erro: "Não foi possível concluir a troca de senha." });
+    return responder(req, 200, { sucesso: true, ok: true, mensagem: "Senha pessoal cadastrada." });
+  }
+
+  // Redefinição de senha por administrador delegado: autorização integral no servidor.
+  if (consulta?.acao === "redefinir_senha") {
+    const id = Number(consulta.usuario_id);
+    const senha = consulta.senha;
+    if (!Number.isSafeInteger(id) || id <= 0 || typeof senha !== "string" ||
+        !senhaAtlasValida(senha)) {
+      return responder(req, 400, { erro: "Informe usuário válido e senha de 8 a 128 caracteres, com pelo menos 2 tipos de caracteres." });
+    }
+    if (!owner && (!permissoesExecutor.has("ADMINISTRACAO_DELEGADA") ||
+        !permissoesExecutor.has("USUARIOS_EDITAR") ||
+        !["MASTER", "GESTOR"].includes(String(executor.perfil).toUpperCase()))) {
+      return responder(req, 403, { erro: "Administração delegada não autorizada." });
+    }
+    const { data: alvo, error: erroAlvo } = await admin.from("usuarios_sistema")
+      .select("id,ativo,owner_sistema,empresa_id,auth_user_id,perfil")
+      .eq("id", id).maybeSingle();
+    if (erroAlvo || !alvo) return responder(req, 404, { erro: "Funcionário não encontrado." });
+    if (alvo.owner_sistema || Number(alvo.id) === 1 || Number(alvo.id) === Number(executor.id)) {
+      return responder(req, 403, { erro: "Esta conta não pode ser redefinida por esta operação." });
+    }
+    if (!alvo.auth_user_id) return responder(req, 409, { erro: "Funcionário ainda não possui acesso Supabase Auth ativo." });
+    if (alvo.ativo !== true) return responder(req, 403, { erro: "Não é permitido redefinir senha de funcionário inativo." });
+    if (!owner && ["MASTER", "GESTOR"].includes(String(alvo.perfil ?? "").toUpperCase()))
+      return responder(req, 403, { erro: "A redefinição de senha de MASTER ou GESTOR exige o OWNER." });
+    if (!owner) {
+      if (Number(alvo.empresa_id) !== Number(executor.empresa_id))
+        return responder(req, 403, { erro: "Empresa fora do alcance administrativo." });
+      const [{data: obrasAlvo, error: erroObrasAlvo}, {data: obrasExecutor, error: erroObrasExecutor}] = await Promise.all([
+        admin.from("usuario_obras").select("obra_id").eq("usuario_id", id),
+        admin.from("usuario_obras").select("obra_id").eq("usuario_id", executor.id),
+      ]);
+      if (erroObrasAlvo || erroObrasExecutor) return responder(req, 503, { erro: "Não foi possível validar as obras." });
+      const autorizadas = new Set((obrasExecutor ?? []).map(o => Number(o.obra_id)));
+      const vinculadas = (obrasAlvo ?? []).map(o => Number(o.obra_id));
+      if (!vinculadas.length || vinculadas.some(obra => !autorizadas.has(obra)))
+        return responder(req, 403, { erro: "Funcionário possui obras fora do alcance administrativo." });
+    }
+    const { data: contaAlvo, error: erroContaAlvo } = await admin.auth.admin.getUserById(String(alvo.auth_user_id));
+    if (erroContaAlvo || !contaAlvo?.user) return responder(req, 503, { erro: "Conta Auth indisponível." });
+    const { error: erroSenha } = await admin.auth.admin.updateUserById(String(alvo.auth_user_id), {
+      password: senha,
+      app_metadata: { ...(contaAlvo.user.app_metadata ?? {}), atlas_troca_senha_pendente: true },
+    });
+    if (erroSenha) {
+      console.error("ATLAS_REDEFINICAO_SENHA_ERRO", { codigo: erroSenha.code, mensagem: erroSenha.message });
+      return responder(req, 503, { erro: "Não foi possível redefinir a senha." });
+    }
+    return responder(req, 200, { sucesso: true, ok: true, mensagem: "Senha redefinida no Supabase Auth." });
+  }
 
   if (consulta) {
     if (!owner && (
@@ -243,6 +321,24 @@ serve(async (req: Request): Promise<Response> => {
         return responder(req, 403, { erro: "Empresa não autorizada." });
       }
     }
+    // Segurança: qualquer leitura/edição administrativa exige que TODAS as obras
+    // do funcionário estejam dentro das obras explicitamente autorizadas.
+    if (!owner) {
+      const [{ data: obrasAlvo, error: erroObrasAlvo },
+             { data: obrasExecutor, error: erroObrasExecutor }] = await Promise.all([
+        admin.from("usuario_obras").select("obra_id").eq("usuario_id", id),
+        admin.from("usuario_obras").select("obra_id").eq("usuario_id", executor.id),
+      ]);
+      if (erroObrasAlvo || erroObrasExecutor) {
+        return responder(req, 500, { erro: "Falha ao validar obras do funcionário." });
+      }
+      const autorizadas = new Set((obrasExecutor ?? []).map(v => Number(v.obra_id)));
+      const vinculadas = (obrasAlvo ?? []).map(v => Number(v.obra_id));
+      if (!vinculadas.length || vinculadas.some(obra => !autorizadas.has(obra))) {
+        return responder(req, 403, { erro: "Funcionário possui obra fora do alcance administrativo." });
+      }
+    }
+
     // Edição de dados: escopo e privilégios são validados novamente no servidor.
     if (consulta.acao === "editar") {
       if (!owner && !permissoesExecutor.has("USUARIOS_EDITAR") &&
@@ -306,11 +402,31 @@ serve(async (req: Request): Promise<Response> => {
         if (!Array.isArray(mudancas.permissoes) || mudancas.permissoes.length > 250 ||
             mudancas.permissoes.some(p => typeof p !== "string" || !/^[A-Z0-9_]{2,100}$/.test(p)))
           return responder(req, 400, { erro: "Permissões inválidas." });
+        if (!owner && (mudancas.permissoes as string[]).includes("ADMINISTRACAO_DELEGADA")) {
+          return responder(req, 403, { erro: "Somente o OWNER pode conceder administração delegada." });
+        }
         const novas = new Set(mudancas.permissoes as string[]);
         const antigas = new Set(permissoesDoBanco(alvo.permissoes));
-        if (!owner && [...new Set([...novas, ...antigas])].some(p =>
-            novas.has(p) !== antigas.has(p) && !permissoesExecutor.has(p)))
-          return responder(req, 403, { erro: "Não é permitido modificar permissões superiores às próprias." });
+        // Delegação vale para permissões operacionais, não para privilégios
+        // administrativos nem para acesso a obras não autorizadas.
+        const protegidas = new Set([
+          "ADMINISTRACAO_DELEGADA", "USUARIOS_VER", "USUARIOS_CRIAR",
+          "USUARIOS_EDITAR", "USUARIOS_BLOQUEAR", "USUARIOS_PERMISSOES",
+          "USUARIOS_OBRAS", "USUARIOS_HISTORICO", "EMPRESAS_CRIAR",
+          "EMPRESAS_EDITAR", "EMPRESAS_INATIVAR", "EMPRESAS_EXCLUIR",
+          "TODAS_OBRAS_VER", "RELATORIOS_TODAS_OBRAS",
+        ]);
+        const alteradas = [...new Set([...novas, ...antigas])]
+          .filter(p => novas.has(p) !== antigas.has(p));
+        const delegada = permissoesExecutor.has("ADMINISTRACAO_DELEGADA");
+        if (!owner && alteradas.some(p => {
+          if (permissoesExecutor.has(p)) return false;
+          if (!delegada || protegidas.has(p)) return true;
+          if (p.startsWith("EXPEDICAO_OBRA_")) return true;
+          return false;
+        })) return responder(req, 403, {
+          erro: "Permissão administrativa ou obra fora do alcance delegado."
+        });
         alteracoes.permissoes = [...novas].join(",");
       }
       alteracoes.updated_at = new Date().toISOString();
@@ -428,6 +544,10 @@ serve(async (req: Request): Promise<Response> => {
     });
   }
 
+  if (!owner && permissoes.includes("ADMINISTRACAO_DELEGADA")) {
+    return responder(req, 403, { erro: "Somente o OWNER pode conceder administração delegada." });
+  }
+
   if (
     !owner &&
     permissoes.some(
@@ -458,10 +578,17 @@ serve(async (req: Request): Promise<Response> => {
       .in("id", obras);
 
   if (erroObras) {
-    return responder(req, 500, {
-      erro: "Não foi possível validar as obras.",
-    });
-  }
+  console.error("ATLAS_CADASTRO_VALIDACAO_OBRAS_ERRO", {
+    codigo: erroObras.code,
+    mensagem: erroObras.message,
+    detalhes: erroObras.details,
+    dica: erroObras.hint,
+  });
+
+  return responder(req, 500, {
+    erro: "Não foi possível validar as obras.",
+  });
+}
 
   const idsValidos = new Set(
     (obrasValidas ?? []).map((o) => Number(o.id)),
@@ -516,8 +643,19 @@ serve(async (req: Request): Promise<Response> => {
     });
   }
 
-  // Credencial Auth e marcador legado são independentes.
-  const senhaProvisoria = `At-${aleatorioHex(24)}`;
+  // Senha opcional informada no formulario. Nunca persiste no cadastro legado.
+  // Se omitida, preserva o comportamento anterior: geracao segura no servidor.
+  const senhaInformada = corpo.senha_provisoria;
+  if (senhaInformada !== undefined &&
+      (typeof senhaInformada !== "string" ||
+       !senhaAtlasValida(senhaInformada))) {
+    return responder(req, 400, {
+      erro: "A senha provisória deve ter de 8 a 128 caracteres e combinar pelo menos 2 tipos: maiúsculas, minúsculas, números ou símbolos.",
+    });
+  }
+  const senhaProvisoria = typeof senhaInformada === "string"
+    ? senhaInformada
+    : `At-${aleatorioHex(24)}`;
   const marcadorLegado = `AUTH_BLOQUEADO_${aleatorioHex(48)}`;
 
   // 1. Cria a identidade no Supabase Auth.
@@ -526,6 +664,7 @@ serve(async (req: Request): Promise<Response> => {
       email,
       password: senhaProvisoria,
       email_confirm: true,
+      app_metadata: { atlas_troca_senha_pendente: true },
       user_metadata: {
         nome,
       },

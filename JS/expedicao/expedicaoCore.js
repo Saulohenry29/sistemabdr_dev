@@ -245,7 +245,7 @@ async function carregarTudo(){
     const ob = await db().rpc("atlas_obras_destino_expedicao");
     if(ob.error) throw ob.error;
     obras = ob.data || [];
-    await Promise.all([carregarCatalogo(), carregarPedidos()]);
+    await Promise.all([carregarCatalogo(), carregarPedidos(), atlasCarregarRemessasPatrimoniais()]);
     salvarCacheExpedicao();
     window.itensCatalogo = itensCatalogo;
     window.pedidos = pedidos;
@@ -266,6 +266,27 @@ async function carregarTudo(){
   }
 }
 
+
+/* Remessas diretas do Patrimônio: consulta independente dos pedidos comuns.
+   Nenhuma ação de recebimento é criada nesta etapa. */
+let atlasRemessasPatrimoniais = [];
+let atlasRemessasErro = "";
+
+async function atlasCarregarRemessasPatrimoniais(){
+  atlasRemessasPatrimoniais = [];
+  atlasRemessasErro = "";
+  try{
+    const resultado = await db().from("atlas_patrimonio_remessas")
+      .select("*")
+      .order("enviado_em", {ascending:false})
+      .limit(200);
+    if(resultado.error) throw resultado.error;
+    atlasRemessasPatrimoniais = resultado.data || [];
+  }catch(erro){
+    atlasRemessasErro = String(erro?.message || erro);
+    console.error("Atlas Expedição — consulta de remessas patrimoniais:", erro);
+  }
+}
 
 /* =========================================================
    ATLAS SPRINT 2.8.1 - DISPONIBILIDADE REAL DO CATÁLOGO
@@ -3346,6 +3367,181 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     el.innerHTML = arr.map(p => typeof pedidoHTML === "function" ? pedidoHTML(p) : "").join("");
   }
 
+  /* Mantém exatamente as classes e a grade compacta dos pedidos do Atlas.
+     Os IDs das remessas não são tratados como IDs de pedidos de retirada. */
+  function atlasCardRemessaPatrimonial(r){
+    const origem = r.obra_origem_nome || nomeObra(r.obra_origem_id);
+    const destino = r.obra_destino_nome || nomeObra(r.obra_destino_id);
+    const codigo = String(r.codigo || ("RP-" + r.id));
+    const status = String(r.status || "").toUpperCase().replaceAll("_", " ");
+    const quantidade = Number(r.total_itens || 0);
+    return `<div class="pedido-card atlas-pedido-compacto" data-remessa-patrimonial="${Number(r.id)}">
+      <div class="atlas-pedido-row">
+        <div>
+          <div class="atlas-pedido-numero">RP-${Number(r.id)}</div>
+          <span class="atlas-pedido-codigo">${esc(codigo)}</span>
+        </div>
+        <div class="atlas-pedido-main">
+          <div class="atlas-pedido-destino">${esc(destino)}</div>
+          <div class="atlas-pedido-meta">${esc(r.enviado_por_nome || "-")} • ${esc(origem)} → ${esc(destino)}</div>
+          <div class="atlas-pedido-itens-resumo">Transferência direta de patrimônio</div>
+        </div>
+        <div class="atlas-pedido-status">
+          <span class="badge-status ${statusClass(r.status)}">${esc(status)}</span>
+          <div class="pedido-small">${quantidade} item(ns)</div>
+        </div>
+        <div class="atlas-pedido-actions"><button class="atlas-btn-abrir" type="button" onclick="atlasAbrirRemessaPatrimonial(${Number(r.id)})">Abrir</button></div>
+      </div>
+    </div>`;
+  }
+
+  /* RP utiliza a apresentação oficial do modal, mas nunca o identificador
+     nem as operações de um PED. Não altera a proteção de pedidos existente. */
+  window.atlasAbrirRemessaPatrimonial = async function(id){
+    const remessa = atlasRemessasPatrimoniais.find(r=>Number(r.id)===Number(id));
+    if(!remessa) return atlasToast("⚠ Transferência não encontrada. Atualize a tela.");
+    const u = atlasUsuario();
+    const escopo = atlasObrasVisiveisExpedicao();
+    const nome = atlasNorm(u.nome || "");
+    if(Number(u.id || u.usuario_id) !== 1 &&
+       !escopo.has(Number(remessa.obra_origem_id)) &&
+       !escopo.has(Number(remessa.obra_destino_id)) &&
+       !(nome && nome === atlasNorm(remessa.enviado_por_nome))){
+      return atlasToast("⚠ Você não possui acesso a esta transferência.");
+    }
+    try{
+      const {data,error} = await db().from("atlas_patrimonio_remessa_itens")
+        .select("*").eq("remessa_id",Number(id)).order("id",{ascending:true});
+      if(error) throw error;
+      const itens = data || [];
+      const modal = document.getElementById("modalDetalhe");
+      const titulo = document.getElementById("modalTitulo");
+      const box = document.getElementById("modalConteudo");
+      if(!modal || !box) throw new Error("Modal oficial da Expedição indisponível.");
+      // Usa as classes CSS oficiais carregadas pelo módulo de recebimento.
+      // O CSS é instalado pela função original ao abrir um PED em trânsito.
+      if(!document.getElementById("atlasRecebimentoDetalheCss")){
+        // O CSS oficial é local ao módulo; reproduz apenas as classes existentes
+        // para RP sem modificar o fluxo de pedidos.
+        const css = document.createElement("style");
+        css.id = "atlasRecebimentoDetalheCss";
+        css.textContent = `
+          #modalDetalhe.atlas-recebimento .modal{width:min(1160px,calc(100vw - 32px));max-height:calc(100dvh - 28px);overflow:hidden}
+          #modalDetalhe.atlas-recebimento .modal-head{padding:12px 16px}
+          #modalDetalhe.atlas-recebimento .modal-body{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+          .atlas-rec-scroll{padding:16px 18px 12px;overflow-y:auto;overflow-x:hidden;min-height:0;box-sizing:border-box}
+          .atlas-rec-top{display:grid;grid-template-columns:minmax(200px,.85fr) minmax(0,1.55fr);gap:18px;align-items:center;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+          .atlas-rec-pedido{display:flex;align-items:center;gap:8px;min-width:0}
+          .atlas-rec-pedido-num{font-size:24px;line-height:1;font-weight:950;color:#0f172a}
+          .atlas-rec-codigo{font-size:10px;color:#64748b;font-weight:800;margin-top:5px}
+          .atlas-rec-etapas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;position:relative}
+          .atlas-rec-etapas:before{content:"";position:absolute;top:13px;left:10%;right:10%;height:2px;background:#dbe4ef}
+          .atlas-rec-etapa{position:relative;text-align:center;font-size:9px;color:#64748b;font-weight:800}
+          .atlas-rec-etapa i{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;background:#e2e8f0;font-style:normal}
+          .atlas-rec-etapa.ok i{background:#16a34a;color:#fff}
+          .atlas-rec-etapa.atual i{background:#2563eb;color:#fff}
+          .atlas-rec-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+          .atlas-rec-card{border:1px solid #e2e8f0;background:#f8fafc;border-radius:12px;padding:9px 11px;min-width:0}
+          .atlas-rec-card small{display:block;font-size:9px;color:#64748b;font-weight:900;text-transform:uppercase;margin-bottom:3px}
+          .atlas-rec-card b{display:block;font-size:12px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .atlas-rec-transporte{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:12px;align-items:center;background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;padding:10px 12px;margin-bottom:12px}
+          .atlas-rec-transporte strong{font-size:12px}.atlas-rec-transporte small{display:block;font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase}
+          .atlas-rec-transporte b{font-size:11px}.atlas-rec-link{border:1px solid #bfdbfe;background:white;color:#1d4ed8;border-radius:9px;padding:7px 10px;font-size:10px;font-weight:900;cursor:pointer}
+          .atlas-rec-secao{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:10px}
+          .atlas-rec-secao-head{padding:9px 12px;font-size:12px;font-weight:950}
+          .atlas-rec-itens{max-height:180px;overflow-y:auto}
+          .atlas-rec-item{display:grid;grid-template-columns:30px minmax(145px,1.35fr) minmax(110px,1.15fr) 68px 42px;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid #eef2f7;font-size:11px}
+          .atlas-rec-item-num{width:26px;height:26px;border-radius:9px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:950}
+          .atlas-rec-item-cod,.atlas-rec-qtd{font-weight:950}.atlas-rec-item-desc{color:#334155}
+          .atlas-rec-compactos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+          .atlas-rec-dobra{border:1px solid #e2e8f0;border-radius:11px}
+          .atlas-rec-dobra summary{cursor:pointer;padding:9px 12px;font-size:11px;font-weight:900}
+          .atlas-rec-dobra-conteudo{padding:0 12px 10px;font-size:10px;line-height:1.55}
+          @media(max-width:800px){.atlas-rec-top{grid-template-columns:1fr}.atlas-rec-resumo{grid-template-columns:1fr 1fr}.atlas-rec-transporte{grid-template-columns:1fr 1fr}.atlas-rec-item{grid-template-columns:30px 1fr 70px}.atlas-rec-item-desc{grid-column:2}.atlas-rec-item-un{display:none}.atlas-rec-compactos{grid-template-columns:1fr}}
+        `;
+        document.head.appendChild(css);
+      }
+      const e = v=>esc(v ?? "-");
+      const origem=remessa.obra_origem_nome || nomeObra(remessa.obra_origem_id);
+      const destino=remessa.obra_destino_nome || nomeObra(remessa.obra_destino_id);
+      const finalizado=["RECEBIDA","RECEBIDO","RECEBIDO_COM_DIVERGENCIA"].includes(String(remessa.status).toUpperCase());
+      const etapas = [
+        ["Transferido",true],["Em trânsito",true],["A receber",false],["Recebido",finalizado]
+      ].map(([label,ok],idx)=>`<div class="atlas-rec-etapa ${ok?"ok":idx===2?"atual":""}"><i>${ok?"✓":idx+1}</i>${label}</div>`).join("");
+      modal.classList.add("atlas-recebimento");
+      titulo.textContent="🚚 Detalhes da remessa";
+      box.innerHTML=`
+        <div class="atlas-rec-scroll">
+          <div class="atlas-rec-top"><div class="atlas-rec-pedido"><div><div class="atlas-rec-pedido-num">RP-${Number(remessa.id)}</div><div class="atlas-rec-codigo">${e(remessa.codigo)}</div></div><span class="badge-status ${statusClass(remessa.status)}">${e(String(remessa.status).replaceAll("_"," "))}</span></div><div class="atlas-rec-etapas">${etapas}</div></div>
+          <div class="atlas-rec-resumo">
+            <div class="atlas-rec-card"><small>Responsável</small><b>${e(remessa.enviado_por_nome)}</b></div>
+            <div class="atlas-rec-card"><small>Origem</small><b title="${e(origem)}">${e(origem)}</b></div>
+            <div class="atlas-rec-card"><small>Destino</small><b title="${e(destino)}">${e(destino)}</b></div>
+            <div class="atlas-rec-card"><small>Data de saída</small><b>${e(dataBR(remessa.enviado_em))}</b></div>
+          </div>
+          <div class="atlas-rec-transporte"><strong>🚚 Transporte</strong><div><small>Motorista</small><b>${e(remessa.motorista_nome)}</b></div><div><small>Placa</small><b>${e(remessa.veiculo_placa)}</b></div><div><small>Transportadora</small><b>${e(remessa.transportadora)}</b></div><button class="atlas-rec-link" type="button" onclick="document.getElementById('atlasRecHistorico')?.setAttribute('open','open')">Ver detalhes</button></div>
+          <div class="atlas-rec-secao"><div class="atlas-rec-secao-head">📦 Patrimônios da transferência (${itens.length})</div><div class="atlas-rec-itens">${itens.map((i,idx)=>`<div class="atlas-rec-item"><div class="atlas-rec-item-num">${idx+1}</div><div class="atlas-rec-item-cod">${e(i.codigo_qr)}</div><div class="atlas-rec-item-desc">${e(i.nome_bem)}</div><div class="atlas-rec-qtd">Qtd. 1</div><div class="atlas-rec-item-un">UN</div></div>`).join("") || '<div class="cart-empty">Nenhum patrimônio encontrado.</div>'}</div></div>
+          <div class="atlas-rec-compactos">
+            <details class="atlas-rec-dobra" id="atlasRecHistorico"><summary>📄 Histórico da remessa ⌄</summary><div class="atlas-rec-dobra-conteudo">Saída: ${e(dataBR(remessa.enviado_em))}<br>${e(origem)} → ${e(destino)}<br>Responsável: ${e(remessa.enviado_por_nome)}</div></details>
+            <details class="atlas-rec-dobra"><summary>🧾 Documentos relacionados ⌄</summary><div class="atlas-rec-dobra-conteudo">Nenhum documento vinculado nesta visualização.</div></details>
+          </div>
+        </div>`;
+      modal.classList.add("ativo");
+    }catch(erro){
+      console.error("Atlas: não foi possível abrir remessa patrimonial",erro);
+      atlasToast("⚠ Falha ao carregar os detalhes da transferência.");
+    }
+  };
+
+  function atlasRenderizarRemessasPatrimoniais(){
+    const u = atlasUsuario();
+    const uid = Number(u.id || u.usuario_id || 0);
+    const operacional = Number(atlasObraOperacionalId || 0);
+    const escopo = atlasObrasVisiveisExpedicao();
+    const normalizar = v => atlasNorm(v);
+    const nomeAtual = normalizar(u.nome || "");
+    const visiveis = atlasRemessasPatrimoniais.filter(r =>
+      uid === 1 ||
+      escopo.has(Number(r.obra_origem_id)) ||
+      escopo.has(Number(r.obra_destino_id)) ||
+      (nomeAtual && normalizar(r.enviado_por_nome) === nomeAtual)
+    );
+
+    const emTransito = r => normalizar(r.status).replaceAll(" ", "_") === "EM_TRANSITO";
+    const destino = visiveis.filter(r => emTransito(r) && operacional &&
+      Number(r.obra_destino_id) === operacional);
+    const transito = visiveis.filter(r => emTransito(r) &&
+      (uid === 1 ||
+       (operacional && Number(r.obra_origem_id) === operacional) ||
+       (nomeAtual && normalizar(r.enviado_por_nome) === nomeAtual)) &&
+      !(uid !== 1 && operacional && Number(r.obra_destino_id) === operacional));
+    const historico = visiveis.filter(r =>
+      ["RECEBIDA", "RECEBIDO", "RECEBIDA_DIVERGENCIA",
+       "RECEBIDO_COM_DIVERGENCIA", "CANCELADA"].includes(
+        normalizar(r.status).replaceAll(" ", "_")));
+
+    for(const [id, remessas] of [
+      ["listaTransito", transito],
+      ["listaReceber", destino],
+      ["listaHistorico", historico]
+    ]){
+      const el = document.getElementById(id);
+      if(!el) continue;
+      if(remessas.length){
+        el.querySelector(".cart-empty")?.remove();
+        el.insertAdjacentHTML("beforeend", remessas.map(atlasCardRemessaPatrimonial).join(""));
+      }
+    }
+
+    if(atlasRemessasErro){
+      const el = document.getElementById("listaTransito");
+      if(el){
+        el.insertAdjacentHTML("beforeend",
+          `<div class="cart-empty">Não foi possível consultar as transferências patrimoniais. Confira o console do navegador.</div>`);
+      }
+    }
+  }
+
   /* Cada aba recebe somente os pedidos que cabem ao usuário atual. */
   window.renderizarPedidos = renderizarPedidos = function(){
     atlasAjustarAbaAprovacao();
@@ -3410,6 +3606,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
       "Nenhuma remessa destinada às suas obras está aguardando recebimento.");
     atlasListaEscopo("listaHistorico", historico,
       "Nenhum histórico relacionado à sua obra ou às suas solicitações.");
+    atlasRenderizarRemessasPatrimoniais();
   };
 
   function atlasNegarAcao(msg){

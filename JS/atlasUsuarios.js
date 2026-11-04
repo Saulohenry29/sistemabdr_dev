@@ -4,6 +4,10 @@
 
   const STATE={users:[],works:[],companies:[],profiles:[],selected:null,draft:null,page:1,pageSize:8,table:"usuarios_sistema",dirty:false,worksDraft:new Set(),expeditionWorksDraft:new Set(),formWorksDraft:new Set(),formWorksTemp:new Set()};
   const OWNER_ID=1;
+  function atlasSenhaValida(valor){
+    if(typeof valor!=="string" || valor.length<8 || valor.length>128 || /[\u0000-\u001f\u007f]/.test(valor))return false;
+    return [/[a-z]/.test(valor),/[A-Z]/.test(valor),/[0-9]/.test(valor),/[^A-Za-z0-9]/.test(valor)].filter(Boolean).length>=2;
+  }
   const USUARIOS_COLUNAS="id,nome,usuario,perfil,empresa_id,obra_id,ativo,criado_em,email,criado_por,atualizado_em,permissoes,updated_at,ultimo_login,foto_url,telefone,cargo,senha_provisoria,trocar_senha,data_reset_senha,perfil_rapido,senha_temporaria,obras_liberadas,observacao_acesso,auth_user_id,owner_sistema,auth_status,auth_ativado_em,auth_ativado_por";
   const $=(s,c=document)=>c.querySelector(s); const $$=(s,c=document)=>[...c.querySelectorAll(s)];
   function hostWindow(){
@@ -176,7 +180,7 @@
     ]},
     {id:"PATRIMONIO",title:"📦 Patrimônio",items:[["PATRIMONIO_VER","Visualizar / consultar"],["PATRIMONIO_CRIAR","Cadastrar"],["PATRIMONIO_EDITAR","Editar dados"],["PATRIMONIO_MOVIMENTAR","Movimentar"],["PATRIMONIO_IMPRIMIR","Imprimir etiquetas"],["PATRIMONIO_EXCLUIR","Excluir/inativar"],["CONFIGURAR_ETIQUETAS","Configurar etiquetas"]]},
     {id:"MANUTENCAO",title:"🔧 Manutenção",items:[["MANUTENCAO_VER","Acessar manutenção"],["MANUTENCAO_CRIAR","Enviar para manutenção"],["MANUTENCAO_SAIDA","Registrar saída / gerar link"],["MANUTENCAO_ANALISAR_ORCAMENTO","Analisar orçamento / laudo"],["MANUTENCAO_APROVAR","Aprovar, recusar ou pedir ajuste"],["MANUTENCAO_RECEBER","Registrar recebimento"],["MANUTENCAO_PREVENTIVA_GERENCIAR","Gerenciar manutenção preventiva"]] },
-    {id:"EXPEDICAO",title:"🚚 Expedição",access:"EXPEDICAO_VER",items:[["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_FISCAL","Fiscal / Romaneio e NF-e"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"]]},
+    {id:"EXPEDICAO",title:"🚚 Expedição",access:"EXPEDICAO_VER",items:[["SOLICITAR_MATERIAL","Novo pedido"],["APROVAR_PEDIDO_ORIGEM","Aprovar ou recusar"],["SEPARAR_PEDIDO","Separar pedido"],["EXPEDICAO_FISCAL","Fiscal / Romaneio e NF-e"],["EXPEDICAO_TRANSPORTE","Retirada e transporte"],["ENTREGAR_MATERIAL","Entregar/enviar"],["CONFERIR_MERCADORIA","Receber e conferir"],["EXPEDICAO_RECEBER_PROPRIA_REMESSA","Permitir receber a própria remessa"]]},
     {id:"ESTOQUE",title:"📚 Estoque / Entrada",items:[["ESTOQUE_VER","Acessar estoque"],["ESTOQUE_ENTRADA","Entrada"],["ESTOQUE_SAIDA","Saída"],["ESTOQUE_TRANSFERIR","Transferir"],["ENTRADA_VER","Tela de entrada"],["TRIAGEM_VER","Triagem"]]},
     {id:"EMPRESAS",title:"🏢 Empresas / Obras",items:[["EMPRESAS_VER","Visualizar"],["EMPRESAS_CRIAR","Criar"],["EMPRESAS_EDITAR","Editar"],["EMPRESAS_INATIVAR","Inativar/reativar"],["EMPRESAS_EXCLUIR","Excluir"]]},
     {id:"USUARIOS",title:"👥 Usuários / Administração",items:[["USUARIOS_VER","Visualizar usuários"],["USUARIOS_CRIAR","Criar usuários"],["USUARIOS_EDITAR","Editar usuários"],["USUARIOS_BLOQUEAR","Bloquear usuários"],["USUARIOS_PERMISSOES","Gerenciar permissões"],["USUARIOS_OBRAS","Gerenciar vínculos de obras (em preparação)"],["USUARIOS_HISTORICO","Consultar histórico administrativo"],["CONFIGURACOES_VER","Configurações"]]}
@@ -560,19 +564,25 @@
         return false;
       }
 
-      if(user._consulta_resumida){
-        try{
-          const {data:resposta,error:erroConsulta}=await db().functions.invoke("atlas-admin-usuarios",{
-            body:{acao:"consultar",usuario_id:Number(user.id)}
-          });
-          if(erroConsulta||resposta?.sucesso!==true||!resposta?.funcionario){
-            throw new Error(resposta?.erro||erroConsulta?.message||"Falha ao consultar funcionário.");
+      // A ficha resumida é exibida imediatamente. A autorização de detalhes
+      // ocorre em segundo plano, sem bloquear a seleção nem repetir um 403.
+      if(user._consulta_resumida && !user._consulta_em_andamento && !user._consulta_negada){
+        user._consulta_em_andamento=true;
+        db().functions.invoke("atlas-admin-usuarios",{
+          body:{acao:"consultar",usuario_id:Number(user.id)}
+        }).then(({data:resposta,error:erroConsulta})=>{
+          if(erroConsulta || resposta?.sucesso!==true || !resposta?.funcionario){
+            // O servidor pode negar detalhes de funcionários com obras fora
+            // do escopo. Preservamos a listagem sem conceder edição.
+            user._consulta_negada=true;
+            return;
           }
           Object.assign(user,resposta.funcionario,{_consulta_resumida:false});
-        }catch(error){
-          // Sem dados completos, exibir apenas informações públicas da listagem.
-          toast("Ficha em modo de consulta: "+error.message,"info");
-        }
+          if(String(STATE.selected?.id)===String(user.id)) selectUser(user.id);
+        }).catch(error=>{
+          console.warn("Atlas Usuários: consulta de detalhes indisponível.",error?.message||error);
+          user._consulta_negada=true;
+        }).finally(()=>{user._consulta_em_andamento=false;});
       }
 
       STATE.selected = user;
@@ -1526,6 +1536,21 @@
     modal("modalFormObras",true);
   }
 
+  function atlasIconeVisibilidade(visivel){
+    // SVG monocromático, sem emoji ou dependências externas.
+    return visivel
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c5.5 0 9.4 5 10 7-.3 1-1.4 2.8-3.1 4.2M6.2 6.2C3.8 7.8 2.5 10.3 2 12c.6 2 4.5 7 10 7 1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+  function atualizarIconeSenha(botao,visivel){
+    if(!botao)return;
+    const descricao=visivel?"Ocultar senha":"Mostrar senha";
+    botao.innerHTML=atlasIconeVisibilidade(visivel);
+    botao.setAttribute("aria-label",descricao);
+    botao.setAttribute("aria-pressed",String(visivel));
+    botao.title=descricao;
+  }
+
   async function openUserModal(user=null,focusPassword=false){
     if(user?(!canEditSelected()):(!canCreateUsers()))return;
     if(user&&Number(user.id)===OWNER_ID&&!currentIsOwner())return;
@@ -1543,25 +1568,35 @@
     const senhaLabel=$("#formSenha")?.closest("label");
     if(senhaLabel){
       // A senha provisória é exibida apenas durante esta edição.
+      senhaLabel.classList.add("atlas-senha-label");
+      let campoSenha=senhaLabel.querySelector("#formSenha");
+      let envoltorio=senhaLabel.querySelector(".atlas-senha-campo");
+      if(campoSenha && !envoltorio){
+        envoltorio=document.createElement("span");
+        envoltorio.className="atlas-senha-campo";
+        campoSenha.parentNode.insertBefore(envoltorio,campoSenha);
+        envoltorio.appendChild(campoSenha);
+      }
       let controles=senhaLabel.querySelector("#atlasSenhaControles");
       if(!controles){
         controles=document.createElement("div");
         controles.id="atlasSenhaControles";
-        controles.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px";
+        controles.className="atlas-senha-acoes";
         const olho=document.createElement("button");
         olho.type="button";olho.id="atlasMostrarSenha";
-        olho.style.cssText="border:1px solid #d5dce6;background:#fff;color:#344054;border-radius:9px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer";
-        olho.textContent="Mostrar senha";
+        olho.className="atlas-senha-olho";
+        olho.setAttribute("aria-label","Mostrar senha");
+        olho.title="Mostrar senha";
+        olho.innerHTML=atlasIconeVisibilidade(false);
         olho.onclick=()=>{
           const campo=$("#formSenha");
           const mostrar=campo.type==="password";
           campo.type=mostrar?"text":"password";
-          olho.textContent=mostrar?"Ocultar senha":"Mostrar senha";
-          olho.setAttribute("aria-pressed",String(mostrar));
+          atualizarIconeSenha(olho,mostrar);
         };
         const copiar=document.createElement("button");
         copiar.type="button";copiar.id="atlasCopiarSenha";
-        copiar.style.cssText="border:1px solid #d5dce6;background:#fff;color:#344054;border-radius:9px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer";
+        copiar.className="atlas-senha-botao";
         copiar.textContent="Copiar senha";
         copiar.onclick=async()=>{
           const valor=$("#formSenha")?.value||"";
@@ -1572,32 +1607,48 @@
             setTimeout(()=>{if(copiar.isConnected)copiar.textContent="Copiar senha";},2000);
           }catch(_){alert("Não foi possível copiar automaticamente. Selecione o campo para copiar.");}
         };
-        controles.append(olho,copiar);
+        const gerar=document.createElement("button");
+        gerar.type="button";gerar.id="atlasGerarSenha";
+        gerar.textContent="Gerar senha";
+        gerar.className="atlas-senha-botao";
+        gerar.onclick=()=>{
+          const alfabeto="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+          const aleatorios=new Uint32Array(16);
+          crypto.getRandomValues(aleatorios);
+          $("#formSenha").value=Array.from(aleatorios,n=>alfabeto[n%alfabeto.length]).join("");
+          $("#formSenha").type="text";
+          atualizarIconeSenha(olho,true);
+        };
+        envoltorio.appendChild(olho);
+        controles.append(gerar,copiar);
         senhaLabel.appendChild(controles);
       }
       $("#formSenha").type="password";
       const olho=senhaLabel.querySelector("#atlasMostrarSenha");
-      if(olho){olho.textContent="Mostrar senha";olho.setAttribute("aria-pressed","false");}
+      if(olho)atualizarIconeSenha(olho,false);
       const copiar=senhaLabel.querySelector("#atlasCopiarSenha");
       if(copiar)copiar.textContent="Copiar senha";
-      senhaLabel.hidden=!user || !currentIsOwner();
+      senhaLabel.hidden=false;
       let botao=senhaLabel.querySelector("#btnRedefinirSenhaSeparada");
       if(!botao){
         botao=document.createElement("button");
         botao.type="button";
         botao.id="btnRedefinirSenhaSeparada";
         botao.className="btn btn-secondary";
-        botao.style.cssText="display:block;margin-top:12px;padding:11px 16px;border:0;border-radius:9px;background:#a30e1a;color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;max-width:100%;white-space:normal";
+        botao.classList.add("atlas-senha-definir");
         senhaLabel.appendChild(botao);
         botao.onclick=redefinirSenhaSeparada;
       }
       const info=authStatusInfo(user);
-      botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Redefinir senha (legado)":"Ativação pendente — redefinição indisponível";
-      botao.disabled=info.status==='AGUARDANDO';
+      botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Definir senha provisória (legado)":"Ativação pendente — redefinição indisponível";
+      // A Edge Function atlas-senhas autoriza redefinicao de legado somente ao OWNER.
+      const podeRedefinir=info.status==='LEGADO'?currentIsOwner():(currentIsOwner()||hasCurrentPerm("ADMINISTRACAO_DELEGADA"));
+      botao.disabled=!user || info.status==='AGUARDANDO' || !podeRedefinir;
+      botao.title="A redefinição é autorizada no servidor conforme o perfil e as obras.";
       const aviso=senhaLabel.querySelector("#avisoSenhaSeparada")||document.createElement("small");
       aviso.id="avisoSenhaSeparada";
-      aviso.textContent="Digite a senha (8 a 128 caracteres) e clique em Definir. Depois da confirmação, use Mostrar ou Copiar. Salvar usuário não altera credenciais.";
-      aviso.style.cssText="display:block;margin-top:8px;font-size:12px;line-height:1.5;color:#667085";
+      aviso.textContent=!user?"Informe uma senha de 8 a 128 caracteres ou deixe em branco para o servidor gerar uma. A senha será aplicada ao salvar o cadastro.":"Digite uma nova senha de 8 a 128 caracteres e clique em Definir senha provisória. Salvar usuário não redefine a senha.";
+      aviso.className="atlas-senha-aviso";
       if(!aviso.parentNode)senhaLabel.appendChild(aviso);
     }
     atualizarPreviewFoto(user); modal("modalUsuario",true);if(focusPassword&&user)setTimeout(()=>$("#formSenha").focus(),80)
@@ -1616,29 +1667,36 @@
   async function redefinirSenhaSeparada(){
     const id=Number($("#formId")?.value);
     const senha=$("#formSenha")?.value||"";
-    if(!currentIsOwner()||!Number.isSafeInteger(id)||id<=0){alert("Somente o OWNER pode redefinir senhas.");return;}
-    if(senha.length<8||senha.length>128){alert("Informe uma senha provisória de 8 a 128 caracteres.");return;}
+    if((!currentIsOwner()&&!hasCurrentPerm("ADMINISTRACAO_DELEGADA"))||!Number.isSafeInteger(id)||id<=0){alert("Você não possui autorização para redefinir senhas.");return;}
+    if(!atlasSenhaValida(senha)){alert("Use 8 a 128 caracteres e combine pelo menos 2 tipos: maiúsculas, minúsculas, números ou símbolos.");return;}
     if(!confirm("Redefinir SOMENTE a senha deste funcionário? Outras alterações do formulário não serão salvas."))return;
     const botao=$("#btnRedefinirSenhaSeparada");
     if(botao)botao.disabled=true;
     try{
       const {data:{session},error:erroSessao}=await db().auth.getSession();
       if(erroSessao||!session?.access_token)throw new Error("Sessão Supabase Auth inválida. Entre novamente.");
-      const {data:retorno,error:erroFuncao}=await db().functions.invoke("atlas-senhas",{
-        body:{acao:"redefinir",usuario_id:id,senha}
+      const alvo=STATE.selected;
+      if(!alvo || Number(alvo.id)!==id)throw new Error("Selecione novamente o funcionário antes de redefinir a senha.");
+      const status=authStatusInfo(alvo).status;
+      if(status==='AGUARDANDO')throw new Error("Conclua a ativação pendente antes de redefinir a senha.");
+      if(status==='LEGADO' && !currentIsOwner())throw new Error("Somente o OWNER pode redefinir senhas legadas.");
+      const funcaoSenha=status==='LEGADO'?"atlas-senhas":"atlas-admin-usuarios";
+      const acaoSenha=status==='LEGADO'?"redefinir":"redefinir_senha";
+      const {data:retorno,error:erroFuncao}=await db().functions.invoke(funcaoSenha,{
+        body:{acao:acaoSenha,usuario_id:id,senha}
       });
       if(erroFuncao){
         let detalhe="Não foi possível contatar o serviço de senhas.";
-        try{const resposta=await erroFuncao.context?.json?.();detalhe=resposta?.error||detalhe;}catch(_e){}
+        try{const resposta=await erroFuncao.context?.json?.();detalhe=resposta?.erro||resposta?.error||detalhe;}catch(_e){}
         throw new Error(detalhe);
       }
-      if(!retorno?.ok)throw new Error(retorno?.error||"Redefinição não confirmada.");
+      if(!(retorno?.ok===true||retorno?.sucesso===true))throw new Error(retorno?.error||retorno?.erro||"Redefinição não confirmada.");
       // Não apagar a senha antes de o administrador poder conferi-la e copiá-la.
       // openUserModal limpa o campo ao reabrir o formulário.
       const campoSenha=$("#formSenha");
       if(campoSenha)campoSenha.type="password";
       const botaoOlho=$("#atlasMostrarSenha");
-      if(botaoOlho){botaoOlho.textContent="Mostrar senha";botaoOlho.setAttribute("aria-pressed","false");}
+      if(botaoOlho)atualizarIconeSenha(botaoOlho,false);
       toast("Senha provisória definida. Confira e copie antes de fechar este formulário.");
       await load();
     }catch(erro){alert("Senha não redefinida: "+erro.message);}
@@ -1687,7 +1745,11 @@
     if(!payload.nome||!payload.usuario){alert("Informe nome e usuário.");return}
     if(!payload.empresa_id){alert("Selecione a empresa do funcionário.");return}
     const obrasSelecionadas=[...STATE.formWorksDraft].map(id=>STATE.works.find(w=>String(w.id)===String(id)));
-    if(obrasSelecionadas.some(w=>!w || String(w.empresa_id)!==String(payload.empresa_id))){
+    // O OWNER pode autorizar obras de outras empresas sem mudar a empresa principal.
+    if(obrasSelecionadas.some(w=>!w)){
+      alert("Uma das obras selecionadas não foi encontrada. Atualize a lista e tente novamente.");return;
+    }
+    if(!currentIsOwner() && obrasSelecionadas.some(w=>String(w.empresa_id)!==String(payload.empresa_id))){
       alert("As obras de atuação precisam pertencer à empresa selecionada. Ajuste as obras ou a empresa.");return;
     }
     if(!id && !payload.obra_operacional_id){alert("Selecione a base operacional da Expedição.");return}
@@ -1697,8 +1759,8 @@
     }
     // Edição: senha é operação separada, autorizada pelo backend e não pelo RPC de cadastro.
     // Novos usuários nunca recebem senha legada.
-    if(senha && id && !currentIsOwner()) { alert("Somente o OWNER pode redefinir senhas de funcionários."); return; }
-    if(senha && id && senha.length < 8) { alert("A senha provisória precisa ter pelo menos 8 caracteres."); return; }
+    
+    if(senha && !atlasSenhaValida(senha)) { alert("A senha provisória precisa ter de 8 a 128 caracteres."); return; }
 
     if(!id){
       if(!payload.email){alert("Informe o e-mail do funcionário para enviar a ativação segura.");return}
@@ -1715,6 +1777,36 @@
     if(id && senha){
       alert("Para redefinir a senha, use o botão próprio. Salvar usuário não altera credenciais.");
       return;
+    }
+
+    // Credencial exibida somente após confirmação do cadastro pelo servidor.
+    // Não armazenar a senha em localStorage, sessão ou logs.
+    async function mostrarCredenciaisCadastro(usuario, senha){
+      return new Promise(resolve=>{
+        const fundo=document.createElement("div");
+        fundo.style.cssText="position:fixed;inset:0;z-index:2147483647;background:rgba(10,24,46,.72);display:flex;align-items:center;justify-content:center;padding:20px";
+        const caixa=document.createElement("section");
+        caixa.setAttribute("role","dialog");caixa.setAttribute("aria-modal","true");
+        caixa.setAttribute("aria-label","Credenciais provisórias do funcionário");
+        caixa.style.cssText="width:min(480px,100%);background:white;border-radius:18px;padding:26px;box-shadow:0 20px 65px #0004;font-family:inherit;color:#172b4d";
+        const titulo=document.createElement("h2");titulo.textContent="Funcionário cadastrado!";titulo.style.cssText="margin:0 0 12px;color:#a80013;font-size:23px";
+        const aviso=document.createElement("p");aviso.textContent="Copie as credenciais agora. A senha provisória será exibida somente nesta janela. A exigência de troca no primeiro acesso depende do fluxo de autenticação do Atlas e ainda não está garantida.";aviso.style.cssText="font-size:14px;line-height:1.5";
+        const rotulo=document.createElement("div");rotulo.textContent="Usuário";rotulo.style.cssText="font-size:12px;font-weight:700;margin-top:18px";
+        const nome=document.createElement("div");nome.textContent=usuario;nome.style.cssText="padding:10px;background:#f5f7fb;border-radius:8px;overflow-wrap:anywhere";
+        const rotuloSenha=document.createElement("div");rotuloSenha.textContent="Senha provisória";rotuloSenha.style.cssText=rotulo.style.cssText;
+        const campo=document.createElement("input");campo.type="password";campo.value=senha;campo.readOnly=true;campo.autocomplete="off";campo.setAttribute("aria-label","Senha provisória");campo.style.cssText="box-sizing:border-box;width:100%;padding:11px;border:1px solid #d5dce6;border-radius:8px";
+        const acoes=document.createElement("div");acoes.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:20px";
+        const mostrar=document.createElement("button");mostrar.type="button";mostrar.textContent="Mostrar senha";
+        const copiar=document.createElement("button");copiar.type="button";copiar.textContent="Copiar credenciais";
+        const fechar=document.createElement("button");fechar.type="button";fechar.textContent="Fechar";
+        for(const b of [mostrar,copiar,fechar])b.style.cssText="padding:11px 14px;border:1px solid #d5dce6;border-radius:9px;background:#fff;cursor:pointer;font-weight:600";
+        fechar.style.cssText+=";background:#b60018;color:white;border-color:#b60018";
+        mostrar.onclick=()=>{campo.type=campo.type==="password"?"text":"password";mostrar.textContent=campo.type==="password"?"Mostrar senha":"Ocultar senha"};
+        copiar.onclick=async()=>{try{await navigator.clipboard.writeText("Usuário: "+usuario+"\nSenha provisória: "+senha);copiar.textContent="Copiado ✓";}catch(_){campo.type="text";campo.focus();campo.select();alert("Não foi possível copiar automaticamente. Selecione a senha e copie manualmente.");}};
+        const encerrar=()=>{campo.value="";fundo.remove();resolve();};
+        fechar.onclick=encerrar;
+        acoes.append(mostrar,copiar,fechar);caixa.append(titulo,aviso,rotulo,nome,rotuloSenha,campo,acoes);fundo.append(caixa);document.body.append(fundo);fechar.focus();
+      });
     }
 
     if(!id){
@@ -1734,7 +1826,8 @@
             nome:payload.nome,usuario:payload.usuario,email:payload.email,perfil:payload.perfil,
             empresa_id:payload.empresa_id,permissoes:permissoesCadastro,
             obra_operacional_id:payload.obra_operacional_id,
-            obras:[...STATE.formWorksDraft].map(Number)
+            obras:[...STATE.formWorksDraft].map(Number),
+            ...(senha?{senha_provisoria:senha}:{})
           }
         });
         if(erroFuncao){
@@ -1744,11 +1837,13 @@
         }
         if(retorno?.sucesso!==true||!retorno?.funcionario?.id) throw new Error(retorno?.erro||"A Edge Function não confirmou o cadastro.");
         modal("modalUsuario",false);
+        if(retorno.senha_provisoria){
+          await mostrarCredenciaisCadastro(String(retorno.funcionario.usuario||payload.usuario),String(retorno.senha_provisoria));
+        }else{
+          alert("Funcionário cadastrado, mas o servidor não retornou uma senha provisória. Verifique o acesso antes de entregar as credenciais.");
+        }
         await load();
         await selectUser(retorno.funcionario.id);
-        if(retorno.senha_provisoria){
-          alert("Funcionário criado no Supabase Auth.\n\nSenha provisória (exibida uma única vez): "+retorno.senha_provisoria+"\n\nA troca obrigatória de senha ainda precisa ser validada antes de liberar o acesso.");
-        }
         toast(retorno.mensagem||"Usuário criado no Supabase Auth.");
       }catch(erro){alert("Cadastro seguro não concluído: "+erro.message)}
       return;
@@ -1850,7 +1945,7 @@
       if(!row) return;
 
       event.preventDefault();
-      selectUser(row.dataset.userId);
+      if(String(STATE.selected?.id)!==String(row.dataset.userId)) selectUser(row.dataset.userId);
     });
 
     userList?.addEventListener("keydown", event => {
@@ -1862,7 +1957,7 @@
       if(!row) return;
 
       event.preventDefault();
-      selectUser(row.dataset.userId);
+      if(String(STATE.selected?.id)!==String(row.dataset.userId)) selectUser(row.dataset.userId);
     });
     $("#paginacaoUsuarios")?.addEventListener("click", event => {
       const button =

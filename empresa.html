@@ -353,78 +353,20 @@
     </section>
 
     <section class="card edicao-card" id="cardEdicaoEmpresa" data-acao-permissao="EMPRESAS_EDITAR">
-      <h3>✏️ Editar Empresa / Obra / Setor</h3>
-
-      <div class="edicao-aviso">
-        Editando: <b id="editandoEmpresaTitulo">-</b><br>
-        Toda alteração será registrada automaticamente em movimentações.
+      <h3>✏️ Editar obra</h3>
+      <div class="edicao-aviso">Editando somente a obra: <b id="editandoEmpresaTitulo">-</b><br>
+        Os dados da empresa e das demais obras não serão alterados. O status é gerenciado pelo botão específico da listagem.
       </div>
-
       <input type="hidden" id="edit_id">
-
       <div class="empresa-form-grid">
-        <div>
-          <label>Código da Empresa</label>
-          <input id="edit_codigo_empresa">
-        </div>
-
-        <div>
-          <label>Nome da Empresa</label>
-          <input id="edit_nome" oninput="aplicarPadraoBDREdicao()">
-        </div>
-
-        <div>
-          <label>Setor / Obra</label>
-          <input id="edit_setor_obra">
-        </div>
-
-        <div>
-          <label>Código Sienge da Obra</label>
-          <input id="edit_codigo_sienge_obra">
-        </div>
-
-        <div>
-          <label>Tabela de Insumo</label>
-          <select id="edit_tabela_insumo">
-            <option value="2">Tabela 2 (Padrão atual)</option>
-            <option value="3">Tabela 3 (Nova)</option>
-          </select>
-        </div>
-
-        <div>
-          <label>CNPJ</label>
-          <input id="edit_cnpj">
-        </div>
-
-        <div>
-          <label>Cidade</label>
-          <input id="edit_cidade">
-        </div>
-
-        <div>
-          <label>Estado</label>
-          <input id="edit_estado">
-        </div>
-
-        <div>
-          <label>Endereço</label>
-          <input id="edit_endereco">
-        </div>
-
-        <div>
-          <label>CEP</label>
-          <input id="edit_cep">
-        </div>
+        <div><label>Código da obra</label><input id="edit_codigo_obra" maxlength="40" required></div>
+        <div><label>Nome da obra / setor</label><input id="edit_nome_obra" maxlength="200" required></div>
+        <div><label>Código Sienge</label><input id="edit_codigo_sienge_obra" maxlength="40"></div>
+        <div><label>Tabela de insumo</label><select id="edit_tabela_insumo"><option value="2">Tabela 2</option><option value="3">Tabela 3</option></select></div>
       </div>
-
-      <br>
-
-      <label>Observação</label>
-      <textarea id="edit_observacao"></textarea>
-
       <div class="form-actions">
-        <button class="btn-salvar" data-acao-permissao="EMPRESAS_EDITAR" onclick="salvarEdicaoEmpresa()">💾 Salvar alterações</button>
-        <button class="btn-limpar" onclick="cancelarEdicaoEmpresa()">Cancelar edição</button>
+        <button class="btn-salvar" type="button" data-acao-permissao="EMPRESAS_EDITAR" onclick="salvarEdicaoObra()">💾 Salvar obra</button>
+        <button class="btn-limpar" type="button" onclick="cancelarEdicaoEmpresa()">Cancelar</button>
       </div>
     </section>
 
@@ -432,15 +374,15 @@
       <h3>🔎 Buscar empresas</h3>
 
       <div class="empresa-filtro-grid">
-        <input id="buscaEmpresa" placeholder="Buscar por nome, código, setor, cidade..." oninput="renderizarEmpresas()">
+        <input id="buscaEmpresa" placeholder="Buscar por nome, código, setor, cidade..." oninput="agendarBuscaEmpresas()">
 
-        <select id="filtroStatusEmpresa" onchange="renderizarEmpresas()">
+        <select id="filtroStatusEmpresa" onchange="reiniciarPaginacaoEmpresas()">
           <option value="">Todos os status</option>
           <option value="ATIVA">Ativas</option>
           <option value="INATIVA">Inativas</option>
         </select>
 
-        <select id="filtroEstadoEmpresa" onchange="renderizarEmpresas()">
+        <select id="filtroEstadoEmpresa" onchange="reiniciarPaginacaoEmpresas()">
           <option value="">Todos os estados</option>
         </select>
       </div>
@@ -459,6 +401,16 @@
       </div>
 
       <div id="listaEmpresas"></div>
+      <div id="paginacaoEmpresas" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px" aria-live="polite">
+        <span id="resumoPaginacaoEmpresas"></span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label for="tamanhoPaginaEmpresas">Por página</label>
+          <select id="tamanhoPaginaEmpresas" onchange="alterarTamanhoPaginaEmpresas()"><option value="15">15</option><option value="25">25</option><option value="50">50</option></select>
+          <button type="button" class="btn-mini" id="paginaEmpresasAnterior" onclick="mudarPaginaEmpresas(-1)">← Anterior</button>
+          <span id="indicadorPaginaEmpresas"></span>
+          <button type="button" class="btn-mini" id="paginaEmpresasProxima" onclick="mudarPaginaEmpresas(1)">Próxima →</button>
+        </div>
+      </div>
     </section>
 
     <section class="card">
@@ -783,38 +735,84 @@ async function salvarEmpresa(){
     alert(e.message || "Erro ao salvar empresa/obra.");
   }
 }
+// Consultas paginadas no servidor: não carrega toda a tabela de obras.
+let paginaEmpresas = 1;
+let tamanhoPaginaEmpresas = 15;
+let totalObrasEmpresas = 0;
+let tokenConsultaEmpresas = 0;
+let timerBuscaEmpresas = null;
+
+function agendarBuscaEmpresas(){
+  clearTimeout(timerBuscaEmpresas);
+  timerBuscaEmpresas = setTimeout(reiniciarPaginacaoEmpresas, 300);
+}
+function reiniciarPaginacaoEmpresas(){
+  paginaEmpresas = 1;
+  consultarPaginaEmpresas();
+}
+function alterarTamanhoPaginaEmpresas(){
+  tamanhoPaginaEmpresas = Number(document.getElementById("tamanhoPaginaEmpresas").value) || 15;
+  reiniciarPaginacaoEmpresas();
+}
+function mudarPaginaEmpresas(direcao){
+  const limite = Math.max(1, Math.ceil(totalObrasEmpresas / tamanhoPaginaEmpresas));
+  const destino = Math.min(limite, Math.max(1, paginaEmpresas + direcao));
+  if(destino === paginaEmpresas) return;
+  paginaEmpresas = destino;
+  consultarPaginaEmpresas();
+}
+function atualizarPaginacaoEmpresas(){
+  const paginas = Math.max(1, Math.ceil(totalObrasEmpresas / tamanhoPaginaEmpresas));
+  document.getElementById("resumoPaginacaoEmpresas").textContent = `${totalObrasEmpresas} obra(s) encontrada(s)`;
+  document.getElementById("indicadorPaginaEmpresas").textContent = `Página ${paginaEmpresas} de ${paginas}`;
+  document.getElementById("paginaEmpresasAnterior").disabled = paginaEmpresas <= 1;
+  document.getElementById("paginaEmpresasProxima").disabled = paginaEmpresas >= paginas;
+}
 async function carregarEmpresas(){
-
-  const { data, error } = await db()
-    .from("empresas")
-    .select("*")
-    .order("nome");
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
+  // Metadados das empresas são usados para exibir nome/cidade e filtrar por estado.
+  // As obras, que crescem mais rapidamente, são buscadas por páginas no Supabase.
+  const { data, error } = await db().from("empresas").select("*").order("nome");
+  if(error){ alert("Erro ao carregar empresas: " + error.message); return; }
   empresas = data || [];
-
-  const { data: obrasData, error: obrasError } = await db()
-    .from("obras")
-    .select("*")
-    .order("nome");
-
-  if(obrasError){
-    console.warn("Não foi possível carregar obras vinculadas:", obrasError.message);
-    obrasEmpresas = [];
-  }else{
-    obrasEmpresas = obrasData || [];
-  }
-
-  await carregarMovimentacoesEmpresas();
-
   carregarFiltroEstados();
-  renderizarEmpresas();
+  await Promise.all([consultarPaginaEmpresas(), carregarMovimentacoesEmpresas()]);
   aplicarAcoesEmpresaPorPermissao();
   renderizarMovimentacoesEmpresas();
+}
+async function consultarPaginaEmpresas(){
+  const token = ++tokenConsultaEmpresas;
+  const lista = document.getElementById("listaEmpresas");
+  lista.textContent = "Carregando obras...";
+  const termo = campo("buscaEmpresa").trim();
+  const estado = campo("filtroEstadoEmpresa");
+  const status = campo("filtroStatusEmpresa");
+  let consulta = db().from("obras").select("*", {count:"exact"});
+  if(status === "ATIVA") consulta = consulta.eq("ativa", true);
+  if(status === "INATIVA") consulta = consulta.eq("ativa", false);
+  const empresasEstado = estado ? empresas.filter(e => e.estado === estado) : empresas;
+  if(estado){
+    const ids = empresasEstado.map(e => e.id);
+    if(!ids.length){ obrasEmpresas=[]; totalObrasEmpresas=0; renderizarEmpresas(); atualizarPaginacaoEmpresas(); return; }
+    consulta = consulta.in("empresa_id", ids);
+  }
+  if(termo){
+    // Busca pelo código/nome da obra e pelos dados da empresa associada.
+    const termoNormalizado = normalizarTexto(termo);
+    const idsEmpresa = empresasEstado.filter(e => normalizarTexto([e.nome,e.codigo_empresa,e.setor_obra,e.cidade,e.estado,e.cnpj].join(" ")).includes(termoNormalizado)).map(e=>e.id);
+    const seguro = termo.replace(/[%_,().]/g, " ").trim();
+    const filtros = [`nome.ilike.%${seguro}%`, `codigo_obra.ilike.%${seguro}%`];
+    if(idsEmpresa.length) filtros.push(`empresa_id.in.(${idsEmpresa.join(",")})`);
+    consulta = consulta.or(filtros.join(","));
+  }
+  const inicio = (paginaEmpresas - 1) * tamanhoPaginaEmpresas;
+  const {data, error, count} = await consulta.order("nome",{ascending:true}).order("id",{ascending:true}).range(inicio, inicio+tamanhoPaginaEmpresas-1);
+  if(token !== tokenConsultaEmpresas) return;
+  if(error){ console.error("Erro na consulta paginada de obras:",error); lista.textContent = "Erro ao consultar obras: " + error.message; return; }
+  obrasEmpresas = data || [];
+  totalObrasEmpresas = count || 0;
+  if(paginaEmpresas > 1 && !obrasEmpresas.length && totalObrasEmpresas){ paginaEmpresas=Math.max(1,Math.ceil(totalObrasEmpresas/tamanhoPaginaEmpresas)); return consultarPaginaEmpresas(); }
+  renderizarEmpresas();
+  atualizarPaginacaoEmpresas();
 }
 
 function carregarFiltroEstados(){
@@ -834,98 +832,64 @@ function carregarFiltroEstados(){
   select.value = atual;
 }
 
+function escaparTextoEmpresa(valor){
+  return String(valor ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
 function renderizarEmpresas(){
   const lista = document.getElementById("listaEmpresas");
-  const busca = campo("buscaEmpresa").toLowerCase();
-  const filtroStatus = campo("filtroStatusEmpresa");
-  const filtroEstado = campo("filtroEstadoEmpresa");
-
-  lista.innerHTML = "";
-
-  const filtradas = empresas.filter(e => {
-    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
-
-    const texto = `
-      ${e.nome || ""}
-      ${e.codigo_empresa || ""}
-      ${e.setor_obra || ""}
-      ${e.cnpj || ""}
-      ${e.cidade || ""}
-      ${e.estado || ""}
-      ${e.endereco || ""}
-      ${e.cep || ""}
-      ${statusTexto}
-      ${obraDaEmpresa(e.id)?.codigo_sienge || ""}
-      ${obraDaEmpresa(e.id)?.tabela_insumo || ""}
-    `.toLowerCase();
-
-    return texto.includes(busca)
-      && (!filtroStatus || statusTexto === filtroStatus)
-      && (!filtroEstado || e.estado === filtroEstado);
-  });
-
-  if(filtradas.length === 0){
-    lista.innerHTML = `<div class="empresa-linha">Nenhuma empresa encontrada.</div>`;
+  lista.replaceChildren();
+  const empresasPorId = new Map(empresas.map(e => [String(e.id),e]));
+  // Fonte única da listagem: obras. Evita linhas artificiais de empresas legadas.
+  const linhas = obrasEmpresas.map(obra => ({empresa:empresasPorId.get(String(obra.empresa_id)),obra}));
+  if(!linhas.length){
+    lista.innerHTML = '<div class="empresa-linha">Nenhuma obra encontrada.</div>';
     return;
   }
-
-  filtradas.forEach(e => {
-    const statusTexto = e.ativa === false ? "INATIVA" : "ATIVA";
-    const obraVinculada = obraDaEmpresa(e.id);
-
-    lista.innerHTML += `
-      <div class="empresa-linha" id="empresa-${e.id}">
-
-        <div class="empresa-nome" title="${e.nome || "-"}">
-          ${e.nome || "-"}
-        </div>
-
-        <div class="empresa-info">
-          ${e.codigo_empresa || "-"}
-        </div>
-
-        <div class="empresa-info" title="${e.setor_obra || "-"}">
-          ${e.setor_obra || "-"}
-        </div>
-
-        <div class="empresa-info">
-          ${e.cidade || "-"} ${e.estado ? " / " + e.estado : ""}
-        </div>
-
-        <div>
-          <span class="empresa-status ${statusTexto}">
-            ${statusTexto}
-          </span>
-        </div>
-
-        <div class="empresa-acoes">
-          <button class="btn-mini" title="Ver detalhes" onclick="toggleDetalhes(${e.id})">📂 Detalhes</button>
-
-          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EDITAR") ? `
-            <button class="btn-mini btn-editar" title="Editar empresa" onclick="editarEmpresa(${e.id})">✏️ Editar</button>
-          ` : ``}
-
-          ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_INATIVAR") ? `
-            <button class="btn-mini ${e.ativa === false ? "btn-status-success" : "btn-status-warning"}"
-              title="${e.ativa === false ? "Reativar empresa" : "Inativar empresa"}"
-              onclick="alterarStatusEmpresa(${e.id}, ${e.ativa === false ? "true" : "false"})">
-              ${e.ativa === false ? "✅ Reativar" : "🚫 Inativar"}
-            </button>
-          ` : ``}
-        </div>
-
-        <div class="empresa-detalhes">
-          <b>CNPJ:</b> ${e.cnpj || "-"}<br>
-          <b>Endereço:</b> ${e.endereco || "-"}<br>
-          <b>CEP:</b> ${e.cep || "-"}<br>
-          <b>Código Sienge da obra:</b> ${obraVinculada?.codigo_sienge || "-"}<br>
-          <b>Tabela de insumo:</b> ${obraVinculada?.tabela_insumo || "3"}<br>
-          <b>Observação:</b> ${e.observacao || "-"}<br>
-        </div>
-
+  linhas.forEach(({empresa:e,obra:o}) => {
+    const esc = escaparTextoEmpresa;
+    const status = (o.ativa !== false && o.ativo !== false) ? "ATIVA" : "INATIVA";
+    const linha = document.createElement("div");
+    linha.className = "empresa-linha";
+    linha.innerHTML = `
+      <div class="empresa-nome" title="${esc(e?.nome || 'Empresa não localizada')}">${esc(e?.nome || 'Empresa não localizada')}</div>
+      <div class="empresa-info">${esc(o.codigo_obra || '-')}</div>
+      <div class="empresa-info" title="${esc(o.nome || '-')}">${esc(o.nome || '-')}</div>
+      <div class="empresa-info">${esc(e?.cidade || '-')} ${e?.estado ? ' / ' + esc(e.estado) : ''}</div>
+      <div><span class="empresa-status ${status}">${status}</span></div>
+      <div class="empresa-acoes">
+        <button class="btn-mini" type="button" data-detalhes>📂 Detalhes</button>
+        ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EDITAR") ? `<button class="btn-mini btn-editar" type="button" data-editar>✏️ Editar obra</button>` : ''}
+        ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_INATIVAR") ? `<button class="btn-mini ${status === 'ATIVA' ? 'btn-status-warning' : 'btn-status-success'}" type="button" data-status>${status === 'ATIVA' ? '🚫 Inativar obra' : '✅ Reativar obra'}</button>` : ''}
       </div>
-    `;
+      <div class="empresa-detalhes">
+        <b>ID da obra:</b> ${esc(o.id)}<br>
+        <b>Código da obra:</b> ${esc(o.codigo_obra || '-')}<br>
+        <b>CNPJ da empresa:</b> ${esc(e?.cnpj || '-')}<br>
+        <b>Endereço da empresa:</b> ${esc(e?.endereco || '-')}<br>
+        <b>Código Sienge:</b> ${esc(o.codigo_sienge || '-')}<br>
+        <b>Tabela de insumo:</b> ${esc(o.tabela_insumo ?? '-')}
+      </div>`;
+    linha.querySelector('[data-detalhes]').addEventListener('click', () => linha.classList.toggle('aberta'));
+    linha.querySelector('[data-editar]')?.addEventListener('click', () => editarObra(o.id));
+    linha.querySelector('[data-status]')?.addEventListener('click', () => alterarStatusObra(o.id, status === "INATIVA"));
+    lista.appendChild(linha);
   });
+}
+
+async function alterarStatusObra(id, ativar){
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR", "Sem permissão para alterar status de obras.")) return;
+  const obra = obrasEmpresas.find(o => Number(o.id) === Number(id));
+  if(!obra) return alert("Obra não encontrada na página atual.");
+  const acao = ativar ? "REATIVAR" : "INATIVAR";
+  if(!confirm(`${acao} somente a obra ${obra.codigo_obra} - ${obra.nome} (ID ${obra.id})?\n\nA empresa e as demais obras não serão alteradas.`)) return;
+  const {data,error} = await db().from("obras").update({ativa:ativar,ativo:ativar}).eq("id",obra.id).eq("empresa_id",obra.empresa_id).select("id,ativa,ativo");
+  if(error || !data?.length){ alert("Não foi possível alterar a obra: " + (error?.message || "Nenhum registro alterado.")); return; }
+  try{ await registrarMovimentacaoEmpresa("ALTERACAO_STATUS_OBRA", null, `Obra ID ${obra.id} | ${obra.codigo_obra} - ${obra.nome} | ${acao}`); }
+  catch(e){ console.warn("Falha ao registrar movimentação da obra:",e); }
+  await consultarPaginaEmpresas();
 }
 
 function toggleDetalhes(id){
@@ -952,7 +916,7 @@ async function carregarMovimentacoesEmpresas(){
   const { data, error } = await db()
     .from("movimentacoes")
     .select("*")
-    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA", "EXCLUSAO_EMPRESA"])
+    .in("tipo", ["CADASTRO_EMPRESA", "EDICAO_EMPRESA", "ALTERACAO_STATUS_EMPRESA", "EXCLUSAO_EMPRESA", "EDICAO_OBRA", "ALTERACAO_STATUS_OBRA"])
     .order("id", { ascending:false })
     .limit(10);
 
@@ -991,248 +955,67 @@ function formatarData(data){
   return d.toLocaleString("pt-BR");
 }
 
-async function alterarStatusEmpresa(id, status){
-
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR", "Você não tem permissão para inativar ou reativar empresas.")) return;
-
-  const empresaAntes = empresas.find(e => String(e.id) === String(id));
-
-  if(!empresaAntes){
-    alert("Empresa não encontrada.");
-    return;
-  }
-
-  const statusAtual = empresaAntes?.ativa === false ? "INATIVA" : "ATIVA";
-  const statusNovo = status === true ? "ATIVA" : "INATIVA";
-
-  const confirma = confirm(
-    `Confirma ${statusNovo === "ATIVA" ? "REATIVAR" : "INATIVAR"} a empresa "${empresaAntes?.nome || "-"}"?`
-  );
-
-  if(!confirma) return;
-
-  const respEmpresa = await db()
-    .from("empresas")
-    .update({
-      ativa: status,
-      ativo: status
-    })
-    .eq("id", id)
-    .select();
-
-  if(respEmpresa.error){
-    alert("Erro ao alterar empresa: " + respEmpresa.error.message);
-    return;
-  }
-
-  if(!respEmpresa.data || respEmpresa.data.length === 0){
-    alert("Nenhuma linha foi alterada no banco.");
-    return;
-  }
-
-  const respObras = await db()
-    .from("obras")
-    .update({
-      ativa: status,
-      ativo: status
-    })
-    .eq("empresa_id", id);
-
-  if(respObras.error){
-    alert("Erro ao alterar obras: " + respObras.error.message);
-    return;
-  }
-
-  await registrarMovimentacaoEmpresa(
-    "ALTERACAO_STATUS_EMPRESA",
-    empresaAntes,
-    `Empresa: ${empresaAntes?.nome || "-"} | Status anterior: ${statusAtual} | Status novo: ${statusNovo}`
-  );
-
-  alert("Status alterado com sucesso.");
-
-  await carregarEmpresas();
-}
-
-function editarEmpresa(id){
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para editar empresas.")) return;
-
-  const empresa = empresas.find(e => String(e.id) === String(id));
-
-  if(!empresa){
-    alert("Empresa não encontrada.");
-    return;
-  }
-
-  document.getElementById("edit_id").value = empresa.id;
-  document.getElementById("edit_codigo_empresa").value = empresa.codigo_empresa || "";
-  document.getElementById("edit_nome").value = empresa.nome || "";
-  document.getElementById("edit_setor_obra").value = empresa.setor_obra || "";
-  document.getElementById("edit_cnpj").value = empresa.cnpj || "";
-  document.getElementById("edit_cidade").value = empresa.cidade || "";
-  document.getElementById("edit_estado").value = empresa.estado || "";
-  document.getElementById("edit_endereco").value = empresa.endereco || "";
-  document.getElementById("edit_cep").value = empresa.cep || "";
-  document.getElementById("edit_observacao").value = empresa.observacao || "";
-
-  const obraVinculada = obraDaEmpresa(empresa.id);
-  document.getElementById("edit_codigo_sienge_obra").value = obraVinculada?.codigo_sienge || "";
-  document.getElementById("edit_tabela_insumo").value = obraVinculada?.tabela_insumo || 3;
-
-  document.getElementById("editandoEmpresaTitulo").innerText = `${empresa.nome || "-"} | ${empresa.codigo_empresa || "-"}`;
-
+// Edição individual: nenhuma gravação é feita na tabela empresas.
+function editarObra(id){
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Sem permissão para editar obras.")) return;
+  const obra = obrasEmpresas.find(o => Number(o.id) === Number(id));
+  if(!obra) return alert("Obra não encontrada na página atual.");
+  document.getElementById("edit_id").value = obra.id;
+  document.getElementById("edit_codigo_obra").value = obra.codigo_obra || "";
+  document.getElementById("edit_nome_obra").value = obra.nome || "";
+  document.getElementById("edit_codigo_sienge_obra").value = obra.codigo_sienge || "";
+  document.getElementById("edit_tabela_insumo").value = String(obra.tabela_insumo ?? 2);
+  document.getElementById("editandoEmpresaTitulo").textContent = `${obra.codigo_obra || '-'} - ${obra.nome || '-'} (ID ${obra.id})`;
   document.getElementById("cardEdicaoEmpresa").classList.add("ativo");
-
-  document.getElementById("cardEdicaoEmpresa").scrollIntoView({
-    behavior:"smooth",
-    block:"start"
-  });
+  document.getElementById("cardEdicaoEmpresa").scrollIntoView({behavior:"smooth",block:"start"});
 }
-
 function cancelarEdicaoEmpresa(){
   document.getElementById("cardEdicaoEmpresa").classList.remove("ativo");
   document.getElementById("edit_id").value = "";
 }
-
-function compararAlteracoesEmpresa(antes, depois){
-  const campos = [
-    ["codigo_empresa", "Código"],
-    ["nome", "Nome"],
-    ["setor_obra", "Setor/Obra"],
-    ["cnpj", "CNPJ"],
-    ["cidade", "Cidade"],
-    ["estado", "Estado"],
-    ["endereco", "Endereço"],
-    ["cep", "CEP"],
-    ["observacao", "Observação"]
-  ];
-
+async function salvarEdicaoObra(){
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Sem permissão para editar obras.")) return;
+  const id = Number(campo("edit_id"));
+  const obra = obrasEmpresas.find(o => Number(o.id) === id);
+  if(!obra) return alert("Obra não localizada. Atualize a lista antes de editar.");
+  const codigo_obra = campo("edit_codigo_obra");
+  const nome = campo("edit_nome_obra");
+  const codigo_sienge = campo("edit_codigo_sienge_obra");
+  const tabela_insumo = Number(campo("edit_tabela_insumo"));
+  if(!codigo_obra || !nome) return alert("Informe o código e o nome da obra.");
+  if(![2,3].includes(tabela_insumo)) return alert("Tabela de insumo inválida.");
   const alteracoes = [];
-
-  campos.forEach(([campo, rotulo]) => {
-    const valorAntes = String(antes?.[campo] || "").trim();
-    const valorDepois = String(depois?.[campo] || "").trim();
-
-    if(valorAntes !== valorDepois){
-      alteracoes.push(`${rotulo}: "${valorAntes || "-"}" → "${valorDepois || "-"}"`);
-    }
-  });
-
-  return alteracoes;
-}
-
-async function salvarEdicaoEmpresa(){
-
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Você não tem permissão para salvar edição de empresas.")) return;
-
-  const id = campo("edit_id");
-
-  if(!id){
-    alert("Nenhuma empresa selecionada para edição.");
-    return;
+  for(const [rotulo,antigo,novo] of [
+    ["Código",obra.codigo_obra,codigo_obra],
+    ["Nome",obra.nome,nome],
+    ["Código Sienge",obra.codigo_sienge,codigo_sienge],
+    ["Tabela de insumo",obra.tabela_insumo,tabela_insumo]
+  ]) if(String(antigo ?? "") !== String(novo ?? "")) alteracoes.push(`${rotulo}: ${antigo ?? '-'} → ${novo || '-'}`);
+  if(!alteracoes.length) return alert("Nenhuma alteração realizada.");
+  // Impede duplicação de código dentro da mesma empresa, sem modificar outros cadastros.
+  if(String(obra.codigo_obra ?? "") !== codigo_obra){
+    const {data:iguais,error:erroBusca} = await db().from("obras").select("id")
+      .eq("empresa_id",obra.empresa_id).eq("codigo_obra",codigo_obra).neq("id",obra.id).limit(1);
+    if(erroBusca) return alert("Não foi possível verificar o código: " + erroBusca.message);
+    if(iguais?.length) return alert("Já existe outra obra com este código na mesma empresa.");
   }
-
-  const empresaAntes = empresas.find(e => String(e.id) === String(id));
-
-  const empresaEditada = {
-    codigo_empresa: campo("edit_codigo_empresa"),
-    nome: campo("edit_nome"),
-    setor_obra: campo("edit_setor_obra"),
-    cnpj: campo("edit_cnpj"),
-    cidade: campo("edit_cidade"),
-    estado: campo("edit_estado"),
-    endereco: campo("edit_endereco"),
-    cep: campo("edit_cep"),
-    observacao: campo("edit_observacao")
-  };
-
-  if(!empresaEditada.nome){
-    alert("Informe o nome da empresa.");
-    return;
-  }
-
-  if(!empresaEditada.codigo_empresa){
-    alert("Informe o código da empresa.");
-    return;
-  }
-
-  if(!empresaEditada.setor_obra){
-    alert("Informe o setor / obra.");
-    return;
-  }
-
-  const alteracoes = compararAlteracoesEmpresa(empresaAntes, empresaEditada);
-
-  if(alteracoes.length === 0){
-    alert("Nenhuma alteração foi feita.");
-    return;
-  }
-
-  const confirma = confirm(
-    "Confirma salvar as alterações desta empresa?\n\n" +
-    alteracoes.join("\n")
-  );
-
-  if(!confirma) return;
-
-  const { error } = await db()
-    .from("empresas")
-    .update(empresaEditada)
-    .eq("id", id);
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  const obraAtual = obraDaEmpresa(id);
-  const payloadObra = {
-    nome: empresaEditada.setor_obra,
-    codigo_obra: empresaEditada.codigo_empresa,
-    codigo_sienge: campo("edit_codigo_sienge_obra"),
-    tabela_insumo: Number(campo("edit_tabela_insumo") || 3),
-    ativa: true
-  };
-
-  if(obraAtual?.id){
-    const { error: erroObra } = await db()
-      .from("obras")
-      .update(payloadObra)
-      .eq("id", obraAtual.id);
-
-    if(erroObra){
-      alert("Empresa alterada, mas erro ao atualizar obra: " + erroObra.message);
-      return;
-    }
-  }else{
-    const { error: erroObraNova } = await db()
-      .from("obras")
-      .insert([{...payloadObra, empresa_id:id}]);
-
-    if(erroObraNova){
-      alert("Empresa alterada, mas erro ao criar obra vinculada: " + erroObraNova.message);
-      return;
-    }
-  }
-
-  await db()
-    .from("obras")
-    .update({
-      nome: empresaEditada.setor_obra,
-      codigo_obra: empresaEditada.codigo_empresa
-    })
-    .eq("empresa_id", id);
-
-  await registrarMovimentacaoEmpresa(
-    "EDICAO_EMPRESA",
-    empresaAntes,
-    `Empresa: ${empresaAntes?.nome || "-"} | Alterações: ${alteracoes.join(" | ")}`
-  );
-
-  alert("Empresa alterada com sucesso.");
-
-  cancelarEdicaoEmpresa();
-  carregarEmpresas();
+  if(!confirm(`Salvar alterações SOMENTE na obra ID ${obra.id}?\n\n${alteracoes.join("\n")}\n\nA empresa e as demais obras permanecerão inalteradas.`)) return;
+  const botao = document.querySelector('#cardEdicaoEmpresa .btn-salvar');
+  botao.disabled = true;
+  try{
+    const {data,error} = await db().from("obras")
+      .update({codigo_obra,nome,codigo_sienge,tabela_insumo})
+      .eq("id",obra.id).eq("empresa_id",obra.empresa_id)
+      .select("id,codigo_obra,nome,codigo_sienge,tabela_insumo");
+    if(error || data?.length !== 1) throw new Error(error?.message || "Nenhuma obra foi atualizada.");
+    try{
+      await registrarMovimentacaoEmpresa("EDICAO_OBRA", null, `Obra ID ${obra.id} | ${alteracoes.join(" | ")}`);
+    }catch(erroLog){console.warn("Obra atualizada, mas falhou registro da movimentação:",erroLog);}
+    cancelarEdicaoEmpresa();
+    await consultarPaginaEmpresas();
+    alert("Obra atualizada com sucesso. Nenhuma outra obra foi alterada.");
+  }catch(e){console.error(e);alert("Erro ao editar obra: " + e.message);}
+  finally{botao.disabled = false;}
 }
 
 async function excluirEmpresa(id){

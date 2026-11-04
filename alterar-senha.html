@@ -75,6 +75,10 @@ let modoTrocaAuth = false;
 let sessaoAcessoSeguro = null;
 
 function bancoBDR(){ return window.client || window.supabaseClient || window.clientSupabase || null; }
+function atlasSenhaValida(valor){
+  if(typeof valor!=="string" || valor.length<8 || valor.length>128 || /[\u0000-\u001f\u007f]/.test(valor))return false;
+  return [/[a-z]/.test(valor),/[A-Z]/.test(valor),/[0-9]/.test(valor),/[^A-Za-z0-9]/.test(valor)].filter(Boolean).length>=2;
+}
 function usuarioLocalBDR(){ try{return JSON.parse(localStorage.getItem("usuario_logado") || localStorage.getItem("usuarioLogado") || "null");}catch(_e){return null;} }
 function msg(txt, cor="red"){ const el=document.getElementById("mensagem"); if(el){el.style.color=cor;el.innerText=txt||"";} }
 function destinoPadraoBDR(usuario){ const perms=String(usuario?.permissoes||"").toUpperCase(); if(perms.includes("DASHBOARD_VER"))return "atlas.html#m=dashboard";if(perms.includes("PATRIMONIO_VER"))return "atlas.html#m=patrimonio";if(perms.includes("ESTOQUE_VER"))return "atlas.html#m=estoque";if(perms.includes("EXPEDICAO_VER"))return "atlas.html#m=expedicao";if(perms.includes("RELATORIOS_VER"))return "atlas.html#m=relatorios";return "atlas.html#m=dashboard"; }
@@ -112,7 +116,8 @@ async function prepararPagina(){
 
   const usuarioLocal=usuarioLocalBDR();
   if(sessaoAcessoSeguro?.user && usuarioLocal?.auth_user_id === sessaoAcessoSeguro.user.id &&
-      String(usuarioLocal.auth_status || '').toUpperCase() === 'ATIVO'){
+      String(usuarioLocal.auth_status || '').toUpperCase() === 'ATIVO' &&
+      sessaoAcessoSeguro.user.app_metadata?.atlas_troca_senha_pendente === true){
     modoTrocaAuth=true;
     document.getElementById("tituloPagina").innerText="Troca obrigatória de senha";
     document.getElementById("subtituloPagina").innerText="Confirme sua senha provisória e escolha uma senha pessoal.";
@@ -167,7 +172,7 @@ function configurarCamposSenha(){
   const validacao=document.getElementById('validacaoConfirmacao');
 
   function validarVisualmente(){
-    const minimo=(modoMigracaoInterna||modoAcessoSeguro)?8:6;
+    const minimo=8;
     const valorNova=nova.value;
     const valorConfirmacao=confirmar.value;
 
@@ -270,13 +275,13 @@ async function salvarTrocaAuth(){
   const novaSenha=document.getElementById("novaSenha").value;
   const confirmarSenha=document.getElementById("confirmarSenha").value;
   if(!usuario?.id || !senhaAtual){msg("Informe sua senha atual.");return;}
-  if(novaSenha.length<8 || novaSenha.length>128 || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Confira a nova senha: 8 a 128 caracteres, diferente da atual e com confirmação igual.");return;}
+  if(!atlasSenhaValida(novaSenha) || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Use 8 a 128 caracteres e pelo menos 2 tipos de caracteres; a nova senha deve ser diferente da atual e coincidir com a confirmação.");return;}
   const btn=document.getElementById("btnSalvar");btn.disabled=true;
   try{
     const {data}=await banco.auth.getSession();
     if(!data?.session?.access_token){msg("Sessão segura expirada. Faça login novamente.");return;}
-    const {data:retorno,error:erroFuncao}=await banco.functions.invoke('atlas-senhas',{
-      body:{acao:'trocar-auth',senha_atual:senhaAtual,nova_senha:novaSenha}
+    const {data:retorno,error:erroFuncao}=await banco.functions.invoke('atlas-admin-usuarios',{
+      body:{acao:'concluir_senha_provisoria',senha_atual:senhaAtual,nova_senha:novaSenha}
     });
     if(erroFuncao){
       let detalhe='Não foi possível alterar a senha.';
@@ -294,7 +299,7 @@ async function salvarSenhaLegada(){
   const novaSenha=document.getElementById("novaSenha").value;
   const confirmarSenha=document.getElementById("confirmarSenha").value;
   if(!usuario?.id || !senhaAtual){msg("Sessão expirada ou senha atual ausente.");return;}
-  if(novaSenha.length<8 || novaSenha.length>128 || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Confira a nova senha: 8 a 128 caracteres, diferente da atual e com confirmação igual.");return;}
+  if(!atlasSenhaValida(novaSenha) || novaSenha===senhaAtual || novaSenha!==confirmarSenha){msg("Use 8 a 128 caracteres e pelo menos 2 tipos de caracteres; a nova senha deve ser diferente da atual e coincidir com a confirmação.");return;}
   const btn=document.getElementById("btnSalvar");btn.disabled=true;
   try{
     const {data:retorno,error:erroFuncao}=await bancoBDR().functions.invoke('atlas-senhas',{

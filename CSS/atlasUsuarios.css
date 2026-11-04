@@ -1701,3 +1701,23 @@
 
 /* Acesso seguro - migração gradual Supabase Auth */
 .atlas-auth-card{display:flex;align-items:center;gap:14px;margin:0 0 16px;padding:14px 16px;border:1px solid #dfe5ec;border-radius:14px;background:#fff}.atlas-auth-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#f1f5f9;font-size:18px}.atlas-auth-info{min-width:0;display:flex;flex:1;flex-direction:column;gap:2px}.atlas-auth-info small{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-weight:800}.atlas-auth-info strong{font-size:14px;color:#172033}.atlas-auth-info span{font-size:12px;color:#64748b;line-height:1.35}.atlas-auth-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.atlas-auth-badge{display:inline-flex;align-items:center;justify-content:center;min-width:82px;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.05em}.atlas-auth-badge.legacy{background:#f1f5f9;color:#475569}.atlas-auth-badge.pending{background:#fff7ed;color:#9a3412}.atlas-auth-badge.active{background:#ecfdf5;color:#047857}@media(max-width:760px){.atlas-auth-card{align-items:flex-start;flex-wrap:wrap}.atlas-auth-actions{width:100%;justify-content:flex-start;padding-left:56px}}
+
+/* Modal de usuários: controles de senha compactos e acessíveis. */
+#modalUsuario .atlas-form-grid{gap:9px 12px;padding:12px 17px}
+#modalUsuario .atlas-form-grid input,
+#modalUsuario .atlas-form-grid select{height:36px;margin-top:4px}
+#modalUsuario .atlas-modal header,
+#modalUsuario .atlas-modal footer{padding:10px 16px}
+#modalUsuario .atlas-senha-label{min-width:0}
+#modalUsuario .atlas-senha-campo{position:relative;display:block;width:100%}
+#modalUsuario .atlas-senha-campo #formSenha{padding-right:46px}
+#modalUsuario .atlas-senha-olho{position:absolute;right:2px;top:4px;width:36px;height:36px;display:grid;place-items:center;border:0;background:transparent;color:#536276;border-radius:8px;cursor:pointer}
+#modalUsuario .atlas-senha-olho svg{width:19px;height:19px}
+#modalUsuario .atlas-senha-olho:hover{background:#f1f5f9;color:#a30e1a}
+#modalUsuario .atlas-senha-olho:focus-visible{outline:2px solid #a30e1a;outline-offset:1px}
+#modalUsuario .atlas-senha-acoes{display:flex;gap:7px;flex-wrap:nowrap;margin-top:7px}
+#modalUsuario .atlas-senha-botao{flex:1;min-width:0;white-space:nowrap;border:1px solid #d5dce6;background:#fff;color:#344054;border-radius:8px;padding:8px 6px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#modalUsuario .atlas-senha-definir{display:block;width:100%;margin-top:8px;padding:9px 8px;border:0;border-radius:8px;background:#a30e1a;color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:normal}
+#modalUsuario .atlas-senha-definir:disabled{opacity:.55;cursor:not-allowed}
+#modalUsuario .atlas-senha-aviso{display:block;margin-top:6px;font-size:11px;line-height:1.35;color:#667085;font-weight:400}
+@media(max-width:760px){#modalUsuario .atlas-senha-acoes{flex-wrap:wrap}#modalUsuario .atlas-senha-botao{min-width:110px}}

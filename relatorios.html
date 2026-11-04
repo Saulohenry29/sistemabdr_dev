@@ -1360,6 +1360,85 @@ button,
 </style>
 
 <link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css?v=20260629-menu-unico-66">
+<style>
+/* Atlas — seleção múltipla de produtos do relatório */
+.atlas-relatorio-busca-wrap{display:flex;gap:8px;min-width:0}
+.atlas-relatorio-busca-wrap>input{flex:1;min-width:0}
+.atlas-relatorio-seletor-btn{flex:none;display:flex;align-items:center;gap:7px;border:1px solid #bfd4ee;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800;border-radius:10px;padding:9px 12px;white-space:nowrap}
+.atlas-relatorio-seletor-btn:hover{background:#dbeafe}
+#atlasRelatorioQtdSelecao:not([hidden]){background:#a4161a;color:white;padding:2px 7px;border-radius:99px}
+.atlas-relatorio-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:2147483500;align-items:center;justify-content:center;padding:20px}
+.atlas-relatorio-modal-bg.ativo{display:flex}
+.atlas-relatorio-modal{display:flex;flex-direction:column;width:min(820px,96vw);height:min(750px,92vh);background:#fff;border-radius:20px;box-shadow:0 25px 80px rgba(0,0,0,.28);overflow:hidden}
+.atlas-relatorio-modal-header{display:flex!important;justify-content:space-between;align-items:center;padding:21px 24px;border-bottom:1px solid #e2e8f0;background:#fff!important}
+.atlas-relatorio-modal-header h2{margin:0;font-size:19px;color:#9f171d}.atlas-relatorio-modal-header p{margin:5px 0 0;font-size:12px;color:#64748b}
+.atlas-relatorio-fechar{font-size:25px;line-height:1;background:#f1f5f9;color:#475569;border-radius:10px;padding:5px 12px}
+.atlas-relatorio-modal-body{padding:18px 24px;display:flex;flex-direction:column;min-height:0;flex:1}
+.atlas-relatorio-modal-search{display:flex;align-items:center;gap:9px;border:1px solid #cbd5e1;border-radius:12px;padding:0 12px;color:#64748b}
+.atlas-relatorio-modal-search input{border:0!important;outline:0!important;flex:1;min-height:44px;font-size:14px}
+.atlas-relatorio-modal-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eff6ff;border-radius:10px;margin:12px 0 8px;padding:11px;color:#1d4ed8;font-size:12px;font-weight:700}
+.atlas-relatorio-modal-tools label{display:flex;align-items:center;gap:9px;cursor:pointer}.atlas-relatorio-modal-tools input,.atlas-relatorio-produto input{width:17px;height:17px;accent-color:#2563eb;flex:none}
+.atlas-relatorio-modal-lista{overflow:auto;min-height:0;flex:1}
+.atlas-relatorio-produto{display:flex;align-items:center;gap:13px;padding:12px 10px;border-bottom:1px solid #e2e8f0;cursor:pointer;color:#0f172a}
+.atlas-relatorio-produto:hover{background:#f8fafc}.atlas-relatorio-produto:has(input:checked){background:#eff6ff}
+.atlas-relatorio-produto-nome{flex:1;min-width:0;font-size:13px;font-weight:750;overflow-wrap:anywhere}.atlas-relatorio-produto-nome small{display:block;color:#64748b;font-size:11px;font-weight:400;margin-top:3px}
+.atlas-relatorio-produto-qtd{font-size:11px;font-weight:800;color:#475569;background:#f1f5f9;border-radius:9px;padding:6px 9px;white-space:nowrap}
+.atlas-relatorio-modal-vazio{padding:30px;text-align:center;color:#64748b;font-size:13px}
+.atlas-relatorio-modal-footer{display:flex;align-items:center;gap:9px;padding:16px 24px;border-top:1px solid #e2e8f0;background:#f8fafc}
+.atlas-relatorio-selecionados{margin-right:auto}.atlas-relatorio-selecionados strong{display:block;color:#0f172a;font-size:13px}.atlas-relatorio-selecionados small{color:#64748b;font-size:11px}
+.atlas-relatorio-limpar,.atlas-relatorio-cancelar{background:#fff;color:#334155;border:1px solid #cbd5e1;font-weight:700}
+.atlas-relatorio-aplicar{background:#a4161a;font-weight:800}
+@media(max-width:720px){.atlas-relatorio-busca-wrap{flex-direction:column}.atlas-relatorio-modal-bg{padding:6px}.atlas-relatorio-modal{width:100%;height:95vh}.atlas-relatorio-modal-header,.atlas-relatorio-modal-body,.atlas-relatorio-modal-footer{padding:12px}.atlas-relatorio-modal-footer{flex-wrap:wrap}.atlas-relatorio-selecionados{width:100%}}
+@media print{#atlasModalProdutosRelatorio{display:none!important}}
+</style>
+<style>
+/* Atlas — filtros compactos dos relatórios */
+.card.filtros{position:relative}
+.atlas-filtros-compactos{display:flex;flex-direction:column;gap:10px;margin:10px 0 13px}
+.atlas-filtros-principal{display:grid;grid-template-columns:minmax(230px,2fr) minmax(115px,.75fr) minmax(160px,1.15fr) minmax(155px,1fr);gap:9px;align-items:end}
+#filtroObra[hidden]{display:none!important}\n.atlas-filtros-compactos label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;font-weight:700;color:#64748b}
+.atlas-filtros-compactos input,.atlas-filtros-compactos select{height:38px!important;min-height:38px!important;padding:7px 10px!important;font-size:12px!important;border-radius:9px!important;min-width:0}
+.atlas-filtros-compactos input:focus,.atlas-filtros-compactos select:focus,.atlas-relatorio-modal-search input:focus{outline:none!important;border-color:#94a3b8!important;box-shadow:none!important}
+.atlas-filtro-acao{height:38px;min-width:0;width:100%;display:flex;justify-content:center;align-items:center;gap:7px;padding:7px 10px!important;border-radius:9px!important;background:#f8fafc!important;border:1px solid #cbd5e1!important;color:#1e3a5f!important;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden}
+.atlas-filtro-acao:hover{background:#eff6ff!important}
+.atlas-produtos-acao{background:#eff6ff!important;border-color:#bfdbfe!important;color:#1d4ed8!important}
+.atlas-filtro-acao span{overflow:hidden;text-overflow:ellipsis}
+.atlas-filtros-secundarios{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
+.atlas-filtros-secundarios>label:nth-child(1){width:185px}
+.atlas-filtros-secundarios>label:nth-child(2){width:155px}
+.atlas-filtros-secundarios>label:nth-child(3){width:170px}
+.atlas-filtro-limpar{height:38px;background:#f1f5f9!important;color:#475569!important;border:1px solid #cbd5e1!important;border-radius:9px!important;font-weight:800;font-size:12px}
+.atlas-periodo-wrap{position:relative;min-width:0}
+.atlas-periodo-popover{position:absolute;right:0;top:44px;z-index:1000;width:310px;max-width:calc(100vw - 40px);padding:14px;background:white;border:1px solid #e2e8f0;border-radius:13px;box-shadow:0 15px 40px #0f172a30}
+.atlas-periodo-popover[hidden]{display:none!important}
+.atlas-periodo-atalhos{display:flex;gap:6px;margin-bottom:12px}
+.atlas-periodo-atalhos button{flex:1;padding:8px 4px;background:#eff6ff;color:#1d4ed8;font-size:11px}
+.atlas-periodo-popover label{margin:8px 0}
+.atlas-periodo-limpar{width:100%;background:#64748b;margin-top:8px;font-size:12px}
+.atlas-relatorio-modal-search:focus-within{border-color:#94a3b8!important;box-shadow:none!important}
+.atlas-relatorio-modal-search input{outline:none!important;box-shadow:none!important}
+.atlas-obras-overlay{display:none;position:fixed;inset:0;z-index:2147483601;background:#0f172ab0;align-items:center;justify-content:center;padding:14px}
+.atlas-obras-overlay.ativo{display:flex}
+.atlas-obras-dialog{width:min(680px,96vw);max-height:88vh;display:flex;flex-direction:column;background:white;border-radius:18px;overflow:hidden;box-shadow:0 25px 75px #0f172a55}
+.atlas-obras-dialog header{display:flex!important;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid #e2e8f0}
+.atlas-obras-dialog header h2{font-size:18px;color:#a4161a;margin:0}
+.atlas-obras-dialog header p{font-size:12px;color:#64748b;margin:4px 0 0}
+.atlas-obras-dialog header button{background:#f1f5f9;color:#475569;font-size:22px;width:36px;height:36px}
+.atlas-obras-conteudo{padding:15px 20px;overflow:auto}
+.atlas-obras-conteudo>input{height:41px;margin-bottom:10px}
+.atlas-obras-marcar{display:flex;align-items:center;gap:8px;padding:10px;background:#eff6ff;border-radius:9px;font-size:12px;color:#1d4ed8;font-weight:700}
+.atlas-obras-marcar input,.atlas-obra-item input{width:16px!important;height:16px!important;flex:none}
+.atlas-obras-lista{max-height:48vh;overflow:auto}
+.atlas-obra-item{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #e2e8f0;font-size:12px;cursor:pointer}
+.atlas-obra-item:hover{background:#f8fafc}
+.atlas-obras-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:12px}
+.atlas-obras-dialog footer>div{display:flex;gap:7px}
+.atlas-obras-clear,.atlas-obras-cancel{background:#f1f5f9;color:#334155}
+.atlas-obras-apply{background:#a4161a}
+@media(max-width:950px){.atlas-filtros-principal{grid-template-columns:1fr 1fr}.atlas-filtros-secundarios>label{flex:1;min-width:145px}}
+@media(max-width:550px){.atlas-filtros-principal{grid-template-columns:1fr 1fr}.atlas-filtro-pesquisa{grid-column:1/-1}.atlas-filtros-secundarios>label{width:100%!important}.atlas-obras-dialog footer>div{flex-wrap:wrap}}
+@media print{.atlas-obras-overlay,.atlas-periodo-popover{display:none!important}}
+</style>
 </head>
 
 <body>
@@ -1399,55 +1478,74 @@ button,
   </div>
 </div>
 
+
+<!-- Seletor múltiplo: utiliza os patrimônios já carregados e autorizados no relatório -->
+<div id="atlasModalObrasRelatorio" class="atlas-obras-overlay" aria-hidden="true" onclick="if(event.target===this)atlasFecharModalObras()">
+  <section class="atlas-obras-dialog" role="dialog" aria-modal="true" aria-labelledby="atlasTituloObras">
+    <header><div><h2 id="atlasTituloObras"><i class="fa-solid fa-building"></i> Selecionar obras e setores</h2><p>Marque várias obras para montar seu relatório.</p></div><button type="button" onclick="atlasFecharModalObras()" aria-label="Fechar">×</button></header>
+    <div class="atlas-obras-conteudo">
+      <input id="atlasPesquisarObras" placeholder="Pesquisar obra ou código..." oninput="atlasRenderizarObras()" autocomplete="off">
+      <label class="atlas-obras-marcar"><input type="checkbox" id="atlasMarcarObras" onchange="atlasSelecionarObrasVisiveis(this.checked)"> Selecionar resultados da pesquisa</label>
+      <div id="atlasListaObras" class="atlas-obras-lista"></div>
+    </div>
+    <footer><strong id="atlasQtdObras">0 obras selecionadas</strong><div><button type="button" class="atlas-obras-clear" onclick="atlasLimparObrasModal()">Limpar</button><button type="button" class="atlas-obras-cancel" onclick="atlasFecharModalObras()">Cancelar</button><button type="button" class="atlas-obras-apply" onclick="atlasAplicarObras()">Aplicar filtros</button></div></footer>
+  </section>
+</div>
+<div id="atlasModalProdutosRelatorio" class="atlas-relatorio-modal-bg" aria-hidden="true" onclick="if(event.target===this)fecharSeletorProdutosRelatorio()">
+  <section class="atlas-relatorio-modal" role="dialog" aria-modal="true" aria-labelledby="atlasSeletorTitulo">
+    <header class="atlas-relatorio-modal-header">
+      <div><h2 id="atlasSeletorTitulo"><i class="fa-solid fa-boxes-stacked"></i> Selecionar produtos e patrimônios</h2><p>Encontre e selecione vários itens para montar seu relatório.</p></div>
+      <button type="button" class="atlas-relatorio-fechar" aria-label="Fechar" onclick="fecharSeletorProdutosRelatorio()">&times;</button>
+    </header>
+    <div class="atlas-relatorio-modal-body">
+      <div class="atlas-relatorio-modal-search"><i class="fa-solid fa-magnifying-glass"></i><input id="atlasPesquisaProdutosRelatorio" type="search" placeholder="Digite armario, geladeira, código..." oninput="renderizarSeletorProdutosRelatorio()" autocomplete="off"></div>
+      <div class="atlas-relatorio-modal-tools"><label><input id="atlasMarcarPaginaProdutos" type="checkbox" onchange="marcarResultadosProdutosRelatorio(this.checked)"> Selecionar resultados da pesquisa</label><span id="atlasContagemResultadosProdutos"></span></div>
+      <div id="atlasListaProdutosRelatorio" class="atlas-relatorio-modal-lista"></div>
+    </div>
+    <footer class="atlas-relatorio-modal-footer"><div class="atlas-relatorio-selecionados"><strong id="atlasTotalProdutosSelecionados">0 produtos selecionados</strong><small>Pesquise outro nome sem perder as seleções.</small></div><button type="button" class="atlas-relatorio-limpar" onclick="limparSelecaoProdutosModal()">Limpar seleção</button><button type="button" class="atlas-relatorio-cancelar" onclick="fecharSeletorProdutosRelatorio()">Cancelar</button><button type="button" class="atlas-relatorio-aplicar" onclick="aplicarSeletorProdutosRelatorio()"><i class="fa-solid fa-check"></i> Aplicar filtros</button></footer>
+  </section>
+</div>
+
 <div class="card filtros">
   <h3>🔎 Filtros do Relatório</h3>
 
-  <div class="grid">
-    <input id="busca" placeholder="Buscar por nome, código, obra..." oninput="resetarPaginaRelatorio(); renderizarRelatorio()">
-
-    <input type="date" id="dataInicio" title="Data inicial" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-
-    <input type="date" id="dataFim" title="Data final" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-
-    <select id="filtroObra" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-      <option value="">Todas as obras/setores</option>
-    </select>
-
-    <select id="filtroOrigem" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-      <option value="">Todos os cadastros</option>
-      <option value="NOVO">Somente novos do sistema</option>
-      <option value="LEGADO">Somente patrimônio antigo/legado</option>
-      <option value="PAT">Somente códigos PAT</option>
-      <option value="ANTIGO">Somente códigos antigos</option>
-    </select>
-
-    <select id="filtroStatus" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-      <option value="">Todos os status</option>
-      <option value="ESTOQUE">Estoque</option>
-      <option value="EM_USO">Em uso</option>
-      <option value="MANUTENCAO">Manutenção</option>
-      <option value="BAIXADO">Baixado</option>
-    </select>
-
-    <select id="filtroTipo" onchange="resetarPaginaRelatorio(); renderizarRelatorio()">
-      <option value="">Todos os tipos</option>
-      <option value="ELETRONICO">Eletrônico</option>
-      <option value="VEICULO">Veículo</option>
-      <option value="FERRAMENTA">Ferramenta</option>
-      <option value="MAQUINA">Máquina agrícola</option>
-      <option value="UTILIDADE_OPERACIONAL">Utilidade operacional</option>
-      <option value="MOBILIARIO">Mobiliário</option>
-      <option value="OUTRO">Outro</option>
-    </select>
-  </div>
-
-  <br>
-
-  <div class="sienge-mini-actions">
-    <button class="btn-mini red" onclick="periodoRelatorio('HOJE')">Hoje</button>
-    <button class="btn-mini dark" onclick="periodoRelatorio('7DIAS')">7 dias</button>
-    <button class="btn-mini dark" onclick="periodoRelatorio('30DIAS')">30 dias</button>
-    <button class="btn-mini gray" onclick="limparPeriodoRelatorio()">Limpar período</button>
+  <div class="atlas-filtros-compactos">
+    <div class="atlas-filtros-principal">
+      <label class="atlas-filtro-pesquisa"><span>Pesquisa rápida</span><input id="busca" placeholder="Nome, código, obra..." oninput="resetarPaginaRelatorio(); renderizarRelatorio()"></label>
+      <button type="button" class="atlas-filtro-acao atlas-produtos-acao" onclick="abrirSeletorProdutosRelatorio()"><i class="fa-solid fa-boxes-stacked"></i> Produtos <span id="atlasRelatorioQtdSelecao" hidden></span></button>
+      <button type="button" class="atlas-filtro-acao" id="atlasAbrirObras" onclick="atlasAbrirModalObras()"><i class="fa-solid fa-building"></i> <span id="atlasObrasResumo">Todas as obras</span></button>
+      <div class="atlas-periodo-wrap">
+        <button type="button" class="atlas-filtro-acao" id="atlasBotaoPeriodo" onclick="atlasAlternarPeriodo()"><i class="fa-regular fa-calendar"></i> <span id="atlasPeriodoResumo">Todo o período</span></button>
+        <div class="atlas-periodo-popover" id="atlasPeriodoPopover" hidden>
+          <div class="atlas-periodo-atalhos">
+            <button type="button" onclick="periodoRelatorio('HOJE');atlasAtualizarPeriodo()">Hoje</button>
+            <button type="button" onclick="periodoRelatorio('7DIAS');atlasAtualizarPeriodo()">7 dias</button>
+            <button type="button" onclick="periodoRelatorio('30DIAS');atlasAtualizarPeriodo()">30 dias</button>
+          </div>
+          <label>Data inicial<input type="date" id="dataInicio" onchange="resetarPaginaRelatorio();renderizarRelatorio();atlasAtualizarPeriodo()"></label>
+          <label>Data final<input type="date" id="dataFim" onchange="resetarPaginaRelatorio();renderizarRelatorio();atlasAtualizarPeriodo()"></label>
+          <button type="button" class="atlas-periodo-limpar" onclick="limparPeriodoRelatorio();atlasAtualizarPeriodo()">Limpar período</button>
+        </div>
+      </div>
+    </div>
+    <div class="atlas-filtros-secundarios">
+      <label><span>Cadastro</span><select id="filtroOrigem" onchange="resetarPaginaRelatorio();renderizarRelatorio()">
+        <option value="">Todos os cadastros</option><option value="NOVO">Novos do sistema</option>
+        <option value="LEGADO">Patrimônio legado</option><option value="PAT">Códigos PAT</option><option value="ANTIGO">Códigos antigos</option>
+      </select></label>
+      <label><span>Status</span><select id="filtroStatus" onchange="resetarPaginaRelatorio();renderizarRelatorio()">
+        <option value="">Todos os status</option><option value="ESTOQUE">Estoque</option>
+        <option value="EM_USO">Em uso</option><option value="MANUTENCAO">Manutenção</option><option value="BAIXADO">Baixado</option>
+      </select></label>
+      <label><span>Tipo</span><select id="filtroTipo" onchange="resetarPaginaRelatorio();renderizarRelatorio()">
+        <option value="">Todos os tipos</option><option value="ELETRONICO">Eletrônico</option>
+        <option value="VEICULO">Veículo</option><option value="FERRAMENTA">Ferramenta</option>
+        <option value="MAQUINA">Máquina agrícola</option><option value="UTILIDADE_OPERACIONAL">Utilidade operacional</option>
+        <option value="MOBILIARIO">Mobiliário</option><option value="OUTRO">Outro</option>
+      </select></label>
+      <button type="button" class="atlas-filtro-limpar" onclick="limparFiltros();atlasLimparObras();atlasAtualizarPeriodo()">Limpar filtros</button>
+    </div>
+    <select id="filtroObra" aria-label="Filtro de obra compatível" onchange="resetarPaginaRelatorio();renderizarRelatorio()" hidden><option value="">Todas as obras/setores</option></select>
   </div>
 
   <div class="botoes relatorio-actions">
@@ -2494,10 +2592,176 @@ function renderizarTabelaPaginaRelatorio(){
   });
   atualizarPaginacaoRelatorio();
 }
+// Busca original e seleção avançada usam a mesma normalização.
+function atlasNormalizarBuscaProduto(texto){
+  return String(texto ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+const atlasProdutosSelecionadosRelatorio = new Set();
+let atlasProdutosRascunhoRelatorio = new Set();
+function atlasCatalogoProdutosRelatorio(){
+  const grupos = new Map();
+  // Fonte: somente o conjunto de patrimônios já carregado para o usuário.
+  for(const p of patrimonios){
+    const nome = String(p.nome_bem ?? "").trim();
+    if(!nome) continue;
+    const chave = atlasNormalizarBuscaProduto(nome);
+    if(!chave) continue;
+    if(!grupos.has(chave)) grupos.set(chave,{chave,nome,quantidade:0,codigos:[]});
+    const grupo=grupos.get(chave);
+    grupo.quantidade++;
+    if(grupo.codigos.length<3){
+      const codigo=String(p.codigo_qr || p.codigo_antigo || p.codigo_bem || "").trim();
+      if(codigo)grupo.codigos.push(codigo);
+    }
+  }
+  return [...grupos.values()].sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+}
+function abrirSeletorProdutosRelatorio(){
+  atlasProdutosRascunhoRelatorio = new Set(atlasProdutosSelecionadosRelatorio);
+  const modal=document.getElementById("atlasModalProdutosRelatorio");
+  document.getElementById("atlasPesquisaProdutosRelatorio").value="";
+  modal.classList.add("ativo");modal.setAttribute("aria-hidden","false");
+  renderizarSeletorProdutosRelatorio();
+  document.getElementById("atlasPesquisaProdutosRelatorio").focus();
+}
+function fecharSeletorProdutosRelatorio(){
+  const modal=document.getElementById("atlasModalProdutosRelatorio");
+  modal.classList.remove("ativo");modal.setAttribute("aria-hidden","true");
+}
+function atlasResultadosPesquisaProdutos(){
+  const termo=atlasNormalizarBuscaProduto(document.getElementById("atlasPesquisaProdutosRelatorio")?.value);
+  return atlasCatalogoProdutosRelatorio().filter(g=>g.chave.includes(termo)||g.codigos.some(c=>atlasNormalizarBuscaProduto(c).includes(termo)));
+}
+function renderizarSeletorProdutosRelatorio(){
+  const lista=document.getElementById("atlasListaProdutosRelatorio");
+  if(!lista)return;
+  lista.replaceChildren();
+  const resultados=atlasResultadosPesquisaProdutos();
+  document.getElementById("atlasContagemResultadosProdutos").textContent=`${resultados.length} encontrado(s)`;
+  const marcar=document.getElementById("atlasMarcarPaginaProdutos");
+  marcar.checked=resultados.length>0&&resultados.every(g=>atlasProdutosRascunhoRelatorio.has(g.chave));
+  marcar.indeterminate=!marcar.checked&&resultados.some(g=>atlasProdutosRascunhoRelatorio.has(g.chave));
+  if(!resultados.length){
+    const vazio=document.createElement("div");vazio.className="atlas-relatorio-modal-vazio";
+    vazio.textContent="Nenhum produto encontrado. Tente outro nome ou código.";lista.append(vazio);
+  }
+  // Renderiza apenas os primeiros 300 nomes por pesquisa para manter o modal responsivo.
+  resultados.slice(0,300).forEach(g=>{
+    const linha=document.createElement("label");linha.className="atlas-relatorio-produto";
+    const check=document.createElement("input");check.type="checkbox";check.checked=atlasProdutosRascunhoRelatorio.has(g.chave);
+    check.addEventListener("change",()=>{
+      if(check.checked)atlasProdutosRascunhoRelatorio.add(g.chave);else atlasProdutosRascunhoRelatorio.delete(g.chave);
+      renderizarSeletorProdutosRelatorio();
+    });
+    const nome=document.createElement("span");nome.className="atlas-relatorio-produto-nome";nome.textContent=g.nome;
+    const codigo=document.createElement("small");codigo.textContent=g.codigos.length?`Ex.: ${g.codigos.join(" · ")}`:"Patrimônio cadastrado";nome.append(codigo);
+    const qtd=document.createElement("span");qtd.className="atlas-relatorio-produto-qtd";qtd.textContent=`${g.quantidade} item(ns)`;
+    linha.append(check,nome,qtd);lista.append(linha);
+  });
+  document.getElementById("atlasTotalProdutosSelecionados").textContent=`${atlasProdutosRascunhoRelatorio.size} produto(s) selecionado(s)`;
+}
+function marcarResultadosProdutosRelatorio(marcar){
+  // Marca todos os nomes encontrados, inclusive além das primeiras 300 linhas exibidas.
+  atlasResultadosPesquisaProdutos().forEach(g=>marcar?atlasProdutosRascunhoRelatorio.add(g.chave):atlasProdutosRascunhoRelatorio.delete(g.chave));
+  renderizarSeletorProdutosRelatorio();
+}
+function limparSelecaoProdutosModal(){atlasProdutosRascunhoRelatorio.clear();renderizarSeletorProdutosRelatorio();}
+function atualizarContadorProdutosRelatorio(){
+  const el=document.getElementById("atlasRelatorioQtdSelecao");if(!el)return;
+  el.hidden=atlasProdutosSelecionadosRelatorio.size===0;
+  el.textContent=String(atlasProdutosSelecionadosRelatorio.size);
+}
+function aplicarSeletorProdutosRelatorio(){
+  atlasProdutosSelecionadosRelatorio.clear();
+  atlasProdutosRascunhoRelatorio.forEach(chave=>atlasProdutosSelecionadosRelatorio.add(chave));
+  fecharSeletorProdutosRelatorio();atualizarContadorProdutosRelatorio();
+  resetarPaginaRelatorio();renderizarRelatorio();
+}
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&document.getElementById("atlasModalProdutosRelatorio")?.classList.contains("ativo"))fecharSeletorProdutosRelatorio();
+});
+
+// Filtros compactos: seleção múltipla de obras independente da seleção Sienge.
+const atlasObrasFiltradas = new Set();
+let atlasObrasRascunho = new Set();
+function atlasNomeObra(o){return [o.codigo_obra || o.codigo_sienge || "",o.nome || ""].filter(Boolean).join(" - ")}
+function atlasAbrirModalObras(){
+  atlasObrasRascunho=new Set(atlasObrasFiltradas);
+  document.getElementById("atlasPesquisarObras").value="";
+  document.getElementById("atlasModalObrasRelatorio").classList.add("ativo");
+  document.getElementById("atlasModalObrasRelatorio").setAttribute("aria-hidden","false");
+  atlasRenderizarObras();
+  document.getElementById("atlasPesquisarObras").focus();
+}
+function atlasFecharModalObras(){
+  document.getElementById("atlasModalObrasRelatorio").classList.remove("ativo");
+  document.getElementById("atlasModalObrasRelatorio").setAttribute("aria-hidden","true");
+}
+function atlasObrasVisiveis(){
+  const termo=atlasNormalizarBuscaProduto(document.getElementById("atlasPesquisarObras").value);
+  return obras.filter(o=>atlasNormalizarBuscaProduto(atlasNomeObra(o)).includes(termo));
+}
+function atlasRenderizarObras(){
+  const lista=document.getElementById("atlasListaObras");
+  lista.replaceChildren();
+  const visiveis=atlasObrasVisiveis();
+  visiveis.forEach(o=>{
+    const label=document.createElement("label");
+    label.className="atlas-obra-item";
+    const box=document.createElement("input");box.type="checkbox";
+    box.checked=atlasObrasRascunho.has(String(o.id));
+    box.addEventListener("change",()=>{
+      if(box.checked)atlasObrasRascunho.add(String(o.id));
+      else atlasObrasRascunho.delete(String(o.id));
+      atlasAtualizarResumoObrasModal();
+    });
+    const nome=document.createElement("span");nome.textContent=atlasNomeObra(o);
+    label.append(box,nome);lista.appendChild(label);
+  });
+  if(!visiveis.length){const vazio=document.createElement("p");vazio.textContent="Nenhuma obra encontrada.";lista.appendChild(vazio)}
+  atlasAtualizarResumoObrasModal();
+}
+function atlasAtualizarResumoObrasModal(){
+  document.getElementById("atlasQtdObras").textContent=atlasObrasRascunho.size+" obra(s) selecionada(s)";
+  const visiveis=atlasObrasVisiveis();
+  const marcadas=visiveis.filter(o=>atlasObrasRascunho.has(String(o.id))).length;
+  const check=document.getElementById("atlasMarcarObras");
+  check.checked=visiveis.length>0 && marcadas===visiveis.length;
+  check.indeterminate=marcadas>0 && marcadas<visiveis.length;
+}
+function atlasSelecionarObrasVisiveis(marcar){
+  atlasObrasVisiveis().forEach(o=>marcar?atlasObrasRascunho.add(String(o.id)):atlasObrasRascunho.delete(String(o.id)));
+  atlasRenderizarObras();
+}
+function atlasLimparObrasModal(){atlasObrasRascunho.clear();atlasRenderizarObras()}
+function atlasAplicarObras(){
+  atlasObrasFiltradas.clear();atlasObrasRascunho.forEach(id=>atlasObrasFiltradas.add(id));
+  document.getElementById("filtroObra").value="";
+  atlasAtualizarResumoObras();
+  atlasFecharModalObras();resetarPaginaRelatorio();renderizarRelatorio();
+}
+function atlasAtualizarResumoObras(){
+  document.getElementById("atlasObrasResumo").textContent=atlasObrasFiltradas.size?atlasObrasFiltradas.size+" obra(s) selecionada(s)":"Todas as obras";
+}
+function atlasLimparObras(){atlasObrasFiltradas.clear();atlasAtualizarResumoObras()}
+function atlasAlternarPeriodo(){
+  const el=document.getElementById("atlasPeriodoPopover");
+  el.hidden=!el.hidden;
+}
+function atlasAtualizarPeriodo(){
+  const ini=document.getElementById("dataInicio").value;
+  const fim=document.getElementById("dataFim").value;
+  const fmt=v=>v?v.split("-").reverse().join("/"):"";
+  document.getElementById("atlasPeriodoResumo").textContent=ini||fim?[fmt(ini),fmt(fim)].filter(Boolean).join(" até "):"Todo o período";
+}
+document.addEventListener("click",e=>{
+  const wrap=document.querySelector(".atlas-periodo-wrap");
+  if(wrap && !wrap.contains(e.target))document.getElementById("atlasPeriodoPopover").hidden=true;
+});
 function renderizarRelatorio(){
   if(modoRelatorioHistorico){ modoRelatorioHistorico=false; }
 
-  const busca = valor("busca").toLowerCase();
+  const busca = atlasNormalizarBuscaProduto(valor("busca"));
   const status = valor("filtroStatus");
   const tipo = valor("filtroTipo");
   const obra = valor("filtroObra");
@@ -2525,9 +2789,9 @@ function renderizarRelatorio(){
       ${obraObj?.nome || ""}
       ${obraObj?.codigo_obra || ""}
       ${obraObj?.codigo_sienge || ""}
-    `.toLowerCase();
-
-    const passaBusca = texto.includes(busca);
+    `;
+    const passaBusca = atlasNormalizarBuscaProduto(texto).includes(busca);
+    const passaProdutos = atlasProdutosSelecionadosRelatorio.size===0 || atlasProdutosSelecionadosRelatorio.has(atlasNormalizarBuscaProduto(p.nome_bem));
     const passaStatus = !status || p.status === status;
     const passaTipo = !tipo || p.tipo_item === tipo;
 
@@ -2540,7 +2804,9 @@ function renderizarRelatorio(){
       obrasMarcadas.length === 0 || obrasMarcadas.includes(String(p.obra_id));
 
     const passaObraFiltro =
-      obrasMarcadas.length > 0 ? true : (!obra || String(p.obra_id) === String(obra));
+      obrasMarcadas.length > 0 ? true : (atlasObrasFiltradas.size > 0
+        ? atlasObrasFiltradas.has(String(p.obra_id))
+        : (!obra || String(p.obra_id) === String(obra)));
 
     let passaOrigem = true;
     const origemItem = tipoOrigemCadastro(p);
@@ -2552,7 +2818,7 @@ function renderizarRelatorio(){
 
     const passaPeriodo = dentroPeriodoRelatorio(p);
 
-    return passaBusca && passaStatus && passaTipo && passaObraMarcada && passaObraFiltro && passaOrigem && passaPeriodo;
+    return passaBusca && passaProdutos && passaStatus && passaTipo && passaObraMarcada && passaObraFiltro && passaOrigem && passaPeriodo;
   });
 
   filtradosAtuais.sort(compararIdentificacaoRelatorio);
@@ -2598,6 +2864,9 @@ function renderizarMovimentacoes(){
 }
 
 function limparFiltros(){
+  atlasLimparObras();
+  atlasProdutosSelecionadosRelatorio.clear();
+  atualizarContadorProdutosRelatorio();
   document.getElementById("busca").value = "";
   document.getElementById("filtroStatus").value = "";
   document.getElementById("filtroTipo").value = "";

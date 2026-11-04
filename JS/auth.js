@@ -110,6 +110,8 @@ async function fazerLogin(){
 
     const migrado = String(usuario.auth_status || "LEGADO").toUpperCase() === "ATIVO" && Boolean(usuario.auth_user_id);
 
+    let trocaPendenteAuth = false;
+
     if(migrado){
       // O login visível pode ser "saulo"; o Auth usa o e-mail vinculado internamente.
       if(!usuario.email){
@@ -130,6 +132,8 @@ async function fazerLogin(){
         return;
       }
 
+      trocaPendenteAuth = authData.user.app_metadata?.atlas_troca_senha_pendente === true;
+
       // Segurança crítica: o UUID autenticado deve ser exatamente o vinculado ao cadastro Atlas.
       if(String(authData.user.id).toLowerCase() !== String(usuario.auth_user_id).toLowerCase()){
         await db.auth.signOut();
@@ -144,6 +148,10 @@ async function fazerLogin(){
       }
     }
 
+    // app_metadata é definida pelo servidor e não pode ser alterada pelo usuário.
+    if(migrado && trocaPendenteAuth){
+      usuario.trocar_senha = true;
+    }
     const usuarioSessao = salvarSessaoAtlas(usuario, login);
 
     try{

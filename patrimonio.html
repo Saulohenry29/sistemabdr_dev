@@ -523,20 +523,42 @@ html.atlas-embedded .bdr-main{
 <div id="lista"></div>
 </div>
 
+
+<style id="atlasTransporteEtapaCss">
+#atlasRemessaTransporteModal .atlas-remessa-modal{box-shadow:0 24px 70px rgba(15,23,42,.28);border-radius:18px;overflow:hidden}
+#atlasRemessaTransporteModal .atlas-remessa-grid{padding:20px;gap:14px}
+#atlasRemessaTransporteModal input{width:100%;box-sizing:border-box}
+#atlasRemessaTransporteModal .atlas-remessa-footer{gap:12px}
+</style>
+<div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasRemessaTransporteModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.voltarTransporte()">
+  <div class="atlas-remessa-modal" style="max-width:720px;width:min(720px,calc(100vw - 24px))">
+    <div class="atlas-remessa-head"><div><h2>🚚 Preparar transporte</h2><p>Informe quem transportará os patrimônios antes de confirmar a remessa.</p></div><button type="button" class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.voltarTransporte()">✕</button></div>
+    <div class="atlas-remessa-grid">
+      <div class="wide"><label>Motorista / responsável *</label><input id="atlasRemessaMotorista" placeholder="Nome completo do motorista" autocomplete="off"></div>
+      <div><label>Veículo / transportadora</label><input id="atlasRemessaVeiculo" placeholder="Veículo ou transportadora" autocomplete="off"></div>
+      <div><label>Placa *</label><input id="atlasRemessaPlaca" placeholder="ABC-1D23" maxlength="8" autocomplete="off"></div>
+    </div>
+    <div class="atlas-remessa-footer"><span id="atlasRemessaTransporteResumo">Revise os dados antes de confirmar.</span><div class="atlas-remessa-acoes"><button type="button" class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarTransporte()">← Voltar</button><button type="button" class="atlas-remessa-btn primary" id="atlasBtnConfirmarTransporte" onclick="AtlasPatrimonioRemessas.confirmarTransporte()">🚚 Confirmar transferência</button></div></div>
+  </div>
+</div>
 <div aria-hidden="true" class="atlas-remessa-modal-bg" id="atlasNovaRemessaModal" onclick="if(event.target===this) AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">
 <div class="atlas-remessa-modal">
 <div class="atlas-remessa-head"><div><h2>↔ Nova Transferência Patrimonial</h2><p>Selecione destino e encaminhe os patrimônios para a Expedição.</p></div><button class="atlas-remessa-fechar" onclick="AtlasPatrimonioRemessas.fechar('atlasNovaRemessaModal')">✕</button></div>
 <div class="atlas-remessa-grid">
 <div><label>Código</label><input id="atlasRemessaCodigo" readonly></div>
-<div><label>Status após recebimento</label><select id="atlasRemessaStatusDestino"><option value="MANTER">Manter status anterior</option><option value="EM_USO">Em uso</option><option value="ESTOQUE">Estoque</option></select></div>
+
 <div><label>Obra de origem</label><select id="atlasRemessaOrigem" disabled><option value="">Origem definida pelos itens selecionados</option></select></div>
-<div><label>Obra de destino</label><select id="atlasRemessaDestino"><option value="">Selecione o destino</option></select></div>
-<div style="display:none"><label>Motorista / transportador</label><input id="atlasRemessaMotorista"></div>
-<div style="display:none"><label>Veículo / placa</label><input id="atlasRemessaVeiculo"><input id="atlasRemessaPlaca"></div>
+<div class="atlas-remessa-destino-campo"><label for="atlasRemessaDestinoBusca">Obra de destino</label>
+<select id="atlasRemessaDestino" class="atlas-remessa-select-valor" tabindex="-1" aria-hidden="true"><option value="">Selecione o destino</option></select>
+<div class="atlas-remessa-combo" id="atlasRemessaDestinoCombo">
+<input id="atlasRemessaDestinoBusca" type="text" autocomplete="off" role="combobox" aria-controls="atlasRemessaDestinoOpcoes" aria-expanded="false" aria-autocomplete="list" placeholder="Pesquisar código ou nome da obra...">
+<div id="atlasRemessaDestinoOpcoes" class="atlas-remessa-combo-opcoes" role="listbox" hidden></div>
+</div></div>
+
 <div class="wide"><label>Observação</label><textarea id="atlasRemessaObs" placeholder="Motivo da transferência, referência ou observação..."></textarea></div>
 </div>
 <div class="atlas-remessa-itens atlas-remessa-itens-revisao"><div class="atlas-remessa-itens-tools"><strong id="atlasRemessaSelecionados">0 patrimônio(s) selecionado(s)</strong><span>Itens escolhidos diretamente na tela de Patrimônio.</span></div><div class="atlas-remessa-lista-itens" id="atlasRemessaListaItens"></div></div>
-<div class="atlas-remessa-footer"><span>A transferência será encaminhada para a Expedição. A obra só muda após o recebimento no destino.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.enviar()">↔ Enviar para Expedição</button></div></div>
+<div class="atlas-remessa-footer"><span>A transferência será encaminhada para a Expedição. A obra só muda após o recebimento no destino.</span><div class="atlas-remessa-acoes"><button class="atlas-remessa-btn" onclick="AtlasPatrimonioRemessas.voltarSelecao()">← Voltar à seleção</button><button class="atlas-remessa-btn primary" id="atlasBtnEnviarRemessa" onclick="AtlasPatrimonioRemessas.prepararTransporte()">🚚 Preparar transporte</button></div></div>
 </div></div>
 
 </main>

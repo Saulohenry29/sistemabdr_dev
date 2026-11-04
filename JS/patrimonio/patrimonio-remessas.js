@@ -168,11 +168,9 @@
       return;
     }
     box.innerHTML=lista.map(p=>`<div class="atlas-remessa-item atlas-remessa-item-revisao">
-      <span>✓</span>
-      <strong>${esc(p.codigo_qr||'-')}</strong>
-      <span>${esc(p.nome_bem||'-')}</span>
-      <span class="atlas-remessa-item-local">${esc(p.localizacao||obraNome(p.obra_id))}</span>
-      <span class="atlas-remessa-item-status">${esc(p.status||'-')}</span>
+      <span class="atlas-remessa-item-check">✓</span>
+      <div class="atlas-remessa-item-ident"><strong>${esc(p.codigo_qr||'-')}</strong><span>${esc(p.nome_bem||'-')}</span></div>
+      <div class="atlas-remessa-item-info"><span class="atlas-remessa-item-local">${esc(p.localizacao||obraNome(p.obra_id))}</span><span class="atlas-remessa-item-status">${esc(p.status||'-')}</span></div>
     </div>`).join('');
     atualizarSelecionados();
   }
@@ -252,6 +250,47 @@
     api().renderizar?.();
   }
 
+  function configurarBuscaDestino(){
+    const select=document.getElementById('atlasRemessaDestino');
+    const input=document.getElementById('atlasRemessaDestinoBusca');
+    const lista=document.getElementById('atlasRemessaDestinoOpcoes');
+    if(!select||!input||!lista)return;
+    const opcoes=[...select.options].filter(o=>o.value&&!o.disabled).map(o=>({id:o.value,nome:o.textContent.trim()}));
+    const atualizar=()=>{
+      const atual=opcoes.find(o=>o.id===select.value);
+      input.value=atual?atual.nome:'';
+    };
+    const fechar=()=>{lista.hidden=true;input.setAttribute('aria-expanded','false');};
+    const mostrar=()=>{
+      const filtro=input.value.trim().toLocaleLowerCase('pt-BR');
+      const filtradas=opcoes.filter(o=>o.nome.toLocaleLowerCase('pt-BR').includes(filtro)).slice(0,70);
+      lista.replaceChildren();
+      if(!filtradas.length){
+        const vazio=document.createElement('div');vazio.className='atlas-remessa-combo-vazio';vazio.textContent='Nenhuma obra encontrada';lista.append(vazio);
+      }
+      filtradas.forEach(o=>{
+        const botao=document.createElement('button');
+        botao.type='button';botao.className='atlas-remessa-combo-opcao';
+        botao.setAttribute('role','option');botao.textContent=o.nome;
+        botao.addEventListener('mousedown',e=>e.preventDefault());
+        botao.addEventListener('click',()=>{
+          select.value=o.id;atualizar();fechar();select.dispatchEvent(new Event('change',{bubbles:true}));
+        });
+        lista.append(botao);
+      });
+      lista.hidden=false;input.setAttribute('aria-expanded','true');
+    };
+    input.onfocus=()=>{input.select();mostrar();};
+    input.oninput=()=>{select.value='';mostrar();};
+    input.onkeydown=e=>{
+      if(e.key==='Escape'){fechar();atualizar();input.blur();}
+      if(e.key==='Enter'&&!lista.hidden){const primeiro=lista.querySelector('button');if(primeiro){e.preventDefault();primeiro.click();}}
+    };
+    input.onblur=()=>{setTimeout(()=>{if(!lista.contains(document.activeElement)){fechar();atualizar();}},120);};
+    select.onchange=()=>{atualizar();fechar();};
+    atualizar();fechar();
+  }
+
   function prepararModal(){
     const origem=state.obraOrigemSelecao;
     document.getElementById('atlasRemessaCodigo').value=gerarCodigo();
@@ -262,7 +301,7 @@
     document.getElementById('atlasRemessaVeiculo').value='';
     document.getElementById('atlasRemessaPlaca').value='';
     document.getElementById('atlasRemessaObs').value='';
-    document.getElementById('atlasRemessaStatusDestino').value='MANTER';
+    configurarBuscaDestino();
     const destino=document.getElementById('atlasRemessaDestino');
     if(destino && origem){
       [...destino.options].forEach(opt=>{ if(String(opt.value)===String(origem)) opt.disabled=true; });
@@ -286,7 +325,7 @@
     setTimeout(()=>busca?.focus(),40);
   }
 
-  async function abrirComPatrimonios(ids){
+  async function abrirComPatrimonios(ids, opcoes={}){
     if(!podeMovimentar()){ alert('Você não tem permissão para movimentar patrimônios.'); return; }
     if(!(await schemaOk())) return mensagemSchema();
     const lista=(ids||[]).map(patrimonioPorId).filter(Boolean);
@@ -299,6 +338,22 @@
     lista.forEach(p=>state.itensSelecionados.add(String(p.id)));
     prepararModal();
     renderItensNova();
+    if(opcoes.destinoId != null){
+      const destino=document.getElementById('atlasRemessaDestino');
+      const id=String(opcoes.destinoId);
+      const autorizado=[...destino.options].some(o=>o.value===id && !o.disabled);
+      if(!autorizado){
+        aviso('A obra de destino não está autorizada para esta transferência.');
+        return;
+      }
+      destino.value=id;
+      destino.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    if(opcoes.observacao){
+      document.getElementById('atlasRemessaObs').value=String(opcoes.observacao);
+    }
+    // Fecha o detalhe individual apenas após preparar o modal compartilhado.
+    if(opcoes.destinoId != null) document.getElementById('modalBg').style.display='none';
     modal('atlasNovaRemessaModal',true);
   }
 
@@ -433,6 +488,33 @@
     }catch(e){console.warn('Atlas Transferência: notificação da Expedição não enviada',e?.message||e);return 0;}
   }
 
+  function prepararTransporte(){
+    const origem=texto(document.getElementById('atlasRemessaOrigem')?.value);
+    const destino=texto(document.getElementById('atlasRemessaDestino')?.value);
+    if(!origem || !destino) return aviso('Selecione a obra de destino antes de preparar o transporte.');
+    if(origem===destino) return aviso('Origem e destino precisam ser diferentes.');
+    if(!state.itensSelecionados.size) return aviso('Selecione pelo menos um patrimônio.');
+    const destinoObj=destinosTransferencia().find(o=>texto(o.id)===destino);
+    if(!destinoObj) return aviso('Obra de destino não autorizada em Obras Expedição.');
+    const resumo=document.getElementById('atlasRemessaTransporteResumo');
+    if(resumo) resumo.textContent=`${state.itensSelecionados.size} patrimônio(s) • ${obraNome(origem)} → ${obraNome(destino)}`;
+    modal('atlasNovaRemessaModal',false);
+    modal('atlasRemessaTransporteModal',true);
+    setTimeout(()=>document.getElementById('atlasRemessaMotorista')?.focus(),30);
+  }
+  function voltarTransporte(){
+    modal('atlasRemessaTransporteModal',false);
+    modal('atlasNovaRemessaModal',true);
+  }
+  async function confirmarTransporte(){
+    const motorista=texto(document.getElementById('atlasRemessaMotorista')?.value);
+    const placa=texto(document.getElementById('atlasRemessaPlaca')?.value).toUpperCase();
+    if(!motorista) return aviso('Informe o motorista ou responsável pelo transporte.');
+    if(!/^[A-Z]{3}-?[0-9][A-Z0-9][0-9]{2}$/.test(placa)) return aviso('Informe uma placa válida (ex.: ABC-1234 ou ABC-1D23).');
+    document.getElementById('atlasRemessaPlaca').value=placa;
+    await enviar();
+  }
+
   async function enviar(){
     if(!podeMovimentar()) return alert('Você não tem permissão para movimentar patrimônios.');
     const origem=texto(document.getElementById('atlasRemessaOrigem').value);
@@ -445,8 +527,8 @@
     const origemObj=obra(origem), destinoObj=destinosTransferencia().find(o=>texto(o.id)===destino);
     if(!destinoObj) return aviso('Obra de destino não autorizada em Obras Expedição.');
     const codigo=texto(document.getElementById('atlasRemessaCodigo').value)||gerarCodigo();
-    const statusEscolhido=texto(document.getElementById('atlasRemessaStatusDestino').value);
-    const statusDestino=statusEscolhido==='MANTER'?'':statusEscolhido;
+    // A situação no destino é decidida por quem confirma o recebimento.
+    const statusDestino='';
     const payload={
       p_codigo:codigo,p_empresa_id:Number(origemObj?.empresa_id||u.empresa_id||17),p_obra_origem_id:Number(origem),p_obra_destino_id:Number(destino),
       p_obra_origem_nome:origemObj?.nome||origemObj?.setor_obra||obraNome(origem),p_obra_destino_nome:destinoObj?.nome||destinoObj?.setor_obra||obraNome(destino),
@@ -698,6 +780,6 @@
   function fechar(id){ modal(id,false); }
   function init(){ carregarRemessas(); const params=new URLSearchParams(location.search); if(params.get('remessas')) setTimeout(()=>abrirCentral(params.get('remessas')),250); }
 
-  window.AtlasPatrimonioRemessas={__loaded:true,statusPatrimonio,abrirNova,abrirComPatrimonios,iniciarSelecao,cancelarSelecao,continuarSelecao,voltarSelecao,modoSelecaoAtivo,estaSelecionado,alternarPorLinha,selecionarPagina,fechar,renderItensNova,origemMudou,selecionarItem,enviar,abrirCentral,abrirDetalhe,receber,abrirHistoricoPatrimonio,carregar:carregarRemessas};
+  window.AtlasPatrimonioRemessas={__loaded:true,statusPatrimonio,abrirNova,abrirComPatrimonios,iniciarSelecao,cancelarSelecao,continuarSelecao,voltarSelecao,modoSelecaoAtivo,estaSelecionado,alternarPorLinha,selecionarPagina,fechar,renderItensNova,origemMudou,selecionarItem,enviar,prepararTransporte,voltarTransporte,confirmarTransporte,abrirCentral,abrirDetalhe,receber,abrirHistoricoPatrimonio,carregar:carregarRemessas};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true}); else init();
 })();

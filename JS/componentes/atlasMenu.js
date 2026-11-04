@@ -12,7 +12,8 @@
     ['movimentacoes', 'movimentacoes.html', 'MOVIMENTACOES_VER', 'Movimentações', 'fa-solid fa-right-left'],
     ['relatorios', 'relatorios.html', 'RELATORIOS_VER', 'Relatórios', 'fa-regular fa-file-lines'],
     ['empresa', 'empresa.html', 'EMPRESAS_VER', 'Empresas', 'fa-solid fa-building'],
-    ['usuarios', 'usuarios.html', 'USUARIOS_VER', 'Usuários', 'fa-solid fa-users']
+    ['usuarios', 'usuarios.html', 'USUARIOS_VER', 'Usuários', 'fa-solid fa-users'],
+    ['sentinela', 'sentinela.html', 'SENTINELA_OWNER', 'Saúde e Segurança', 'fa-solid fa-shield-halved']
   ];
 
   function escapar(valor){
@@ -35,7 +36,10 @@
           </div>
         </div>
         <nav class="bdr-menu" aria-label="Menu principal">
-          ${itens.map(([modulo,pagina,permissao,tip,icone]) => `
+          ${itens.filter(([modulo]) => {
+            if(modulo !== "sentinela") return true;
+            try { const u=JSON.parse(localStorage.getItem("usuario_logado")||localStorage.getItem("usuarioLogado")||"null"); return Number(u?.id)===1; }catch(_){return false;}
+          }).map(([modulo,pagina,permissao,tip,icone]) => `
             <button
               type="button"
               class="bdr-menu-btn"

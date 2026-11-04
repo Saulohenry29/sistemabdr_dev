@@ -13,10 +13,10 @@
 
 <!-- CSS PADRÃO DO SISTEMA -->
 <link rel="stylesheet" href="./CSS/layout-bdr.css">
-<link rel="stylesheet" href="./CSS/bdr-fix-menu-final.css?v=20260724-padrao-profissional-v1">
-<link rel="stylesheet" href="./CSS/atlas-topbar.css?v=20260724-padrao-profissional-v1">
+
+
 <script src="./JS/atlasDialog.js?v=20260724-padrao-profissional-v1"></script>
-<script src="./JS/bdrNotificacoes.js?v=20260724-padrao-profissional-v1"></script>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -66,6 +66,13 @@ body{background:var(--bdr-bg)!important;}
 
 
 
+/* Dentro da Shell Atlas: sem menu/topbar próprios e sem deslocamento lateral. */
+.estoque-conteudo{
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:8px;
+}
 /* CARDS E FILTROS */
 .card{background:#fff;border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #eef2f7;}
 .card h3{margin:0 0 10px;color:var(--bdr-red);font-weight:900;}
@@ -859,6 +866,18 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 
 
   <!-- ATLAS: visual oficial da Topbar -->
+<style>
+#atlasEstruturasBg{position:fixed;inset:0;z-index:200000;background:rgba(15,23,42,.68);display:none;align-items:center;justify-content:center;padding:16px}
+#atlasEstruturasBg.aberto{display:flex}
+.atlas-est-box{background:#f8fafc;width:min(100%,1000px);max-height:94vh;overflow:auto;border-radius:18px;box-shadow:0 20px 70px #0004;color:#172033}
+.atlas-est-head{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;padding:20px 24px;border-bottom:1px solid #e2e8f0;border-radius:18px 18px 0 0}
+.atlas-est-head h2{margin:0;font-size:21px;color:#c51d26}.atlas-est-body{padding:20px 24px}
+.atlas-est-nota{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:13px;color:#92400e;margin-bottom:16px}
+.atlas-est-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;background:white;border:1px solid #e2e8f0;padding:16px;border-radius:14px}
+.atlas-est-form .atlas-est-check{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;line-height:1.3;margin:0}.atlas-est-form .atlas-est-check input{width:18px;height:18px;min-height:18px;flex:0 0 18px;padding:0;margin:0;accent-color:#d71920}.atlas-est-check small{font-size:11px;color:#64748b;font-weight:400}.atlas-est-feedback{margin-top:12px;background:#ecfdf5;border:1px solid #86efac;color:#166534;padding:12px;border-radius:10px;font-size:13px;font-weight:700}.atlas-est-actions [hidden]{display:none}.atlas-est-preview .atlas-est-cell{cursor:pointer;user-select:none}.atlas-est-preview .atlas-est-cell.atlas-est-inativa{background:#e5e7eb!important;color:#6b7280!important;text-decoration:line-through;opacity:.8;border:1px dashed #94a3b8}.atlas-est-hint{font-size:12px;color:#475569;margin:10px 0}.atlas-est-form label{display:block;font-weight:700;font-size:12px;color:#475569;margin-bottom:5px}.atlas-est-form input,.atlas-est-form select{width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:9px;padding:8px;background:#fff;color:#0f172a}
+.atlas-est-form .atlas-est-wide{grid-column:span 2}.atlas-est-actions{display:flex;align-items:end;gap:8px}.atlas-est-btn{border:0;background:#d71920;color:white;padding:11px 16px;border-radius:9px;font-weight:800;cursor:pointer}.atlas-est-btn.sec{background:#e2e8f0;color:#334155}.atlas-est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px;margin-top:16px}.atlas-est-item{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}.atlas-est-item strong{font-size:20px;color:#b91c1c}.atlas-est-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.atlas-est-tags span{font-size:11px;font-weight:700;background:#f1f5f9;padding:6px 8px;border-radius:7px}.atlas-est-preview{margin-top:14px;padding:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow-x:auto}.atlas-est-preview-title{font-size:13px;font-weight:800;color:#334155;margin-bottom:10px}.atlas-est-matrix{display:grid;gap:5px;width:max-content;min-width:100%}.atlas-est-cell{font-size:10px;white-space:nowrap;background:#eff6ff;color:#1d4ed8;padding:8px 5px;border-radius:5px;text-align:center;border:1px solid #dbeafe}.atlas-est-level{font-size:11px;font-weight:800;display:flex;align-items:center;color:#475569}.atlas-est-muted{font-size:12px;color:#64748b;margin-top:5px}.atlas-est-item button{border:0;background:#f1f5f9;color:#334155;border-radius:8px;padding:7px 10px;cursor:pointer;margin-top:12px}
+@media(max-width:720px){.atlas-est-form{grid-template-columns:1fr 1fr}.atlas-est-form .atlas-est-wide{grid-column:span 2}.atlas-est-body{padding:12px}.atlas-est-head{padding:14px}}
+</style>
 </head>
 
 <body>
@@ -870,124 +889,13 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
 <script src="./JS/offlineDB.js"></script>
 <script src="./JS/bdrSyncEngine.js"></script>
 <script src="./JS/bdrSyncCenter.js"></script>
-<script src="./JS/bdrMenuPermissoes.js"></script>
-<script src="./JS/bdr-menu-ocultar-de-verdade.js?v=20260629-2"></script>
-<script src="./JS/bdr-menu-permissoes-hard-fix.js?v=20260629-1"></script>
+
+
+
 
 <script>verificarLogin();</script>
 
-<div class="app-layout">
-<aside class="bdr-sidebar">
-  <div class="bdr-brand">
-  <div class="bdr-brand-icon bdr-logo-menu"></div>
-</div>
-
-   <!-- MENU PRINCIPAL FIXO -->
- <nav class="bdr-menu">
-
-  <!-- DASHBOARD -->
-  <button data-permissao="DASHBOARD_VER" class="bdr-menu-btn" data-tip="Dashboard" onclick="ir('dashboard.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-chart-simple"></i>
-    </span>
-  </button>
-
-  <!-- ENTRADA -->
-  <button data-permissao="ENTRADA_VER" class="bdr-menu-btn" data-tip="Entrada" onclick="ir('entrada.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-arrow-down-wide-short"></i>
-    </span>
-  </button>
-
-  <!-- TRIAGEM -->
-  <button data-permissao="TRIAGEM_VER" class="bdr-menu-btn" data-tip="Triagem" onclick="ir('triagem.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-vials"></i>
-    </span>
-  </button>
-
-  <!-- Estoque -->
-  <button data-permissao="ESTOQUE_VER" class="bdr-menu-btn active" data-tip="Estoque" onclick="ir('estoque.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-boxes-stacked"></i>
-    </span>
-  </button>
-
-  <!-- PATRIMÔNIO -->
-  <button data-permissao="PATRIMONIO_VER" class="bdr-menu-btn" data-tip="Patrimônio" onclick="ir('patrimonio.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-tags"></i>
-    </span>
-  </button>
-
-  <!-- EXPEDIÇÃO -->
-   <button data-permissao="EXPEDICAO_VER" class="bdr-menu-btn " data-tip="Expedição" onclick="ir('expedicao.html')">
-     <span class="bdr-menu-icon">
-       <i class="fa-solid fa-truck-fast"></i>
-      </span>
-    </button>
-
-    <!-- MOVIMENTAÇÕES -->
-  <button data-permissao="MOVIMENTACOES_VER" class="bdr-menu-btn" data-tip="Movimentações" onclick="ir('movimentacoes.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-right-left"></i>
-    </span>
-  </button>  
-  
-  <!-- RELATÓRIOS -->
-  <button data-permissao="RELATORIOS_VER" class="bdr-menu-btn" data-tip="Relatórios" onclick="ir('relatorios.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-regular fa-file-lines"></i>
-    </span>
-  </button>
-
-  <!-- EMPRESAS -->
-  <button data-permissao="EMPRESAS_VER" class="bdr-menu-btn" data-tip="Empresas" onclick="ir('empresa.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-building"></i>
-    </span>
-  </button>
-
-  <!-- USUÁRIOS -->
-  <button data-permissao="USUARIOS_VER" class="bdr-menu-btn" data-tip="Usuários" onclick="ir('usuarios.html')">
-    <span class="bdr-menu-icon">
-      <i class="fa-solid fa-users"></i>
-    </span>
-  </button>
-
-</nav>
-</aside>
-
-<main class="bdr-main">
-  <div class="bdr-topbar">
-    <div>
-      <div class="bdr-topbar-title">📦 BDR Estoque</div>
-      <div class="bdr-topbar-sub">Estoque geral: consumo + patrimônios, por CD, obra e setor, com controle de acesso.</div>
-    </div>
-
-    <div class="bdr-top-actions">
-      <div class="notif-wrap">
-        <button class="notif-btn" type="button" title="Notificações" data-atlas-toggle="notifications" aria-label="Abrir notificações">
-          <i class="fa-regular fa-bell"></i>
-          <span id="notifBadge" class="notif-badge">0</span>
-        </button>
-        <div id="notifDropdown" class="notif-dropdown">
-          <div class="notif-head">🔔 Central de notificações</div>
-          <div id="notifLista" class="notif-list"><div class="notif-item">Nenhuma notificação no momento.</div></div>
-        </div>
-      </div>
-
-      <div class="user-menu" data-atlas-toggle="user" aria-label="Abrir menu do usuário">
-        <div class="user-mini"><b id="usuarioNome">Olá, -</b><small id="usuarioPerfil">-</small></div>
-        <div class="avatar"><i class="fa-solid fa-user"></i></div>
-        <div id="dropdownUser" class="dropdown-user">
-          <button data-permissao="USUARIOS_VER" type="button" onclick="ir('usuarios.html'); event.stopPropagation();"><i class="fa-solid fa-user-gear"></i> Meu perfil / usuários</button>
-          <button type="button" class="logout-btn" onclick="logout(); event.stopPropagation();"><i class="fa-solid fa-right-from-bracket"></i> Sair do sistema</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<main class="estoque-conteudo">
   <!-- MARCAÇÃO 1: CONTEXTO DE ACESSO -->
   <div class="contexto-estoque" id="contextoEstoque">
     <div>
@@ -1013,6 +921,11 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
   <section class="card">
     <h3>⚡ Ações rápidas</h3>
     <div class="acoes-estoque-grid">
+      <div class="acao-estoque-card" data-acao-permissao="ESTOQUE_ENTRADA" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_ENTRADA','gerenciar estruturas')) return; atlasAbrirEstruturas()">
+        <strong><i class="fa-solid fa-warehouse"></i> Gerenciar estruturas</strong>
+        <span>Criar porta-paletes PP, prateleiras PA e mezaninos MZ com níveis automáticos.</span>
+        <button class="bdr-card-abrir" type="button">Configurar <i class="fa-solid fa-chevron-right"></i></button>
+      </div>
       <div class="acao-estoque-card acao-card-3d" data-acao-permissao="ESTOQUE_TRANSFERIR" onclick="if(!bdrPodeAcaoEstoque('ESTOQUE_TRANSFERIR','acessar o endereçamento 3D')) return; ir('prateleiras-3d.html')">
         <strong><i class="fa-solid fa-cubes-stacked"></i> Endereçamento 3D</strong>
         <span>Layout das prateleiras, cadastro dos endereços e impressão das etiquetas.</span>
@@ -1069,8 +982,29 @@ button:focus,button:active,.bdr-menu-btn:focus,.bdr-menu-btn:active{outline:none
     <div id="listaProdutos" class="lista-estoque"></div>
   </section>
 </main>
-</div>
 
+<!-- ATLAS: gerenciador de estruturas em rascunho local, sem gravação no Supabase -->
+<div id="atlasEstruturasBg" role="dialog" aria-modal="true" aria-label="Gerenciar estruturas do estoque" onclick="if(event.target===this)atlasFecharEstruturas()">
+ <div class="atlas-est-box">
+  <div class="atlas-est-head"><div><h2><i class="fa-solid fa-warehouse"></i> Gerenciar estruturas</h2><small>Porta-Paletes · Prateleiras · Mezaninos</small></div><button type="button" class="atlas-est-btn sec" onclick="atlasFecharEstruturas()" aria-label="Fechar">✕</button></div>
+  <div class="atlas-est-body">
+   <div class="atlas-est-nota"><b>Modo de planejamento local:</b> as estruturas ficam salvas somente neste navegador. Ainda não aparecem no 3D nem alteram o banco, produtos, saldos ou endereços reais. Não use estes códigos como etiquetas operacionais até a integração ser validada.</div>
+   <form id="atlasEstForm" class="atlas-est-form">
+    <div><label for="atlasEstTipo">Tipo de estrutura</label><select id="atlasEstTipo"><option value="PP">Porta-Paletes (PP)</option><option value="PA">Prateleira (PA)</option><option value="MZ">Mezanino (MZ)</option></select></div>
+    <div><label for="atlasEstCodigo">Código</label><input id="atlasEstCodigo" readonly required></div>
+    <div><label for="atlasEstColunas">Quantidade de colunas</label><input id="atlasEstColunas" type="number" min="1" max="100" value="12" required></div>
+    <div><label for="atlasEstNiveis">Quantidade de níveis</label><input id="atlasEstNiveis" type="number" min="1" max="30" value="6" required></div>
+    <div class="atlas-est-wide"><label for="atlasEstPosicao">Posição física (descrição)</label><input id="atlasEstPosicao" maxlength="90" placeholder="Ex.: lateral direita, próximo à entrada"></div>
+    <div class="atlas-est-wide"><label for="atlasEstEspelhado" class="atlas-est-check"><input id="atlasEstEspelhado" type="checkbox"> Espelhado <span style="font-weight:400;color:#64748b">(inverter a visualização das colunas)</span></label></div>
+    <div class="atlas-est-wide"><label class="atlas-est-check"><input id="atlasEstChao" type="checkbox" checked><span>Nível 01 começa no chão <small>(desmarcado: primeira posição elevada)</small></span></label></div>
+    <div class="atlas-est-actions"><button id="atlasEstSalvarBtn" class="atlas-est-btn" type="submit">+ Criar estrutura</button><button id="atlasEstCancelarEdicao" class="atlas-est-btn sec" type="button" hidden>Cancelar edição</button></div>
+   </form>
+   <div id="atlasEstFeedback" role="status" aria-live="polite" class="atlas-est-feedback" hidden></div><div class="atlas-est-hint">Clique em uma posição para ativar ou desativar. <strong>Azul = existente</strong> · <strong>Cinza = inexistente</strong>.</div><div id="atlasEstPrevia" class="atlas-est-preview" aria-live="polite"></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px"><b id="atlasEstTotal">Estruturas cadastradas</b><button type="button" class="atlas-est-btn sec" onclick="atlasExportarEstruturas()">Exportar rascunho JSON</button></div>
+   <div id="atlasEstLista" class="atlas-est-grid" aria-live="polite"></div>
+  </div>
+ </div>
+</div>
 <!-- MARCAÇÃO 5: MODAL LATERAL CLICÁVEL -->
 <div class="modal-bg" id="modalProdutoBg" onclick="fecharModalProdutoFora(event)">
   <div class="modal-side" onclick="event.stopPropagation()">
@@ -1746,10 +1680,10 @@ window.addEventListener("DOMContentLoaded", () => {
 <script defer src="./JS/estoque.js"></script>
 <script src="./JS/bdrUppercase.js"></script>
 <script src="./JS/bdr-localizador-prateleira.js?v=1"></script>
-<script src="./JS/bdrMenuMobileAtivo.js?v=20260702-3"></script>
+
 
   <!-- ATLAS: controlador oficial da Topbar (último script da página) -->
 
-<script src="./JS/atlasTopbar.js?v=20260724-padrao-profissional-v1"></script>
+
 </body>
 </html>

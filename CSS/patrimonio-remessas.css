@@ -111,3 +111,24 @@
     .atlas-remessa-selecao-bar{align-items:flex-start;}
   }
 
+
+/* Transferência patrimonial: seleção de destino e revisão sem sobreposição. */
+#atlasNovaRemessaModal .atlas-remessa-modal{width:min(820px,calc(100vw - 32px));max-height:min(88dvh,850px);overflow-y:auto;overflow-x:hidden;box-sizing:border-box;}
+#atlasNovaRemessaModal .atlas-remessa-grid>div{min-width:0;}
+#atlasNovaRemessaModal .atlas-remessa-select-valor{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;}
+#atlasNovaRemessaModal .atlas-remessa-destino-campo{position:relative;}
+#atlasNovaRemessaModal .atlas-remessa-combo{position:relative;min-width:0;}
+#atlasNovaRemessaModal .atlas-remessa-combo input{width:100%;box-sizing:border-box;}
+#atlasNovaRemessaModal .atlas-remessa-combo-opcoes{position:relative;z-index:2;max-height:180px;overflow-y:auto;overflow-x:hidden;border:1px solid #cbd5e1;border-radius:9px;background:#fff;margin-top:4px;box-shadow:0 5px 16px rgba(15,23,42,.1);}
+#atlasNovaRemessaModal .atlas-remessa-combo-opcoes[hidden]{display:none!important;}
+#atlasNovaRemessaModal .atlas-remessa-combo-opcao{display:block;width:100%;padding:9px 11px;border:0;border-bottom:1px solid #f1f5f9;background:#fff;color:#0f172a;font:inherit;font-size:11px;text-align:left;cursor:pointer;white-space:normal;overflow-wrap:anywhere;}
+#atlasNovaRemessaModal .atlas-remessa-combo-opcao:hover,#atlasNovaRemessaModal .atlas-remessa-combo-opcao:focus{background:#fff1f2;color:#991b1b;}
+#atlasNovaRemessaModal .atlas-remessa-combo-vazio{padding:12px;color:#64748b;font-size:11px;}
+#atlasNovaRemessaModal .atlas-remessa-lista-itens{max-height:230px;overflow-y:auto;overflow-x:hidden;}
+#atlasNovaRemessaModal .atlas-remessa-item-revisao{display:grid;grid-template-columns:24px minmax(0,1.2fr) minmax(0,1fr);align-items:center;gap:10px;min-width:0;padding:10px 12px;box-sizing:border-box;}
+#atlasNovaRemessaModal .atlas-remessa-item-revisao .atlas-remessa-item-check{color:#15803d;text-align:center;font-weight:900;}
+#atlasNovaRemessaModal .atlas-remessa-item-ident,#atlasNovaRemessaModal .atlas-remessa-item-info{display:flex;flex-direction:column;gap:3px;min-width:0;}
+#atlasNovaRemessaModal .atlas-remessa-item-ident strong{color:#991b1b;font-size:11px;overflow-wrap:anywhere;}
+#atlasNovaRemessaModal .atlas-remessa-item-ident span,#atlasNovaRemessaModal .atlas-remessa-item-info span{font-size:11px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;min-width:0;}
+#atlasNovaRemessaModal .atlas-remessa-item-status{font-weight:800;color:#334155;}
+@media(max-width:650px){#atlasNovaRemessaModal .atlas-remessa-item-revisao{grid-template-columns:22px minmax(0,1fr);}#atlasNovaRemessaModal .atlas-remessa-item-info{grid-column:2;}#atlasNovaRemessaModal .atlas-remessa-grid{grid-template-columns:1fr;}}
