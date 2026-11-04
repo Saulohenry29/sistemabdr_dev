@@ -205,6 +205,17 @@
     if(!precisa) return true;
     if(temPermissao(precisa)) return true;
 
+    // Um módulo dentro do Atlas não deve navegar para login por conta própria.
+    // A shell valida a autenticação; aqui apenas bloqueamos o módulo.
+    if(window.self !== window.top && new URLSearchParams(location.search).get('atlas') === '1'){
+      console.warn('[Atlas permissões] Acesso ao módulo bloqueado:', pagina, precisa);
+      document.body.replaceChildren();
+      const aviso = document.createElement('p');
+      aviso.textContent = 'Você não tem permissão para acessar esta tela.';
+      aviso.style.cssText = 'font:16px Arial;padding:32px;color:#991b1b';
+      document.body.appendChild(aviso);
+      return false;
+    }
     alert("Você não tem permissão para acessar esta tela.");
 
     if(temPermissao("DASHBOARD_VER") && pagina !== "dashboard.html"){

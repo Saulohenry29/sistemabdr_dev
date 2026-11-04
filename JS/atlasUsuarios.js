@@ -1640,8 +1640,10 @@
         botao.onclick=redefinirSenhaSeparada;
       }
       const info=authStatusInfo(user);
-      botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Conta legada — ativação necessária":"Ativação pendente — redefinição indisponível";
-      botao.disabled=!user || info.status!=='ATIVO' || (!currentIsOwner() && !hasCurrentPerm("ADMINISTRACAO_DELEGADA"));
+      botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Definir senha provisória (legado)":"Ativação pendente — redefinição indisponível";
+      // A Edge Function atlas-senhas autoriza redefinicao de legado somente ao OWNER.
+      const podeRedefinir=info.status==='LEGADO'?currentIsOwner():(currentIsOwner()||hasCurrentPerm("ADMINISTRACAO_DELEGADA"));
+      botao.disabled=!user || info.status==='AGUARDANDO' || !podeRedefinir;
       botao.title="A redefinição é autorizada no servidor conforme o perfil e as obras.";
       const aviso=senhaLabel.querySelector("#avisoSenhaSeparada")||document.createElement("small");
       aviso.id="avisoSenhaSeparada";
@@ -1673,9 +1675,15 @@
     try{
       const {data:{session},error:erroSessao}=await db().auth.getSession();
       if(erroSessao||!session?.access_token)throw new Error("Sessão Supabase Auth inválida. Entre novamente.");
-      const funcaoSenha="atlas-admin-usuarios";
+      const alvo=STATE.selected;
+      if(!alvo || Number(alvo.id)!==id)throw new Error("Selecione novamente o funcionário antes de redefinir a senha.");
+      const status=authStatusInfo(alvo).status;
+      if(status==='AGUARDANDO')throw new Error("Conclua a ativação pendente antes de redefinir a senha.");
+      if(status==='LEGADO' && !currentIsOwner())throw new Error("Somente o OWNER pode redefinir senhas legadas.");
+      const funcaoSenha=status==='LEGADO'?"atlas-senhas":"atlas-admin-usuarios";
+      const acaoSenha=status==='LEGADO'?"redefinir":"redefinir_senha";
       const {data:retorno,error:erroFuncao}=await db().functions.invoke(funcaoSenha,{
-        body:{acao:"redefinir_senha",usuario_id:id,senha}
+        body:{acao:acaoSenha,usuario_id:id,senha}
       });
       if(erroFuncao){
         let detalhe="Não foi possível contatar o serviço de senhas.";
@@ -1737,7 +1745,11 @@
     if(!payload.nome||!payload.usuario){alert("Informe nome e usuário.");return}
     if(!payload.empresa_id){alert("Selecione a empresa do funcionário.");return}
     const obrasSelecionadas=[...STATE.formWorksDraft].map(id=>STATE.works.find(w=>String(w.id)===String(id)));
-    if(obrasSelecionadas.some(w=>!w || String(w.empresa_id)!==String(payload.empresa_id))){
+    // O OWNER pode autorizar obras de outras empresas sem mudar a empresa principal.
+    if(obrasSelecionadas.some(w=>!w)){
+      alert("Uma das obras selecionadas não foi encontrada. Atualize a lista e tente novamente.");return;
+    }
+    if(!currentIsOwner() && obrasSelecionadas.some(w=>String(w.empresa_id)!==String(payload.empresa_id))){
       alert("As obras de atuação precisam pertencer à empresa selecionada. Ajuste as obras ou a empresa.");return;
     }
     if(!id && !payload.obra_operacional_id){alert("Selecione a base operacional da Expedição.");return}

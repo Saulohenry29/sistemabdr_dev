@@ -295,6 +295,11 @@ function selecionarObjeto3D(event){
   selecionarEndereco(hits[0].object, true);
 }
 function selecionarEndereco(obj, moverCamera=false){
+  if(obj.userData?.atlasRascunho){
+    objetosClicaveis.forEach(item=>item.scale.set(1,1,1));obj.scale.set(1.15,1.15,1.15);
+    const d=obj.userData;el('codigoSelecionado').textContent=d.codigo+' · Estrutura '+d.estrutura+' · '+d.coluna+' · '+d.nivel+' · '+(d.nivel01Chao?'N01 no chão':'N01 elevado')+' · RASCUNHO LOCAL (sem saldo)';
+    toast(d.codigo+' — posição de planejamento');if(moverCamera)centralizarObjeto(obj);return;
+  }
   objetosClicaveis.forEach(item=>item.scale.set(1,1,1));
   obj.scale.set(1.18,1.18,1.18);
   enderecoSelecionado = obj.userData;
@@ -322,6 +327,7 @@ function localizarEndereco3D(){
   selecionarEndereco(obj,true);
 }
 function ativarModo3D(){
+  atlasCDAtivo=false;document.body.classList.remove('atlas-cd-ativo');
   bdr3DAtivo = true;
   document.body.classList.remove('bdr-3d-inativo');
   if(!scene || !renderer || !camera){
@@ -576,6 +582,103 @@ function limparLayout(){
 
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ fecharModalEtiquetas(); document.body.classList.remove('bdr-print-etiquetas'); } });
 document.addEventListener('click', e=>{ if(e.target && e.target.id === 'modalEtiquetas') fecharModalEtiquetas(); });
+
+/* ATLAS — prévia 3D de estruturas locais PP / PA / MZ.
+   Exclusivamente visual: nenhuma escrita no banco, nem geração de etiquetas reais. */
+let atlasCDAtivo=false;
+function atlasLerEstruturas(){
+  try{
+    const dados=JSON.parse(localStorage.getItem('ATLAS_ESTRUTURAS_RASCUNHO_LOCAL')||'[]');
+    return Array.isArray(dados)?dados.filter(x=>x&&/^(PP|PA|MZ)\d{2,}$/.test(x.codigo)&&Number.isInteger(x.colunas)&&x.colunas>0&&x.colunas<=100&&Number.isInteger(x.niveis)&&x.niveis>0&&x.niveis<=30):[];
+  }catch{return []}
+}
+function atlasCaixa(g,x,y,z,w,h,d,cor){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:cor,roughness:.67}));
+  mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return mesh;
+}
+function atlasDesenharEstrutura(g,e,cx,cz){
+  const cols=e.colunas,levels=e.niveis,larg=cols*.68,prof=e.tipo==='PP'?1.65:1.12,alt=levels*.76;
+  const lado=String(e.posicao||'').toLowerCase();
+  const espelho=!!e.espelhado, inativas=new Set(e.posicoesInativas||[]);
+  const base=new THREE.Group();base.position.set(cx,0,cz);
+  // As colunas avançam ao longo da parede (eixo Z), não atravessando o corredor (eixo X).
+  base.rotation.y=Math.PI/2;
+  g.add(base);
+  const colPoste=e.tipo==='PP'?0x22549a:e.tipo==='PA'?0x64748b:0x7c3aed;
+  for(let c=0;c<=cols;c++)for(const z of [-prof/2,prof/2])atlasCaixa(base,-larg/2+c*.68,.1+alt/2,z,.055,alt+.2,.055,colPoste);
+  for(let n=0;n<=levels;n++)for(const z of [-prof/2,prof/2])atlasCaixa(base,0,.08+n*.76,z,larg+.06,.055,.065,0xf59e0b);
+  for(let c=1;c<=cols;c++)for(let n=1;n<=levels;n++){
+    const pos='C'+String(c).padStart(2,'0')+'-N'+String(n).padStart(2,'0');
+    const indice=espelho?cols-c:c-1;
+    const x=-larg/2+.34+indice*.68,y=.22+(n-1)*.76;
+    if(inativas.has(pos)){
+      atlasCaixa(base,x,y,0,.48,.035,.55,0x94a3b8);
+      continue;
+    }
+    const box=atlasCaixa(base,x,y,0,.52,.30,prof*.67,0x3b82f6);
+    box.userData={clicavel:true,atlasRascunho:true,codigo:e.codigo+'-'+pos,estrutura:e.codigo,coluna:'C'+String(c).padStart(2,'0'),nivel:'N'+String(n).padStart(2,'0'),nivel01Chao:e.nivel01Chao!==false,espelhado:espelho};
+    objetosClicaveis.push(box);
+  }
+  criarTexto3D(e.codigo,cx,alt+1.0,cz,g,.42);
+  if(lado.includes('direita'))criarTexto3D('DIREITA',cx,alt+.5,cz,g,.23);
+  else if(lado.includes('esquerda'))criarTexto3D('ESQUERDA',cx,alt+.5,cz,g,.23);
+}
+function abrirEstruturasCD3D(){
+  const estruturas=atlasLerEstruturas();
+  if(!estruturas.length){alert('Nenhuma estrutura no rascunho deste navegador. Cadastre PP01 ou PA01 em Estoque → Gerenciar estruturas.');return}
+  if(!window.THREE){alert('Three.js não carregou. Verifique sua conexão.');return}
+  atlasCDAtivo=true;bdr3DAtivo=true;visao2DAtiva=false;
+  document.body.classList.remove('bdr-3d-inativo');document.body.classList.add('atlas-cd-ativo');
+  iniciarThree();
+  setTimeout(()=>{
+    redimensionarThree();limparLayout3D();
+    grupoLayout=new THREE.Group();grupoLayout.name='ATLAS_CD_RASCUNHO';scene.add(grupoLayout);objetosClicaveis=[];
+    // Planta demonstrativa do CD: entrada em +Z, fundo em -Z.
+    // PP01 à direita. PA01, quando ainda não tem posição física, junto à parede esquerda.
+    // Demais estruturas sem posição definida ficam no centro para não presumir localização.
+    const direita=[],esquerda=[],centro=[],fundo=[];
+    estruturas.forEach(e=>{
+      const p=String(e.posicao||'').toLowerCase();
+      if(p.includes('direita'))direita.push(e);
+      else if(p.includes('esquerda') || (e.tipo==='PA' && e.codigo==='PA01' && !p.trim()))esquerda.push(e);
+      else if(p.includes('fundo'))fundo.push(e);
+      else centro.push(e);
+    });
+    const maiorComprimento=Math.max(12,...estruturas.map(e=>e.colunas*.68+2));
+    const comprimento=Math.max(22,maiorComprimento+10);
+    const largura=22, entrada=comprimento/2, paredeFundo=-comprimento/2;
+    // Marcação de perímetro: guia visual, sem representar medidas reais do CD.
+    atlasCaixa(grupoLayout,-largura/2,.035,0,.10,.07,comprimento,0x94a3b8);
+    atlasCaixa(grupoLayout, largura/2,.035,0,.10,.07,comprimento,0x94a3b8);
+    atlasCaixa(grupoLayout,0,.035,paredeFundo,largura,.07,.10,0x94a3b8);
+    const colocarLateral=(lista,lado)=>{
+      let cursor=entrada-2;
+      lista.forEach(e=>{
+        const prof=e.tipo==='PP'?1.65:1.12, comp=e.colunas*.68;
+        const x=lado*(largura/2-prof/2-.45);
+        const z=cursor-comp/2;
+        atlasDesenharEstrutura(grupoLayout,e,x,z);
+        cursor-=comp+1.4;
+      });
+    };
+    colocarLateral(direita,1);colocarLateral(esquerda,-1);
+    centro.forEach((e,i)=>{
+      const x=(i%2===0?-3:3),z=entrada-3-e.colunas*.34-Math.floor(i/2)*7;
+      atlasDesenharEstrutura(grupoLayout,e,x,z);
+    });
+    fundo.forEach((e,i)=>{
+      const x=-largura/2+3+i*4,z=paredeFundo+2.3;
+      atlasDesenharEstrutura(grupoLayout,e,x,z);
+    });
+    criarTexto3D('ENTRADA',0,.10,entrada-1,grupoLayout,.65);
+    criarTexto3D('FUNDO',0,.10,paredeFundo+1,grupoLayout,.65);
+    camera.position.set(21,23,entrada+14);controls.target.set(0,1,0);
+    controls.maxDistance=220;controls.update();
+    el('codigoSelecionado').textContent=estruturas.length+' estrutura(s) do rascunho local. Clique numa posição azul para consultar seu código. Posições cinzas não existem.';
+    toast('Estruturas locais carregadas em 3D. Nenhum dado foi alterado.');
+  },80);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarConfigEtiqueta();
   // Carrega leve primeiro: mapa 2D/lista/etiquetas. O 3D abre só ao clicar em Ativar 3D.

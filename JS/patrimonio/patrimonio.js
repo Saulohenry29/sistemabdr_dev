@@ -966,6 +966,11 @@ function atlasSincronizarDestinoTransferencia(){
     campo.append(busca,seta);
     select.insertAdjacentElement("afterend",campo);
     document.body.appendChild(lista);
+    // A lista fica fora do modal para não ser cortada pelo overflow.
+    // Impede que os eventos de seleção cheguem aos manipuladores do modal.
+    for(const evento of ["pointerdown","mousedown","mouseup","click"]){
+      lista.addEventListener(evento, e => e.stopPropagation());
+    }
     atlasDestinoUI = {select,campo,busca,seta,lista,aberto:false};
 
     const fechar = () => {
@@ -998,7 +1003,7 @@ function atlasSincronizarDestinoTransferencia(){
         vazio.textContent = "Nenhuma obra encontrada";
         lista.appendChild(vazio);
       }
-      itens.forEach(op => {
+      itens.slice(0,100).forEach(op => {
         const item = document.createElement("button");
         item.type = "button";
         item.className = "atlas-destino-opcao";
@@ -1006,7 +1011,10 @@ function atlasSincronizarDestinoTransferencia(){
         item.setAttribute("aria-selected",String(select.value===op.value));
         item.textContent = op.textContent;
         if(select.value===op.value) item.classList.add("selecionada");
-        item.addEventListener("click",() => {
+        item.addEventListener("pointerdown",e=>e.preventDefault());
+        item.addEventListener("click",e => {
+          e.preventDefault();
+          e.stopPropagation();
           select.value = op.value;
           select.dispatchEvent(new Event("change",{bubbles:true}));
           busca.value = op.textContent;
@@ -1021,7 +1029,11 @@ function atlasSincronizarDestinoTransferencia(){
       posicionar();
     };
     busca.addEventListener("focus",() => { if(!busca.disabled){busca.value="";renderizar();} });
-    busca.addEventListener("input",renderizar);
+    let pesquisaPendente;
+    busca.addEventListener("input",() => {
+      clearTimeout(pesquisaPendente);
+      pesquisaPendente=setTimeout(renderizar,90);
+    });
     busca.addEventListener("keydown", e => {
       if(e.key==="Escape"){
         fechar();
@@ -4019,71 +4031,49 @@ async function trocarObra(){
     alert("Você não tem permissão para transferir patrimônio.");
     return;
   }
-
   if(!patrimonioSelecionado){
     alert("Selecione um patrimônio.");
     return;
   }
-
   const transferenciaAtiva = await atlasBuscarTransferenciaAtivaPatrimonio(patrimonioSelecionado.id);
   if(transferenciaAtiva){
     alert("Este patrimônio já possui uma transferência ativa (" + (transferenciaAtiva.codigo || ("#" + transferenciaAtiva.id)) + "). Conclua ou cancele a remessa antes de criar outra.");
     return;
   }
-
   const obs = valor("observacaoMov");
   if(!obs || obs.length < 5){
     alert("Informe uma justificativa da transferência.");
     return;
   }
-
   const novaObraId = document.getElementById("novaObraSelect")?.value;
   if(!novaObraId){
     alert("Selecione a obra/setor de destino.");
     return;
   }
-
   const novaObra = atlasObrasTransferenciaCarregadas.find(o => String(o.id) === String(novaObraId));
   if(!novaObra){
     alert("Obra destino não encontrada.");
     return;
   }
-
   if(String(patrimonioSelecionado.obra_id || "") === String(novaObra.id)){
     alert("Este patrimônio já pertence à obra/setor selecionado.");
     return;
   }
-
   if(patrimonioOffline()){
-    alert("A transferência logística precisa de internet para criar a remessa com segurança. Tente novamente quando a conexão voltar.");
+    alert("A transferência patrimonial precisa de internet para criar a remessa com segurança.");
     return;
   }
-
-  if(!window.AtlasWorkflow?.criarTransferenciaDireta){
-    alert("O fluxo logístico do Atlas não foi carregado. Atualize a página e tente novamente.");
+  if(!window.AtlasPatrimonioRemessas?.abrirComPatrimonios){
+    alert("O módulo de transferências patrimoniais não foi carregado.");
     return;
   }
-
-  try{
-    const resultado = await window.AtlasWorkflow.criarTransferenciaDireta({
-      patrimonio:{ ...patrimonioSelecionado },
-      obraDestino:{ ...novaObra },
-      observacao:obs
-    });
-
-    patrimonios = patrimonios.map(p => Number(p.id) === Number(patrimonioSelecionado.id) ? { ...p, status:"EM_TRANSFERENCIA" } : p);
-    fecharModal();
-    renderizarPatrimonios();
-    await atlasCarregarAReceber();
-
-    alert(
-      "🚚 Remessa " + (resultado?.codigo || "criada") +
-      " criada com sucesso. O patrimônio continua na obra de origem até a saída e só mudará para a obra destino após o recebimento."
-    );
-  }catch(e){
-    console.error("Atlas Patrimônio: erro ao criar transferência direta.", e);
-    alert(e?.message || "Não foi possível criar a remessa de transferência.");
-  }
+  // A mesma remessa atende individual e lote. Não há gravação nesta etapa.
+  // A confirmação e a gravação continuam sob responsabilidade do módulo de remessas.
+  const patrimonioId = patrimonioSelecionado.id;
+  await window.AtlasPatrimonioRemessas.abrirComPatrimonios([patrimonioId], {
+    destinoId:novaObra.id,
+    observacao:obs
+  });
 }
 
 

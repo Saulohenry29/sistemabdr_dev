@@ -1825,7 +1825,11 @@ body{font-size:11px !important;}
 <script src="./JS/bdrMenuPermissoes.js"></script>
 <script src="./JS/bdr-menu-ocultar-de-verdade.js?v=20260629-padrao-unico"></script>
 
-<script>verificarLogin();</script>
+<script>
+// No shell Atlas, a autenticação é validada pelo atlas.html antes de criar o iframe.
+// O acesso direto ao dashboard continua exigindo sessão.
+if (window.self === window.top) verificarLogin();
+</script>
 
 <div class="bdr-app">
 
@@ -2256,8 +2260,16 @@ function usuarioTemPermissaoBDR(permissao, usuario = usuarioAtual()){
 
 function bloquearPaginaSemPermissaoBDR(permissao){
   if(usuarioTemPermissaoBDR(permissao)) return true;
-  alert("Você não tem permissão para acessar esta tela.");
-  window.location.href = "login.html";
+  console.warn('[Atlas permissões] Dashboard sem DASHBOARD_VER; conteúdo bloqueado.');
+  if (window.self === window.top) {
+    alert("Você não tem permissão para acessar esta tela.");
+  } else {
+    document.body.replaceChildren();
+    const aviso = document.createElement('p');
+    aviso.textContent = 'Acesso ao Dashboard não autorizado.';
+    aviso.style.cssText = 'font:16px Arial;padding:32px;color:#991b1b';
+    document.body.appendChild(aviso);
+  }
   return false;
 }
 

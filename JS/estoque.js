@@ -1088,3 +1088,88 @@ document.addEventListener("keydown", function(e){
   document.getElementById("modalEnderecamento3D")?.classList.remove("ativo");
   document.getElementById("modalCentralEtiquetas")?.classList.remove("ativo");
 });
+/* ATLAS — editor de estruturas (rascunho local; sem operações de banco). */
+(function(){
+  'use strict';
+  const CHAVE='ATLAS_ESTRUTURAS_RASCUNHO_LOCAL';
+  const $=id=>document.getElementById(id);
+  let estruturas=[];let editando=null;let inativas=new Set();
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function ler(){try{const d=JSON.parse(localStorage.getItem(CHAVE)||'[]');return Array.isArray(d)?d.filter(x=>x&&/^(PP|PA|MZ)\d{2,}$/.test(x.codigo)&&Number.isInteger(x.niveis)&&x.niveis>=1&&x.niveis<=30&&Number.isInteger(x.colunas??1)&&(x.colunas??1)>=1&&(x.colunas??1)<=100):[]}catch{return []}}
+  function salvar(){try{localStorage.setItem(CHAVE,JSON.stringify(estruturas));return true}catch(e){alert('Não foi possível salvar o rascunho neste navegador. '+e.message);return false}}
+  function proximo(tipo){let n=1;const usados=new Set(estruturas.map(x=>x.codigo));while(usados.has(tipo+String(n).padStart(2,'0')))n++;return tipo+String(n).padStart(2,'0')}
+  function codigo(){if(editando)return;const tipo=$('atlasEstTipo').value;$('atlasEstCodigo').value=proximo(tipo);$('atlasEstNiveis').value=tipo==='MZ'?'1':'4';$('atlasEstColunas').value=tipo==='PP'?'12':tipo==='PA'?'4':'2';previa()}
+  function chavePos(c,n){return 'C'+String(c).padStart(2,'0')+'-N'+String(n).padStart(2,'0')}
+  function enderecos(x){
+    const colunas=x.colunas??1, bloqueadas=new Set(x.posicoesInativas||[]);
+    return Array.from({length:colunas*x.niveis},(_,i)=>{
+      const pos=chavePos(Math.floor(i/x.niveis)+1,i%x.niveis+1);
+      return bloqueadas.has(pos)?null:x.codigo+'-'+pos;
+    }).filter(Boolean);
+  }
+  function normalizarInativas(c,n){
+    inativas=new Set([...inativas].filter(pos=>{
+      const m=/^C(\d+)-N(\d+)$/.exec(pos);
+      return m&&+m[1]>=1&&+m[1]<=c&&+m[2]>=1&&+m[2]<=n;
+    }));
+  }
+  function previa(){
+    const id=$('atlasEstCodigo').value,c=Number($('atlasEstColunas').value),n=Number($('atlasEstNiveis').value);
+    const el=$('atlasEstPrevia');if(!el)return;
+    if(!Number.isInteger(c)||!Number.isInteger(n)||c<1||n<1||c>100||n>30){el.textContent='Informe entre 1 e 100 colunas e entre 1 e 30 níveis.';return}
+    normalizarInativas(c,n);
+    const espelhado=$('atlasEstEspelhado').checked,comChao=$('atlasEstChao').checked;
+    const matriz=Array.from({length:n},(_,row)=>'<div class="atlas-est-level">N'+String(n-row).padStart(2,'0')+'</div>'+Array.from({length:c},(_,col)=>{
+      const coluna=espelhado?c-col:col+1, nivel=n-row, pos=chavePos(coluna,nivel),desativada=inativas.has(pos);
+      return '<button type="button" class="atlas-est-cell'+(desativada?' atlas-est-inativa':'')+'" data-atlas-pos="'+pos+'" aria-pressed="'+desativada+'" title="'+esc(id+'-'+pos)+' — '+(desativada?'Inexistente; clique para ativar':'Existente; clique para desativar')+'">'+(desativada?'✕ ':'')+'C'+String(coluna).padStart(2,'0')+'</button>';
+    }).join('')).join('');
+    el.innerHTML='<div class="atlas-est-preview-title">Prévia de '+esc(id)+' — '+c+' colunas × '+n+' níveis = '+(c*n-inativas.size)+' endereços ativos de '+(c*n)+' (N01 = '+(comChao?'chão':'primeira posição elevada')+')</div><div class="atlas-est-matrix" style="grid-template-columns:42px repeat('+c+', minmax(48px,1fr))">'+matriz+'</div>';
+  }
+  function render(){
+    $('atlasEstTotal').textContent=estruturas.length+' estrutura(s) no rascunho';
+    $('atlasEstLista').innerHTML=estruturas.length?estruturas.map(x=>{
+      const nome={PP:'Porta-Paletes',PA:'Prateleira',MZ:'Mezanino'}[x.tipo]||x.tipo;
+      const tags=enderecos(x).map(e=>'<span>'+esc(e)+'</span>').join('');
+      const colunas=x.colunas??1;
+      return '<article class="atlas-est-item"><div>'+esc(nome)+'</div><strong>'+esc(x.codigo)+'</strong><div class="atlas-est-muted">'+colunas+' coluna(s) × '+x.niveis+' nível(is) = '+enderecos(x).length+' endereços ativos de '+(colunas*x.niveis)+' · '+(x.espelhado?'Espelhado · ':'')+(x.nivel01Chao===false?'N01 elevado · ':'N01 = chão · ')+esc(x.posicao||'Posição não definida')+'</div><div class="atlas-est-tags">'+tags+'</div><button type="button" data-atlas-editar="'+esc(x.codigo)+'">Editar</button> <button type="button" data-atlas-excluir="'+esc(x.codigo)+'">Excluir rascunho</button></article>';
+    }).join(''):'<div class="atlas-est-muted">Nenhuma estrutura cadastrada neste navegador. Comece criando PP01, PA01 ou MZ01.</div>';
+  }
+  window.atlasAbrirEstruturas=function(){estruturas=ler();editando=null;inativas=new Set();$('atlasEstruturasBg').classList.add('aberto');codigo();render()};
+  window.atlasFecharEstruturas=function(){$('atlasEstruturasBg').classList.remove('aberto')};
+  window.atlasExportarEstruturas=function(){const blob=new Blob([JSON.stringify({tipo:'rascunho_local_atlas',estruturas},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='estruturas-estoque-rascunho.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+  document.addEventListener('DOMContentLoaded',()=>{
+    const form=$('atlasEstForm');if(!form)return;
+    $('atlasEstTipo').addEventListener('change',codigo);$('atlasEstEspelhado').addEventListener('change',previa);$('atlasEstChao').addEventListener('change',previa);['atlasEstColunas','atlasEstNiveis'].forEach(id=>$(id).addEventListener('input',previa));
+    function feedback(msg){const el=$('atlasEstFeedback');el.textContent=msg;el.hidden=false;el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    function sairEdicao(){editando=null;$('atlasEstTipo').disabled=false;$('atlasEstSalvarBtn').textContent='+ Criar estrutura';$('atlasEstCancelarEdicao').hidden=true;$('atlasEstEspelhado').checked=false;$('atlasEstChao').checked=true;$('atlasEstPosicao').value='';inativas=new Set();codigo();}
+    $('atlasEstCancelarEdicao').addEventListener('click',sairEdicao);
+    $('atlasEstPrevia').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-atlas-pos]');if(!btn)return;
+      const pos=btn.dataset.atlasPos;
+      if(inativas.has(pos))inativas.delete(pos);else inativas.add(pos);
+      previa();
+    });
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const tipo=$('atlasEstTipo').value,colunas=Number($('atlasEstColunas').value),niveis=Number($('atlasEstNiveis').value),posicao=$('atlasEstPosicao').value.trim(),espelhado=$('atlasEstEspelhado').checked,nivel01Chao=$('atlasEstChao').checked,id=editando||proximo(tipo);
+      if(!['PP','PA','MZ'].includes(tipo)||!Number.isInteger(niveis)||niveis<1||niveis>30||!Number.isInteger(colunas)||colunas<1||colunas>100){alert('Informe de 1 a 100 colunas e de 1 a 30 níveis.');return}
+      normalizarInativas(colunas,niveis);
+      const anterior=estruturas.map(x=>({...x})),registro={tipo,codigo:id,colunas,niveis,posicao,espelhado,nivel01Chao,posicoesInativas:[...inativas].sort()};
+      if(editando){const i=estruturas.findIndex(x=>x.codigo===editando);if(i<0){alert('Estrutura não encontrada.');return}estruturas[i]={...estruturas[i],...registro};}
+      else estruturas.push(registro);
+      if(!salvar()){estruturas=anterior;return}
+      render();const nome={PP:'Porta-Paletes',PA:'Prateleira',MZ:'Mezanino'}[tipo];
+      feedback('✅ '+nome+' '+id+(editando?' atualizado':' criado')+' com sucesso! '+(colunas*niveis)+' endereços ativos de '+(colunas*niveis)+' posições.');
+      sairEdicao();
+    });
+    $('atlasEstLista').addEventListener('click',e=>{
+      const editar=e.target.closest('[data-atlas-editar]');
+      if(editar){const x=estruturas.find(a=>a.codigo===editar.dataset.atlasEditar);if(!x)return;
+        editando=x.codigo;$('atlasEstTipo').value=x.tipo;$('atlasEstTipo').disabled=true;$('atlasEstCodigo').value=x.codigo;$('atlasEstColunas').value=x.colunas??1;$('atlasEstNiveis').value=x.niveis;$('atlasEstPosicao').value=x.posicao||'';$('atlasEstEspelhado').checked=!!x.espelhado;$('atlasEstChao').checked=x.nivel01Chao!==false;inativas=new Set(x.posicoesInativas||[]);$('atlasEstSalvarBtn').textContent='Salvar alterações';$('atlasEstCancelarEdicao').hidden=false;previa();form.scrollIntoView({behavior:'smooth',block:'start'});return;}
+      const btn=e.target.closest('[data-atlas-excluir]');if(!btn)return;
+      const id=btn.dataset.atlasExcluir;if(!confirm('Excluir '+id+' somente deste rascunho local?'))return;
+      const anterior=estruturas.slice();estruturas=estruturas.filter(x=>x.codigo!==id);if(!salvar()){estruturas=anterior;return}if(editando===id)sairEdicao();render();codigo();feedback('Rascunho '+id+' excluído deste navegador.');
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('atlasEstruturasBg').classList.contains('aberto'))window.atlasFecharEstruturas()});
+  });
+})();

@@ -1,5 +1,5 @@
 /* BDR ERP - Service Worker V4 SAFE OFFLINE */
-const BDR_CACHE_VERSION = "bdr-erp-v4.0.7-etiqueta-offline-teste";
+const BDR_CACHE_VERSION = "bdr-erp-v4.0.8-navegacao-segura";
 
 const BDR_ASSETS = [
   "./",
@@ -128,7 +128,7 @@ self.addEventListener("fetch", event => {
       fetch(req).then(resp => {
         bdrSalvarRespostaCompletaNoCache(BDR_CACHE_VERSION, req, resp.clone());
         return resp;
-      }).catch(async () => await caches.match(req) || await caches.match("./login.html") || await caches.match("./index.html"))
+      }).catch(async () => await caches.match(req) || new Response("Página indisponível sem conexão. Verifique a rede e tente novamente.", {status:503,headers:{"Content-Type":"text/plain; charset=utf-8"}}))
     );
     return;
   }

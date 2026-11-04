@@ -138,6 +138,9 @@ body.bdr-3d-inativo .hud{display:none!important;}
 body:not(.bdr-3d-inativo) .bdr-3d-placeholder{display:none!important;}
 
 @media print{#areaImpressao h3,.preview-title{display:none!important;visibility:hidden!important;}}
+/* Prévia do planejamento físico: não cria endereços operacionais. */
+.atlas-cd-banner{display:none;padding:10px 14px;margin:8px 0;background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;color:#92400e;font-size:12px;font-weight:700}
+body.atlas-cd-ativo .atlas-cd-banner{display:block}
 </style>
 </head>
 <body class="bdr-3d-inativo">
@@ -189,8 +192,9 @@ body:not(.bdr-3d-inativo) .bdr-3d-placeholder{display:none!important;}
         <section class="panel"><h3>Legenda</h3><div class="legend"><div><span class="dot free"></span> Livre</div><div><span class="dot busy"></span> Ocupado</div><div><span class="dot reserved"></span> Reservado</div><div><span class="dot block"></span> Bloqueado</div></div></section>
       </aside>
 
-      <section class="stage-wrap">
+      <section class="stage-wrap"><div class="atlas-cd-banner" id="atlasCdAviso">VISUALIZAÇÃO DE TESTE: estruturas do rascunho local deste navegador. Não representa produtos, saldos nem endereços operacionais do Supabase.</div>
         <div class="stage-toolbar">
+          <button class="btn btn-purple" onclick="abrirEstruturasCD3D()" title="Visualizar rascunhos locais do Gerenciador de Estruturas"><i class="fa-solid fa-warehouse"></i> Estruturas do CD (teste)</button>
           <button class="btn btn-green" onclick="ativarModo3D()"><i class="fa-solid fa-cube"></i> Ativar 3D</button>
           <button class="btn btn-light" onclick="modoOrbitar()">Orbitar 360°</button>
           <button class="btn btn-light" onclick="resetCamera()">Home 3D</button>

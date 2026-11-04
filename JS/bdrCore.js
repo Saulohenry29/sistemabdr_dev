@@ -7,35 +7,48 @@ const SUPABASE_KEY = "sb_publishable_VXvPi5TQMiPyOxknM5Fw_g_0NHwZYss";
 
 let __bdrUltimoTesteOnline = null;
 let __bdrUltimoTesteTempo = 0;
+let __bdrTesteEmAndamento = null;
+const BDR_INTERVALO_TESTE_MS = 3000;
 
 async function bdrOnlineReal(){
-  if(navigator.onLine === false) return false;
+  if(navigator.onLine === false){
+    __bdrUltimoTesteOnline = false;
+    __bdrUltimoTesteTempo = Date.now();
+    return false;
+  }
   if(!window.client) return false;
 
-  const agora = Date.now();
+  // Compartilha a mesma consulta entre chamadas simultâneas.
+  if(__bdrTesteEmAndamento) return __bdrTesteEmAndamento;
 
   if(
     __bdrUltimoTesteOnline !== null &&
-    (agora - __bdrUltimoTesteTempo) < 3000
+    (Date.now() - __bdrUltimoTesteTempo) < BDR_INTERVALO_TESTE_MS
   ){
     return __bdrUltimoTesteOnline;
   }
 
+  __bdrTesteEmAndamento = (async function(){
+    let online = false;
+    try{
+      const { error } = await window.client
+        .from("obras")
+        .select("id")
+        .limit(1);
+      online = !error;
+    }catch(e){
+      online = false;
+    }
+    __bdrUltimoTesteOnline = online;
+    // Conta o intervalo a partir do término, não do início da consulta.
+    __bdrUltimoTesteTempo = Date.now();
+    return online;
+  })();
+
   try{
-    const { error } = await window.client
-      .from("obras")
-      .select("id")
-      .limit(1);
-
-    __bdrUltimoTesteOnline = !error;
-    __bdrUltimoTesteTempo = agora;
-
-    return __bdrUltimoTesteOnline;
-
-  }catch(e){
-    __bdrUltimoTesteOnline = false;
-    __bdrUltimoTesteTempo = agora;
-    return false;
+    return await __bdrTesteEmAndamento;
+  }finally{
+    __bdrTesteEmAndamento = null;
   }
 }
 
