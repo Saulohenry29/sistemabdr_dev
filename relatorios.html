@@ -2117,29 +2117,51 @@ let dadosMovimentacoes = movResp.data || [];
 /* DADOS: filtra por permissão nova, não por perfil. */
 const podeTodasObras = temPermissaoRelatoriosBDR("RELATORIOS_TODAS_OBRAS", usuario)
   || temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
+const podeObrasPermitidas = temPermissaoRelatoriosBDR("RELATORIOS_OBRAS_PERMITIDAS", usuario);
 const podePropriaObra = temPermissaoRelatoriosBDR("PROPRIA_OBRA_VER", usuario);
+let obrasVisiveis = obrasResp.data || [];
 
 if(usuario && !podeTodasObras){
-  if(podePropriaObra && usuario.obra_id){
-    dadosPatrimonios = dadosPatrimonios.filter(p =>
-      String(p.obra_id) === String(usuario.obra_id)
-    );
-
-    dadosMovimentacoes = dadosMovimentacoes.filter(m =>
-      String(m.obra_origem_id) === String(usuario.obra_id) ||
-      String(m.obra_destino_id) === String(usuario.obra_id)
-    );
-
-    document.getElementById("filtroObra").style.display = "none";
-  }else{
-    dadosPatrimonios = [];
-    dadosMovimentacoes = [];
-    document.getElementById("filtroObra").style.display = "none";
+  // A fonte principal das obras de atuação é usuario_obras, a mesma do
+  // gerenciamento de Usuários. Nunca usar a empresa como substituta da
+  // autorização por obra; obras permitidas podem ser de empresas distintas.
+  const idsPermitidos = new Set();
+  if(podeObrasPermitidas){
+    const vinculosResp = await db().from("usuario_obras")
+      .select("obra_id").eq("usuario_id", Number(usuario.id));
+    if(vinculosResp.error){
+      console.error("Relatórios: erro ao consultar obras autorizadas", vinculosResp.error);
+      alert("Não foi possível consultar suas obras autorizadas. Contate o administrador.");
+      return; // Sem autorização confirmada, não exibir dados.
+    }
+    for(const vinculo of (vinculosResp.data || [])){
+      if(vinculo.obra_id != null) idsPermitidos.add(String(vinculo.obra_id));
+    }
+    // Compatibilidade com usuários legados que ainda não possuem vínculos.
+    // A proteção efetiva dos dados continua sendo responsabilidade do RLS.
+    if(idsPermitidos.size === 0){
+      String(usuario.obras_liberadas || "").split(",")
+        .map(id => id.trim()).filter(id => /^\d+$/.test(id))
+        .forEach(id => idsPermitidos.add(id));
+    }
+  }else if(podePropriaObra && usuario.obra_id != null){
+    idsPermitidos.add(String(usuario.obra_id));
   }
+
+  dadosPatrimonios = dadosPatrimonios.filter(p =>
+    idsPermitidos.has(String(p.obra_id))
+  );
+  dadosMovimentacoes = dadosMovimentacoes.filter(m =>
+    idsPermitidos.has(String(m.obra_origem_id)) ||
+    idsPermitidos.has(String(m.obra_destino_id))
+  );
+  obrasVisiveis = obrasVisiveis.filter(o => idsPermitidos.has(String(o.id)));
+  document.getElementById("filtroObra").style.display =
+    obrasVisiveis.length > 1 ? "" : "none";
 }
 
 patrimonios = dadosPatrimonios;
-obras = obrasResp.data || [];
+obras = obrasVisiveis;
 empresas = empresasResp.data || [];
 siengeCodigos = siengeResp.data || [];
 movimentacoes = dadosMovimentacoes;

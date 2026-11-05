@@ -110,7 +110,9 @@ async function fazerLogin(){
 
     const migrado = String(usuario.auth_status || "LEGADO").toUpperCase() === "ATIVO" && Boolean(usuario.auth_user_id);
 
-    let trocaPendenteAuth = false;
+    // null/undefined: contas antigas sem marcador no Supabase Auth.
+    // true/false: estado explícito da troca obrigatória no servidor.
+    let trocaPendenteAuth = null;
 
     if(migrado){
       // O login visível pode ser "saulo"; o Auth usa o e-mail vinculado internamente.
@@ -132,7 +134,7 @@ async function fazerLogin(){
         return;
       }
 
-      trocaPendenteAuth = authData.user.app_metadata?.atlas_troca_senha_pendente === true;
+      trocaPendenteAuth = authData.user.app_metadata?.atlas_troca_senha_pendente;
 
       // Segurança crítica: o UUID autenticado deve ser exatamente o vinculado ao cadastro Atlas.
       if(String(authData.user.id).toLowerCase() !== String(usuario.auth_user_id).toLowerCase()){
@@ -148,9 +150,11 @@ async function fazerLogin(){
       }
     }
 
-    // app_metadata é definida pelo servidor e não pode ser alterada pelo usuário.
-    if(migrado && trocaPendenteAuth){
-      usuario.trocar_senha = true;
+    // Para contas Supabase Auth, o marcador explícito do servidor prevalece
+    // sobre indicadores legados de senha (que podem continuar preenchidos).
+    // Sem marcador, mantém a regra legada por segurança.
+    if(migrado && typeof trocaPendenteAuth === "boolean"){
+      usuario.trocar_senha = trocaPendenteAuth;
     }
     const usuarioSessao = salvarSessaoAtlas(usuario, login);
 
@@ -170,7 +174,14 @@ async function fazerLogin(){
       return;
     }
 
-    if(senhaEhTemporariaBDR(usuarioSessao)){
+    // Após a troca concluída no Supabase Auth, não obrigar nova troca
+    // apenas porque campos antigos ainda estão marcados no cadastro.
+    // O marcador true continua exigindo troca; sem marcador usamos o legado.
+    const exigeTroca = migrado
+      ? (trocaPendenteAuth === true ||
+         (trocaPendenteAuth !== false && senhaEhTemporariaBDR(usuarioSessao)))
+      : senhaEhTemporariaBDR(usuarioSessao);
+    if(exigeTroca){
       window.location.href = "alterar-senha.html";
       return;
     }
