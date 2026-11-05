@@ -100,7 +100,20 @@ async function fazerLogin(){
     return;
   }
 
-  try{
+    try{
+    // Encerra a sessão Auth anterior antes de consultar o funcionário.
+    // Evita que o RLS de outro usuário oculte o cadastro pesquisado.
+    const { error: erroSaida } = await db.auth.signOut({
+      scope: "local"
+    });
+
+    if(erroSaida){
+      mostrarMensagemAuth(
+        "Não foi possível encerrar a sessão anterior. Atualize a página e tente novamente."
+      );
+      return;
+    }
+
     const usuario = await buscarUsuarioLoginBDR(db, login);
 
     if(!usuario || usuario.ativo === false || String(usuario.ativo).toLowerCase() === "false"){
@@ -121,10 +134,7 @@ async function fazerLogin(){
         return;
       }
 
-      // Garante que não exista sessão Auth anterior influenciando a validação.
-      try { await db.auth.signOut({ scope: "local" }); } catch(_e) {}
-
-      const { data: authData, error: authError } = await db.auth.signInWithPassword({
+        const { data: authData, error: authError } = await db.auth.signInWithPassword({
         email: String(usuario.email).trim(),
         password: senha
       });
