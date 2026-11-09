@@ -1,0 +1,76 @@
+/* AtlasPaginacao v1.1 — indicador de página centralizado, "Ir para" à direita.
+   Componente independente: utilizado por Relatórios e preparado para demais módulos. */
+.atlas-paginacao{
+  --ap-borda:#d7dde5;--ap-acao:#ae1521;
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;column-gap:10px;row-gap:7px;
+  padding:7px 10px;font-family:inherit;font-weight:600;font-size:11px;
+  line-height:1.3;color:#273347;background:#fff;
+}
+.atlas-paginacao__anteriores,.atlas-paginacao__proximas,.atlas-paginacao__ir,.atlas-paginacao__ir label,.atlas-paginacao__direita{
+  display:flex;align-items:center;gap:6px;
+}
+.atlas-paginacao__anteriores{justify-self:end}
+.atlas-paginacao__direita{justify-self:start;min-width:0;flex-wrap:wrap;column-gap:12px}
+.atlas-paginacao__estado{
+  min-width:75px;text-align:center;color:#1f2c3d;
+  font-variant-numeric:tabular-nums;font-size:11px;white-space:nowrap;
+}
+.atlas-paginacao button{
+  min-width:29px;min-height:29px;border:1px solid var(--ap-borda);
+  border-radius:7px;background:#fff;color:var(--ap-acao);cursor:pointer;
+  font-size:13px;font-weight:800;padding:3px 9px;line-height:1.2;
+}
+.atlas-paginacao button:hover:not(:disabled){background:#fff0f1;border-color:#bd6b72}
+.atlas-paginacao button:disabled{opacity:.4;cursor:default}
+.atlas-paginacao button:focus-visible,.atlas-paginacao input:focus-visible{outline:2px solid var(--ap-acao);outline-offset:2px}
+.atlas-paginacao__ir{margin:0 0 0 16px}
+.atlas-paginacao__ir label{font-size:11px;white-space:nowrap;color:#35435a}
+.atlas-paginacao__ir input{
+  box-sizing:border-box;width:65px;min-height:29px;border:1px solid var(--ap-borda);
+  border-radius:7px;padding:4px 6px;background:#fff;
+  font:inherit;color:#18263e;text-align:center;
+}
+.atlas-paginacao__ir button[type=submit]{font-size:11px}
+.atlas-paginacao__faixa{font-size:10px;color:#697789;white-space:nowrap;font-weight:500}
+/* A primeira dobra mantém os controles próximos sem forçar rolagem horizontal. */
+@media(max-width:1100px){
+  .atlas-paginacao__direita{column-gap:8px}
+  .atlas-paginacao__ir{margin-left:4px}
+  .atlas-paginacao__faixa{flex-basis:100%;text-align:left}
+}
+@media(max-width:680px){
+  .atlas-paginacao{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+  .atlas-paginacao__anteriores{order:1}
+  .atlas-paginacao__estado{order:2}
+  .atlas-paginacao__direita{order:3;justify-content:center;flex-basis:100%}
+  .atlas-paginacao__faixa{flex-basis:100%;text-align:center}
+}
+/* v1.2 — setinhas integradas e independentes; nunca reiniciam em 1. */
+.atlas-paginacao__campo{position:relative;display:inline-flex;align-items:stretch;width:76px;flex:0 0 76px}
+.atlas-paginacao__ir .atlas-paginacao__campo input{
+  box-sizing:border-box;width:100%;min-width:0;min-height:29px;
+  padding:4px 24px 4px 7px!important;appearance:textfield;
+  -moz-appearance:textfield;
+}
+.atlas-paginacao__ir .atlas-paginacao__campo input::-webkit-inner-spin-button,
+.atlas-paginacao__ir .atlas-paginacao__campo input::-webkit-outer-spin-button{
+  -webkit-appearance:none;margin:0;
+}
+.atlas-paginacao__spin{
+  position:absolute;right:1px;top:1px;bottom:1px;width:19px;
+  display:grid;grid-template-rows:1fr 1fr;
+  border-left:1px solid var(--ap-borda);overflow:hidden;
+  border-radius:0 6px 6px 0;
+}
+.atlas-paginacao .atlas-paginacao__spin button{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0!important;min-height:0!important;height:100%;width:100%;
+  padding:0!important;margin:0;border:none!important;border-radius:0!important;
+  background:#f7f8fa;font-size:7px!important;line-height:1!important;
+  color:#344860;
+}
+.atlas-paginacao .atlas-paginacao__spin button:first-child{border-bottom:1px solid var(--ap-borda)!important}
+.atlas-paginacao .atlas-paginacao__spin button:disabled{opacity:.25;cursor:default}
+
+.atlas-paginacao__ir .atlas-paginacao__rotulo{font-size:11px;white-space:nowrap;color:#35435a}

@@ -1,0 +1,2032 @@
+
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#222}
+.layout{display:flex}
+.content{flex:1;padding:12px}
+.card{background:white;border-radius:8px;padding:14px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.card h3{margin:0 0 8px;color:#a4161a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+input,select{width:100%;padding:9px;border:1px solid #ccc;border-radius:5px}
+button{padding:9px;border:none;border-radius:5px;cursor:pointer;background:#a4161a;color:white}
+.btn-ok{background:#2a9d8f}
+.btn-blue{background:#2563eb}
+.btn-dark{background:#111827}
+.tabela{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.tabela th{background:#a4161a;color:white;padding:8px;text-align:left}
+.tabela td{border-bottom:1px solid #ddd;padding:8px}
+.status{padding:4px 7px;border-radius:20px;color:white;font-size:12px;background:#2c3e50}
+.ESTOQUE{background:#2a9d8f}
+.EM_USO{background:#2563eb}
+.MANUTENCAO{background:#f97316}
+.BAIXADO{background:#dc2626}
+
+@media print{
+  .sidebar,.filtros,.botoes,header{display:none}
+  body{background:white}
+  .content{padding:0}
+  .card{box-shadow:none}
+}
+
+@media(max-width:768px){
+  .layout{flex-direction:column}
+}
+
+/* Seleção múltipla de obras/setores para exportação */
+.obras-check-wrap{
+  max-height:190px;
+  overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:7px;
+}
+
+.obra-check{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:8px;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.obra-check input{
+  width:auto;
+}
+
+.obra-check:hover{
+  background:#fff1f2;
+  border-color:#fecaca;
+}
+
+.sienge-mini-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:8px 0 10px;
+}
+
+.btn-mini{
+  border:none;
+  border-radius:9px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  color:#fff;
+}
+
+.btn-mini.red{background:#a4161a}
+.btn-mini.dark{background:#111827}
+.btn-mini.gray{background:#6b7280}
+
+
+/* MODAL CÓDIGOS SIENGE */
+.sienge-modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.62);
+  z-index:99999;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.sienge-modal-bg.ativo{display:flex}
+.sienge-modal{
+  width:min(1100px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  background:#eef2f7;
+  border-radius:18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
+  padding:14px;
+}
+.sienge-modal-top{
+  background:#fff;
+  border-left:4px solid #a4161a;
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.sienge-modal-title{color:#a4161a;font-size:18px;font-weight:900}
+.sienge-modal-sub{color:#6b7280;font-size:12px;margin-top:3px}
+.sienge-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sienge-tab{background:#fff;color:#111827;border:1px solid #fecaca;border-radius:999px;padding:9px 13px;font-weight:900}
+.sienge-tab.active{background:#a4161a;color:#fff}
+.sienge-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+.sienge-lista{max-height:420px;overflow:auto}
+.sienge-row{display:grid;grid-template-columns:100px 100px 1fr 85px;gap:8px;align-items:center;background:#fff;border-left:4px solid #a4161a;border-radius:10px;padding:9px;margin-bottom:7px;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.sienge-row b{color:#a4161a}
+.sienge-row small{color:#6b7280}
+.import-box{border:1px dashed #fecaca;background:#fff7f7;border-radius:12px;padding:12px}
+.help{background:#eff6ff;color:#1e40af;border-left:4px solid #2563eb;padding:10px;border-radius:10px;margin-bottom:10px}
+@media(max-width:900px){
+  .sienge-grid{grid-template-columns:1fr}
+  .sienge-row{grid-template-columns:1fr}
+  .sienge-modal{width:100%;max-height:94vh}
+}
+
+
+/* =========================================================
+   SIENGE SECRETO - MONTAGEM DO DETALHAMENTO
+   Abre com 5 cliques no título "Códigos Sienge".
+========================================================= */
+.sienge-secret-box{
+  display:none;
+  margin-top:12px;
+  border:1px solid #fecaca;
+  border-left:4px solid #d71920;
+  border-radius:14px;
+  background:linear-gradient(135deg,#fff,#fff7f7);
+  padding:12px;
+}
+
+.sienge-secret-box.ativo{
+  display:block;
+}
+
+.sienge-secret-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.sienge-secret-head h3{
+  margin:0;
+  color:#d71920;
+  font-size:15px;
+  font-weight:900;
+}
+
+.sienge-secret-head p{
+  margin:3px 0 0;
+  color:#6b7280;
+  font-size:11px;
+}
+
+.sienge-secret-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.sienge-secret-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:10px;
+}
+
+.sienge-secret-card h4{
+  margin:0 0 8px;
+  color:#111827;
+  font-size:13px;
+}
+
+.sienge-field-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.sienge-field-btn{
+  border:1px solid #fee2e2;
+  background:#fff;
+  color:#111827;
+  border-radius:999px;
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s;
+}
+
+.sienge-field-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 15px rgba(15,23,42,.10);
+  border-color:#d71920;
+  color:#d71920;
+}
+
+.sienge-order-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.sienge-order-item{
+  display:grid;
+  grid-template-columns:26px 1fr auto;
+  gap:8px;
+  align-items:center;
+  border:1px solid #e5e7eb;
+  background:#f9fafb;
+  border-radius:10px;
+  padding:8px;
+}
+
+.sienge-order-item .num{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#d71920;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:900;
+}
+
+.sienge-order-item strong{
+  font-size:12px;
+  color:#111827;
+}
+
+.sienge-order-item small{
+  display:block;
+  color:#6b7280;
+  font-size:10px;
+  margin-top:2px;
+}
+
+.sienge-order-actions{
+  display:flex;
+  gap:4px;
+}
+
+.sienge-order-actions button{
+  border:none;
+  border-radius:7px;
+  width:26px;
+  height:26px;
+  cursor:pointer;
+  font-size:11px;
+  font-weight:900;
+}
+
+.sienge-order-actions .up,
+.sienge-order-actions .down{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+.sienge-order-actions .del{
+  background:#fee2e2;
+  color:#dc2626;
+}
+
+.sienge-secret-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.sienge-secret-actions button{
+  border:none;
+  border-radius:10px;
+  padding:9px 12px;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.sienge-secret-actions .save{
+  background:#059669;
+}
+
+.sienge-secret-actions .clear{
+  background:#6b7280;
+}
+
+.sienge-preview{
+  background:#eff6ff;
+  border-left:4px solid #2563eb;
+  border-radius:10px;
+  padding:9px;
+  margin-top:10px;
+  color:#1e40af;
+  font-size:11px;
+  line-height:1.4;
+}
+
+@media(max-width:900px){
+  .sienge-secret-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* =========================================================
+   MOTOR PREMIUM DE INSUMOS SIENGE
+========================================================= */
+.sienge-motor-box{margin-top:12px;border:1px solid #dbeafe;border-left:4px solid #2563eb;border-radius:14px;background:linear-gradient(135deg,#fff,#eff6ff);padding:12px}
+.sienge-motor-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.sienge-motor-head h3{margin:0;color:#1d4ed8;font-size:15px;font-weight:900}.sienge-motor-head p{margin:3px 0 0;color:#6b7280;font-size:11px}
+.sienge-motor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sienge-motor-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px}.sienge-motor-card h4{margin:0 0 8px;color:#111827;font-size:13px}
+.sienge-motor-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}.sienge-motor-actions button{border:none;border-radius:10px;padding:9px 12px;color:#fff;font-size:12px;font-weight:900;cursor:pointer}.sienge-motor-actions .blue{background:#2563eb}.sienge-motor-actions .green{background:#059669}.sienge-motor-actions .dark{background:#111827}
+.sienge-motor-input{width:100%;height:38px;border:1px solid #d1d5db;border-radius:10px;padding:0 10px;font-size:12px;margin-bottom:8px}.sienge-motor-file{width:100%;border:1px dashed #93c5fd;background:#eff6ff;border-radius:10px;padding:9px;font-size:12px}
+.sienge-motor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.sienge-motor-stat{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px;text-align:center}.sienge-motor-stat strong{display:block;color:#111827;font-size:18px}.sienge-motor-stat span{font-size:10px;color:#6b7280;font-weight:900}
+.sienge-motor-result{margin-top:8px;background:#f8fafc;border-left:4px solid #2563eb;border-radius:10px;padding:9px;font-size:12px;color:#374151;line-height:1.4;max-height:240px;overflow:auto}.sienge-confidence{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-weight:900;font-size:11px;color:#fff}.sienge-confidence.alta{background:#16a34a}.sienge-confidence.media{background:#f59e0b}.sienge-confidence.baixa{background:#dc2626}
+@media(max-width:900px){.sienge-motor-grid{grid-template-columns:1fr}.sienge-motor-stats{grid-template-columns:1fr}}
+
+
+/* =========================================================
+   ATLAS RELATÓRIOS 3.5.0
+   RELATÓRIO DE ATIVIDADES PATRIMONIAIS
+========================================================= */
+
+.cabecalho-relatorio-impressao{
+  display:none;
+}
+
+#cardRelatorioPatrimonios .tabela th:nth-child(9),
+#cardRelatorioPatrimonios .tabela td:nth-child(9){
+  min-width:135px;
+  white-space:nowrap;
+}
+
+#cardRelatorioPatrimonios .tabela th:nth-child(10),
+#cardRelatorioPatrimonios .tabela td:nth-child(10){
+  min-width:120px;
+}
+
+@media print{
+  @page{
+    size:A4 landscape;
+    margin:10mm;
+  }
+
+  html,body{
+    background:#fff!important;
+    color:#111!important;
+    font-family:Arial,sans-serif!important;
+  }
+
+  /* Esconde completamente o sistema. */
+  .bdr-sidebar,
+  header,
+  .relatorio-topbar,
+  .kpi-relatorio-grid,
+  .filtros,
+  .botoes,
+  .card-movimentacoes,
+  .content > .card[data-permissao="SIENGE_EXPORTAR"],
+  #modalSiengeCodigos,
+  .notif-dropdown,
+  .dropdown-user{
+    display:none!important;
+  }
+
+  .layout,
+  .content{
+    display:block!important;
+    margin:0!important;
+    width:100%!important;
+    padding:0!important;
+  }
+
+  /* Mostra somente o cabeçalho do arquivo e o relatório. */
+  #cabecalhoRelatorioImpressao{
+    display:block!important;
+    margin:0 0 8mm!important;
+  }
+
+  #cardRelatorioPatrimonios{
+    display:block!important;
+    box-shadow:none!important;
+    border:0!important;
+    padding:0!important;
+    margin:0!important;
+  }
+
+  #cardRelatorioPatrimonios > h3,
+  #cardRelatorioPatrimonios > #resumo{
+    display:none!important;
+  }
+
+  .relatorio-doc-topo{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    border-bottom:2px solid #a4161a;
+    padding-bottom:8px;
+    margin-bottom:8px;
+  }
+
+  .relatorio-doc-empresa{
+    color:#a4161a;
+    font-size:15px;
+    font-weight:900;
+  }
+
+  .relatorio-doc-titulo{
+    color:#111827;
+    font-size:18px;
+    font-weight:900;
+    margin-top:3px;
+  }
+
+  .relatorio-doc-data{
+    color:#475569;
+    font-size:10px;
+    text-align:right;
+  }
+
+  .relatorio-doc-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:5px 14px;
+    font-size:10px;
+    line-height:1.35;
+    margin-bottom:7px;
+  }
+
+  .relatorio-doc-declaracao{
+    padding:6px 8px;
+    background:#f8fafc!important;
+    border-left:3px solid #a4161a;
+    font-size:9px;
+    color:#334155;
+    margin-bottom:8px;
+  }
+
+  #cardRelatorioPatrimonios .tabela{
+    width:100%!important;
+    table-layout:fixed!important;
+    border-collapse:collapse!important;
+    font-size:7.4px!important;
+  }
+
+  #cardRelatorioPatrimonios .tabela th{
+    position:static!important;
+    background:#e5e7eb!important;
+    color:#111!important;
+    border:1px solid #9ca3af!important;
+    padding:4px!important;
+    font-size:7px!important;
+  }
+
+  #cardRelatorioPatrimonios .tabela td{
+    border:1px solid #d1d5db!important;
+    padding:4px!important;
+    overflow-wrap:anywhere;
+    vertical-align:top;
+  }
+
+  #cardRelatorioPatrimonios .tabela tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  #cardRelatorioPatrimonios .status{
+    color:#111!important;
+    background:transparent!important;
+    border:0!important;
+    padding:0!important;
+    font-size:7px!important;
+  }
+}
+
+
+/* =========================================================
+   ATLAS RELATÓRIOS 3.5.1 — CORREÇÕES FINAIS
+========================================================= */
+
+.relatorio-numero-linha{text-align:center;font-weight:700}
+.relatorio-total-final td{
+  text-align:right;
+  padding:9px!important;
+  background:#f8fafc;
+  border-top:2px solid #a4161a!important;
+}
+
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+
+  body > aside,
+  .bdr-sidebar,
+  .bdr-menu,
+  .bdr-menu-btn,
+  .bdr-brand,
+  .bdr-brand-icon,
+  .sidebar,
+  .menu-btn,
+  header,
+  .relatorio-topbar,
+  .kpi-relatorio-grid,
+  .filtros,
+  .botoes,
+  .card-movimentacoes,
+  .content > .card[data-permissao="SIENGE_EXPORTAR"],
+  #modalSiengeCodigos,
+  .notif-wrap,
+  .notif-dropdown,
+  .user-menu,
+  .dropdown-user{
+    display:none!important;
+    visibility:hidden!important;
+  }
+
+  body,.layout,.content{
+    margin:0!important;
+    padding:0!important;
+    width:100%!important;
+    display:block!important;
+    overflow:visible!important;
+  }
+
+  #cabecalhoRelatorioImpressao,
+  #cardRelatorioPatrimonios{
+    display:block!important;
+    visibility:visible!important;
+  }
+
+  #cardRelatorioPatrimonios .tabela{
+    width:100%!important;
+    table-layout:fixed!important;
+    font-size:7px!important;
+  }
+
+  #cardRelatorioPatrimonios .tabela th:nth-child(1){width:3%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(2){width:8%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(3){width:17%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(4){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(5){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(6){width:13%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(7){width:8%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(8){width:8%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(9){width:9%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(10){width:12%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(11){width:8%!important}
+
+  #cardRelatorioPatrimonios thead{display:table-header-group!important}
+  #cardRelatorioPatrimonios tfoot{display:table-footer-group!important}
+
+  #cardRelatorioPatrimonios tr{
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+
+  #cardRelatorioPatrimonios td,
+  #cardRelatorioPatrimonios th{
+    overflow-wrap:anywhere!important;
+    white-space:normal!important;
+    line-height:1.22!important;
+  }
+}
+
+
+/* =========================================================
+   ATLAS RELATÓRIOS 3.5.2 — SELEÇÃO DE OBRAS
+========================================================= */
+
+.obra-check:has(.obra-sienge-check:checked){
+  background:#eff6ff!important;
+  border-color:#60a5fa!important;
+  color:#1e3a8a!important;
+  box-shadow:0 0 0 2px rgba(96,165,250,.12);
+}
+
+.obra-check .obra-sienge-check{
+  width:16px!important;
+  height:16px!important;
+  min-width:16px!important;
+  accent-color:#2563eb;
+}
+
+
+/* =========================================================
+   ATLAS RELATÓRIOS 3.5.3 — PAGINAÇÃO E DESEMPENHO
+
+   Tela:
+   • renderiza somente 30 linhas;
+   • filtros e KPIs usam o total completo;
+   • impressão e CSV continuam usando todos os filtrados.
+========================================================= */
+
+.relatorio-paginacao-topo{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:8px 0 10px;
+  padding:9px 11px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#475569;
+  font-size:12px;
+  font-weight:700;
+}
+
+.relatorio-paginacao-acoes{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.relatorio-paginacao-acoes button{
+  min-height:34px;
+  padding:7px 11px;
+  border:1px solid #fecaca;
+  border-radius:9px;
+  background:#fff;
+  color:#a4161a;
+  font-size:11px;
+  font-weight:800;
+}
+
+.relatorio-paginacao-acoes button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  border-color:#e5e7eb;
+  color:#9ca3af;
+  background:#f9fafb;
+}
+
+#relatorioPaginaInfo{
+  padding:7px 10px;
+  border-radius:9px;
+  background:#111827;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+}
+
+@media(max-width:720px){
+  .relatorio-paginacao-topo{
+    flex-direction:column;
+    align-items:stretch;
+    text-align:center;
+  }
+}
+
+@media print{
+  .relatorio-paginacao-topo{
+    display:none!important;
+  }
+}
+
+
+/* =========================================================
+   ATLAS RELATÓRIOS 3.6.1 — CONFERÊNCIA COM PERMISSÃO
+
+   Permissão necessária:
+   PATRIMONIO_CONFERIR_RELATORIO
+========================================================= */
+.btn-assinar{background:#7c3aed!important}
+.btn-assinados{background:#0f766e!important}
+.atlas-assinados-lista{padding:14px 17px 18px;display:grid;gap:10px}
+.atlas-assinados-vazio{padding:22px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc}
+.atlas-assinado-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid #e2e8f0;border-radius:13px;background:#fff}
+.atlas-assinado-item:hover{border-color:#99f6e4;background:#f0fdfa}
+.atlas-assinado-item h4{margin:0 0 5px;color:#0f172a;font-size:13px}
+.atlas-assinado-item p{margin:2px 0;color:#64748b;font-size:11px;line-height:1.35}
+.atlas-assinado-acoes{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.atlas-assinado-acoes button{border:0;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:900;cursor:pointer}
+.atlas-assinado-abrir{background:#0f766e;color:#fff}.atlas-assinado-imprimir{background:#111827;color:#fff}
+.atlas-assinados-carregando{padding:22px;text-align:center;color:#475569}
+.atlas-conferencia-status{display:none;margin:10px 0 14px;padding:11px 13px;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:11px;background:#eff6ff;color:#1e3a8a;font-size:12px;line-height:1.45}
+.atlas-conferencia-status.ativo{display:block}
+.atlas-conferencia-status.historico{border-color:#c4b5fd;border-left-color:#7c3aed;background:#faf5ff;color:#4c1d95}
+.atlas-conferencia-status strong{display:block;margin-bottom:3px}
+.atlas-conferencia-status button{margin-top:8px;border:0;border-radius:8px;padding:7px 10px;background:#111827;color:#fff;font-size:11px;font-weight:800;cursor:pointer}
+
+@media(max-width:650px){.atlas-assinado-item{grid-template-columns:1fr}.atlas-assinado-acoes{justify-content:stretch}.atlas-assinado-acoes button{flex:1}}
+
+.atlas-conf-modal-bg{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.70)}
+.atlas-conf-modal-bg.ativo{display:flex}
+.atlas-conf-modal{width:min(760px,96vw);max-height:94vh;overflow:auto;background:#fff;border-radius:20px;border-left:5px solid #7c3aed;box-shadow:0 28px 80px rgba(15,23,42,.35)}
+.atlas-conf-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid #e5e7eb;background:linear-gradient(135deg,#fff,#faf5ff)}
+.atlas-conf-modal-head h2{margin:0;color:#5b21b6;font-size:19px}.atlas-conf-modal-head p{margin:4px 0 0;color:#64748b;font-size:12px}
+.atlas-conf-fechar{width:38px;height:38px;border:0;border-radius:12px;background:#f3e8ff;color:#6b21a8;font-size:24px;font-weight:900}
+.atlas-conf-resumo{display:grid;grid-template-columns:1.4fr .6fr;gap:10px;padding:14px 17px 4px}
+.atlas-conf-resumo>div{padding:10px 12px;border:1px solid #e9d5ff;border-radius:12px;background:#faf5ff}
+.atlas-conf-resumo span{display:block;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase}
+.atlas-conf-resumo strong{display:block;margin-top:4px;color:#1e293b;font-size:13px}
+.atlas-conf-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 17px}
+.atlas-conf-form label{color:#334155;font-size:11px;font-weight:800}
+.atlas-conf-form input,.atlas-conf-form textarea{width:100%;margin-top:5px;border:1px solid #d8b4fe!important;border-radius:11px!important;background:#fff!important;color:#172033!important;font-size:14px!important;font-weight:400!important}
+.atlas-conf-form input{min-height:42px}.atlas-conf-wide{grid-column:1/-1}
+.atlas-conf-texto{margin:0 17px 12px;padding:9px 11px;border-left:4px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#4c1d95;font-size:12px;line-height:1.45}
+.atlas-conf-assinatura-box{margin:0 17px;padding:10px;border:1px solid #d8b4fe;border-radius:14px;background:#fafafa}
+.atlas-conf-assinatura-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.atlas-conf-assinatura-head strong{color:#334155;font-size:12px}.atlas-conf-assinatura-head button{border:0;border-radius:9px;padding:7px 10px;background:#ede9fe;color:#5b21b6;font-size:11px;font-weight:800}
+#canvasAssinaturaConferencia{display:block;width:100%;height:210px;border:2px dashed #c4b5fd;border-radius:12px;background:#fff;touch-action:none;cursor:crosshair}
+#confAssinaturaAjuda{margin-top:6px;color:#64748b;font-size:10px;text-align:center}
+.atlas-conf-acoes{display:flex;justify-content:flex-end;gap:9px;padding:14px 17px 17px}.atlas-conf-acoes button{min-height:40px;border:0;border-radius:11px;padding:9px 14px;font-size:12px;font-weight:900}
+.atlas-conf-cancelar{background:#e5e7eb;color:#374151}.atlas-conf-salvar{background:#7c3aed;color:#fff}.atlas-conf-salvar:disabled{opacity:.6;cursor:wait}
+.relatorio-conferencia-impressao{
+  display:none;
+  margin-top:3mm;
+  padding-top:2.2mm;
+  border-top:1px solid #64748b;
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.relatorio-conferencia-titulo{
+  text-align:center;
+  color:#111827;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.25px;
+  margin-bottom:1.8mm;
+}
+.relatorio-conferencia-codigo{font-size:8px;color:#334155;margin-bottom:2mm}
+.relatorio-conferencia-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.8mm 14mm;
+  font-size:8px;
+  line-height:1.2;
+}
+.relatorio-conferencia-funcao{grid-column:1/-1}
+.relatorio-conferencia-assinatura{
+  width:300px;
+  margin:1.8mm auto 0;
+  text-align:center;
+  position:relative;
+}
+.relatorio-conferencia-assinatura img{
+  display:block;
+  width:255px;
+  height:35px;
+  margin:0 auto -1px;
+  object-fit:contain;
+  object-position:center bottom;
+  position:relative;
+  z-index:2;
+}
+.relatorio-conferencia-linha{
+  width:255px;
+  margin:0 auto;
+  border-top:1px solid #111;
+  position:relative;
+  z-index:1;
+}
+#relatorioAssinaturaNomeFinal{margin-top:2px;font-size:8px;font-weight:700;color:#111827;line-height:1.1;position:relative;z-index:3}
+.relatorio-visto-paginas{display:none}
+
+/* Visto colocado no fim da primeira folha quando a conferência histórica ocupa a segunda. */
+.relatorio-visto-antes-conferencia{display:none}
+@media(max-width:650px){.atlas-conf-modal-bg{padding:7px;align-items:flex-start;overflow:auto}.atlas-conf-modal{width:100%;max-height:none;margin:4px 0 90px}.atlas-conf-resumo,.atlas-conf-form{grid-template-columns:1fr}.atlas-conf-wide{grid-column:auto}#canvasAssinaturaConferencia{height:240px}.atlas-conf-acoes{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e7eb}}
+@media print{
+  #modalConferenciaPatrimonial,#modalRelatoriosAssinados{display:none!important}
+
+  /* Avisos de navegação e comparação aparecem apenas na tela. */
+  #avisoHistoricoConferencia{
+    display:none!important;
+    visibility:hidden!important;
+    height:0!important;
+    min-height:0!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+    overflow:hidden!important;
+  }
+
+  /* Remove definitivamente os rodapés antigos. */
+  .relatorio-visto-eletronico,
+  .relatorio-total-final,
+  #relatorioVistoEletronico,
+  #totalTabelaRelatorio,
+  [data-relatorio-legado="visto"],
+  [data-relatorio-legado="total"]{
+    display:none!important;
+    visibility:hidden!important;
+    height:0!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+  }
+
+  .relatorio-conferencia-impressao.ativo{display:block!important}
+
+  /*
+     Quando todos os itens e a conferência couberem na mesma folha,
+     o bloco permanece logo após a tabela. Se faltar espaço, o próprio
+     navegador move o bloco completo para a folha seguinte.
+  */
+  body.relatorio-uma-pagina .relatorio-visto-paginas{display:none!important}
+  body.relatorio-uma-pagina .relatorio-conferencia-impressao.ativo{
+    position:static!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:auto!important;
+    margin:3mm 8mm 0!important;
+    padding:2.2mm 0 0!important;
+    background:#fff!important;
+    z-index:auto!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+
+  /* Em cada página: somente a imagem da assinatura. */
+  .relatorio-visto-paginas.ativo{
+    display:block!important;
+    position:fixed;
+    right:5mm;
+    bottom:3mm;
+    width:38mm;
+    height:15mm;
+    z-index:999999;
+    pointer-events:none;
+  }
+  .relatorio-visto-paginas img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:center bottom;
+  }
+
+  /*
+     Caso histórico de duas páginas: o visto pertence à primeira folha e
+     o bloco completo começa na segunda. Assim não dependemos do rodapé
+     fixo do navegador, que poderia ocultar o visto por uma estimativa de itens.
+  */
+  body.relatorio-historico-duas-paginas .relatorio-visto-paginas{display:none!important}
+  body.relatorio-historico-duas-paginas .relatorio-visto-antes-conferencia{
+    display:flex!important;
+    justify-content:flex-end;
+    align-items:flex-end;
+    height:17mm;
+    padding:0 5mm 1.5mm 0;
+    margin:0!important;
+    background:#fff;
+    break-after:page;
+    page-break-after:always;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  body.relatorio-historico-duas-paginas .relatorio-visto-antes-conferencia img{
+    display:block;
+    width:38mm;
+    height:15mm;
+    object-fit:contain;
+    object-position:center bottom;
+  }
+}
+
+
+/* ATLAS RELATÓRIOS 4.2.0 — histórico limpo e visto manuscrito em páginas adicionais */
+#cardRelatorioPatrimonios.relatorio-obra-unica .coluna-obra-relatorio{display:none!important}
+@media print{
+  #cardRelatorioPatrimonios .tabela th:nth-child(1){width:3%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(2){width:9%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(3){width:16%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(4){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(5){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(6){width:12%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(7){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(8){width:7%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(9){width:9%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(10){width:9%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(11){width:8%!important}
+  #cardRelatorioPatrimonios .tabela th:nth-child(12){width:9%!important}
+  #cardRelatorioPatrimonios.relatorio-obra-unica .tabela th:nth-child(3){width:19%!important}
+}
+
+
+
+/* =========================================================
+   MELHORIA VISUAL RELATÓRIOS - SEM MEXER NA BUSCA ORIGINAL
+========================================================= */
+
+body{
+  background:#eef2f7 !important;
+}
+
+header{
+  display:none !important;
+}
+
+.layout{
+  display:flex;
+}
+
+.content{
+  margin-left:0;
+  width:100%;
+  min-width:0;
+  padding:12px 0 0;
+}
+
+.relatorio-title{
+  font-size:19px;
+  font-weight:900;
+  color:#a4161a;
+}
+
+.relatorio-sub{
+  color:#6b7280;
+  font-size:12px;
+  margin-top:3px;
+}
+
+.relatorio-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.btn-relatorio{
+  border:none;
+  border-radius:10px;
+  padding:9px 12px;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  transition:.2s;
+  font-size:12px;
+}
+
+.btn-relatorio:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.05);
+}
+
+.btn-print{background:#111827}
+.btn-excel{background:#16a34a}
+.btn-limpar{background:#6b7280}
+
+.kpi-relatorio-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.kpi-relatorio{
+  background:white;
+  border-left:4px solid #a4161a;
+  border-radius:14px;
+  padding:10px;
+  box-shadow:0 2px 9px rgba(0,0,0,.08);
+}
+
+.kpi-relatorio strong{
+  display:block;
+  font-size:18px;
+  color:#111827;
+}
+
+.kpi-relatorio span{
+  display:block;
+  margin-top:4px;
+  color:#6b7280;
+  font-size:11px;
+  font-weight:800;
+}
+
+.card{
+  border-radius:16px !important;
+  border-left:4px solid #a4161a;
+  box-shadow:0 2px 9px rgba(0,0,0,.08) !important;
+}
+
+.card h3{
+  color:#a4161a !important;
+}
+
+.grid{
+  grid-template-columns:1.5fr .8fr .8fr 1fr !important;
+}
+
+input,select{
+  border-radius:9px !important;
+  border:1px solid #d1d5db !important;
+  font-size:12px;
+}
+
+.tabela{
+  border-collapse:collapse;
+  font-size:12px;
+  background:white;
+}
+
+.tabela th{
+  background:#a4161a !important;
+  color:white;
+  padding:9px;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+.tabela td{
+  border-bottom:1px solid #e5e7eb;
+  padding:8px;
+}
+
+.tabela tr:hover td{
+  background:#f9fafb;
+}
+
+.status{
+  display:inline-flex;
+  width:max-content;
+  padding:4px 9px;
+  border-radius:8px;
+  color:white;
+  font-size:10px;
+  font-weight:400;
+}
+
+.ESTOQUE{background:#16a34a !important}
+.EM_USO{background:#2563eb !important}
+.MANUTENCAO{background:#f97316 !important}
+.BAIXADO{background:#dc2626 !important}
+
+@media(max-width:900px){
+  .content{
+    margin-left:0;
+    width:100%;
+  }
+
+  .grid,
+  .kpi-relatorio-grid{
+    grid-template-columns:1fr !important;
+  }
+
+}
+
+@media print{
+  .bdr-sidebar,
+  .relatorio-topbar,
+  .filtros,
+  .botoes,
+  .card-movimentacoes{
+    display:none !important;
+  }
+
+  .content{
+    margin-left:0 !important;
+    width:100% !important;
+    padding:0 !important;
+  }
+
+  .card{
+    box-shadow:none !important;
+    border-left:none !important;
+  }
+
+  body{
+    background:white !important;
+  }
+}
+
+
+
+/* =========================================================
+   TOPO PADRÃO BDR - USUÁRIO + NOTIFICAÇÕES
+========================================================= */
+.bdr-top-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:auto;
+}
+
+.notif-wrap{
+  position:relative;
+}
+
+.notif-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  box-shadow:none;
+}
+
+.notif-btn:hover{
+  background:#fff1f2;
+  color:#a4161a;
+}
+
+.notif-badge{
+  position:absolute;
+  top:1px;
+  right:0;
+  min-width:17px;
+  height:17px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#dc2626;
+  color:white;
+  font-size:10px;
+  font-weight:900;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.notif-dropdown{
+  position:absolute;
+  top:48px;
+  right:0;
+  width:330px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+
+.notif-dropdown.ativo{
+  display:block;
+}
+
+.notif-head{
+  padding:12px 14px;
+  font-weight:900;
+  color:#a4161a;
+  background:#fff5f5;
+  border-bottom:1px solid #fecaca;
+}
+
+.notif-list{
+  max-height:280px;
+  overflow:auto;
+}
+
+.notif-item{
+  padding:10px 14px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:12px;
+  color:#374151;
+  cursor:pointer;
+}
+
+.notif-item:hover{
+  background:#f9fafb;
+}
+
+.notif-item strong{
+  display:block;
+  color:#111827;
+  margin-bottom:3px;
+}
+
+.user-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:.22s ease;
+  outline:none!important;
+  user-select:none!important;
+  caret-color:transparent!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.user-menu,
+.user-menu *,
+#usuarioNome,
+#usuarioPerfil{
+  user-select:none!important;
+  caret-color:transparent!important;
+}
+
+.user-menu:hover{
+  background:#fff1f2;
+  transform:translateX(4px) scale(1.02);
+}
+
+.user-menu:hover .avatar{
+  transform:scale(1.06);
+}
+
+.user-mini{
+  text-align:right;
+  font-size:13px;
+  pointer-events:none;
+}
+
+.user-mini b{
+  display:block;
+  outline:none!important;
+}
+
+.user-mini small{
+  color:#a4161a;
+  font-weight:900;
+  outline:none!important;
+}
+
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#fecaca,#fff);
+  border:2px solid #fee2e2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#a4161a;
+  font-size:18px;
+  transition:.22s ease;
+  pointer-events:none;
+}
+
+.dropdown-user{
+  position:absolute;
+  top:55px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 18px 35px rgba(15,23,42,.18);
+  padding:8px;
+  display:none;
+  min-width:220px;
+  z-index:9999;
+}
+
+.dropdown-user.ativo{
+  display:block;
+  animation:dropdownTop .16s ease;
+}
+
+@keyframes dropdownTop{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.dropdown-user button{
+  width:100%;
+  border:none;
+  background:#fff;
+  color:#374151;
+  padding:10px 11px;
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:900;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.dropdown-user button:hover{
+  background:#fff1f2;
+  color:#a4161a;
+  transform:none;
+  filter:none;
+}
+
+.dropdown-user .logout-btn{
+  color:#dc2626;
+}
+
+button:focus,
+button:active,
+.bdr-menu-btn:focus,
+.bdr-menu-btn:active,
+.user-menu:focus,
+.user-menu:active,
+.notif-btn:focus,
+.notif-btn:active{
+  outline:none!important;
+  box-shadow:none!important;
+}
+
+button,
+.bdr-top-actions,
+.bdr-top-actions *,
+.notif-wrap,
+.notif-wrap *,
+.notif-btn,
+.notif-btn *,
+.notif-badge{
+  -webkit-tap-highlight-color:transparent!important;
+  caret-color:transparent!important;
+  user-select:none!important;
+}
+
+@media(max-width:900px){
+  .bdr-top-actions{width:100%;justify-content:space-between;}
+  .notif-dropdown{right:-80px;width:300px;}
+}
+
+
+
+/* BDR permissões relatórios: sem permissão = não aparece */
+[data-bdr-sem-permissao="SIM"]{display:none!important;}
+
+
+
+/* Atlas — seleção múltipla de produtos do relatório */
+.atlas-relatorio-busca-wrap{display:flex;gap:8px;min-width:0}
+.atlas-relatorio-busca-wrap>input{flex:1;min-width:0}
+.atlas-relatorio-seletor-btn{flex:none;display:flex;align-items:center;gap:7px;border:1px solid #bfd4ee;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800;border-radius:10px;padding:9px 12px;white-space:nowrap}
+.atlas-relatorio-seletor-btn:hover{background:#dbeafe}
+#atlasRelatorioQtdSelecao:not([hidden]){background:#a4161a;color:white;padding:2px 7px;border-radius:99px}
+.atlas-relatorio-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:2147483500;align-items:center;justify-content:center;padding:20px}
+.atlas-relatorio-modal-bg.ativo{display:flex}
+.atlas-relatorio-modal{display:flex;flex-direction:column;width:min(820px,96vw);height:min(750px,92vh);background:#fff;border-radius:20px;box-shadow:0 25px 80px rgba(0,0,0,.28);overflow:hidden}
+.atlas-relatorio-modal-header{display:flex!important;justify-content:space-between;align-items:center;padding:21px 24px;border-bottom:1px solid #e2e8f0;background:#fff!important}
+.atlas-relatorio-modal-header h2{margin:0;font-size:19px;color:#9f171d}.atlas-relatorio-modal-header p{margin:5px 0 0;font-size:12px;color:#64748b}
+.atlas-relatorio-fechar{font-size:25px;line-height:1;background:#f1f5f9;color:#475569;border-radius:10px;padding:5px 12px}
+.atlas-relatorio-modal-body{padding:18px 24px;display:flex;flex-direction:column;min-height:0;flex:1}
+.atlas-relatorio-modal-search{display:flex;align-items:center;gap:9px;border:1px solid #cbd5e1;border-radius:12px;padding:0 12px;color:#64748b}
+.atlas-relatorio-modal-search input{border:0!important;outline:0!important;flex:1;min-height:44px;font-size:14px}
+.atlas-relatorio-modal-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eff6ff;border-radius:10px;margin:12px 0 8px;padding:11px;color:#1d4ed8;font-size:12px;font-weight:700}
+.atlas-relatorio-modal-tools label{display:flex;align-items:center;gap:9px;cursor:pointer}.atlas-relatorio-modal-tools input,.atlas-relatorio-produto input{width:17px;height:17px;accent-color:#2563eb;flex:none}
+.atlas-relatorio-modal-lista{overflow:auto;min-height:0;flex:1}
+.atlas-relatorio-produto{display:flex;align-items:center;gap:13px;padding:12px 10px;border-bottom:1px solid #e2e8f0;cursor:pointer;color:#0f172a}
+.atlas-relatorio-produto:hover{background:#f8fafc}.atlas-relatorio-produto:has(input:checked){background:#eff6ff}
+.atlas-relatorio-produto-nome{flex:1;min-width:0;font-size:13px;font-weight:750;overflow-wrap:anywhere}.atlas-relatorio-produto-nome small{display:block;color:#64748b;font-size:11px;font-weight:400;margin-top:3px}
+.atlas-relatorio-produto-qtd{font-size:11px;font-weight:800;color:#475569;background:#f1f5f9;border-radius:9px;padding:6px 9px;white-space:nowrap}
+.atlas-relatorio-modal-vazio{padding:30px;text-align:center;color:#64748b;font-size:13px}
+.atlas-relatorio-modal-footer{display:flex;align-items:center;gap:9px;padding:16px 24px;border-top:1px solid #e2e8f0;background:#f8fafc}
+.atlas-relatorio-selecionados{margin-right:auto}.atlas-relatorio-selecionados strong{display:block;color:#0f172a;font-size:13px}.atlas-relatorio-selecionados small{color:#64748b;font-size:11px}
+.atlas-relatorio-limpar,.atlas-relatorio-cancelar{background:#fff;color:#334155;border:1px solid #cbd5e1;font-weight:700}
+.atlas-relatorio-aplicar{background:#a4161a;font-weight:800}
+@media(max-width:720px){.atlas-relatorio-busca-wrap{flex-direction:column}.atlas-relatorio-modal-bg{padding:6px}.atlas-relatorio-modal{width:100%;height:95vh}.atlas-relatorio-modal-header,.atlas-relatorio-modal-body,.atlas-relatorio-modal-footer{padding:12px}.atlas-relatorio-modal-footer{flex-wrap:wrap}.atlas-relatorio-selecionados{width:100%}}
+@media print{#atlasModalProdutosRelatorio{display:none!important}}
+
+
+
+/* Atlas — filtros compactos dos relatórios */
+.card.filtros{position:relative}
+.atlas-filtros-compactos{display:flex;flex-direction:column;gap:10px;margin:10px 0 13px}
+.atlas-filtros-principal{display:grid;grid-template-columns:minmax(230px,2fr) minmax(115px,.75fr) minmax(160px,1.15fr) minmax(155px,1fr);gap:9px;align-items:end}
+#filtroObra[hidden]{display:none!important}\n.atlas-filtros-compactos label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;font-weight:700;color:#64748b}
+.atlas-filtros-compactos input,.atlas-filtros-compactos select{height:38px!important;min-height:38px!important;padding:7px 10px!important;font-size:12px!important;border-radius:9px!important;min-width:0}
+.atlas-filtros-compactos input:focus,.atlas-filtros-compactos select:focus,.atlas-relatorio-modal-search input:focus{outline:none!important;border-color:#94a3b8!important;box-shadow:none!important}
+.atlas-filtro-acao{height:38px;min-width:0;width:100%;display:flex;justify-content:center;align-items:center;gap:7px;padding:7px 10px!important;border-radius:9px!important;background:#f8fafc!important;border:1px solid #cbd5e1!important;color:#1e3a5f!important;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden}
+.atlas-filtro-acao:hover{background:#eff6ff!important}
+.atlas-produtos-acao{background:#eff6ff!important;border-color:#bfdbfe!important;color:#1d4ed8!important}
+.atlas-filtro-acao span{overflow:hidden;text-overflow:ellipsis}
+.atlas-filtros-secundarios{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
+.atlas-filtros-secundarios>label:nth-child(1){width:185px}
+.atlas-filtros-secundarios>label:nth-child(2){width:155px}
+.atlas-filtros-secundarios>label:nth-child(3){width:170px}
+.atlas-filtro-limpar{height:38px;background:#f1f5f9!important;color:#475569!important;border:1px solid #cbd5e1!important;border-radius:9px!important;font-weight:800;font-size:12px}
+.atlas-periodo-wrap{position:relative;min-width:0}
+.atlas-periodo-popover{position:absolute;right:0;top:44px;z-index:1000;width:310px;max-width:calc(100vw - 40px);padding:14px;background:white;border:1px solid #e2e8f0;border-radius:13px;box-shadow:0 15px 40px #0f172a30}
+.atlas-periodo-popover[hidden]{display:none!important}
+.atlas-periodo-atalhos{display:flex;gap:6px;margin-bottom:12px}
+.atlas-periodo-atalhos button{flex:1;padding:8px 4px;background:#eff6ff;color:#1d4ed8;font-size:11px}
+.atlas-periodo-popover label{margin:8px 0}
+.atlas-periodo-limpar{width:100%;background:#64748b;margin-top:8px;font-size:12px}
+.atlas-relatorio-modal-search:focus-within{border-color:#94a3b8!important;box-shadow:none!important}
+.atlas-relatorio-modal-search input{outline:none!important;box-shadow:none!important}
+.atlas-obras-overlay{display:none;position:fixed;inset:0;z-index:2147483601;background:#0f172ab0;align-items:center;justify-content:center;padding:14px}
+.atlas-obras-overlay.ativo{display:flex}
+.atlas-obras-dialog{width:min(680px,96vw);max-height:88vh;display:flex;flex-direction:column;background:white;border-radius:18px;overflow:hidden;box-shadow:0 25px 75px #0f172a55}
+.atlas-obras-dialog header{display:flex!important;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid #e2e8f0}
+.atlas-obras-dialog header h2{font-size:18px;color:#a4161a;margin:0}
+.atlas-obras-dialog header p{font-size:12px;color:#64748b;margin:4px 0 0}
+.atlas-obras-dialog header button{background:#f1f5f9;color:#475569;font-size:22px;width:36px;height:36px}
+.atlas-obras-conteudo{padding:15px 20px;overflow:auto}
+.atlas-obras-conteudo>input{height:41px;margin-bottom:10px}
+.atlas-obras-marcar{display:flex;align-items:center;gap:8px;padding:10px;background:#eff6ff;border-radius:9px;font-size:12px;color:#1d4ed8;font-weight:700}
+.atlas-obras-marcar input,.atlas-obra-item input{width:16px!important;height:16px!important;flex:none}
+.atlas-obras-lista{max-height:48vh;overflow:auto}
+.atlas-obra-item{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #e2e8f0;font-size:12px;cursor:pointer}
+.atlas-obra-item:hover{background:#f8fafc}
+.atlas-obras-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid #e2e8f0;font-size:12px}
+.atlas-obras-dialog footer>div{display:flex;gap:7px}
+.atlas-obras-clear,.atlas-obras-cancel{background:#f1f5f9;color:#334155}
+.atlas-obras-apply{background:#a4161a}
+@media(max-width:950px){.atlas-filtros-principal{grid-template-columns:1fr 1fr}.atlas-filtros-secundarios>label{flex:1;min-width:145px}}
+@media(max-width:550px){.atlas-filtros-principal{grid-template-columns:1fr 1fr}.atlas-filtro-pesquisa{grid-column:1/-1}.atlas-filtros-secundarios>label{width:100%!important}.atlas-obras-dialog footer>div{flex-wrap:wrap}}
+@media print{.atlas-obras-overlay,.atlas-periodo-popover{display:none!important}}
+
+
+
+/* ATLAS | Refinamento visual exclusivo de Relatórios — sem afetar impressão */
+@media screen {
+  body {background:#f0f3f8;}
+  .content {padding:14px 16px 24px;max-width:100%;min-width:0;}
+  .content > .card {border-radius:13px!important;border:1px solid #e3e8ef!important;border-left:3px solid #a4161a!important;box-shadow:0 2px 8px rgba(15,23,42,.055)!important;padding:15px 17px!important;margin-bottom:12px!important;}
+  .content > .card h3 {font-size:15px!important;letter-spacing:-.2px;margin:0 0 12px!important;}
+  .kpi-relatorio-grid {gap:10px!important;margin-bottom:12px!important;}
+  .kpi-relatorio {min-width:0;border:1px solid #e2e8f0;border-left:3px solid #a4161a;border-radius:12px!important;padding:15px 16px!important;box-shadow:0 2px 7px rgba(15,23,42,.045)!important;}
+  .kpi-relatorio strong {font-size:24px!important;font-weight:800;letter-spacing:-.7px;}
+  .kpi-relatorio span {font-size:12px!important;margin-top:4px!important;}
+  .card.filtros {padding:17px!important;}
+  .atlas-filtros-compactos {gap:12px;margin:0 0 14px!important;}
+  .atlas-filtros-principal {grid-template-columns:minmax(200px,2fr) minmax(115px,.85fr) minmax(175px,1.15fr) minmax(155px,1fr)!important;gap:10px!important;}
+  .atlas-filtros-compactos label {font-size:12px!important;gap:6px!important;color:#344256!important;}
+  .atlas-filtros-compactos input,.atlas-filtros-compactos select,.atlas-filtro-acao {height:38px!important;min-height:38px!important;border-radius:8px!important;font-size:12px!important;}
+  .atlas-filtros-secundarios {gap:10px!important;align-items:end;}
+  .atlas-filtros-secundarios>label:nth-child(1),.atlas-filtros-secundarios>label:nth-child(2),.atlas-filtros-secundarios>label:nth-child(3) {width:auto!important;flex:1 1 155px;max-width:240px;}
+  .atlas-filtro-limpar {padding:8px 13px!important;height:38px!important;white-space:nowrap;}
+  .relatorio-actions {display:flex!important;align-items:center!important;gap:7px!important;flex-wrap:wrap!important;padding-top:12px;border-top:1px solid #e8edf4;}
+  .relatorio-actions .btn-relatorio {width:auto!important;min-height:35px!important;height:auto!important;max-width:100%;padding:8px 11px!important;font-size:11px!important;line-height:1.2!important;font-weight:700!important;border-radius:8px!important;box-shadow:none!important;transform:none!important;white-space:normal!important;}
+  .relatorio-actions .btn-relatorio:hover {transform:none!important;filter:brightness(.96);}
+  .obras-check-wrap {max-height:185px;overflow:auto;}
+  .obra-check {font-size:11px!important;}
+  .sienge-mini-actions {display:flex;gap:7px;flex-wrap:wrap;}
+  .sienge-mini-actions .btn-mini {padding:7px 11px!important;font-size:11px!important;border-radius:7px!important;}
+  .tabela {font-size:12px!important;}
+  .tabela th {background:#f2f5f9!important;color:#263448!important;border-bottom:2px solid #a4161a!important;padding:10px 9px!important;}
+  .tabela td {padding:9px!important;border-bottom:1px solid #e8edf4!important;}
+  .tabela tbody tr:hover {background:#f8fafc;}
+  .atlas-obras-dialog {border-radius:14px!important;}
+  .atlas-obras-dialog header {background:#f9fafc;}
+  .atlas-obras-dialog footer {background:#f9fafc;}
+  .atlas-obra-item {border-radius:7px;}
+  /* Uma obra: exibir informação fixa, sem exigir seleção. */
+  .atlas-relatorio-obra-unica #atlasAbrirObras {pointer-events:none!important;cursor:default!important;background:#f1f5f9!important;border-color:#e2e8f0!important;color:#475569!important;}
+  .atlas-relatorio-obra-unica #atlasAbrirObras:after {content:' (automática)';font-size:10px;font-weight:500;color:#64748b;}
+  .atlas-relatorio-obra-unica #atlasAbrirObras .fa-building {color:#64748b;}
+  .atlas-relatorio-obra-unica #listaObrasSienge {display:none!important;}
+  .atlas-relatorio-obra-unica .sienge-mini-actions {display:none!important;}
+  .atlas-obra-unica-info {display:none;margin:0 0 10px;font-size:12px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;}
+  .atlas-relatorio-obra-unica .atlas-obra-unica-info {display:block;}
+}
+@media screen and (max-width:1000px){
+  .atlas-filtros-principal {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media screen and (max-width:620px){
+  .content {padding:10px!important;}
+  .kpi-relatorio-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .atlas-filtros-principal {grid-template-columns:1fr!important;}
+  .atlas-filtros-secundarios>label {max-width:none!important;}
+  .relatorio-actions .btn-relatorio {flex:1 1 130px;}
+}
+
+
+
+.atlas-status-filtro{position:relative!important}
+.atlas-status-botao{width:100%;height:38px;background:#fff!important;color:#1e293b!important;border:1px solid #cbd5e1!important;border-radius:9px!important;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.atlas-status-opcoes{position:absolute;top:100%;left:0;z-index:150;width:max(220px,100%);padding:10px;background:#fff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 14px 30px #0f172a30}
+.atlas-status-opcoes[hidden]{display:none!important}
+.atlas-status-opcoes label{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;padding:7px;color:#334155;font-size:12px}
+.atlas-status-opcoes input{width:16px!important;height:16px!important;min-height:0!important;accent-color:#a4161a}
+.atlas-status-opcoes button{width:100%;background:#f1f5f9;color:#334155;font-size:12px}
+#filtroStatus[hidden]{display:none!important}
+
+/* Relatórios: organização por abas sem camadas de correções */
+.atlas-rel-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px;padding:6px;background:#e8edf5;border-radius:14px}
+.atlas-rel-tabs button{background:#fff;color:#19304c;border:1px solid #dbe3ed;border-radius:10px;padding:12px 16px;font-weight:800;flex:1 1 145px}
+.atlas-rel-tabs button.ativo{background:#b30d20;color:#fff;border-color:#b30d20}
+.atlas-rel-painel[hidden]{display:none!important}
+.atlas-rel-info{font-size:12px;color:#64748b;margin:4px 0 10px}
+.atlas-mov-paginacao{justify-content:center!important;flex-wrap:wrap;text-align:center}
+.atlas-mov-paginacao>div{display:flex;align-items:center;justify-content:center;gap:8px}
+.relatorio-paginacao-topo{justify-content:center!important;flex-wrap:wrap;text-align:center}
+.relatorio-paginacao-acoes{margin:auto}
+.atlas-rel-painel .card{margin-bottom:12px}
+.atlas-rel-tabs button:focus-visible{outline:3px solid #93c5fd}
+@media print{.atlas-rel-tabs{display:none!important}.atlas-rel-painel[hidden]{display:block!important}}
+
+/* ==============================================================
+   ATLAS / BDR — RELATÓRIO DE MOVIMENTAÇÕES
+   Identidade visual da referência aprovada. Escopo: somente o
+   painel de Movimentações dentro do Shell; os estilos dos outros
+   relatórios e a impressão/Excel pré-existentes ficam intactos.
+   ============================================================== */
+body.atlas-rel-mov-ativo .kpi-relatorio-grid,
+body.atlas-rel-mov-ativo .atlas-rel-info,
+body.atlas-rel-mov-ativo .atlas-rel-tabs {display:none!important}
+body.atlas-rel-mov-ativo .content{padding:0!important;background:transparent}
+#atlasMovimentacoesCard.card{display:block;min-width:0!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important;color:#10234b;font-family:inherit}
+#atlasMovimentacoesCard *{box-sizing:border-box}
+#atlasMovimentacoesCard button,#atlasMovimentacoesCard input,#atlasMovimentacoesCard select{font-family:inherit}
+#atlasMovimentacoesCard button{cursor:pointer}
+#atlasMovimentacoesCard button:focus-visible,#atlasMovimentacoesCard input:focus-visible,#atlasMovimentacoesCard select:focus-visible{outline:3px solid #8cb5fd;outline-offset:2px}
+#atlasMovimentacoesCard [hidden]{display:none!important}
+#atlasMovimentacoesCard .atlas-mov-header-controls{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-clear-inline{display:inline-flex;align-items:center;gap:6px;min-height:33px;padding:7px 9px;background:transparent;border:0;border-radius:7px;color:#315882;font-size:10.5px;font-weight:750;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-clear-inline:hover{background:#e6f1ff}
+#atlasMovimentacoesCard .atlas-mov-actions-menu{position:relative}
+#atlasMovimentacoesCard .atlas-mov-actions-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:35px;padding:7px 13px;color:#fff;background:#0b4ec3;border:1px solid #0b4ec3;border-radius:8px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px #174e9c24}
+#atlasMovimentacoesCard .atlas-mov-actions-toggle:hover{background:#093e9e}
+#atlasMovimentacoesCard .atlas-mov-actions-chevron{font-size:9px;margin-left:1px}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown{position:absolute;right:0;top:calc(100% + 7px);z-index:1700;min-width:215px;max-width:min(280px,86vw);padding:5px;background:#fff;border:1px solid #c8d8ef;border-radius:11px;box-shadow:0 18px 42px #113b6e38}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button{display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border:0;border-radius:7px;background:#fff;color:#17365e;font-size:11px;font-weight:750;text-align:left;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button:hover,#atlasMovimentacoesCard .atlas-mov-actions-dropdown button:focus-visible{background:#eef5ff}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button i{width:16px;text-align:center;font-size:14px}
+#atlasMovimentacoesCard .atlas-mov-ac-excel{color:#168443}
+#atlasMovimentacoesCard .atlas-mov-ac-print{color:#0b4ec3}
+#atlasMovimentacoesCard .atlas-mov-ac-sienge{color:#e06e00}
+/* Exportação Sienge: configuração acessada via menu Ações, sem bloco duplicado acima do relatório. */
+.atlas-mov-sienge-overlay[hidden]{display:none!important}
+.atlas-mov-sienge-overlay{position:fixed;inset:0;z-index:99999;display:flex;justify-content:center;align-items:center;padding:16px;background:#061b3c9e}
+.atlas-mov-sienge-dialog{width:min(800px,95vw);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1px solid #c2d8f2;border-radius:15px;box-shadow:0 26px 80px #071a3755;color:#142b53}
+.atlas-mov-sienge-dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 20px;background:#eaf3ff;border-bottom:1px solid #c7daef}
+.atlas-mov-sienge-dialog-head h2{font-size:17px;margin:0 0 7px;color:#0a3679}
+.atlas-mov-sienge-dialog-head p{font-size:11px;line-height:1.5;margin:0;color:#476186}
+.atlas-mov-sienge-close{border:1px solid #c9d9ef;background:#fff;border-radius:8px;width:32px;height:32px;color:#123b79;flex:none;cursor:pointer}
+.atlas-mov-sienge-dialog-body{padding:16px 20px;min-height:0;overflow-y:auto}
+.atlas-mov-sienge-subhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.atlas-mov-sienge-subhead strong{font-size:12px;color:#0b367d}
+.atlas-mov-sienge-hint{font-size:11px;line-height:1.5;margin:9px 0;color:#50688b}
+.atlas-mov-sienge-dialog-body .obras-check-wrap{max-height:320px;overflow:auto;border:1px solid #dae5f4;border-radius:9px;padding:6px}
+.atlas-mov-sienge-dialog-footer{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid #dce7f4;background:#f8fbff}
+.atlas-mov-sienge-dialog-footer button{min-height:36px;border-radius:7px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.atlas-mov-sienge-secondary{border:1px solid #c9d9ef;background:#fff;color:#173d74}
+.atlas-mov-sienge-primary{border:1px solid #f47d00;background:#f47d00;color:#fff}
+#atlasMovimentacoesCard .atlas-mov-btn-search{background:#074bd0;color:#fff;border-color:#074bd0;width:100%;min-width:0;align-self:end;min-height:40px}
+#atlasMovimentacoesCard .atlas-mov-panel{margin:0 0 17px;min-width:0;border:1px solid #c5daf6;border-radius:17px;background:linear-gradient(112deg,#ffffff 0%,#f7fbff 58%,#ebf4ff 100%);box-shadow:0 8px 17px #17385c17;overflow:visible}
+#atlasMovimentacoesCard .atlas-mov-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:45px;padding:0 12px 0 0;background:linear-gradient(90deg,#dceafb,#eff6ff);border-radius:17px 17px 0 0;border-bottom:1px solid #cfdef1}
+#atlasMovimentacoesCard .atlas-mov-panel-head h3{display:flex;align-items:center;gap:10px;max-width:100%;margin:0!important;background:linear-gradient(110deg,#073779,#03458f);border-radius:16px 26px 26px 0;color:#fff!important;font-size:15px!important;font-weight:850!important;line-height:1.3;padding:10px 20px 10px 22px;min-width:265px}
+#atlasMovimentacoesCard .atlas-mov-panel-head h3 i{color:#fff;font-size:17px}
+#atlasMovimentacoesCard .atlas-mov-advanced-toggle{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #c6dbf5;color:#27527d;padding:7px 10px;border-radius:7px;font-size:10.5px;font-weight:800;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-filters-body{padding:12px 20px 17px}
+#atlasMovimentacoesCard .atlas-mov-filter-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:12px;row-gap:11px;align-items:end}
+#atlasMovimentacoesCard .atlas-mov-field{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0;font-size:11.8px;font-weight:800;color:#071939}
+#atlasMovimentacoesCard .atlas-mov-field>span{font-size:11.2px;font-weight:800;color:#0b1f45}
+#atlasMovimentacoesCard .atlas-mov-field-period{grid-column:span 3}
+#atlasMovimentacoesCard .atlas-mov-field-start,#atlasMovimentacoesCard .atlas-mov-field-end{grid-column:span 2}
+#atlasMovimentacoesCard .atlas-mov-field-employee{grid-column:span 5}
+#atlasMovimentacoesCard .atlas-mov-field-work{grid-column:span 4}
+#atlasMovimentacoesCard .atlas-mov-field-type{grid-column:span 3}
+#atlasMovimentacoesCard .atlas-mov-field-status{grid-column:span 5}
+#atlasMovimentacoesCard .atlas-mov-field-search{grid-column:span 10}
+#atlasMovimentacoesCard .atlas-mov-filter-grid>.atlas-mov-btn-search{grid-column:span 2}
+#atlasMovimentacoesCard .atlas-mov-field input:not([type=checkbox]),#atlasMovimentacoesCard .atlas-mov-field select,#atlasMovimentacoesCard .atlas-mov-multi-trigger{border:1px solid #bfcfe7!important;border-radius:8px!important;box-shadow:0 1px 4px #2049800d!important;background:#fff!important;color:#132846!important;min-height:39px!important;height:39px!important;width:100%;font-weight:650;font-size:11px!important;padding:7px 11px!important;min-width:0;line-height:1.25}
+#atlasMovimentacoesCard .atlas-mov-field select{cursor:pointer}
+#atlasMovimentacoesCard .atlas-mov-search{position:relative}
+#atlasMovimentacoesCard .atlas-mov-search>i{position:absolute;top:13px;left:13px;color:#6782ac;z-index:1}
+#atlasMovimentacoesCard .atlas-mov-search input{padding-left:33px!important}
+#atlasMovimentacoesCard .atlas-mov-search input::placeholder{color:#7889a1}
+#atlasMovimentacoesCard .atlas-mov-multi{position:relative;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-multi-trigger{display:flex!important;align-items:center;gap:8px;text-align:left;overflow:hidden;cursor:pointer}
+#atlasMovimentacoesCard .atlas-mov-multi-trigger>i:first-child{color:#0b387c;font-size:14px;flex:none}
+#atlasMovimentacoesCard .atlas-mov-multi-selected{flex:1;display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#atlasMovimentacoesCard .atlas-mov-multi-selected .atlas-mov-chip{display:inline-flex;align-items:center;flex:none;max-width:115px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#e2edff;border:1px solid #c9defb;border-radius:6px;color:#193c79;padding:4px 6px;font-size:9.5px;font-weight:800}
+#atlasMovimentacoesCard .atlas-mov-chip{cursor:pointer;gap:5px}
+#atlasMovimentacoesCard .atlas-mov-chip i{font-size:9px;color:#2d5c9d}
+#atlasMovimentacoesCard .atlas-mov-chip-more{color:#2f5485;font-size:11px;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-chevron{font-size:10px;color:#4e6890;flex:none}
+#atlasMovimentacoesCard .atlas-mov-multi-popup{position:absolute;top:calc(100% + 5px);left:0;width:max(100%,270px);max-width:min(420px,90vw);border:1px solid #bcd2ee;border-radius:12px;padding:11px;background:#fff;color:#15305a;box-shadow:0 19px 43px #0e2d5863;z-index:1500}
+#atlasMovimentacoesCard .atlas-mov-field-status .atlas-mov-multi-popup{left:auto;right:0}
+#atlasMovimentacoesCard .atlas-mov-multi-popup .atlas-mov-multi-search{height:35px!important;min-height:35px!important;margin-bottom:8px!important;padding:7px 9px!important;font-size:12px!important}
+#atlasMovimentacoesCard .atlas-mov-multi-options{max-height:250px;overflow:auto}
+#atlasMovimentacoesCard .atlas-mov-multi-options label{display:flex;flex-direction:row;align-items:center;gap:9px;min-height:32px;padding:5px 6px;cursor:pointer;color:#243b5b;font-size:12px;font-weight:600;border-radius:6px}
+#atlasMovimentacoesCard .atlas-mov-multi-options label:hover{background:#eff5ff}
+#atlasMovimentacoesCard .atlas-mov-multi-options input[type=checkbox]{width:16px!important;height:16px!important;flex:none;accent-color:#0b4fc2}
+#atlasMovimentacoesCard .atlas-mov-multi-empty{padding:14px 6px;color:#71829d;font-size:12px}
+#atlasMovimentacoesCard .atlas-mov-multi-actions{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:9px;border-top:1px solid #e3ebf5}
+#atlasMovimentacoesCard .atlas-mov-multi-actions button{border:1px solid #d7e3f5;border-radius:7px;background:#eff5ff;color:#1a4c92;font-size:10px;font-weight:800;padding:7px 9px}
+#atlasMovimentacoesCard .atlas-mov-multi-actions button:last-child{background:#0751c6;color:#fff;border-color:#0751c6}
+#atlasMovimentacoesCard .atlas-mov-advanced{display:grid;grid-template-columns:minmax(200px,1.4fr) minmax(190px,1fr) minmax(0,1.5fr);gap:15px;align-items:end;padding-top:16px;margin-top:16px;border-top:1px solid #dce8f7}
+#atlasMovimentacoesCard .atlas-mov-advanced-help{font-size:11px;line-height:1.5;color:#546e92;align-self:center}
+#atlasMovimentacoesCard .atlas-mov-results{background:#fff}
+#atlasMovimentacoesCard .atlas-mov-results-head{min-height:46px}
+#atlasMovimentacoesCard .atlas-mov-results-head h3{min-width:275px}
+#atlasMovimentacoesCard .atlas-mov-results-tools{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:800;color:#0c234a;flex-wrap:wrap}
+#atlasMovimentacoesCard .atlas-mov-sort-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;color:#445a7c}
+#atlasMovimentacoesCard .atlas-mov-sort-label select{width:152px;min-height:32px;border:1px solid #cbdcf0;border-radius:8px;background:#fff;color:#294365;font-size:11px;padding:6px}
+#atlasMovimentacoesCard .atlas-mov-notice{padding:6px 16px 4px;margin:0;font-size:11px;color:#627995;background:#fff}
+#atlasMovimentacoesCard .atlas-mov-table-wrap{overflow-x:auto;max-width:100%;padding:5px 10px 7px;background:#fff;border-radius:0 0 16px 16px}
+#atlasMovimentacoesCard .atlas-mov-tabela{width:100%!important;min-width:1010px!important;border-collapse:separate!important;border-spacing:0 3px!important;table-layout:fixed;margin:0!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th{background:#edf3fa!important;color:#071b3b!important;font-size:10px!important;line-height:1.3!important;font-weight:850!important;text-align:left!important;padding:10px 7px!important;border:0!important;border-bottom:1px solid #d5e0ef!important;white-space:normal!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th .atlas-mov-sort-col{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;background:transparent;border:0;color:inherit;text-align:left;padding:0;font-size:inherit;font-weight:inherit;line-height:inherit}
+#atlasMovimentacoesCard .atlas-mov-sort-col i{color:#41689a;font-size:11px;flex:none}
+#atlasMovimentacoesCard .atlas-mov-tabela th:first-child{border-radius:9px 0 0 9px}
+#atlasMovimentacoesCard .atlas-mov-tabela th:last-child{border-radius:0 9px 9px 0;text-align:center!important}
+#atlasMovimentacoesCard .atlas-mov-tabela td{padding:8px 7px!important;border:0!important;border-bottom:1px solid #d7e5f7!important;color:#091d3f!important;line-height:1.4!important;font-size:11px!important;overflow-wrap:anywhere!important;vertical-align:middle!important;background:#fff!important}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr{position:relative;box-shadow:0 1px 2px #1b487014}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr:hover td{background:#f4f8ff!important}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr td:first-child{border-left:4px solid #0751c5!important;border-radius:8px 0 0 8px;padding-left:10px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr td:last-child{border-radius:0 8px 8px 0}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(1){width:11%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(2){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(3){width:20%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(4){width:11%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(5){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(6){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(7){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(8){width:7%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(9){width:5%}
+#atlasMovimentacoesCard .atlas-mov-data{font-variant-numeric:tabular-nums}
+#atlasMovimentacoesCard .atlas-mov-data i{color:#174e98;font-size:16px;margin-right:8px}
+#atlasMovimentacoesCard .atlas-mov-data strong{font-size:10px;display:inline-block;color:#061b3b;font-weight:850}
+#atlasMovimentacoesCard .atlas-mov-data small{display:block;color:#596d8b;font-size:9px;margin-left:22px}
+#atlasMovimentacoesCard .atlas-mov-codigo{display:inline-block;max-width:100%;padding:6px 8px;border-radius:8px;background:#e9edff;color:#14358b;font-size:10px;font-weight:850;overflow-wrap:anywhere}
+#atlasMovimentacoesCard .atlas-mov-item{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:750}
+#atlasMovimentacoesCard .atlas-mov-foto{display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 40px;width:40px;height:40px;border-radius:7px;overflow:hidden;background:#edf3fa;color:#6581ae}
+#atlasMovimentacoesCard .atlas-mov-foto img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+#atlasMovimentacoesCard .atlas-mov-foto i{font-size:15px}
+#atlasMovimentacoesCard .atlas-mov-obra{font-weight:650}
+#atlasMovimentacoesCard .atlas-mov-pessoa{font-size:10px;font-weight:750}
+#atlasMovimentacoesCard .atlas-mov-pessoa i{font-size:14px;color:#1a4c95;margin-right:7px}
+#atlasMovimentacoesCard .atlas-mov-tipo,#atlasMovimentacoesCard .atlas-mov-status{display:inline-flex;justify-content:center;align-items:center;gap:5px;max-width:100%;border-radius:9px;padding:6px 7px;font-size:9.5px;font-weight:750;text-align:center;line-height:1.2}
+#atlasMovimentacoesCard .atlas-mov-tipo{background:#e9f0ff;color:#1354a6}
+#atlasMovimentacoesCard .atlas-mov-tipo-recebimento,#atlasMovimentacoesCard .atlas-mov-status-recebido{background:#def6e5;color:#11632c}
+#atlasMovimentacoesCard .atlas-mov-tipo-envio{background:#e6f1ff;color:#1451a3}
+#atlasMovimentacoesCard .atlas-mov-tipo-baixa{background:#ffedda;color:#96580a}
+#atlasMovimentacoesCard .atlas-mov-status-transito{background:#fff2ce;color:#805410}
+#atlasMovimentacoesCard .atlas-mov-status-enviado,#atlasMovimentacoesCard .atlas-mov-status-transferido{background:#e9f0ff;color:#15519b}
+#atlasMovimentacoesCard .atlas-mov-status-divergencia{background:#ffedd5;color:#9a3412}
+#atlasMovimentacoesCard .atlas-mov-status-cancelado,#atlasMovimentacoesCard .atlas-mov-status-baixado{background:#fee4e6;color:#a52331}
+#atlasMovimentacoesCard .atlas-mov-status-outro{background:#eef2f9;color:#3e567a}
+#atlasMovimentacoesCard .atlas-mov-acoes{text-align:center}
+#atlasMovimentacoesCard .atlas-mov-acoes button{display:inline-flex;justify-content:center;align-items:center;width:32px;height:31px;padding:0;background:#fff;border:1px solid #c4d5eb;border-radius:9px;color:#113d7e;box-shadow:0 2px 5px #16447720}
+#atlasMovimentacoesCard .atlas-mov-acoes button i{font-size:16px}
+#atlasMovimentacoesCard .atlas-mov-empty{text-align:center!important;padding:34px!important;color:#667a99!important}
+#atlasMovimentacoesCard .atlas-mov-empty i{color:#9cb1cb;font-size:22px;margin-right:8px}
+#atlasMovimentacoesCard .atlas-mov-paginacao{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;gap:12px;padding:4px 16px 12px!important;font-size:11px;color:#536e90}
+#atlasMovimentacoesCard .atlas-mov-paginacao>div{display:flex;justify-content:flex-end;gap:8px}
+#atlasMovimentacoesCard .atlas-mov-paginacao button{border:1px solid #c6d9f1;border-radius:8px;background:#fff;color:#235083;padding:7px 10px;font-size:10px;font-weight:750}
+#atlasMovimentacoesCard .atlas-mov-paginacao button:disabled{opacity:.45;cursor:not-allowed}
+#atlasMovimentacoesCard .atlas-mov-summary{display:flex;align-items:center;gap:11px;background:linear-gradient(95deg,#e6f1ff,#f5f9ff);border:1px solid #bfdbfe;border-radius:14px;box-shadow:0 5px 12px #20457815;padding:15px 18px;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-summary-title{display:flex;align-items:center;flex:1.25 1 210px;min-width:170px;gap:10px}
+#atlasMovimentacoesCard .atlas-mov-summary-title>i{color:#034ba8;font-size:24px}
+#atlasMovimentacoesCard .atlas-mov-summary-title strong{display:block;color:#0a2861;font-size:15px;font-weight:850;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-summary-title small{display:block;color:#274b79;font-size:10px;margin-top:3px}
+#atlasMovimentacoesCard .bdr-mov-indicadores{flex:3.5 1 580px;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;margin:0!important}
+#atlasMovimentacoesCard .bdr-mov-indicadores .atlas-mov-summary-stat{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;padding:4px 11px!important;background:transparent!important;border:0!important;border-left:1px solid #bcd2ef!important;border-radius:0!important;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-summary-stat i{font-size:21px;color:#0a4799;flex:none}
+#atlasMovimentacoesCard .atlas-mov-summary-stat i.fa-cube{color:#11623c}
+#atlasMovimentacoesCard .atlas-mov-summary-stat small{display:block;font-size:11px;color:#1a3861;white-space:normal}
+#atlasMovimentacoesCard .atlas-mov-summary-stat strong{display:block;font-weight:850;font-size:21px;color:#071f50;margin-top:1px;font-variant-numeric:tabular-nums}
+#atlasMovimentacoesCard .atlas-mov-footer-note{font-size:9.5px;color:#6d7e93;margin:8px 3px 0;line-height:1.4}
+#atlasMovimentacoesCard .bdr-mov-meta{display:none!important}
+#atlasMovDialog{width:min(810px,95vw);max-height:86vh;overflow:auto;border:1px solid #d6e3f3;border-radius:16px;padding:0;background:#fff;box-shadow:0 24px 80px #071b3c60;color:#19304c}
+#atlasMovDialog::backdrop{background:#071b3c9c}
+#atlasMovDialog .atlas-mov-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;background:#eff5fd;border-bottom:1px solid #dbe5f2;margin:0}
+#atlasMovDialog .atlas-mov-dialog-head span{display:block;color:#6b7d95;font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:7px}
+#atlasMovDialog .atlas-mov-dialog-head strong{display:block;font-size:17px;line-height:1.3;color:#16345f}
+#atlasMovDialog .atlas-mov-dialog-head button{background:#fff;color:#314d70;border:1px solid #cbd9e9;border-radius:8px;width:34px;height:34px;flex:none}
+#atlasMovDetalhes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:19px 22px;font-size:12px}
+#atlasMovDetalhes .atlas-mov-detail{background:#f8fafd;border:1px solid #e6edf6;border-radius:9px;padding:11px 12px;min-width:0;overflow-wrap:anywhere}
+#atlasMovDetalhes .atlas-mov-detail small{display:block;color:#64758a;font-size:10px;font-weight:650;margin-bottom:6px}
+#atlasMovDetalhes .atlas-mov-detail strong{font-size:12px;font-weight:700;color:#203a5b;line-height:1.5;white-space:pre-wrap}
+#atlasMovDialog .atlas-mov-dialog-bottom{display:flex;justify-content:flex-end;padding:0 22px 19px}
+#atlasMovDialog .atlas-mov-dialog-bottom button{background:#0d4bb7;padding:10px 22px;border-radius:8px;color:white;font-weight:750}
+@media(max-width:1200px){
+ #atlasMovimentacoesCard .atlas-mov-filter-grid{column-gap:10px}
+ #atlasMovimentacoesCard .atlas-mov-filters-body{padding:12px 14px 16px}
+ #atlasMovimentacoesCard .atlas-mov-summary{flex-wrap:wrap}
+ #atlasMovimentacoesCard .bdr-mov-indicadores{flex:1 1 100%;margin:2px 0 0!important}
+}
+@media(max-width:820px){
+ #atlasMovimentacoesCard .atlas-mov-field-period{grid-column:span 4}
+ #atlasMovimentacoesCard .atlas-mov-field-start,#atlasMovimentacoesCard .atlas-mov-field-end{grid-column:span 4}
+ #atlasMovimentacoesCard .atlas-mov-field-employee,#atlasMovimentacoesCard .atlas-mov-field-work,#atlasMovimentacoesCard .atlas-mov-field-status{grid-column:span 6}
+ #atlasMovimentacoesCard .atlas-mov-field-type{grid-column:span 6}
+ #atlasMovimentacoesCard .atlas-mov-field-search{grid-column:span 9}
+ #atlasMovimentacoesCard .atlas-mov-filter-grid>.atlas-mov-btn-search{grid-column:span 3}
+ #atlasMovimentacoesCard .atlas-mov-advanced{grid-template-columns:1fr 1fr}
+ #atlasMovimentacoesCard .atlas-mov-advanced-help{grid-column:span 2}
+ #atlasMovimentacoesCard .atlas-mov-panel-head h3{min-width:260px}
+}
+@media(max-width:560px){
+ body.atlas-rel-mov-ativo .content{padding:0!important}
+ #atlasMovimentacoesCard .atlas-mov-header-controls{gap:5px}
+ #atlasMovimentacoesCard .atlas-mov-actions-toggle{padding:7px 9px;font-size:10px}
+ #atlasMovimentacoesCard .atlas-mov-panel-head{min-height:44px;padding:0 7px 0 0;flex-wrap:wrap}
+ #atlasMovimentacoesCard .atlas-mov-header-controls{justify-content:flex-end;flex:1 1 auto;padding:5px 0}
+ #atlasMovimentacoesCard .atlas-mov-clear-inline{font-size:10px;padding:6px}
+ #atlasMovimentacoesCard .atlas-mov-actions-toggle{min-height:32px}
+ #atlasMovimentacoesCard .atlas-mov-panel-head h3{min-width:0;padding:9px 12px;font-size:12px!important}
+ #atlasMovimentacoesCard .atlas-mov-actions-dropdown{right:0}
+ .atlas-mov-sienge-dialog-footer{padding:10px}
+ .atlas-mov-sienge-dialog-body{padding:12px}
+ #atlasMovimentacoesCard .atlas-mov-advanced-toggle{font-size:10px;padding:7px 8px}
+ #atlasMovimentacoesCard .atlas-mov-filters-body{padding:12px}
+ #atlasMovimentacoesCard .atlas-mov-filter-grid{row-gap:11px}
+ #atlasMovimentacoesCard .atlas-mov-field-period,#atlasMovimentacoesCard .atlas-mov-field-employee,#atlasMovimentacoesCard .atlas-mov-field-work,#atlasMovimentacoesCard .atlas-mov-field-type,#atlasMovimentacoesCard .atlas-mov-field-status{grid-column:span 12}
+ #atlasMovimentacoesCard .atlas-mov-field-start,#atlasMovimentacoesCard .atlas-mov-field-end{grid-column:span 6}
+ #atlasMovimentacoesCard .atlas-mov-field-search{grid-column:span 12}
+ #atlasMovimentacoesCard .atlas-mov-filter-grid>.atlas-mov-btn-search{grid-column:span 12}
+ #atlasMovimentacoesCard .atlas-mov-advanced{grid-template-columns:1fr}
+ #atlasMovimentacoesCard .atlas-mov-advanced-help{grid-column:span 1}
+ #atlasMovimentacoesCard .atlas-mov-multi-popup{max-width:88vw}
+ #atlasMovimentacoesCard .atlas-mov-results-head{align-items:stretch;flex-direction:column;padding-bottom:8px;gap:8px}
+ #atlasMovimentacoesCard .atlas-mov-results-head h3{min-width:0;align-self:flex-start}
+ #atlasMovimentacoesCard .atlas-mov-results-tools{width:100%;justify-content:space-between;padding-left:12px}
+ #atlasMovimentacoesCard .atlas-mov-summary{align-items:stretch;padding:14px}
+ #atlasMovimentacoesCard .bdr-mov-indicadores{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #atlasMovimentacoesCard .bdr-mov-indicadores .atlas-mov-summary-stat{border-top:1px solid #c7d9f1!important;padding:11px 4px!important}
+ #atlasMovimentacoesCard .bdr-mov-indicadores .atlas-mov-summary-stat:nth-child(odd){border-left:0!important}
+ #atlasMovimentacoesCard .atlas-mov-paginacao{flex-direction:column!important;align-items:stretch!important}
+ #atlasMovDetalhes{grid-template-columns:1fr}
+}
+
+/* ATLAS RELATÓRIOS — consulta única de patrimônios e histórico (DEV)
+   Apenas geometria real: sem zoom e sem transform:scale(). */
+body.atlas-rel-mov-ativo .content{padding-top:16px!important}
+#atlasMovimentacoesCard .atlas-mov-search>i{pointer-events:none;left:14px;top:50%;transform:translateY(-50%)}
+#atlasMovimentacoesCard .atlas-mov-field .atlas-mov-search input[type="search"]{padding-left:39px!important}
+#atlasMovimentacoesCard .atlas-mov-paginacao{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:7px!important;padding:14px 10px 16px!important;text-align:center!important}
+#atlasMovimentacoesCard .atlas-mov-paginacao .atlas-mov-page-controls{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap;gap:12px!important}
+#atlasMovimentacoesCard .atlas-mov-paginacao #atlasMovPaginaLabel{font-size:11px;font-weight:850;color:#122c61;white-space:nowrap;min-width:90px}
+#atlasMovimentacoesCard .atlas-mov-paginacao #atlasMovFaixa{font-size:10px;color:#627998;line-height:1.4}
+#atlasMovimentacoesCard .atlas-mov-tipo-cadastro{background:#e9eefc;color:#183f85}
+@media (max-width:700px){
+  #atlasMovimentacoesCard .atlas-mov-paginacao{flex-direction:column!important;align-items:center!important}
+  #atlasMovimentacoesCard .atlas-mov-paginacao .atlas-mov-page-controls{justify-content:center!important}
+}
+
+/* ==============================================================
+   ATLAS RELATÓRIOS | Refinamento BDR vermelho/branco – 07/11/2026
+   Apenas estilos do relatório. Sem zoom / transform scale.
+   Mantém o topo e o menu do Shell.
+   ============================================================== */
+#atlasMovimentacoesCard{--rel-vermelho:#ae1420;--rel-borda:#dfe4e9;--rel-navy:#101c30;--rel-cinza:#f7f8fa}
+#atlasMovimentacoesCard .atlas-mov-panel{
+  background:#fff!important;border:1px solid var(--rel-borda)!important;
+  border-left:4px solid var(--rel-vermelho)!important;
+  box-shadow:0 3px 12px rgba(26,35,52,.07)!important;border-radius:13px!important;
+}
+#atlasMovimentacoesCard .atlas-mov-panel-head{
+  background:#fff!important;border-bottom:1px solid #e9eaed!important;
+  padding:0 12px!important;min-height:48px!important;border-radius:12px 12px 0 0!important;
+}
+#atlasMovimentacoesCard .atlas-mov-panel-head h3{
+  min-width:0!important;padding:9px 4px!important;background:none!important;
+  color:var(--rel-vermelho)!important;border-radius:0!important;
+  font-size:15px!important;box-shadow:none!important;
+}
+#atlasMovimentacoesCard .atlas-mov-panel-head h3 i{color:var(--rel-vermelho)!important}
+#atlasMovimentacoesCard .atlas-mov-filters-body{background:#fff!important;border-radius:0 0 12px 12px!important}
+#atlasMovimentacoesCard .atlas-mov-results-head{background:#fff!important}
+#atlasMovimentacoesCard .atlas-mov-clear-inline{color:#981922!important}
+#atlasMovimentacoesCard .atlas-mov-clear-inline:hover{background:#fff2f2!important}
+#atlasMovimentacoesCard .atlas-mov-advanced-toggle{
+  color:#14243c!important;border-color:#d8dce2!important;background:#fff!important;
+}
+#atlasMovimentacoesCard .atlas-mov-actions-toggle{
+  color:#fff!important;background:#132036!important;border-color:#132036!important;
+  box-shadow:none!important;
+}
+#atlasMovimentacoesCard .atlas-mov-actions-toggle:hover{background:#24344e!important}
+#atlasMovimentacoesCard .atlas-mov-btn-search{
+  color:#fff!important;background:#b31320!important;border-color:#b31320!important;
+}
+#atlasMovimentacoesCard .atlas-mov-btn-search:hover{background:#92121c!important}
+#atlasMovimentacoesCard .atlas-mov-field input:not([type=checkbox]),
+#atlasMovimentacoesCard .atlas-mov-field select,
+#atlasMovimentacoesCard .atlas-mov-multi-trigger{border-color:#d5dce4!important;color:#17243a!important}
+#atlasMovimentacoesCard .atlas-mov-multi-trigger>i:first-child{color:#a91622!important}
+#atlasMovimentacoesCard .atlas-mov-selection-count{
+  display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  font-size:11px;color:#172c49;font-weight:750;white-space:nowrap;
+}
+#atlasMovimentacoesCard .atlas-mov-multi-popup{
+  border-color:#d9dee6!important;color:#1c2b43!important;
+  box-shadow:0 14px 35px rgba(24,30,40,.17)!important;
+}
+#atlasMovimentacoesCard .atlas-mov-multi-actions button:last-child{
+  background:#a8121e!important;border-color:#a8121e!important;
+}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown{min-width:250px!important;border-color:#d8dee6!important}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button{color:#1c293a!important}
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button:hover,
+#atlasMovimentacoesCard .atlas-mov-actions-dropdown button:focus-visible{background:#f8e9ea!important}
+#atlasMovimentacoesCard .atlas-mov-menu-divider{height:1px;background:#e4e7ea;margin:5px 8px}
+#atlasMovimentacoesCard .atlas-mov-ac-print{color:#ae1420!important}
+#atlasMovimentacoesCard .atlas-mov-notice{color:#647081!important}
+#atlasMovimentacoesCard .atlas-mov-tabela{min-width:1100px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th{background:#f0f2f5!important;border-bottom-color:#dce0e5!important;color:#19243a!important}
+#atlasMovimentacoesCard .atlas-mov-tabela td{
+  border-bottom-color:#e3e6eb!important;padding:6px 5px!important;
+  font-size:10px!important;line-height:1.3!important;
+}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr td:first-child{
+  border-left:3px solid #b51621!important;padding-left:7px!important;
+}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr:hover td{background:#f9f8f8!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(1){width:9%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(2){width:10%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(3){width:23%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(4){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(5){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(6){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(7){width:12%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(8){width:7%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(9){width:3%}
+#atlasMovimentacoesCard .atlas-mov-data{white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
+#atlasMovimentacoesCard .atlas-mov-data i{color:#b41520!important;font-size:12px!important;margin-right:5px!important}
+#atlasMovimentacoesCard .atlas-mov-data-inline{font-weight:750;font-size:9.5px;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-data-inline small{display:inline!important;margin:0!important;font-size:9px!important;font-weight:600}
+#atlasMovimentacoesCard .atlas-mov-codigo{
+  display:inline-block;white-space:nowrap!important;max-width:100%;overflow:hidden!important;
+  text-overflow:ellipsis!important;overflow-wrap:normal!important;
+  padding:5px 6px!important;border-radius:6px!important;font-size:9.5px!important;
+  color:#17304d!important;background:#edf0f4!important;
+}
+#atlasMovimentacoesCard .atlas-mov-pat-antigo{display:block;font-size:8.5px;color:#68778a;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#atlasMovimentacoesCard .atlas-mov-item{gap:6px!important;font-size:10px!important;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-item>span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#atlasMovimentacoesCard .atlas-mov-foto{flex:0 0 29px!important;width:29px!important;height:29px!important}
+#atlasMovimentacoesCard .atlas-mov-identificacao{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;color:#1e2d43;font-weight:700}
+#atlasMovimentacoesCard .atlas-mov-valor{display:block;margin-top:3px;font-size:9px;color:#8b1a24;font-weight:850}
+#atlasMovimentacoesCard .atlas-mov-obra{
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  overflow-wrap:normal!important;font-size:9.5px!important;
+}
+#atlasMovimentacoesCard .atlas-mov-pessoa{
+  font-size:9.5px!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:anywhere!important;
+}
+#atlasMovimentacoesCard .atlas-mov-pessoa i{color:#a51a25!important;font-size:12px!important;margin-right:5px!important}
+#atlasMovimentacoesCard .atlas-mov-tipo,#atlasMovimentacoesCard .atlas-mov-status{padding:5px 6px!important;font-size:9px!important}
+#atlasMovimentacoesCard .atlas-mov-acoes button{border-color:#d4dce5!important;color:#1b324e!important}
+#atlasMovimentacoesCard .atlas-mov-paginacao button{border-color:#d5d9df!important;color:#a91622!important}
+#atlasMovimentacoesCard .atlas-mov-paginacao #atlasMovPaginaLabel{color:#202b3a!important}
+#atlasMovDialog .atlas-mov-dialog-head{background:#fff!important;border-bottom:2px solid #ac1520!important}
+#atlasMovDialog .atlas-mov-dialog-head strong{color:#1d293c!important}
+#atlasMovDialog .atlas-mov-dialog-bottom button{background:#a91420!important}
+#atlasMovDetalhes{display:block!important;padding:18px 20px!important}
+#atlasMovDetalhes .atlas-mov-detail-group{margin-bottom:18px}
+#atlasMovDetalhes .atlas-mov-detail-group:last-child{margin-bottom:0}
+#atlasMovDetalhes .atlas-mov-detail-group h4{
+  font-size:12px;font-weight:850;color:#9d1420!important;
+  margin:0 0 9px!important;padding-bottom:7px;border-bottom:1px solid #e6e9ee;
+}
+#atlasMovDetalhes .atlas-mov-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#atlasMovDetalhes .atlas-mov-detail{background:#fafafa!important;border-color:#e5e7eb!important;padding:9px 12px!important}
+#atlasMovDetalhes .atlas-mov-detail small{color:#6c7583!important}
+#atlasMovDetalhes .atlas-mov-detail strong{color:#1b283b!important}
+.atlas-mov-sienge-dialog-head{background:#fff!important;border-bottom:2px solid #b01723!important}
+.atlas-mov-sienge-dialog-head h2,.atlas-mov-sienge-subhead strong{color:#a91622!important}
+.atlas-mov-sienge-primary{background:#a91622!important;border-color:#a91622!important}
+@media(max-width:850px){
+ #atlasMovimentacoesCard .atlas-mov-panel-head{flex-wrap:wrap;padding:6px 10px!important}
+ #atlasMovimentacoesCard .atlas-mov-panel-head h3{font-size:13px!important}
+ #atlasMovimentacoesCard .atlas-mov-tabela{min-width:1100px!important}
+ #atlasMovDetalhes .atlas-mov-detail-grid{grid-template-columns:1fr}
+}
+
+/* Refinamento local: navegação da tabela e ação de visualização mais discreta.
+   Sem zoom/scale nem alterações no Shell, permissões ou consultas. */
+#atlasMovimentacoesCard .atlas-mov-table-wrap,
+#atlasMovimentacoesCard .atlas-mov-paginacao{overflow-anchor:none}
+#atlasMovimentacoesCard .atlas-mov-acoes button{
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  border-radius:7px!important;
+}
+#atlasMovimentacoesCard .atlas-mov-acoes button i{font-size:14px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela td{padding-left:6px!important;padding-right:6px!important}
+#atlasMovimentacoesCard .atlas-mov-item{gap:5px!important}
+
+/* Relatórios 09/11 — cabeçalho fixo apenas dentro da lista de resultados. */
+#atlasMovimentacoesCard .atlas-mov-results-sticky{
+  position:sticky!important;
+  top:14px!important;
+  z-index:110;
+  background:#fff;
+  box-shadow:0 2px 7px rgba(20,31,45,.08);
+  border-radius:12px 12px 0 0;
+}
+#atlasMovimentacoesCard .atlas-mov-results-sticky .atlas-mov-results-head{border-radius:12px 12px 0 0!important}
+#atlasMovimentacoesCard .atlas-mov-results-sticky.atlas-mov-stuck,
+#atlasMovimentacoesCard .atlas-mov-results-sticky.atlas-mov-stuck .atlas-mov-results-head{border-radius:0!important}
+#atlasMovimentacoesCard .atlas-mov-results-sticky .atlas-mov-paginacao{
+  border-bottom:1px solid #edf0f2;padding:6px 10px!important;margin:0!important;
+  background:#fff;overflow:visible!important;
+}
+#atlasMovimentacoesCard .atlas-mov-paginacao-baixo{
+  border-top:1px solid #e9edf1;margin-top:4px;background:#fff;
+  padding:10px!important;overflow:visible!important;
+}
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  align-items:center!important;justify-content:initial!important;
+  gap:10px!important;flex-direction:initial!important;
+}
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao .atlas-paginacao__controles{display:flex!important;align-items:center!important;gap:5px}
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao button{padding:4px 9px!important;font-size:12px!important;min-width:29px;min-height:29px;border-radius:7px}
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao .atlas-paginacao__faixa{font-size:10px}
+#atlasMovimentacoesCard .atlas-mov-heading-scroll{overflow:hidden;padding:0 10px;background:#fff}
+#atlasMovimentacoesCard .atlas-mov-tabela-head{border-spacing:0!important;margin:0!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th{padding:10px 6px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:first-child{border-radius:8px 0 0 8px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:last-child{border-radius:0 8px 8px 0!important}
+#atlasMovimentacoesCard .atlas-mov-table-wrap{padding-top:4px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-body{border-spacing:0 3px!important}
+#atlasMovimentacoesCard .atlas-mov-item>span:last-child{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-tabela-body th:nth-child(3),
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(3){max-width:280px}
+#atlasMovimentacoesCard .atlas-mov-results-sticky .atlas-mov-tabela th{position:relative}
+@media(max-width:760px){
+  #atlasMovimentacoesCard .atlas-mov-results-sticky .atlas-mov-results-head{gap:3px!important}
+  #atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao{gap:5px!important}
+  #atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao .atlas-paginacao__faixa{width:100%;text-align:center}
+}
+
+
+/* Relatórios v1.1 — sticky funcional no scroll real do iframe Atlas.
+   layout-bdr.css força overflow-y:auto no BODY e no HTML; o HTML é quem
+   efetivamente rola. Um BODY overflow:auto intercepta position:sticky.
+   clip impede overflow horizontal sem criar novo contêiner de rolagem. */
+body.atlas-rel-mov-ativo{
+  overflow-x:clip!important;
+  overflow-y:visible!important;
+}
+/* Mantém o indicador no centro geométrico do painel e a ação 'Ir' à direita. */
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao .atlas-paginacao__estado{
+  justify-self:center;
+}
+@media(max-width:680px){
+  #atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    justify-content:center!important;
+    gap:7px!important;
+  }
+}
+@media print{
+  /* Impressão não deve herdar painéis fixos da navegação na tela. */
+  #atlasMovimentacoesCard .atlas-mov-results-sticky{position:static!important}
+}
+
+
+/* Relatórios — acabamento visual do cabeçalho fixo (09/11/2026).
+   Mantém a mesma folga vertical de quando a seção chega naturalmente
+   abaixo do Shell e aproxima os dois rótulos do início de seus dados. */
+/* A faixa acima do bloco congelado mascara linhas durante a rolagem,
+   sem mover nem alterar o cabeçalho do Shell. */
+#atlasMovimentacoesCard .atlas-mov-results-sticky::before{
+  content:"";
+  position:absolute;
+  left:-5px; /* cobre também os 4 px da borda externa do painel */
+  right:0;
+  top:-14px;
+  height:14px;
+  background:#f4f6f9;
+  pointer-events:none;
+  display:none; /* não encobre a curva original antes da rolagem */
+}
+#atlasMovimentacoesCard .atlas-mov-results-sticky.atlas-mov-stuck::before{
+  display:block;
+}
+/* Em toda a largura, cabeçalho e corpo conservam o mesmo colgroup.
+   O ajuste é interno ao título, não mexe nas dimensões das colunas. */
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(2){
+  padding-left:13px!important;
+}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(3){
+  padding-left:18px!important;
+}
+/* As setinhas do número devem permanecer menores que as setas de páginas;
+   prevalece sobre a regra genérica dos botões do relatório. */
+#atlasMovimentacoesCard .atlas-mov-paginacao.atlas-paginacao .atlas-paginacao__spin button{
+  font-size:9px!important;
+  padding:0!important;
+  min-width:0!important;
+  min-height:0!important;
+  border-radius:0!important;
+  line-height:1!important;
+}
+@media print{
+  #atlasMovimentacoesCard .atlas-mov-results-sticky{top:0!important}
+  #atlasMovimentacoesCard .atlas-mov-results-sticky::before{display:none}
+}
+
+
+/* Status BAIXADO: responsável pelo patrimônio não é quem executou a baixa. */
+#atlasMovimentacoesCard .atlas-mov-pessoa-info{
+  display:inline-block;
+  width:calc(100% - 24px);
+  max-width:calc(100% - 24px);
+  min-width:0;
+  box-sizing:border-box;
+  vertical-align:middle;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  line-height:1.3;
+}
+#atlasMovimentacoesCard .atlas-mov-auditoria-baixa,
+#atlasMovimentacoesCard .atlas-mov-auditoria-data{display:block;font-size:9px!important;line-height:1.25;color:#65758a;font-weight:600;white-space:normal;overflow-wrap:anywhere}
+#atlasMovimentacoesCard .atlas-mov-auditoria-data{margin-top:4px}
