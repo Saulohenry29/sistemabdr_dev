@@ -24,7 +24,7 @@
 
 
 
-<link rel="stylesheet" href="./CSS/relatorios/relatorios.css?v=20261109-responsaveis-legiveis01">
+<link rel="stylesheet" href="./CSS/relatorios/relatorios.css?v=20261110-atividade-ficha02">
 <link rel="stylesheet" href="./CSS/componentes/atlasPaginacao.css?v=20261109-fix02">
 </head>
 
@@ -341,7 +341,7 @@
         </div>
         <div class="atlas-mov-field atlas-mov-field-type"><span id="atlasMovLblTipos">Tipo de registro</span>
           <div class="atlas-mov-multi" data-mov-multi="tipos">
-            <button type="button" class="atlas-mov-multi-trigger" aria-labelledby="atlasMovLblTipos" aria-expanded="false" onclick="atlasMovAlternarMulti('tipos')"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i><span class="atlas-mov-multi-selected">Todos os patrimônios</span><i class="fa-solid fa-chevron-down atlas-mov-chevron" aria-hidden="true"></i></button>
+            <button type="button" class="atlas-mov-multi-trigger" aria-labelledby="atlasMovLblTipos" aria-expanded="false" onclick="atlasMovAlternarMulti('tipos')"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i><span class="atlas-mov-multi-selected">Todos os registros</span><i class="fa-solid fa-chevron-down atlas-mov-chevron" aria-hidden="true"></i></button>
             <div class="atlas-mov-multi-popup" hidden><div class="atlas-mov-multi-options"></div><div class="atlas-mov-multi-actions"><button type="button" onclick="atlasMovSelecionarTodosMulti('tipos')">Marcar todos</button><button type="button" onclick="atlasMovLimparMulti('tipos')">Limpar</button><button type="button" onclick="atlasMovAlternarMulti('tipos',false)">Concluir</button></div></div>
           </div>
         </div>
@@ -362,25 +362,27 @@
           </div>
         </div>
         <label class="atlas-mov-field atlas-mov-field-direction"><span>Obra selecionada no</span><select id="atlasMovSentido" onchange="atlasMovMudouFiltro()"><option value="ambas">Origem ou destino</option><option value="origem">Somente origem</option><option value="destino">Somente destino</option></select></label>
-        <div class="atlas-mov-advanced-help"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Consulta inicial: todos os patrimônios autorizados. Para consultar os eventos, escolha Histórico de movimentações ou tipos específicos. O período inicia em Todo o período.</div>
+        <div class="atlas-mov-advanced-help"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Consulta inicial: todos os cadastros e movimentações nas obras autorizadas. Sem seleção, cada filtro considera todas as opções; marque funcionário, obra ou tipo para restringir a consulta. O período inicia em Todo o período.</div>
       </div>
     </div>
   </section>
+
+  <section class="atlas-mov-profile" id="atlasMovResumoFuncionario" aria-label="Resumo das atividades do funcionário" aria-live="polite" hidden></section>
 
   <section class="atlas-mov-panel atlas-mov-results" aria-labelledby="atlasMovTituloResultados">
     <div class="atlas-mov-results-sticky" id="atlasMovResultsSticky">
     <div class="atlas-mov-panel-head atlas-mov-results-head"><h3 id="atlasMovTituloResultados"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Resultados da Consulta</h3><div class="atlas-mov-results-tools"><span id="atlasMovContador">—</span><label class="atlas-mov-sort-label">Ordenar <select id="atlasMovOrdenacao" onchange="atlasMovMudouFiltro()"><option value="data_desc">Mais recentes</option><option value="data_asc">Mais antigos</option><option value="patrimonio">Patrimônio (A–Z)</option><option value="responsavel">Responsável (A–Z)</option><option value="descricao">Descrição (A–Z)</option><option value="tipo">Movimentação (A–Z)</option><option value="origem">Origem (A–Z)</option><option value="destino">Destino (A–Z)</option><option value="status">Status (A–Z)</option></select></label></div></div>
       <div class="atlas-mov-paginacao atlas-mov-paginacao-topo" id="atlasMovPaginacaoTopo"></div>
-      <div class="atlas-mov-heading-scroll" id="atlasMovCabecalhoScroll"><table class="atlas-mov-tabela atlas-mov-tabela-head"><colgroup><col style="width:9%"><col style="width:10%"><col style="width:21%"><col style="width:11%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:8%"><col style="width:4%"></colgroup><thead><tr><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('data_desc')" title="Ordenar por Data/Hora"><span id="atlasMovColData">Data/Hora</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('patrimonio')" title="Ordenar por Patrimônio">Patrimônio <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('descricao')" title="Ordenar por Descrição do Bem">Descrição do Bem <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('tipo')" title="Ordenar por Movimentação"><span id="atlasMovColTipo">Movimentação</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('origem')" title="Ordenar por Origem"><span id="atlasMovColOrigem">Origem</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('destino')" title="Ordenar por Destino"><span id="atlasMovColDestino">Destino</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('responsavel')" title="Ordenar por responsável ou executor"><span id="atlasMovColResponsavel">Responsável</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('status')" title="Ordenar por Status">Status <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th>Ações</th></tr></thead></table></div>
+      <div class="atlas-mov-heading-scroll" id="atlasMovCabecalhoScroll"><table class="atlas-mov-tabela atlas-mov-tabela-head"><colgroup><col style="width:8%"><col style="width:10%"><col style="width:14%"><col style="width:9%"><col style="width:15%"><col style="width:15%"><col style="width:10%"><col style="width:10%"><col style="width:6%"><col style="width:3%"></colgroup><thead><tr><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('data_desc')" title="Ordenar por Data/Hora"><span id="atlasMovColData">Data/Hora</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('patrimonio')" title="Ordenar por Patrimônio">Patrimônio <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('descricao')" title="Ordenar por Descrição do Bem">Descrição do Bem <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('tipo')" title="Ordenar por Movimentação"><span id="atlasMovColTipo">Movimentação</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('origem')" title="Ordenar por Origem"><span id="atlasMovColOrigem">Origem</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('destino')" title="Ordenar por Destino"><span id="atlasMovColDestino">Destino</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><span class="atlas-mov-col-ator" id="atlasMovColEnviado">Enviado por</span></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('responsavel')" title="Ordenar por responsável ou executor"><span id="atlasMovColResponsavel">Responsável</span> <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th><button type="button" class="atlas-mov-sort-col" onclick="atlasMovOrdenarColuna('status')" title="Ordenar por Status">Status <i class="fa-solid fa-sort" aria-hidden="true"></i></button></th><th>Ações</th></tr></thead></table></div>
     </div>
 
     <p id="atlasMovAviso" role="status" class="atlas-mov-notice">Carregando patrimônios e histórico...</p>
-    <div class="atlas-mov-table-wrap" role="region" aria-label="Tabela de movimentações" tabindex="0"><table class="atlas-mov-tabela atlas-mov-tabela-body"><colgroup><col style="width:9%"><col style="width:10%"><col style="width:21%"><col style="width:11%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:8%"><col style="width:4%"></colgroup><tbody id="atlasMovCorpo"><tr><td colspan="9">Carregando...</td></tr></tbody></table></div>
+    <div class="atlas-mov-table-wrap" role="region" aria-label="Tabela de movimentações" tabindex="0"><table class="atlas-mov-tabela atlas-mov-tabela-body"><colgroup><col style="width:8%"><col style="width:10%"><col style="width:14%"><col style="width:9%"><col style="width:15%"><col style="width:15%"><col style="width:10%"><col style="width:10%"><col style="width:6%"><col style="width:3%"></colgroup><tbody id="atlasMovCorpo"><tr><td colspan="10">Carregando...</td></tr></tbody></table></div>
     <div class="atlas-mov-paginacao atlas-mov-paginacao-baixo" id="atlasMovPaginacaoBaixo"></div>
   </section>
 
   <section class="atlas-mov-summary" aria-label="Resumo dos resultados filtrados"><div class="atlas-mov-summary-title"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div><strong>Resumo do Relatório</strong><small id="atlasMovResumoPeriodo">Período: todo o histórico</small></div></div><div id="bdrMovIndicadores" class="bdr-mov-indicadores" aria-live="polite"></div></section>
-  <p class="atlas-mov-footer-note">Os indicadores seguem os filtros aplicados. O cadastro mostra cada bem uma única vez; o histórico mostra os eventos registrados.</p>
+  <p class="atlas-mov-footer-note">Os indicadores seguem os filtros aplicados. Em “Todos os registros”, os cadastros mostram cada bem uma vez e as movimentações mostram cada evento registrado.</p>
   <div class="bdr-mov-meta" hidden><span id="bdrMovEmitido"></span><span id="bdrMovEmissao"></span><span id="bdrMovFiltros"></span></div>
   <dialog id="atlasMovDialog" aria-labelledby="atlasMovDialogTitulo"><div class="atlas-mov-dialog-head"><div><span> BDR · GESTÃO PATRIMONIAL</span><strong id="atlasMovDialogTitulo">Detalhes do registro</strong></div><button type="button" onclick="document.getElementById('atlasMovDialog').close()" aria-label="Fechar detalhes"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div><div id="atlasMovDetalhes"></div><div class="atlas-mov-dialog-bottom"><button type="button" onclick="document.getElementById('atlasMovDialog').close()">Fechar</button></div></dialog>
 </div>
@@ -531,7 +533,7 @@ Importar Excel/CSV</h3>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="./JS/supabaseClient.js"></script>
 <script src="./JS/bdrCore.js"></script>
-<script src="./JS/bdrNotificacoes.js"></script>
+<script src="./JS/bdrNotificacoes.js?v=20261110-escopo-obra01"></script>
 <script src="./JS/bdrMenuPermissoes.js"></script>
 <script src="./JS/bdr-menu-ocultar-de-verdade.js?v=20260629-2"></script>
 
@@ -602,7 +604,7 @@ Importar Excel/CSV</h3>
 </div>
 
 <script src="./JS/componentes/atlasPaginacao.js?v=20261109-fix02"></script>
-<script src="./JS/relatorios/relatorios.js?v=20261109-cadastro-baixado02"></script>
+<script src="./JS/relatorios/relatorios.js?v=20261110-escopo-obra01"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="./JS/sienge-insumos-fallback.js"></script>

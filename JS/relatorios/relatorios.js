@@ -37,9 +37,11 @@ function temPermissaoRelatoriosBDR(permissao, usuario = usuarioAtualRelatoriosBD
   const perfil = String(usuario.perfil || "").toUpperCase();
   const ps = listaPermissoesRelatoriosBDR(usuario);
 
-  if((perfil === "MASTER" || perfil === "ADMIN") && ps.length === 0) return true;
-
   permissao = String(permissao || "").toUpperCase();
+  // Compatibilidade de entrada no módulo não concede permissão global por perfil.
+  if((perfil === "MASTER" || perfil === "ADMIN") && ps.length === 0){
+    return permissao === "RELATORIOS_VER";
+  }
   return ps.includes(permissao);
 }
 
@@ -106,16 +108,32 @@ async function carregarDados(){
     return;
   }
 
+  // Resolver vínculos ANTES de baixar patrimônios; não usar permissão de perfil
+  // nem obras_liberadas para ampliar o escopo. É filtro de consulta, não RLS.
+  const usuario=usuarioAtualRelatoriosBDR();
+  const eOwnerRelatorio=Number(usuario?.id)===1 && usuario?.owner_sistema===true;
+  let idsPermitidos=new Set();
+  if(!eOwnerRelatorio){
+    const {data:vinculos,error}=await db().from('usuario_obras')
+      .select('obra_id').eq('usuario_id',Number(usuario?.id)||0);
+    if(error){
+      console.error('Relatórios: não foi possível validar vínculos por obra',error);
+      alert('Não foi possível validar as obras autorizadas. A consulta foi bloqueada.');
+      return;
+    }
+    idsPermitidos=new Set((vinculos||[]).map(v=>String(v.obra_id)).filter(v=>/^\d+$/.test(v)));
+  }
+
   async function carregarTodosPatrimoniosRelatorio(){
     const todos = [];
     const tamanhoPagina = 1000;
     let inicio = 0;
+    if(!eOwnerRelatorio && idsPermitidos.size===0)return {data:[],error:null};
 
     while(true){
-      const resposta = await db()
-        .from("patrimonio")
-        .select("*")
-        .order("id", { ascending:false })
+      let consulta=db().from("patrimonio").select("*");
+      if(!eOwnerRelatorio)consulta=consulta.in('obra_id',[...idsPermitidos]);
+      const resposta=await consulta.order("id", {ascending:false})
         .range(inicio, inicio + tamanhoPagina - 1);
 
       if(resposta.error) return { data:todos, error:resposta.error };
@@ -132,10 +150,11 @@ async function carregarDados(){
 
   const patResp = await carregarTodosPatrimoniosRelatorio();
 
-  const obrasResp = await db()
-    .from("obras")
-    .select("*")
-    .order("nome");
+  const obrasResp = !eOwnerRelatorio && !idsPermitidos.size
+    ? {data:[],error:null}
+    : await (eOwnerRelatorio ? db().from("obras").select("*")
+      : db().from("obras").select("*").in('id',[...idsPermitidos]))
+      .order("nome");
 
   const empresasResp = await db()
     .from("empresas")
@@ -147,11 +166,12 @@ async function carregarDados(){
     .select("*")
     .eq("ativo", true);
 
-  const movResp = await db()
-    .from("movimentacoes")
-    .select("*")
-    .order("id", { ascending:false })
-    .limit(50);
+  const movResp = !eOwnerRelatorio && !idsPermitidos.size
+    ? {data:[],error:null}
+    : await (eOwnerRelatorio ? db().from("movimentacoes").select("*")
+      : db().from("movimentacoes").select("*").or(
+        `obra_origem_id.in.(${[...idsPermitidos].join(',')}),obra_destino_id.in.(${[...idsPermitidos].join(',')})`
+      )).order("id",{ascending:false}).limit(50);
 
   if(patResp.error){
     console.error(patResp.error);
@@ -175,64 +195,19 @@ async function carregarDados(){
     console.error(movResp.error);
   }
 
-const usuario = usuarioAtualRelatoriosBDR();
-
 let dadosPatrimonios = patResp.data || [];
 let dadosMovimentacoes = movResp.data || [];
 
-/* DADOS: filtra por permissão nova, não por perfil. */
-const podeTodasObras = temPermissaoRelatoriosBDR("RELATORIOS_TODAS_OBRAS", usuario)
-  || temPermissaoRelatoriosBDR("TODAS_OBRAS_VER", usuario);
-const podeObrasPermitidas = temPermissaoRelatoriosBDR("RELATORIOS_OBRAS_PERMITIDAS", usuario);
-const podePropriaObra = temPermissaoRelatoriosBDR("PROPRIA_OBRA_VER", usuario);
+/* Acesso de leitura por obra: usuario_obras é a fonte canônica dos vínculos.
+ * atlas_usuario_obras determina a obra OPERACIONAL (lado da transferência),
+ * não restringe a consulta a essa única obra. Perfil não concede visão global.
+ * Segurança real requer políticas RLS no servidor: este filtro é apenas UI. */
 let obrasVisiveis = obrasResp.data || [];
-
-if(usuario && !podeTodasObras){
-  // A fonte principal das obras de atuação é usuario_obras, a mesma do
-  // gerenciamento de Usuários. Nunca usar a empresa como substituta da
-  // autorização por obra; obras permitidas podem ser de empresas distintas.
-  const idsPermitidos = new Set();
-  if(podeObrasPermitidas){
-    const vinculosResp = await db().from("usuario_obras")
-      .select("obra_id").eq("usuario_id", Number(usuario.id));
-    if(vinculosResp.error){
-      console.error("Relatórios: erro ao consultar obras autorizadas", vinculosResp.error);
-      alert("Não foi possível consultar suas obras autorizadas. Contate o administrador.");
-      return; // Sem autorização confirmada, não exibir dados.
-    }
-    for(const vinculo of (vinculosResp.data || [])){
-      if(vinculo.obra_id != null) idsPermitidos.add(String(vinculo.obra_id));
-    }
-    // Compatibilidade com usuários legados que ainda não possuem vínculos.
-    // A proteção efetiva dos dados continua sendo responsabilidade do RLS.
-    if(idsPermitidos.size === 0){
-      String(usuario.obras_liberadas || "").split(",")
-        .map(id => id.trim()).filter(id => /^\d+$/.test(id))
-        .forEach(id => idsPermitidos.add(id));
-    }
-  }else if(podePropriaObra && usuario.obra_id != null){
-    idsPermitidos.add(String(usuario.obra_id));
-  }
-
-  dadosPatrimonios = dadosPatrimonios.filter(p =>
-    idsPermitidos.has(String(p.obra_id))
-  );
-  dadosMovimentacoes = dadosMovimentacoes.filter(m =>
-    idsPermitidos.has(String(m.obra_origem_id)) ||
-    idsPermitidos.has(String(m.obra_destino_id))
-  );
-  obrasVisiveis = obrasVisiveis.filter(o => idsPermitidos.has(String(o.id)));
-  document.getElementById("filtroObra").style.display =
-    obrasVisiveis.length > 1 ? "" : "none";
-}
-
-// Obras 22 (LAB) e 33 (SATH) são exclusivas do OWNER, mesmo quando
-// o perfil tem permissão geral de relatórios. A consulta deve continuar
-// obedecendo às policies RLS do Supabase em todas as situações.
-const eOwnerRelatorio = Number(usuario?.id)===1 && usuario?.owner_sistema===true;
 if(!eOwnerRelatorio){
-  dadosPatrimonios = dadosPatrimonios.filter(p => !['22','33'].includes(String(p.obra_id)));
-  obrasVisiveis = obrasVisiveis.filter(o => !['22','33'].includes(String(o.id)));
+  dadosPatrimonios = dadosPatrimonios.filter(p=>idsPermitidos.has(String(p.obra_id)));
+  dadosMovimentacoes = dadosMovimentacoes.filter(m=>
+    idsPermitidos.has(String(m.obra_origem_id)) || idsPermitidos.has(String(m.obra_destino_id)));
+  obrasVisiveis = obrasVisiveis.filter(o=>idsPermitidos.has(String(o.id)));
 }
 patrimonios = dadosPatrimonios;
   atlasMovPatrimoniosPorId = new Map(patrimonios.map(p => [String(p.id), p]));
@@ -853,7 +828,7 @@ function atlasConfigurarObraUnicaRelatorio(){
   if(info && unica){info.textContent="Obra autorizada: "+atlasNomeObra(obras[0])+". Nenhuma seleção necessária.";}
 }
 function atlasAtualizarResumoObras(){
-  document.getElementById("atlasObrasResumo").textContent=obras.length===1?atlasNomeObra(obras[0]):(atlasObrasFiltradas.size?atlasObrasFiltradas.size+" obra(s) selecionada(s)":"Todas as obras autorizadas (exceto testes)");
+  document.getElementById("atlasObrasResumo").textContent=obras.length===1?atlasNomeObra(obras[0]):(atlasObrasFiltradas.size?atlasObrasFiltradas.size+" obra(s) selecionada(s)":"Todas as obras autorizadas");
 }
 function atlasLimparObras(){atlasObrasFiltradas.clear();atlasObrasSelecaoAplicada=false;atlasAtualizarResumoObras();atlasMovPagina=1;atlasRenderMov()}
 function atlasAlternarPeriodo(){
@@ -988,6 +963,82 @@ function atlasMovSincronizarCabecalhoHorizontal(){
 }
 // O histórico é reconstruído apenas a partir de transferências/remessas disponíveis e autorizadas.
 let atlasMovTrajetos = new Map();
+// Autoria da primeira etapa (quem solicitou/iniciou o envio) e da expedição
+// efetiva são distintas. O usuário quer o primeiro e o último participante na
+// tabela, preservando o despachante intermediário nos detalhes e exportações.
+let atlasMovRemetentesPorEvento = new Map();
+function atlasMovNomeAuditavel(v){
+  const nome=String(v??'').trim();
+  return nome&&!['—','-','...','NAO INFORMADO','NÃO INFORMADO','NULL','USUÁRIO NÃO IDENTIFICADO'].includes(nome.toLocaleUpperCase('pt-BR'))?nome:'';
+}
+function atlasMovNomeComparavel(v){
+  return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLocaleUpperCase('pt-BR').replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+}
+function atlasMovMesmoFuncionario(a,b){
+  const primeiro=atlasMovNomeComparavel(a),segundo=atlasMovNomeComparavel(b);
+  if(!primeiro||!segundo)return false;
+  if(primeiro===segundo)return true;
+  // Ex.: "João Paulo Souza" corresponde a "JOAO PAULO SOUZA DE BRITO".
+  // Prefixos com menos de 3 palavras NÃO são aceitos: nomes curtos poderiam
+  // representar pessoas diferentes. Não inferimos identidade apenas pela obra.
+  const curto=primeiro.length<segundo.length?primeiro:segundo;
+  const longo=primeiro.length<segundo.length?segundo:primeiro;
+  return curto.split(' ').length>=3&&longo.startsWith(curto+' ');
+}
+function atlasMovDespachanteIntermediario(m){
+  const despachante=atlasMovNomeAuditavel(m?.enviado_por);
+  const autorInicial=atlasMovNomeAuditavel(m?.solicitado_por);
+  return despachante&&autorInicial&&!atlasMovMesmoFuncionario(despachante,autorInicial)?despachante:null;
+}
+function atlasMovChaveRemetente(m){
+  const referencia=String(m?.codigo_remessa||m?.pedido_id||'').trim();
+  const bem=String(m?.patrimonio_id||'').trim();
+  return referencia&&bem?`${referencia}::${bem}`:null;
+}
+function atlasMovReconstruirRemetentes(){
+  atlasMovRemetentesPorEvento=new Map();
+  const prioridades=new Map();
+  for(const m of atlasMovDados){
+    const chave=atlasMovChaveRemetente(m);
+    if(!chave)continue;
+    const solicitante=atlasMovNomeAuditavel(m.solicitado_por);
+    const remetente=atlasMovNomeAuditavel(m.enviado_por);
+    const autorEvento=atlasMovTipoRegistro(m)==='ENVIO'?atlasMovNomeAuditavel(m.usuario):'';
+    const nome=solicitante||remetente||autorEvento;
+    const prioridade=solicitante?3:remetente?2:autorEvento?1:0;
+    if(nome&&prioridade>(prioridades.get(chave)||0)){
+      prioridades.set(chave,prioridade);
+      atlasMovRemetentesPorEvento.set(chave,nome);
+    }
+  }
+}
+function atlasMovQuemEnviou(m){
+  if(m.origem_registro==='CADASTRO_PATRIMONIAL')return atlasMovTexto(atlasMovCadastroUsuario(m));
+  // PED: solicitado_por é quem iniciou a transferência no Patrimônio.
+  // enviado_por registra a expedição física posterior e fica no detalhe.
+  // RP direta: não há solicitado_por; enviado_por_nome da remessa é o iniciador.
+  const autor=atlasMovNomeAuditavel(m.solicitado_por)||atlasMovNomeAuditavel(m.enviado_por);
+  if(autor)return autor;
+  const chave=atlasMovChaveRemetente(m);
+  const ligado=chave?atlasMovRemetentesPorEvento.get(chave):null;
+  if(ligado)return ligado;
+  // Somente eventos explicitamente de ENVIO admitem usuário como autor.
+  if(atlasMovTipoRegistro(m)==='ENVIO')return atlasMovTexto(atlasMovNomeAuditavel(m.usuario)||null);
+  return '—';
+}
+function atlasMovQuemRecebeuOuExecutou(m){
+  if(m.origem_registro==='CADASTRO_PATRIMONIAL')return atlasMovResponsavel(m);
+  if(atlasMovTipoRegistro(m)==='RECEBIMENTO')return atlasMovTexto(m.recebido_por||m.usuario);
+  return atlasMovResponsavel(m);
+}
+function atlasMovAtorHtml(nome,classe){
+  const valor=atlasMovTexto(nome);
+  // Na tela somente os dois primeiros nomes (quando houver mais palavras);
+  // nome completo continua no tooltip e nos dados/exportações.
+  return `<span class="atlas-mov-ator ${classe||''}" title="${atlasMovEsc(valor)}" aria-label="${atlasMovEsc(valor)}"><i class="fa-regular fa-user" aria-hidden="true"></i><span class="atlas-mov-ator-nome">${atlasMovEsc(atlasMovNomeCurto(valor))}</span></span>`;
+}
+
 // Auditoria real das baixas: registros gravados pelo módulo Patrimônio em "movimentacoes".
 // Chave = patrimônio, valor = última transição documentada para BAIXADO.
 let atlasMovBaixasAuditadas = new Map();
@@ -1211,8 +1262,30 @@ const atlasMovSelecoes = {
 const atlasMovOpcoes = {obras:[],funcionarios:[],tipos:[],status:[],categorias:[]};
 const atlasMovRotulos = {
   obras:'Todas as obras autorizadas',funcionarios:'Todos os funcionários',
-  tipos:'Todos os patrimônios',status:'Todos os status',categorias:'Todas as categorias'
+  tipos:'Todos os registros',status:'Todos os status',categorias:'Todas as categorias'
 };
+// Abrevia SOMENTE a exibição; a identificação/filtros trabalham com o nome
+// integral. Para homônimos com os mesmos dois primeiros nomes, usa o menor
+// prefixo adicional que permita distingui-los pelos nomes disponíveis.
+function atlasMovNomeCurto(nome){
+  const completo=atlasMovTexto(nome).trim();
+  const partes=completo.split(/\s+/).filter(Boolean);
+  if(partes.length<=2)return completo;
+  const chave=atlasMovNomeComparavel(completo);
+  const nomes=[...new Set((atlasMovOpcoes.funcionarios||[])
+    .map(o=>atlasMovNomeComparavel(o.valor)).filter(Boolean))];
+  const prefixoDois=chave.split(' ').slice(0,2).join(' ');
+  const colisoes=nomes.filter(n=>n.split(' ').slice(0,2).join(' ')===prefixoDois);
+  let limite=2;
+  if(colisoes.length>1){
+    const normalizadas=chave.split(' ');
+    while(limite<partes.length&&colisoes.some(outro=>
+      outro!==chave&&outro.split(' ').slice(0,limite).join(' ')===normalizadas.slice(0,limite).join(' '))){
+      limite++;
+    }
+  }
+  return partes.slice(0,limite).join(' ')+(partes.length>limite?'...':'');
+}
 let atlasMovFotosReferencia = new Map();
 function atlasMovFotoChave(marca,modelo){
   const n = x => String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -1257,13 +1330,15 @@ function atlasMovDesenharMulti(nome){
   const selecionadas=opts.filter(o=>selecionados.has(String(o.valor)));
   const container=root.querySelector('.atlas-mov-multi-selected');
   if(container){
+    // Seleção vazia = TODOS, inclusive cadastros e movimentações.
     container.innerHTML=nome==='obras' && selecionadas.length
       ? `<span class="atlas-mov-selection-count">${selecionadas.length} obra${selecionadas.length===1?'':'s'}/setor${selecionadas.length===1?'':'es'} selecionado${selecionadas.length===1?'':'s'}</span>`
       : selecionadas.length
         ?selecionadas.slice(0,2).map(o=>`<span class="atlas-mov-chip" data-valor="${atlasMovEsc(o.valor)}" title="Remover ${atlasMovEsc(o.texto)}">${atlasMovEsc(o.texto)} <i class="fa-solid fa-xmark" aria-hidden="true"></i></span>`).join('')
           +(selecionadas.length>2?`<span class="atlas-mov-chip-more">+${selecionadas.length-2}</span>`:'')
         :atlasMovEsc(atlasMovRotulos[nome]);
-    container.parentElement.title=selecionadas.length?selecionadas.map(o=>o.texto).join(' · '):atlasMovRotulos[nome];
+    container.parentElement.title=selecionadas.length
+      ?selecionadas.map(o=>o.texto).join(' · '):atlasMovRotulos[nome];
     container.querySelectorAll('.atlas-mov-chip').forEach(chip=>chip.addEventListener('click',e=>{
       e.stopPropagation();selecionados.delete(chip.dataset.valor);atlasMovDesenharMulti(nome);atlasMovMudouFiltro();
     }));
@@ -1359,7 +1434,12 @@ document.addEventListener('keydown',e=>{
     p.hidden=true;p.parentElement.querySelector('.atlas-mov-multi-trigger')?.setAttribute('aria-expanded','false');
   });
 });
-function atlasMovMudouFiltro(){atlasMovPagina=1;atlasRenderMov();}
+function atlasMovMudouFiltro(){
+  // Tipo vazio significa todos os registros autorizados, não só cadastros.
+  atlasMovDesenharMulti('tipos');
+  atlasMovPagina=1;
+  atlasRenderMov();
+}
 function atlasMovPeriodoPersonalizado(){
   const sel=document.getElementById('atlasMovPeriodo');if(sel)sel.value='personalizado';atlasMovMudouFiltro();
 }
@@ -1386,22 +1466,31 @@ function atlasMovLimparTodos(){
   document.querySelectorAll('#atlasMovimentacoesCard .atlas-mov-multi-popup').forEach(x=>x.hidden=true);
   atlasMovAtualizarPeriodo();
 }
-// Sem tipo marcado: consulta geral de bens (um registro por patrimônio).
-// HISTORICO ou tipos de evento: consulta a movimentações. Uma seleção pode
-// combinar cadastro e eventos, sem repetir o cadastro de um mesmo bem.
+// A seleção vazia dos tipos é neutra, como nos demais filtros:
+// cadastro (cada bem uma vez) + histórico real de movimentações (cada evento).
+function atlasMovBuscaPessoaDigitada(){
+  const q=atlasMovNomeComparavel(document.getElementById('atlasMovBusca')?.value);
+  if(q.length<3)return false;
+  return atlasMovDados.some(m=>m.origem_registro!=='PATRIMONIO_BAIXADO' &&
+    [...atlasMovParticipantes(m),atlasMovQuemEnviou(m)].some(v=>atlasMovNomeComparavel(v).includes(q)));
+}
 function atlasMovIncluiCadastro(){
   const t=atlasMovSelecoes.tipos;
   return !t.size || t.has('CADASTRO');
 }
 function atlasMovIncluiHistorico(){
   const t=atlasMovSelecoes.tipos;
-  return t.has('HISTORICO')||['ENVIO','RECEBIMENTO','TRANSFERENCIA','BAIXA','OUTROS'].some(x=>t.has(x));
+  return !t.size || t.has('HISTORICO') ||
+    ['ENVIO','RECEBIMENTO','TRANSFERENCIA','BAIXA','OUTROS'].some(x=>t.has(x));
 }
 function atlasMovFontesSelecionadas(){
   const t=atlasMovSelecoes.tipos;
   const cadastro=atlasMovIncluiCadastro()?atlasMovCadastroDados:[];
   const historico=atlasMovIncluiHistorico()?atlasMovDados.filter(m=>{
-    if(t.has('HISTORICO'))return m.origem_registro!=='PATRIMONIO_BAIXADO'||t.has('BAIXA');
+    // Baixa sintética é uma situação do cadastro, NÃO uma movimentação real.
+    // Só integra o histórico quando se filtra explicitamente por BAIXA.
+    if(m.origem_registro==='PATRIMONIO_BAIXADO')return t.has('BAIXA');
+    if(!t.size||t.has('HISTORICO'))return true;
     return t.has(atlasMovTipoRegistro(m));
   }):[];
   return [...cadastro,...historico];
@@ -1417,7 +1506,7 @@ function atlasMovPovoarFiltros(){
     const stat=atlasMovStatusFiltro(p);estados.set(stat,atlasMovStatusLabel(stat));
   }
   for(const m of atlasMovDados){
-    for(const nome of atlasMovParticipantes(m)){
+    for(const nome of [...atlasMovParticipantes(m),atlasMovQuemEnviou(m)]){
       const n=nome.trim();if(n)pessoas.set(n.toLocaleLowerCase('pt-BR'),n);
     }
     const stat=atlasMovStatusFiltro(m);estados.set(stat,atlasMovStatusLabel(stat));
@@ -1427,8 +1516,8 @@ function atlasMovPovoarFiltros(){
   // Todas as obras autorizadas, não apenas as que já possuem movimentação.
   atlasMovOpcoes.obras=obras.map(o=>({valor:String(o.id),texto:[o.codigo_obra||o.codigo_sienge||'',o.nome||''].filter(Boolean).join(' - ')||String(o.id)})).sort(ordenar);
   atlasMovOpcoes.tipos=[
-    ['CADASTRO','Todos os patrimônios (cadastro)'],
-    ['HISTORICO','Histórico de movimentações'],
+    ['CADASTRO','Cadastros de patrimônio'],
+    ['HISTORICO','Movimentações (histórico)'],
     ['ENVIO','Envio'],['RECEBIMENTO','Recebimento'],
     ['TRANSFERENCIA','Transferência'],['BAIXA','Patrimônio baixado'],
     ['OUTROS','Outros registros']
@@ -1441,7 +1530,7 @@ function atlasMovPovoarFiltros(){
   });
 }
 function atlasMovVisiveis(){
-  const q=(document.getElementById('atlasMovBusca')?.value||'').trim().toLocaleLowerCase('pt-BR');
+  const q=atlasMovNomeComparavel(document.getElementById('atlasMovBusca')?.value);
   const {obras:obrasSel,funcionarios:funcSel,tipos:tipoSel,status:statusSel,categorias:catSel}=atlasMovSelecoes;
   const sentido=document.getElementById('atlasMovSentido')?.value||'ambas';
   const inicio=document.getElementById('atlasMovDataInicio')?.value||'';
@@ -1453,9 +1542,8 @@ function atlasMovVisiveis(){
     // Patrimônios sem obra podem ser consultados pelo OWNER; outros usuários
     // continuam restritos às obras autorizadas, inclusive com RLS.
     if(!autorizadas.has(origem)&&!autorizadas.has(destino)&&!(owner&&m.origem_registro==='CADASTRO_PATRIMONIAL'))return false;
-    if(!owner&&([origem,destino].includes('22')||[origem,destino].includes('33')))return false;
     if(obrasSel.size&&!(sentido!=='destino'&&obrasSel.has(origem))&&!(sentido!=='origem'&&obrasSel.has(destino)))return false;
-    if(funcSel.size&&!atlasMovParticipantes(m).some(v=>[...funcSel].some(f=>v.toLocaleLowerCase('pt-BR')===f.toLocaleLowerCase('pt-BR'))))return false;
+    if(funcSel.size&&![...atlasMovParticipantes(m),atlasMovQuemEnviou(m)].some(v=>[...funcSel].some(f=>atlasMovMesmoFuncionario(v,f))))return false;
     if(tipoSel.size&&!tipoSel.has(atlasMovTipoRegistro(m))&&!(tipoSel.has('HISTORICO')&&m.origem_registro!=='CADASTRO_PATRIMONIAL'&&m.origem_registro!=='PATRIMONIO_BAIXADO'))return false;
     if(statusSel.size&&!statusSel.has(atlasMovStatusFiltro(m)))return false;
     if(catSel.size){
@@ -1465,7 +1553,7 @@ function atlasMovVisiveis(){
     const data=m.origem_registro==='PATRIMONIO_BAIXADO'&&atlasMovDataEvento(m)?String(atlasMovDataEvento(m)).slice(0,10):atlasMovDataISO(atlasMovDataEvento(m));
     if((inicio||fim)&&(!data||(inicio&&data<inicio)||(fim&&data>fim)))return false;
     if(!q)return true;
-    return [atlasMovPat(m.patrimonio_id,m),atlasMovDescricao(m),atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),m.pedido_id,m.codigo_remessa,...atlasMovParticipantes(m),m.status,m.observacao,m.observacao_recebimento,m.marca,m.modelo,m.codigo_antigo,m.numero_serie,m.placa,m.localizacao,m.departamento,atlasMovTipoLabel(m)].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q));
+    return [atlasMovPat(m.patrimonio_id,m),atlasMovDescricao(m),atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),m.pedido_id,m.codigo_remessa,...atlasMovParticipantes(m),atlasMovQuemEnviou(m),m.status,m.observacao,m.observacao_recebimento,m.marca,m.modelo,m.codigo_antigo,m.numero_serie,m.placa,m.localizacao,m.departamento,atlasMovTipoLabel(m)].some(v=>atlasMovNomeComparavel(v).includes(q));
   });
   const ordem=document.getElementById('atlasMovOrdenacao')?.value||'data_desc';
   lista.sort((a,b)=>{
@@ -1488,7 +1576,14 @@ function atlasMovResumo(lista){
   const pessoas=new Set(),obrasUsadas=new Set(),patrimoniosUsados=new Set();
   const autorizadas=new Set(obras.map(o=>String(o.id)));
   for(const m of lista){
-    const responsavel=atlasMovResponsavel(m);if(responsavel!=='—')pessoas.add(responsavel.trim().toLocaleLowerCase('pt-BR'));
+    // Contabiliza todas as pessoas com participação registrada, não apenas
+    // o último executor da linha (o recebimento, por exemplo).
+    for(const nome of [...atlasMovParticipantes(m),atlasMovQuemEnviou(m)]){
+      const valido=atlasMovNomeAuditavel(nome);
+      if(!valido)continue;
+      const jaContado=[...pessoas].some(outro=>atlasMovMesmoFuncionario(outro,valido));
+      if(!jaContado)pessoas.add(atlasMovNomeComparavel(valido));
+    }
     for(const id of [m.obra_origem_id,m.obra_destino_id])if(id!=null&&autorizadas.has(String(id)))obrasUsadas.add(String(id));
     if(m.patrimonio_id!=null)patrimoniosUsados.add('id:'+String(m.patrimonio_id));
     else if(m.codigo_qr)patrimoniosUsados.add('qr:'+String(m.codigo_qr));
@@ -1508,6 +1603,36 @@ function atlasMovFiltroDescricao(){
   if(v('atlasMovBusca'))lista.push('Busca: '+v('atlasMovBusca'));
   return lista.join(' · ');
 }
+// Resumo da participação (não confundir cadastro realizado com responsabilidade
+// atual pelo bem). Só considera registros existentes nas obras autorizadas.
+function atlasMovAtualizarPerfilFuncionario(lista){
+  const painel=document.getElementById('atlasMovResumoFuncionario');
+  if(!painel)return;
+  const escolhidos=[...atlasMovSelecoes.funcionarios];
+  const pesquisa=atlasMovNomeComparavel(document.getElementById('atlasMovBusca')?.value);
+  const porNome=escolhidos.length===0&&atlasMovBuscaPessoaDigitada();
+  const ativo=escolhidos.length>0||porNome;
+  painel.hidden=!ativo;
+  if(!ativo){painel.innerHTML='';return;}
+  const nome=escolhidos.length?escolhidos.join(' · '):document.getElementById('atlasMovBusca')?.value||'Funcionário';
+  const pertence=valor=>escolhidos.length
+    ? escolhidos.some(f=>atlasMovMesmoFuncionario(f,valor))
+    : atlasMovNomeComparavel(valor).includes(pesquisa);
+  const cadastros=lista.filter(m=>m.origem_registro==='CADASTRO_PATRIMONIAL'&&
+    pertence(atlasMovCadastroUsuario(m)));
+  const eventos=lista.filter(m=>m.origem_registro!=='CADASTRO_PATRIMONIAL'&&m.origem_registro!=='PATRIMONIO_BAIXADO');
+  const iniciados=eventos.filter(m=>pertence(atlasMovQuemEnviou(m)));
+  const recebidos=eventos.filter(m=>pertence(m.recebido_por||(atlasMovTipoRegistro(m)==='RECEBIMENTO'?m.usuario:null)));
+  const bens=new Set(lista.map(m=>String(m.patrimonio_id||'')).filter(Boolean));
+  const numeros=[
+    ['fa-box','Cadastros realizados',cadastros.length],
+    ['fa-arrow-right-arrow-left','Movimentações participadas',eventos.length],
+    ['fa-paper-plane','Envios iniciados',iniciados.length],
+    ['fa-box-open','Recebimentos confirmados',recebidos.length]
+  ];
+  painel.innerHTML=`<div class="atlas-mov-profile-heading"><div class="atlas-mov-profile-avatar" aria-hidden="true"><i class="fa-solid fa-user-check"></i></div><div class="atlas-mov-profile-identidade"><small>Atividades do funcionário</small><strong title="${atlasMovEsc(nome)}">${atlasMovEsc(nome)}</strong><span>Resultado filtrado: ${bens.size} patrimônio${bens.size===1?'':'s'} envolvido${bens.size===1?'':'s'}.</span></div></div><div class="atlas-mov-profile-stats">${numeros.map(([icone,titulo,total])=>`<div class="atlas-mov-profile-stat"><i class="fa-solid ${icone}" aria-hidden="true"></i><strong>${total.toLocaleString('pt-BR')}</strong><span>${atlasMovEsc(titulo)}</span></div>`).join('')}</div><p>Inclui apenas atividades registradas e visíveis para suas obras. Quem iniciou o envio e quem confirmou o recebimento são identificados separadamente.</p>`;
+}
+
 function atlasAtualizarCabecalhoMov(lista){
   const resumo=atlasMovResumo(lista),set=(id,t)=>{const el=document.getElementById(id);if(el)el.textContent=t;};
   set('bdrMovEmitido','Emitido por: '+atlasMovEmitente());set('bdrMovEmissao','Emissão: '+new Date().toLocaleString('pt-BR'));set('bdrMovFiltros','Filtros: '+atlasMovFiltroDescricao());
@@ -1517,12 +1642,13 @@ function atlasAtualizarCabecalhoMov(lista){
   set('atlasMovColTipo',cadastro&&!historico?'Marca / Modelo · Valor':'Movimentação');
   set('atlasMovColOrigem',cadastro&&!historico?'Origem registrada':'Origem');
   set('atlasMovColDestino',cadastro&&!historico?'Obra atual':'Destino');
-  set('atlasMovColResponsavel',cadastro&&!historico?'Responsável / Baixa':'Realizado por');
+  set('atlasMovColEnviado',cadastro&&!historico?'Cadastrado por':historico&&!cadastro?'Enviado por':'Enviou / cadastrou');
+  set('atlasMovColResponsavel',cadastro&&!historico?'Responsável / Baixa':historico&&!cadastro?'Recebido / realizado por':'Recebeu / responsável');
   const formatar=x=>x?x.split('-').reverse().join('/'):'';
   const di=document.getElementById('atlasMovDataInicio')?.value||'',df=document.getElementById('atlasMovDataFim')?.value||'';
   set('atlasMovResumoPeriodo',di||df?`Período: ${formatar(di)||'início'} a ${formatar(df)||'hoje'}`:'Período: todo o histórico');
   const el=document.getElementById('bdrMovIndicadores');if(el)el.innerHTML=[
-    ['fa-arrow-right-arrow-left',cadastro&&!historico?'Registros':'Movimentações',resumo.total],
+    ['fa-arrow-right-arrow-left',historico&&!cadastro?'Movimentações':'Registros',resumo.total],
     ['fa-cube','Patrimônios',resumo.patrimonios],
     ['fa-users','Funcionários',resumo.participantes],
     ['fa-building','Obras (envolvidas)',resumo.obras]
@@ -1572,6 +1698,7 @@ function atlasRenderMov(){
     const identificacao=[p.marca,p.modelo].filter(x=>String(x||'').trim()).join(' / ');
 
     const responsavel=atlasMovResponsavel(m),referencia=atlasMovTexto(m.codigo_remessa||m.pedido_id);
+    const enviado=atlasMovQuemEnviou(m),recebidoOuExecutado=atlasMovQuemRecebeuOuExecutou(m);
     const baixaAtual=eCadastro&&status==='BAIXADO';
     const identificacaoBaixa=baixaAtual?atlasMovBaixaIdentificacao(m):null;
     const baixaAuditada=identificacaoBaixa?.origem==='MOVIMENTACAO';
@@ -1602,100 +1729,128 @@ function atlasRenderMov(){
       <td>${celTipo}</td>
       <td class="atlas-mov-obra" title="${atlasMovEsc(origemTexto)}">${atlasMovEsc(origemTexto)}</td>
       <td class="atlas-mov-obra" title="${atlasMovEsc(destinoTexto)}">${atlasMovEsc(destinoTexto)}</td>
-      <td class="atlas-mov-pessoa" title="${atlasMovEsc(nomeExibido)}"><i class="fa-regular fa-user" aria-hidden="true"></i><span class="atlas-mov-pessoa-info">${atlasMovEsc(nomeExibido)}${infoBaixa}</span></td>
+      <td class="atlas-mov-remetente">${atlasMovAtorHtml(enviado,'atlas-mov-ator-envio')}</td>
+      <td class="atlas-mov-pessoa" title="${atlasMovEsc(nomeExibido)}">${atlasMovAtorHtml(eCadastro?nomeExibido:recebidoOuExecutado,'atlas-mov-ator-executor')}${infoBaixa}</td>
       <td><span class="atlas-mov-status atlas-mov-status-${classe}">${classe==='recebido'?'<i class="fa-regular fa-circle-check" aria-hidden="true"></i>':''}${atlasMovEsc(atlasMovStatusLabel(m.status))}</span>${dataBaixa}</td>
       <td class="atlas-mov-acoes"><button type="button" onclick="atlasMovAbrir(${Number.isFinite(mid)?mid:0})" title="${eCadastro?'Ver dados do patrimônio':'Ver detalhes da remessa '+atlasMovEsc(referencia)}" aria-label="Ver detalhes de ${atlasMovEsc(atlasMovCodigo(m))}"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></td>
     </tr>`;
-  }).join('')||'<tr><td class="atlas-mov-empty" colspan="9"><i class="fa-regular fa-folder-open" aria-hidden="true"></i> Nenhum registro encontrado para os filtros selecionados.</td></tr>';
+  }).join('')||'<tr><td class="atlas-mov-empty" colspan="10"><i class="fa-regular fa-folder-open" aria-hidden="true"></i> Nenhum registro encontrado para os filtros selecionados.</td></tr>';
   atlasAtualizarCabecalhoMov(lista);
+  atlasMovAtualizarPerfilFuncionario(lista);
   const faixa=document.getElementById('atlasMovFaixa');if(faixa)faixa.textContent=`Exibindo ${lista.length?ini+1:0}–${Math.min(ini+ATLAS_MOV_POR_PAGINA,lista.length)} de ${lista.length} registros`;
   atlasMovSincronizarPaginadores(lista.length);
   atlasMovSincronizarCabecalhoHorizontal();
 }
 
+function atlasMovDetalheGrupo(titulo,itens,icone='fa-list',classe=''){
+  const validos=itens.filter(([nome,v])=>v!==null&&v!==undefined&&String(v).trim()!==''&&String(v)!=='—');
+  if(!validos.length)return '';
+  return `<section class="atlas-mov-detail-group ${classe}"><h4><i class="fa-solid ${icone}" aria-hidden="true"></i>${atlasMovEsc(titulo)}</h4><div class="atlas-mov-detail-grid">${validos.map(([nome,v])=>`<div class="atlas-mov-detail"><small>${atlasMovEsc(nome)}</small><strong>${atlasMovEsc(v)}</strong></div>`).join('')}</div></section>`;
+}
 function atlasMovAbrir(id){
   const m=[...atlasMovCadastroDados,...atlasMovDados].find(x=>Number(x.id)===Number(id));if(!m)return;
   const p=atlasMovPatrimoniosPorId.get(String(m.patrimonio_id))||m;
   const cadastro=m.origem_registro==='CADASTRO_PATRIMONIAL';
   const tipo=atlasMovTipoLabel(m);
-  const campos=[
-    {titulo:'Identificação do patrimônio',itens:[
-      ['Patrimônio Atlas',atlasMovCodigo(m)],['Patrimônio antigo',p.codigo_antigo],
-      ['Descrição',atlasMovDescricao(m)],['Categoria',p.tipo_item],['Marca',p.marca],['Modelo',p.modelo],
-      ['Número de série',p.numero_serie],['Placa',p.placa],['Valor patrimonial',atlasMovValorPatrimonio(p)===null?'Não informado':atlasMovMoeda(atlasMovValorPatrimonio(p))],
-      ['Situação atual',p.status?atlasMovStatusLabel(p.status):'—']
-    ]},
-    cadastro?{titulo:'Cadastro e localização atual',itens:[
-      ['Primeira origem registrada',atlasMovOrigemRegistrada(m)||'Não identificada no histórico'],
-      ['Obra atual',atlasMovObra(p.obra_id)],['Localização interna',m.localizacao||m.departamento],
-      ['Responsável pelo bem',m.responsavel],['Cadastrado por',m.usuario_cadastro],['Data do cadastro',atlasMovData(atlasMovDataEvento(m))],
-      ...(String(p.status||'').toUpperCase()==='BAIXADO'?(
-        atlasMovAuditoriaBaixa(m)
-          ?[['Baixa realizada por',atlasMovBaixaUsuario(m)||'Não identificado'],
-            ['Data/hora da baixa',atlasMovDataOperacao(atlasMovBaixaData(m))],
-            ['Justificativa da baixa',atlasMovAuditoriaBaixa(m)?.observacao||'Não registrada']]
-          :atlasMovBaixaIdentificacao(m).origem==='CADASTRO_INICIAL'
-            ?[['Identificação do status','BAIXADO no cadastro; sem alteração de status registrada'],
-              ['Cadastrado por',atlasMovCadastroUsuario(m)||'Não informado'],
-              ['Data/hora do cadastro',atlasMovDataOperacao(atlasMovCadastroData(m))],
-              ['Fonte da identificação','Cadastro patrimonial; não há evento separado de baixa']]
-            :[['Registro da baixa','Auditoria indisponível: conferir acesso ao histórico'],
-              ['Cadastrador identificado',atlasMovCadastroUsuario(m)||'Não informado'],
-              ['Nota de auditoria','Sem acesso ao evento de baixa, não é possível confirmar o executor.']]
-      ):[])
-    ]}:{titulo:'Operação e trajeto',itens:[
-      ['Tipo de operação',tipo],['Situação do registro',atlasMovStatusLabel(m.status)],
-      ['Realizado por',atlasMovResponsavel(m)],['Data/hora da operação',atlasMovDataExibicao(m)],
-      ['Pedido / Remessa',m.codigo_remessa||m.pedido_id],
-      ['Origem',atlasMovObra(m.obra_origem_id)],['Destino',atlasMovObra(m.obra_destino_id)],
-      ['Motorista',m.motorista_nome],['Placa do transporte',m.veiculo_placa],
-      ['Conferência',m.conferencia_status]
-    ]},
-    {titulo:'Trajeto entre obras (registros disponíveis)',itens:atlasMovPassagens(m)},
-    ...(!cadastro?[{titulo:'Pessoas envolvidas',itens:[
-      ['Solicitado por',m.solicitado_por],['Aprovado por',m.aprovado_por],['Separado por',m.separado_por],
-      ['Enviado por',m.enviado_por],['Recebido por',m.recebido_por],['Responsável / usuário',m.responsavel||m.usuario]
-    ]},{titulo:'Linha do tempo',itens:[
-      ['Solicitação',m.data_solicitacao?atlasMovData(m.data_solicitacao):null],
-      ['Aprovação',m.data_aprovacao?atlasMovData(m.data_aprovacao):null],
-      ['Separação',m.data_separacao?atlasMovData(m.data_separacao):null],
-      ['Envio',m.data_envio?atlasMovData(m.data_envio):null],
-      ['Recebimento',m.data_recebimento?atlasMovData(m.data_recebimento):null]
-    ]},{titulo:'Observações',itens:[
-      ['Observação',m.observacao],['Observação do recebimento físico',m.observacao_recebimento],
-      ['Nota de origem',m.origem_registro==='PATRIMONIO_BAIXADO'&&!atlasMovAuditoriaBaixa(m)
-        ?(atlasMovErroAuditoriaBaixas?'Auditoria de baixa indisponível.':'BAIXADO no cadastro; cadastrador e data vêm do registro patrimonial, sem evento separado de baixa.'):null]
-    ]}]:[])
+  const tipoEvento=atlasMovTipoRegistro(m);
+  const codigo=atlasMovCodigo(m);
+  const descricao=atlasMovDescricao(m);
+  const status=atlasMovStatusLabel(m.status);
+  const iniciou=atlasMovNomeAuditavel(atlasMovQuemEnviou(m));
+  const recebeu=atlasMovNomeAuditavel(m.recebido_por||(tipoEvento==='RECEBIMENTO'?m.usuario:null));
+  const origem=atlasMovObra(m.obra_origem_id),destino=atlasMovObra(m.obra_destino_id);
+  const detalhePatrimonio=[
+    ['Patrimônio Atlas',codigo],['Patrimônio antigo',p.codigo_antigo],
+    ['Descrição',descricao],['Categoria',p.tipo_item],['Marca',p.marca],['Modelo',p.modelo],
+    ['Número de série',p.numero_serie],['Placa do bem',p.placa],
+    ['Valor patrimonial',atlasMovValorPatrimonio(p)===null?'Não informado':atlasMovMoeda(atlasMovValorPatrimonio(p))],
+    ['Situação atual',p.status?atlasMovStatusLabel(p.status):'—']
   ];
-  const detalhes=document.getElementById('atlasMovDetalhes'),dlg=document.getElementById('atlasMovDialog');if(!detalhes||!dlg)return;
-  detalhes.innerHTML=campos.map(grupo=>{
-    const itens=grupo.itens.filter(([nome,v])=>v!==null&&v!==undefined&&String(v).trim()!==''&&String(v)!=='—');
-    if(!itens.length)return '';
-    return `<section class="atlas-mov-detail-group"><h4>${atlasMovEsc(grupo.titulo)}</h4><div class="atlas-mov-detail-grid">${itens.map(([nome,v])=>`<div class="atlas-mov-detail"><small>${atlasMovEsc(nome)}</small><strong>${atlasMovEsc(v)}</strong></div>`).join('')}</div></section>`;
-  }).join('');
-  document.getElementById('atlasMovDialogTitulo').textContent=`${atlasMovCodigo(m)} · ${cadastro?'Cadastro patrimonial':tipo}`;
+  const detalheCadastro=[
+    ['Primeira origem registrada',atlasMovOrigemRegistrada(m)||'Não identificada no histórico'],
+    ['Obra atual',atlasMovObra(p.obra_id)],['Localização interna',m.localizacao||m.departamento],
+    ['Responsável pelo bem',m.responsavel],['Cadastrado por',m.usuario_cadastro],
+    ['Data do cadastro',atlasMovData(atlasMovDataEvento(m))],
+    ...(String(p.status||'').toUpperCase()==='BAIXADO'?(
+      atlasMovAuditoriaBaixa(m)
+        ?[['Baixa realizada por',atlasMovBaixaUsuario(m)||'Não identificado'],
+          ['Data/hora da baixa',atlasMovDataOperacao(atlasMovBaixaData(m))],
+          ['Justificativa da baixa',atlasMovAuditoriaBaixa(m)?.observacao||'Não registrada']]
+        :atlasMovBaixaIdentificacao(m).origem==='CADASTRO_INICIAL'
+          ?[['Identificação do status','BAIXADO no cadastro; sem alteração de status registrada'],
+            ['Cadastrado por',atlasMovCadastroUsuario(m)||'Não informado'],
+            ['Data/hora do cadastro',atlasMovDataOperacao(atlasMovCadastroData(m))],
+            ['Fonte da identificação','Cadastro patrimonial; não há evento separado de baixa']]
+          :[['Registro da baixa','Auditoria indisponível: conferir acesso ao histórico'],
+            ['Cadastrador identificado',atlasMovCadastroUsuario(m)||'Não informado'],
+            ['Nota de auditoria','Sem acesso ao evento de baixa, não é possível confirmar o executor.']]
+    ):[])
+  ];
+  const detalheOperacao=[
+    ['Tipo de operação',tipo],['Situação do registro',status],
+    ['Realizado por',atlasMovResponsavel(m)],['Data/hora da operação',atlasMovDataExibicao(m)],
+    ['Pedido / Remessa',m.codigo_remessa||m.pedido_id],
+    ['Motorista',m.motorista_nome],['Placa do transporte',m.veiculo_placa],
+    ['Conferência',m.conferencia_status]
+  ];
+  const detalheEquipe=[
+    ['Solicitado por',m.solicitado_por],['Aprovado por',m.aprovado_por],
+    ['Separado por',m.separado_por],
+    ['Expedição / despacho realizado por',atlasMovDespachanteIntermediario(m)],
+    ['Responsável / usuário da operação',m.responsavel||m.usuario]
+  ];
+  const observacoes=[['Observação',m.observacao],['Observação do recebimento físico',m.observacao_recebimento],
+    ['Nota de origem',m.origem_registro==='PATRIMONIO_BAIXADO'&&!atlasMovAuditoriaBaixa(m)
+      ?(atlasMovErroAuditoriaBaixas?'Auditoria de baixa indisponível.':'BAIXADO no cadastro; cadastrador e data vêm do registro patrimonial, sem evento separado de baixa.'):null]];
+  const cartaoPessoa=(icone,papel,nome,nota,recebimento=false)=>`<div class="atlas-mov-participante ${recebimento?'atlas-mov-participante-fim':'atlas-mov-participante-inicio'}"><div class="atlas-mov-participante-papel"><i class="fa-solid ${icone}" aria-hidden="true"></i>${atlasMovEsc(papel)}</div><strong title="${atlasMovEsc(nome||'Não identificado')}">${atlasMovEsc(nome||'Não identificado')}</strong><small>${atlasMovEsc(nota)}</small></div>`;
+  const etapas=[
+    ['Solicitação / início',m.data_solicitacao,atlasMovNomeAuditavel(m.solicitado_por)||iniciou],
+    ['Expedição / despacho',m.data_envio,atlasMovDespachanteIntermediario(m)||atlasMovNomeAuditavel(m.enviado_por)],
+    ['Recebimento',m.data_recebimento,recebeu]
+  ];
+  const linhaTempo=etapas.map(([etapa,data,nome],i)=>`<div class="atlas-mov-timeline-step ${data?'atlas-mov-timeline-registrado':'atlas-mov-timeline-pendente'}"><span class="atlas-mov-timeline-num">${i+1}</span><div><strong>${atlasMovEsc(etapa)}</strong><time>${data?atlasMovEsc(atlasMovData(data)):'Sem data registrada'}</time>${nome?`<small title="${atlasMovEsc(nome)}">${atlasMovEsc(nome)}</small>`:''}</div></div>`).join('');
+  const principal=cadastro
+    ? `<section class="atlas-mov-detail-hero"><div class="atlas-mov-detail-hero-top"><span class="atlas-mov-detail-kicker"><i class="fa-solid fa-box" aria-hidden="true"></i> Cadastro patrimonial</span><span class="atlas-mov-detail-status">${atlasMovEsc(status)}</span></div><h3>${atlasMovEsc(descricao)}</h3><p>Dados de cadastro, situação atual e origem do patrimônio.</p></section>`
+    : `<section class="atlas-mov-detail-hero"><div class="atlas-mov-detail-hero-top"><span class="atlas-mov-detail-kicker"><i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i> ${atlasMovEsc(tipo)}</span><span class="atlas-mov-detail-status">${atlasMovEsc(status)}</span></div><h3>${atlasMovEsc(descricao)}</h3><p>Primeira e última pessoas da transferência, com os responsáveis intermediários preservados.</p></section>
+       <section class="atlas-mov-detail-people" aria-label="Responsáveis principais">${cartaoPessoa('fa-paper-plane','Iniciou o envio',iniciou,'Primeira etapa registrada')}${cartaoPessoa('fa-box-open','Confirmou recebimento',recebeu,recebeu?'Última etapa registrada':'Recebimento ainda não identificado',true)}</section>
+       <section class="atlas-mov-detail-route" aria-label="Origem e destino"><span><small>ORIGEM</small><strong title="${atlasMovEsc(origem)}">${atlasMovEsc(origem)}</strong></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><span><small>DESTINO</small><strong title="${atlasMovEsc(destino)}">${atlasMovEsc(destino)}</strong></span></section>
+       <section class="atlas-mov-detail-timeline"><h4><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Linha do tempo</h4><div class="atlas-mov-timeline-steps">${linhaTempo}</div></section>`;
+  const conteudo=[
+    principal,
+    atlasMovDetalheGrupo('Identificação do patrimônio',detalhePatrimonio,'fa-barcode'),
+    cadastro?atlasMovDetalheGrupo('Cadastro e localização atual',detalheCadastro,'fa-location-dot'):
+      atlasMovDetalheGrupo('Dados da operação e transporte',detalheOperacao,'fa-truck-fast'),
+    !cadastro?atlasMovDetalheGrupo('Outras pessoas envolvidas',detalheEquipe,'fa-people-group'):null,
+    !cadastro?atlasMovDetalheGrupo('Trajeto entre obras (registros disponíveis)',atlasMovPassagens(m),'fa-route','atlas-mov-detail-passagens'):null,
+    !cadastro?atlasMovDetalheGrupo('Observações',observacoes,'fa-note-sticky'):null
+  ];
+  const detalhes=document.getElementById('atlasMovDetalhes'),dlg=document.getElementById('atlasMovDialog');
+  if(!detalhes||!dlg)return;
+  detalhes.innerHTML=conteudo.filter(Boolean).join('');
+  document.getElementById('atlasMovDialogTitulo').textContent=`${codigo} · ${cadastro?'Cadastro patrimonial':tipo}`;
+  dlg.scrollTop=0;
   if(!dlg.open)dlg.showModal();
 }
 function atlasMovEmitente(){const u=usuarioAtualRelatoriosBDR();return u?.nome||u?.nome_completo||u?.usuario||'Usuário não identificado';}
-function atlasMovLinhas(lista){return lista.map(m=>[atlasMovDataExibicao(m),atlasMovCodigo(m),atlasMovDescricao(m),atlasMovTipoLabel(m),atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),atlasMovResponsavel(m),atlasMovStatusLabel(m.status),m.codigo_remessa||m.pedido_id||'',m.solicitado_por||'',m.enviado_por||'',m.recebido_por||'',atlasMovData(m.data_envio),atlasMovData(m.data_recebimento),[m.observacao,m.observacao_recebimento].filter(Boolean).join(' | ')]);}
+function atlasMovLinhas(lista){return lista.map(m=>[atlasMovDataExibicao(m),atlasMovCodigo(m),atlasMovDescricao(m),atlasMovTipoLabel(m),atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),atlasMovResponsavel(m),atlasMovStatusLabel(m.status),m.codigo_remessa||m.pedido_id||'',m.solicitado_por||'',atlasMovQuemEnviou(m)==='—'?'':atlasMovQuemEnviou(m),atlasMovDespachanteIntermediario(m)||'',m.recebido_por||'',atlasMovData(m.data_envio),atlasMovData(m.data_recebimento),[m.observacao,m.observacao_recebimento].filter(Boolean).join(' | ')]);}
 async function atlasExportarMovExcel(){
   if(!exigirPermissaoRelatoriosBDR('RELATORIOS_EXPORTAR'))return;
   const lista=atlasMovVisiveis();if(!lista.length){alert('Nenhuma movimentação para exportar.');return;}
   if(!window.ExcelJS){alert('A biblioteca ExcelJS não foi carregada. Verifique a conexão.');return;}
   const livro=new ExcelJS.Workbook();livro.creator='BDR Construart';livro.created=new Date();
   const aba=livro.addWorksheet('Movimentações',{views:[{state:'frozen',ySplit:8}]});
-  const titulos=['Data/hora do registro','Patrimônio','Descrição do bem','Movimentação','Origem','Destino','Responsável','Status','Pedido / Remessa','Solicitado por','Enviado por','Recebido por','Envio registrado','Recebimento registrado','Observações'];
-  for(const [n,valor] of [[1,'BDR CONSTRUART'],[2,'RELATÓRIO DE MOVIMENTAÇÕES PATRIMONIAIS'],[3,`Emitido por: ${atlasMovEmitente()}  |  Emissão: ${new Date().toLocaleString('pt-BR',{timeZone:'America/Cuiaba'})}`],[4,'Filtros: '+atlasMovFiltroDescricao()]]){aba.mergeCells(n,1,n,15);aba.getCell(n,1).value=valor;}
-  const r=atlasMovResumo(lista);aba.mergeCells(5,1,5,15);aba.getCell(5,1).value=`Movimentações: ${r.total}   |   Funcionários participantes: ${r.participantes}   |   Obras envolvidas: ${r.obras}`;
-  aba.mergeCells(6,1,6,15);aba.getCell(6,1).value='Datas de recebimento: momento registrado no Atlas. Datas históricas informadas posteriormente constam nas observações.';
+  const titulos=['Data/hora do registro','Patrimônio','Descrição do bem','Movimentação','Origem','Destino','Responsável','Status','Pedido / Remessa','Solicitado por','Enviado por (início)','Despachado por','Recebido por','Envio registrado','Recebimento registrado','Observações'];
+  for(const [n,valor] of [[1,'BDR CONSTRUART'],[2,'RELATÓRIO DE MOVIMENTAÇÕES PATRIMONIAIS'],[3,`Emitido por: ${atlasMovEmitente()}  |  Emissão: ${new Date().toLocaleString('pt-BR',{timeZone:'America/Cuiaba'})}`],[4,'Filtros: '+atlasMovFiltroDescricao()]]){aba.mergeCells(n,1,n,16);aba.getCell(n,1).value=valor;}
+  const r=atlasMovResumo(lista);aba.mergeCells(5,1,5,16);aba.getCell(5,1).value=`Movimentações: ${r.total}   |   Funcionários participantes: ${r.participantes}   |   Obras envolvidas: ${r.obras}`;
+  aba.mergeCells(6,1,6,16);aba.getCell(6,1).value='Datas de recebimento: momento registrado no Atlas. Datas históricas informadas posteriormente constam nas observações.';
   const cab=aba.getRow(8);cab.values=titulos;cab.height=30;
   for(const registro of atlasMovLinhas(lista))aba.addRow(registro);
-  aba.columns.forEach((c,i)=>c.width=[22,20,40,20,32,32,28,21,25,25,25,25,22,22,55][i]);
+  aba.columns.forEach((c,i)=>c.width=[22,20,40,20,32,32,28,21,25,25,25,25,25,22,22,55][i]);
   for(const n of [1,2]){const c=aba.getCell(n,1);c.font={bold:true,size:n===1?18:13,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF11396D'}};c.alignment={vertical:'middle'};aba.getRow(n).height=31;}
   for(const n of [3,4,5,6]){aba.getCell(n,1).font={size:10,color:{argb:'FF334155'}};aba.getRow(n).height=22;}
   cab.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0C3678'}};c.font={bold:true,color:{argb:'FFFFFFFF'}};c.alignment={vertical:'middle',wrapText:true};});
   for(let i=9;i<=aba.rowCount;i++){const row=aba.getRow(i);row.height=32;row.eachCell(c=>{c.alignment={vertical:'middle',wrapText:true};c.border={bottom:{style:'hair',color:{argb:'FFDFE8F3'}}};if(i%2===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF3F7FC'}};});}
-  aba.autoFilter={from:{row:8,column:1},to:{row:8,column:15}};
+  aba.autoFilter={from:{row:8,column:1},to:{row:8,column:16}};
   aba.pageSetup={paperSize:8,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
   const buffer=await livro.xlsx.writeBuffer();const url=URL.createObjectURL(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
   const a=document.createElement('a');a.href=url;a.download='BDR_Movimentacoes_Patrimoniais.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -1842,10 +1997,10 @@ function atlasMovInventarioLinha(m,idx){
     atlasMovOrigemRegistrada(m)||'Não identificada',atlasMovObra(p.obra_id),m.localizacao||m.departamento||'',atlasMovData(atlasMovDataEvento(m)),atlasMovCadastroUsuario(m)||'',
     baixado?`${info.nome||'Não identificado'} (${fonte})`:'',baixado&&info.data?`${fonte}: ${atlasMovDataOperacao(info.data)}`:''];
 }
-function atlasMovEventosCabecalhos(){return ['Nº','Data / hora','Patrimônio','Descrição','Evento','Origem','Destino','Executor / fonte','Situação','Pedido / Remessa'];}
+function atlasMovEventosCabecalhos(){return ['Nº','Data / hora','Patrimônio','Descrição','Evento','Origem','Destino','Enviado por','Executor / fonte','Situação','Pedido / Remessa'];}
 function atlasMovEventoLinha(m,idx){
   return [idx+1,atlasMovDataExibicao(m),atlasMovCodigo(m),atlasMovDescricao(m),atlasMovTipoLabel(m),
-    atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),atlasMovResponsavel(m),atlasMovStatusLabel(m.status),m.codigo_remessa||m.pedido_id||''];
+    atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),atlasMovQuemEnviou(m),atlasMovQuemRecebeuOuExecutou(m),atlasMovStatusLabel(m.status),m.codigo_remessa||m.pedido_id||''];
 }
 function atlasMovTabelaDocumento(titulos,linhas,classe){
   return `<table class="${classe}"><thead><tr>${titulos.map(x=>`<th>${atlasMovEsc(x)}</th>`).join('')}</tr></thead><tbody>${linhas.map(l=>`<tr>${l.map(v=>`<td>${atlasMovEsc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
@@ -1854,8 +2009,10 @@ function atlasMovDetalhamentoEvento(m){
   const p=atlasMovPatrimoniosPorId.get(String(m.patrimonio_id))||m;
   const celulas=[['Tipo',atlasMovTipoLabel(m)],['Situação',atlasMovStatusLabel(m.status)],['Patrimônio antigo',p.codigo_antigo],
     ['Origem',atlasMovObra(m.obra_origem_id)],['Destino',atlasMovObra(m.obra_destino_id)],
-    ['Pedido/remessa',m.codigo_remessa||m.pedido_id],['Solicitado por',m.solicitado_por],['Aprovado por',m.aprovado_por],
-    ['Separado por',m.separado_por],['Enviado por',m.enviado_por],['Recebido por',m.recebido_por],
+    ['Pedido/remessa',m.codigo_remessa||m.pedido_id],['Enviado por (iniciou a transferência)',atlasMovQuemEnviou(m)],
+    ['Solicitado por',m.solicitado_por],['Aprovado por',m.aprovado_por],['Separado por',m.separado_por],
+    ['Expedição / despacho por',atlasMovDespachanteIntermediario(m)],
+    ['Recebido por',m.recebido_por||(atlasMovTipoRegistro(m)==='RECEBIMENTO'?m.usuario:null)],
     ['Solicitação',m.data_solicitacao?atlasMovData(m.data_solicitacao):null],
     ['Aprovação',m.data_aprovacao?atlasMovData(m.data_aprovacao):null],['Separação',m.data_separacao?atlasMovData(m.data_separacao):null],
     ['Envio',m.data_envio?atlasMovData(m.data_envio):null],['Recebimento',m.data_recebimento?atlasMovData(m.data_recebimento):null],
@@ -1887,7 +2044,7 @@ function atlasMovDocumentoHtml(detalhado=false){
   const valor=atlasMovTotalValor(cadastros),resumo=atlasMovResumo(lista);
   const inv=cadastros.length?`<section class="doc-section"><h2>Inventário patrimonial — situação atual</h2><p class="doc-info">Uma linha por bem, inclusive sem movimentação. A origem é a primeira origem de transferência registrada com sequência verificável, não necessariamente a obra inicial de cadastro.</p><div class="doc-resumo">Patrimônios: <b>${cadastros.length}</b> · Obras: <b>${atlasMovResumo(cadastros).obras}</b> · Valor dos bens com valor informado: <b>${valor.qtd?atlasMovEsc(atlasMovMoeda(valor.total)):'Não informado'}</b>${valor.sem?` · Sem valor informado: <b>${valor.sem}</b>`:''}</div>${atlasMovTabelaDocumento(atlasMovInventarioCabecalhos(),cadastros.map(atlasMovInventarioLinha),'doc-inventario')}</section>`:'';
   const mov=eventos.length?`<section class="doc-section"><h2>Movimentações e situações selecionadas</h2><p class="doc-info">Uma linha por registro de evento; o mesmo patrimônio pode aparecer mais de uma vez.</p><div class="doc-resumo">Registros: <b>${eventos.length}</b> · Patrimônios únicos: <b>${atlasMovResumo(eventos).patrimonios}</b> · Obras envolvidas: <b>${atlasMovResumo(eventos).obras}</b></div>${atlasMovTabelaDocumento(atlasMovEventosCabecalhos(),eventos.map(atlasMovEventoLinha),'doc-eventos')}${detalhado?`<h2 class="doc-appendix">Detalhamento das operações</h2>${eventos.map(atlasMovDetalhamentoEvento).join('')}`:''}</section>`:'';
-  const css=`@page{size:A4 landscape;margin:9mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font-size:8px;color:#64748b}}*{box-sizing:border-box}body{font:9px Arial,Helvetica,sans-serif;color:#1b2433;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc-top{margin-bottom:12px;position:relative}.doc-brand{font-size:13px;font-weight:900;color:#b31119;letter-spacing:.2px}.doc-emissao{position:absolute;top:0;right:0;font-size:9px;color:#555}.doc-top h1{font-size:17px;margin:5px 0 8px}.doc-rule{height:3px;background:#ae1320;margin-bottom:10px}.doc-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;line-height:1.5}.doc-obras,.doc-filtros{margin-top:7px;padding:6px 9px;background:#f6f7f9;border-left:3px solid #b1111c;line-height:1.5;overflow-wrap:anywhere}.doc-section{margin-top:11px}.doc-section h2{font-size:12px;color:#a60f1a;margin:0 0 5px}.doc-info{font-size:8.5px;color:#596272;margin:0 0 7px}.doc-resumo{margin:0 0 9px;font-size:9px}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #cfd3d8;padding:5px 4px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:normal}th{font-size:8px;background:#eef1f4;color:#202734;font-weight:800}td{font-size:8px}tr{break-inside:avoid}thead{display:table-header-group}tbody tr:nth-child(even){background:#fafafa}.doc-inventario th:nth-child(1){width:3%}.doc-inventario th:nth-child(2){width:8%}.doc-inventario th:nth-child(3){width:5%}.doc-inventario th:nth-child(4){width:10%}.doc-inventario th:nth-child(5){width:5%}.doc-inventario th:nth-child(6){width:6%}.doc-inventario th:nth-child(7){width:7%}.doc-inventario th:nth-child(8){width:6%}.doc-inventario th:nth-child(9){width:6%}.doc-inventario th:nth-child(10){width:6%}.doc-inventario th:nth-child(11){width:7%}.doc-inventario th:nth-child(12){width:6%}.doc-inventario th:nth-child(13){width:6%}.doc-inventario th:nth-child(14){width:6%}.doc-inventario th:nth-child(15){width:8%}.doc-inventario th:nth-child(16){width:5%}.doc-eventos th:nth-child(1){width:3%}.doc-eventos th:nth-child(2){width:10%}.doc-eventos th:nth-child(3){width:11%}.doc-eventos th:nth-child(4){width:20%}.doc-eventos th:nth-child(5){width:9%}.doc-eventos th:nth-child(6){width:12%}.doc-eventos th:nth-child(7){width:12%}.doc-eventos th:nth-child(8){width:11%}.doc-eventos th:nth-child(9){width:7%}.doc-eventos th:nth-child(10){width:5%}.doc-event-card{break-inside:avoid;border:1px solid #d4d4d4;border-left:3px solid #ad1420;padding:8px 10px;margin:8px 0}.doc-event-card h3{font-size:10px;margin:0 0 6px}.doc-event-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px 12px;font-size:8.5px;line-height:1.4}.doc-appendix{break-before:page;margin-top:0!important}.doc-foot{padding-top:10px;margin-top:10px;border-top:1px solid #ddd;font-size:8px;color:#5b6370}.doc-section+.doc-section{break-before:page}`;
+  const css=`@page{size:A4 landscape;margin:9mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font-size:8px;color:#64748b}}*{box-sizing:border-box}body{font:9px Arial,Helvetica,sans-serif;color:#1b2433;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc-top{margin-bottom:12px;position:relative}.doc-brand{font-size:13px;font-weight:900;color:#b31119;letter-spacing:.2px}.doc-emissao{position:absolute;top:0;right:0;font-size:9px;color:#555}.doc-top h1{font-size:17px;margin:5px 0 8px}.doc-rule{height:3px;background:#ae1320;margin-bottom:10px}.doc-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;line-height:1.5}.doc-obras,.doc-filtros{margin-top:7px;padding:6px 9px;background:#f6f7f9;border-left:3px solid #b1111c;line-height:1.5;overflow-wrap:anywhere}.doc-section{margin-top:11px}.doc-section h2{font-size:12px;color:#a60f1a;margin:0 0 5px}.doc-info{font-size:8.5px;color:#596272;margin:0 0 7px}.doc-resumo{margin:0 0 9px;font-size:9px}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #cfd3d8;padding:5px 4px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:normal}th{font-size:8px;background:#eef1f4;color:#202734;font-weight:800}td{font-size:8px}tr{break-inside:avoid}thead{display:table-header-group}tbody tr:nth-child(even){background:#fafafa}.doc-inventario th:nth-child(1){width:3%}.doc-inventario th:nth-child(2){width:8%}.doc-inventario th:nth-child(3){width:5%}.doc-inventario th:nth-child(4){width:10%}.doc-inventario th:nth-child(5){width:5%}.doc-inventario th:nth-child(6){width:6%}.doc-inventario th:nth-child(7){width:7%}.doc-inventario th:nth-child(8){width:6%}.doc-inventario th:nth-child(9){width:6%}.doc-inventario th:nth-child(10){width:6%}.doc-inventario th:nth-child(11){width:7%}.doc-inventario th:nth-child(12){width:6%}.doc-inventario th:nth-child(13){width:6%}.doc-inventario th:nth-child(14){width:6%}.doc-inventario th:nth-child(15){width:8%}.doc-inventario th:nth-child(16){width:5%}.doc-eventos th:nth-child(1){width:3%}.doc-eventos th:nth-child(2){width:9%}.doc-eventos th:nth-child(3){width:10%}.doc-eventos th:nth-child(4){width:15%}.doc-eventos th:nth-child(5){width:9%}.doc-eventos th:nth-child(6){width:10%}.doc-eventos th:nth-child(7){width:10%}.doc-eventos th:nth-child(8){width:12%}.doc-eventos th:nth-child(9){width:11%}.doc-eventos th:nth-child(10){width:7%}.doc-eventos th:nth-child(11){width:4%}.doc-event-card{break-inside:avoid;border:1px solid #d4d4d4;border-left:3px solid #ad1420;padding:8px 10px;margin:8px 0}.doc-event-card h3{font-size:10px;margin:0 0 6px}.doc-event-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px 12px;font-size:8.5px;line-height:1.4}.doc-appendix{break-before:page;margin-top:0!important}.doc-foot{padding-top:10px;margin-top:10px;border-top:1px solid #ddd;font-size:8px;color:#5b6370}.doc-section+.doc-section{break-before:page}`;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>BDR Construart - ${atlasMovEsc(titulo)}</title><style>${css}</style></head><body>${cabe}${inv}${mov}<footer class="doc-foot">BDR CONSTRUART · Atlas Gestão Patrimonial · Informações conforme cadastro e registros disponíveis na data de emissão. Ausência de datas não comprova que o evento ocorreu.</footer></body></html>`;
 }
 function atlasMovImprimirInteligente(detalhado=false){
@@ -1906,7 +2063,7 @@ function atlasMovExcelEventoLinha(m){
   const p=atlasMovPatrimoniosPorId.get(String(m.patrimonio_id))||m;
   return [atlasMovDataExibicao(m),atlasMovCodigo(m),p.codigo_antigo||'',atlasMovDescricao(m),atlasMovTipoLabel(m),
     atlasMovObra(m.obra_origem_id),atlasMovObra(m.obra_destino_id),atlasMovResponsavel(m),atlasMovStatusLabel(m.status),
-    m.codigo_remessa||m.pedido_id||'',m.solicitado_por||'',m.aprovado_por||'',m.separado_por||'',m.enviado_por||'',m.recebido_por||'',
+    m.codigo_remessa||m.pedido_id||'',m.solicitado_por||'',m.aprovado_por||'',m.separado_por||'',atlasMovQuemEnviou(m)==='—'?'':atlasMovQuemEnviou(m),atlasMovDespachanteIntermediario(m)||'',m.recebido_por||'',
     atlasMovData(m.data_solicitacao),atlasMovData(m.data_aprovacao),atlasMovData(m.data_separacao),atlasMovData(m.data_envio),atlasMovData(m.data_recebimento),
     m.motorista_nome||'',m.veiculo_placa||'',m.conferencia_status||'',m.observacao||'',m.observacao_recebimento||''];
 }
@@ -1944,9 +2101,9 @@ async function atlasMovExportarExcelInteligente(){
     aba.getColumn(9).numFmt='"R$" #,##0.00;[Red]("R$" #,##0.00)';
   }
   if(eventos.length){
-    const campos=['Data/hora','Patrimônio','Patrimônio antigo','Descrição','Evento','Origem','Destino','Responsável','Status','Pedido / Remessa','Solicitado por','Aprovado por','Separado por','Enviado por','Recebido por','Solicitação','Aprovação','Separação','Envio','Recebimento','Motorista','Placa','Conferência','Observação','Observação do recebimento'];
+    const campos=['Data/hora','Patrimônio','Patrimônio antigo','Descrição','Evento','Origem','Destino','Responsável','Status','Pedido / Remessa','Solicitado por','Aprovado por','Separado por','Enviado por (início)','Despachado por','Recebido por','Solicitação','Aprovação','Separação','Envio','Recebimento','Motorista','Placa','Conferência','Observação','Observação do recebimento'];
     atlasMovExcelCriarAba(livro,'Movimentações','RELATÓRIO DE MOVIMENTAÇÕES PATRIMONIAIS',campos,eventos.map(atlasMovExcelEventoLinha),
-      [24,22,21,46,22,32,32,28,21,22,28,26,26,26,26,24,24,24,24,24,24,18,24,55,55],eventos);
+      [24,22,21,46,22,32,32,28,21,22,28,26,26,26,26,26,24,24,24,24,24,24,18,24,55,55],eventos);
   }
   const buffer=await livro.xlsx.writeBuffer(),url=URL.createObjectURL(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
   const a=document.createElement('a');a.href=url;a.download=`BDR_Relatorio_${atlasMovModoRelatorio()==='cadastro'?'Patrimonial':atlasMovModoRelatorio()==='eventos'?'Movimentacoes':'Consolidado'}.xlsx`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
@@ -1957,9 +2114,9 @@ async function atlasCarregarMovimentacoes(){
   const usuario=usuarioAtualRelatoriosBDR();
   const todas=temPermissaoRelatoriosBDR('RELATORIOS_TODAS_OBRAS',usuario)||temPermissaoRelatoriosBDR('TODAS_OBRAS_VER',usuario);
   const ids=new Set(obras.map(o=>String(o.id)));
-  // Exibe o cadastro assim que o carregamento inicial terminou. A consulta
-  // demorada do histórico não deve segurar a tela padrão com todos os bens.
-  atlasMovDados=[];atlasMovTrajetos=new Map();atlasMovBaixasAuditadas=new Map();atlasMovErroAuditoriaBaixas=null;
+  // Mostra os cadastros enquanto o histórico carrega. Quando termina,
+  // a seleção neutra de tipos mostra ambas as fontes automaticamente.
+  atlasMovDados=[];atlasMovTrajetos=new Map();atlasMovRemetentesPorEvento=new Map();atlasMovBaixasAuditadas=new Map();atlasMovErroAuditoriaBaixas=null;
   atlasMovCadastroDados=patrimonios.map(p=>({
     ...p,id:-(2000000000+Number(p.id)),patrimonio_id:p.id,
     origem_registro:'CADASTRO_PATRIMONIAL',
@@ -2035,14 +2192,13 @@ async function atlasCarregarMovimentacoes(){
     atlasMovDados=[...registros,...remessas,...baixados].filter(m=>{
       const o=String(m.obra_origem_id),d=String(m.obra_destino_id);
       if(!(ids.has(o)||ids.has(d)))return false;
-      // Obras de laboratório são exclusivas do proprietário do sistema.
-      if(!(Number(usuario?.id)===1 && usuario?.owner_sistema===true) && ([o,d].includes('22')||[o,d].includes('33')))return false;
       return true;
     });
     atlasMovDados.sort((a,b)=>new Date(b.data_envio||0)-new Date(a.data_envio||0));
+    atlasMovReconstruirRemetentes();
     atlasMovReconstruirTrajetos();
     atlasMovErro=falhaRemessas;
-    if(aviso)aviso.textContent=`${atlasMovCadastroDados.length} patrimônios cadastrados e ${atlasMovDados.filter(m=>m.origem_registro!=='PATRIMONIO_BAIXADO').length} eventos disponíveis para consulta. Selecione o tipo de registro para visualizar o histórico.`+(falhaRemessas?' ATENÇÃO: remessas diretas não puderam ser consultadas: '+(falhaRemessas.message||falhaRemessas):'')+(atlasMovErroAuditoriaBaixas?' ATENÇÃO: consulta de auditoria de baixas indisponível. Verifique as permissões de leitura.':'');
+    if(aviso)aviso.textContent=`${atlasMovCadastroDados.length} patrimônios cadastrados e ${atlasMovDados.filter(m=>m.origem_registro!=='PATRIMONIO_BAIXADO').length} eventos disponíveis para consulta. A consulta inicial inclui cadastros e movimentações; use os filtros para restringir.`+(falhaRemessas?' ATENÇÃO: remessas diretas não puderam ser consultadas: '+(falhaRemessas.message||falhaRemessas):'')+(atlasMovErroAuditoriaBaixas?' ATENÇÃO: consulta de auditoria de baixas indisponível. Verifique as permissões de leitura.':'');
   }catch(e){atlasMovDados=[];atlasMovErro=e;if(aviso)aviso.textContent='Cadastro disponível; não foi possível carregar o histórico: '+(e.message||e);console.error(e);}
   await atlasMovCarregarFotos();
   atlasMovPovoarFiltros();atlasMovPagina=1;atlasRenderMov();

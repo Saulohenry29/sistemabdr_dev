@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Atlas • Assinatura de retirada</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#173759;background:#f0f5fb}*{box-sizing:border-box}body{margin:0;padding:20px}main{max-width:780px;margin:0 auto;background:#fff;border-radius:18px;box-shadow:0 20px 60px #12396315;overflow:hidden}.top{background:#0d3768;color:#fff;padding:24px}.brand{font-size:28px;font-weight:900}.brand small{display:block;font-size:13px;font-weight:400;color:#c9daf4;margin-top:5px}.content{padding:22px}h1{margin:0 0 8px;font-size:23px}p{line-height:1.5}.subtitle{color:#546d87}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.box{border:1px solid #d2dfed;border-radius:10px;padding:13px;background:#f9fbfe}.box small{display:block;color:#55718c;font-weight:700;margin-bottom:5px}.box b{overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#e6f2ff;text-align:left}td,th{padding:10px 8px;border-bottom:1px solid #dce6f0;text-align:left}h2{font-size:17px;margin:26px 0 12px}.sign{touch-action:none;width:100%;height:205px;border:2px dashed #a7c4e5;border-radius:12px;background:white}label{display:block;margin-bottom:7px;font-weight:700}input[type=text]{width:100%;padding:13px;border-radius:8px;border:1px solid #b8cbe0;font-size:15px}.buttons{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}button{border:1px solid #b8cce4;background:#eef5ff;color:#173b65;border-radius:9px;padding:12px 17px;font-weight:800;cursor:pointer}button.primary{background:#0e528e;color:white;border-color:#0e528e}button:disabled{opacity:.55;cursor:not-allowed}.notice{margin:16px 0;border-radius:9px;background:#f0f6fc;color:#405f7c;padding:12px;font-size:13px}.error{background:#fff0ed;color:#9b2b1d}.success{background:#e1f7ea;color:#146039}.consent{display:flex;align-items:flex-start;gap:9px;font-size:13px;font-weight:400}.consent input{margin-top:4px}footer{text-align:center;color:#6e849b;font-size:12px;margin:20px 0}@media(max-width:580px){body{padding:0}main{border-radius:0}.content{padding:17px}.row{grid-template-columns:1fr}.buttons button{flex:1}}
+</style>
+<script>
+// O token é retirado da barra antes de carregar dependências; não é armazenado no navegador.
+window.__atlasTokenAssinatura = new URL(location.href).searchParams.get('token') || '';
+try { history.replaceState(null,'',location.pathname); } catch (_) {}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer referrerpolicy="no-referrer"></script>
+<script src="./JS/supabaseClient.js" defer></script>
+</head>
+<body>
+<main>
+<header class="top"><div class="brand">BDR | Atlas<small>Gestão Patrimonial</small></div></header>
+<div class="content"><h1>Assinatura de retirada</h1><p class="subtitle">Confira os patrimônios antes de confirmar que os recebeu para transporte.</p>
+<div id="mensagem" class="notice">Carregando dados do romaneio...</div>
+<div id="conteudo" hidden>
+<div class="row"><div class="box"><small>Remessa</small><b id="numero">—</b></div><div class="box"><small>Validade do link</small><b id="expira">—</b></div><div class="box"><small>Origem</small><b id="origem">—</b></div><div class="box"><small>Destino</small><b id="destino">—</b></div></div>
+<h2>Patrimônios a retirar</h2><table><thead><tr><th>Código</th><th>Descrição</th><th>Qtd.</th></tr></thead><tbody id="itens"></tbody></table>
+<h2>Confirmação do motorista</h2><label for="nome">Nome completo do motorista</label><input id="nome" type="text" autocomplete="name" minlength="4" maxlength="120" placeholder="Informe seu nome completo" required>
+<p class="subtitle">Desenhe sua assinatura com o dedo, caneta ou mouse.</p>
+<canvas class="sign" id="assinatura" width="780" height="230" aria-label="Desenhar assinatura"></canvas>
+<label class="consent"><input id="concordo" type="checkbox"> <span>Conferi a relação de bens acima e confirmo que estou retirando esses itens para transporte.</span></label>
+<div class="buttons"><button id="limpar" type="button">Limpar assinatura</button><button id="confirmar" type="button" class="primary">Confirmar retirada e assinar</button></div>
+</div></div>
+</main><footer>Atlas · Documento operacional de transferência patrimonial.</footer>
+<script>
+(function(){
+'use strict';
+const el=id=>document.getElementById(id), token=window.__atlasTokenAssinatura;
+let canSign=false,drawn=false,down=false;
+function msg(text,status=''){const m=el('mensagem');m.textContent=text;m.className='notice '+status;}
+function val(id,value){el(id).textContent=String(value??'—');}
+function td(text){const x=document.createElement('td');x.textContent=String(text??'—');return x;}
+function canvasInit(){
+ const c=el('assinatura'),ctx=c.getContext('2d');
+ function limpar(){ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#0c2856';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';drawn=false;}
+ function pos(e){const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
+ c.addEventListener('pointerdown',e=>{c.setPointerCapture(e.pointerId);down=true;drawn=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.2,p.y+.2);ctx.stroke();});
+ c.addEventListener('pointermove',e=>{if(!down)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+ ['pointerup','pointercancel'].forEach(t=>c.addEventListener(t,()=>{down=false;}));
+ el('limpar').onclick=limpar;limpar();
+ return ()=>c.toDataURL('image/png');
+}
+const obterImagem=canvasInit();
+async function iniciar(){
+ if(!/^[a-f0-9]{64}$/.test(token)){msg('Este link de assinatura é inválido ou está incompleto. Solicite um novo link ao responsável pela expedição.','error');return;}
+ const cliente=()=>window.client||window.supabaseClient;
+ for(let i=0;i<60&&!cliente();i++)await new Promise(r=>setTimeout(r,100));
+ if(!cliente()){msg('Não foi possível conectar ao Atlas. Verifique a conexão e tente novamente.','error');return;}
+ try{
+  const {data,error}=await cliente().rpc('atlas_romaneio_link_consultar',{p_token:token});
+  if(error)throw error;
+  if(!data){msg('O link expirou, já foi utilizado ou a relação de bens foi alterada. Solicite novo link.','error');return;}
+  val('numero',data.numero);val('origem',data.origem);val('destino',data.destino);
+  val('expira',new Date(data.expira_em).toLocaleString('pt-BR'));
+  const tbody=el('itens');tbody.replaceChildren();
+  for(const item of data.itens||[]){const tr=document.createElement('tr');tr.append(td(item.codigo),td(item.descricao),td(item.qtd));tbody.appendChild(tr);}
+  if(!(data.itens||[]).length){msg('Não foi possível identificar os bens desta remessa. A assinatura foi bloqueada.','error');return;}
+  el('conteudo').hidden=false;msg('Confira os bens antes de assinar.');canSign=true;
+ }catch(e){msg('Não foi possível carregar este documento com segurança: '+(e.message||e),'error');}
+}
+el('confirmar').addEventListener('click',async()=>{
+ if(!canSign)return;
+ const nome=el('nome').value.trim();
+ if(nome.length<4){msg('Informe o nome completo do motorista.','error');return;}
+ if(!drawn){msg('Desenhe sua assinatura antes de confirmar.','error');return;}
+ if(!el('concordo').checked){msg('Marque a confirmação de conferência dos bens.','error');return;}
+ el('confirmar').disabled=true;
+ try{
+  const {error}=await (window.client||window.supabaseClient).rpc('atlas_romaneio_assinar_motorista',{p_token:token,p_nome:nome,p_png:obterImagem()});
+  if(error)throw error;
+  canSign=false;el('conteudo').hidden=true;
+  msg('Retirada confirmada e assinatura registrada! O responsável pela expedição já pode atualizar o romaneio para imprimir sua assinatura.','success');
+ }catch(e){msg('Não foi possível salvar a assinatura: '+(e.message||e),'error');el('confirmar').disabled=false;}
+});
+window.addEventListener('load',iniciar);
+})();
+</script>
+</body></html>

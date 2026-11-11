@@ -164,6 +164,18 @@
         .eq("ativo", true);
       if(error) throw error;
 
+      // A manutenção é vinculada à obra do bem; não notificar somente por empresa.
+      let obraId=Number(manutencao?.obra_id||0);
+      if(!obraId && manutencao?.patrimonio_id){
+        const {data:pat,error:erroPat}=await banco.from('patrimonio')
+          .select('obra_id').eq('id',manutencao.patrimonio_id).maybeSingle();
+        if(erroPat)throw erroPat;
+        obraId=Number(pat?.obra_id||0);
+      }
+      if(!obraId){
+        console.warn('Atlas Manutenção: obra não identificada, alerta não enviado.');
+        return;
+      }
       const lista = (usuarios || []).filter(u => {
         if(manutencao?.empresa_id && String(u.empresa_id) !== String(manutencao.empresa_id)) return false;
         if(atual?.id && String(u.id) === String(atual.id)) return false;
@@ -190,7 +202,9 @@
             titulo,
             mensagem,
             link:`atlas.html?m=manutencao&id=${manutencao.id}`,
-            patrimonio_id:manutencao.patrimonio_id || null
+            patrimonio_id:manutencao.patrimonio_id || null,
+            obra_origem_id:obraId,
+            obra_destino_id:obraId
           });
         }
       }

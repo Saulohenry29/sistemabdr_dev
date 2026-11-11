@@ -2030,3 +2030,168 @@ body.atlas-rel-mov-ativo{
 #atlasMovimentacoesCard .atlas-mov-auditoria-baixa,
 #atlasMovimentacoesCard .atlas-mov-auditoria-data{display:block;font-size:9px!important;line-height:1.25;color:#65758a;font-weight:600;white-space:normal;overflow-wrap:anywhere}
 #atlasMovimentacoesCard .atlas-mov-auditoria-data{margin-top:4px}
+
+/* Histórico com remetente e executor separados; nomes longos em ... sem perder o tooltip. */
+#atlasMovimentacoesCard .atlas-mov-tabela{min-width:1210px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela td{padding-left:5px!important;padding-right:5px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th{padding-left:5px!important;padding-right:5px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(2),
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(3){padding-left:5px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(1){width:8%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(2){width:10%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(3){width:18%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(4){width:9%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(5){width:9%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(6){width:9%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(7){width:13%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(8){width:14%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(9){width:7%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(10){width:3%}
+#atlasMovimentacoesCard .atlas-mov-ator{display:flex;align-items:center;gap:5px;max-width:100%;min-width:0;overflow:hidden;white-space:nowrap;font-size:9.5px;font-weight:750}
+#atlasMovimentacoesCard .atlas-mov-ator i{flex:none;color:#a51a25;font-size:11px;margin:0!important}
+#atlasMovimentacoesCard .atlas-mov-ator-nome{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#atlasMovimentacoesCard .atlas-mov-remetente,#atlasMovimentacoesCard .atlas-mov-pessoa{overflow:hidden!important;white-space:normal!important;max-width:0}
+#atlasMovimentacoesCard .atlas-mov-auditoria-baixa{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(10),
+#atlasMovimentacoesCard .atlas-mov-tabela td:nth-child(10){text-align:center!important}
+@media(max-width:850px){#atlasMovimentacoesCard .atlas-mov-tabela{min-width:1210px!important}}
+
+
+/* ===============================================================
+   Atlas Relatórios | atividades por pessoa, detalhe do evento,
+   aproveitamento equilibrado das colunas (10/11/2026).
+   Somente CSS do módulo; não interfere no shell/topbar.
+   =============================================================== */
+#atlasMovimentacoesCard .atlas-mov-profile[hidden]{display:none!important}
+#atlasMovimentacoesCard .atlas-mov-profile{
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;
+  margin:14px 0!important;padding:16px 20px!important;
+  border-radius:13px;border:1px solid #e4d3d5;
+  border-left:4px solid #b51b2a;background:linear-gradient(115deg,#fff 40%,#faf5f5 100%);
+  box-shadow:0 3px 12px #16243b0d;
+}
+#atlasMovimentacoesCard .atlas-mov-profile-heading{display:flex;align-items:center;gap:11px;flex:1 1 245px;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-profile-avatar{display:grid;place-items:center;width:41px;height:41px;flex:none;border-radius:11px;background:#f9eaec;color:#af1927;font-size:16px}
+#atlasMovimentacoesCard .atlas-mov-profile-identidade{min-width:0;display:grid;gap:4px}
+#atlasMovimentacoesCard .atlas-mov-profile-identidade small{font-size:10px;font-weight:800;color:#a41d29;text-transform:uppercase;letter-spacing:.04em}
+#atlasMovimentacoesCard .atlas-mov-profile-identidade strong{font-size:13px;font-weight:850;color:#1d2d46;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+#atlasMovimentacoesCard .atlas-mov-profile-identidade span{font-size:10.5px;color:#68778b}
+#atlasMovimentacoesCard .atlas-mov-profile-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:2 1 570px;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-profile-stat{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:7px;align-items:center;row-gap:2px;padding:9px 10px;border-radius:9px;background:#fff;border:1px solid #e5e9ef;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-profile-stat i{grid-row:span 2;color:#b51b2a;font-size:13px}
+#atlasMovimentacoesCard .atlas-mov-profile-stat strong{font-size:17px;font-weight:850;color:#142a47;line-height:1.1}
+#atlasMovimentacoesCard .atlas-mov-profile-stat span{font-size:9.5px;color:#53667e;line-height:1.25}
+#atlasMovimentacoesCard .atlas-mov-profile>p{flex:1 1 100%;margin:0!important;color:#607086;font-size:10px;line-height:1.4}
+#atlasMovimentacoesCard .atlas-mov-selection-atividades{color:#1b3156;font-weight:800}
+
+/* O cabeçalho e o corpo usam o MESMO colgroup (também no HTML).
+   Reduz descrição e ganha largura para os dois trechos do trajeto. */
+#atlasMovimentacoesCard .atlas-mov-tabela{min-width:1360px!important;table-layout:fixed}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(1){width:8%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(2){width:10%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(3){width:14%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(4){width:9%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(5){width:15%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(6){width:15%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(7){width:10%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(8){width:10%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(9){width:6%}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(10){width:3%}
+#atlasMovimentacoesCard .atlas-mov-tabela td{padding:8px 8px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela th{padding:10px 8px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(2),
+#atlasMovimentacoesCard .atlas-mov-tabela-head th:nth-child(3){padding-left:11px!important}
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-obra{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0}
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-item{max-width:100%;overflow:hidden;min-width:0}
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-ator{font-size:10px;font-weight:750}
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-remetente,
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-pessoa{overflow:hidden!important;max-width:0}
+@media(max-width:850px){#atlasMovimentacoesCard .atlas-mov-tabela{min-width:1360px!important}}
+@media(max-width:1120px){#atlasMovimentacoesCard .atlas-mov-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){#atlasMovimentacoesCard .atlas-mov-profile{padding:12px!important}#atlasMovimentacoesCard .atlas-mov-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Ficha do patrimônio e responsáveis de ponta a ponta. */
+#atlasMovDialog{width:min(930px,96vw);max-height:90vh;}
+#atlasMovDialog .atlas-mov-dialog-head{position:sticky;top:0;z-index:3;padding:16px 22px!important;box-shadow:0 3px 10px #182f4710}
+#atlasMovDialog .atlas-mov-dialog-head span{font-size:10px!important}
+#atlasMovDialog .atlas-mov-dialog-head strong{font-size:17px!important}
+#atlasMovDetalhes{display:block!important;padding:18px 22px 22px!important}
+#atlasMovDetalhes .atlas-mov-detail-hero{padding:16px 18px;background:linear-gradient(120deg,#fff,#f8f9fb);border:1px solid #e3e7ef;border-radius:12px;margin-bottom:13px}
+#atlasMovDetalhes .atlas-mov-detail-hero-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#atlasMovDetalhes .atlas-mov-detail-kicker{font-size:10px;font-weight:850;color:#a91524;letter-spacing:.02em}
+#atlasMovDetalhes .atlas-mov-detail-kicker i{margin-right:6px}
+#atlasMovDetalhes .atlas-mov-detail-status{font-size:10px;color:#14663a;background:#e6f7eb;padding:6px 10px;border-radius:100px;font-weight:800}
+#atlasMovDetalhes .atlas-mov-detail-hero h3{font-size:17px;line-height:1.3;color:#182b45;margin:8px 0 5px!important;font-weight:850}
+#atlasMovDetalhes .atlas-mov-detail-hero p{font-size:11px;color:#60758f;margin:0!important;line-height:1.45}
+#atlasMovDetalhes .atlas-mov-detail-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 13px}
+#atlasMovDetalhes .atlas-mov-participante{border:1px solid #dce5ed;background:#fff;border-radius:11px;padding:14px 15px;min-width:0;border-top:3px solid #b11828}
+#atlasMovDetalhes .atlas-mov-participante-fim{border-top-color:#118353}
+#atlasMovDetalhes .atlas-mov-participante-papel{font-size:10px;font-weight:800;color:#758398;margin-bottom:8px}
+#atlasMovDetalhes .atlas-mov-participante-papel i{margin-right:6px;color:#b11828;font-size:12px}
+#atlasMovDetalhes .atlas-mov-participante-fim .atlas-mov-participante-papel i{color:#188350}
+#atlasMovDetalhes .atlas-mov-participante strong{display:block;font-size:14px!important;font-weight:850;line-height:1.35;color:#162947;overflow-wrap:anywhere}
+#atlasMovDetalhes .atlas-mov-participante>small{font-size:10px;color:#77899c;display:block;margin-top:5px}
+#atlasMovDetalhes .atlas-mov-detail-route{display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);gap:9px;align-items:center;background:#f5f8fc;border:1px solid #dbe6f2;border-radius:11px;padding:13px 16px;margin-bottom:17px}
+#atlasMovDetalhes .atlas-mov-detail-route>i{display:grid;place-items:center;font-size:17px;color:#9c2530}
+#atlasMovDetalhes .atlas-mov-detail-route>span{display:grid;gap:5px;min-width:0}
+#atlasMovDetalhes .atlas-mov-detail-route small{font-size:9px;font-weight:850;letter-spacing:.07em;color:#6883a1}
+#atlasMovDetalhes .atlas-mov-detail-route strong{font-size:12px;color:#183350;line-height:1.45;overflow-wrap:anywhere}
+#atlasMovDetalhes .atlas-mov-detail-timeline{border:1px solid #e2e8f0;border-radius:11px;padding:15px 16px 14px;margin-bottom:19px}
+#atlasMovDetalhes .atlas-mov-detail-timeline>h4{margin:0 0 15px!important;padding:0!important;border:0!important;color:#a91622;font-size:12px;font-weight:850}
+#atlasMovDetalhes .atlas-mov-detail-timeline>h4 i{margin-right:7px}
+#atlasMovDetalhes .atlas-mov-timeline-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#atlasMovDetalhes .atlas-mov-timeline-step{display:flex;align-items:flex-start;gap:9px;min-width:0;position:relative}
+#atlasMovDetalhes .atlas-mov-timeline-step:not(:last-child)::after{content:"";position:absolute;top:13px;left:29px;width:calc(100% - 25px);height:1px;background:#dfe6ef;z-index:0}
+#atlasMovDetalhes .atlas-mov-timeline-num{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:11px;font-weight:850;background:#fce9eb;color:#ad1827;border:1px solid #ebcdd3;position:relative;z-index:1}
+#atlasMovDetalhes .atlas-mov-timeline-step:last-child .atlas-mov-timeline-num{background:#eaf9f1;color:#177e4e;border-color:#c4e7d2}
+#atlasMovDetalhes .atlas-mov-timeline-step>div{min-width:0}
+#atlasMovDetalhes .atlas-mov-timeline-step strong{display:block;color:#1c3450;font-size:11px;font-weight:800;line-height:1.3}
+#atlasMovDetalhes .atlas-mov-timeline-step time{display:block;margin-top:5px;color:#61758e;font-size:10px}
+#atlasMovDetalhes .atlas-mov-timeline-step small{display:block;margin-top:4px;color:#37485f;font-size:10px;overflow-wrap:anywhere}
+#atlasMovDetalhes .atlas-mov-detail-group{margin:0 0 18px!important}
+#atlasMovDetalhes .atlas-mov-detail-group>h4{display:flex;align-items:center;gap:8px;margin:0 0 9px!important;padding:0 0 9px!important;font-size:12px!important;border-bottom:1px solid #ebedf1!important}
+#atlasMovDetalhes .atlas-mov-detail-group>h4 i{color:#a31b29;font-size:12px}
+#atlasMovDetalhes .atlas-mov-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#atlasMovDetalhes .atlas-mov-detail{background:#fafbfd!important;border:1px solid #e6e9ef!important;border-radius:9px;padding:11px 12px!important}
+#atlasMovDetalhes .atlas-mov-detail small{font-size:10px!important;margin-bottom:5px!important}
+#atlasMovDetalhes .atlas-mov-detail strong{font-size:11.5px!important;line-height:1.45!important}
+#atlasMovDetalhes .atlas-mov-detail-passagens .atlas-mov-detail-grid{grid-template-columns:1fr}
+#atlasMovDetalhes .atlas-mov-detail-passagens .atlas-mov-detail{background:#f5f8fc!important;border-left:3px solid #9baec6!important}
+#atlasMovDialog .atlas-mov-dialog-bottom{position:sticky;bottom:0;background:#fff;padding:10px 22px 16px!important;border-top:1px solid #eff1f4;z-index:2}
+@media(max-width:740px){
+  #atlasMovDialog{width:96vw;max-height:94vh}
+  #atlasMovDetalhes{padding:14px!important}
+  #atlasMovDetalhes .atlas-mov-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #atlasMovDetalhes .atlas-mov-timeline-steps{grid-template-columns:1fr;gap:13px}
+  #atlasMovDetalhes .atlas-mov-timeline-step:not(:last-child)::after{display:none}
+}
+@media(max-width:480px){
+  #atlasMovDetalhes .atlas-mov-detail-people{grid-template-columns:1fr}
+  #atlasMovDetalhes .atlas-mov-detail-grid{grid-template-columns:1fr}
+  #atlasMovDetalhes .atlas-mov-detail-route{grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);padding:10px}
+  #atlasMovDialog .atlas-mov-dialog-head{padding:12px 14px!important}
+}
+
+/* 10/11/2026 — Nomes em duas palavras e trajeto mais legível.
+   O texto integral fica no title/aria-label gerado pelo JS. */
+#atlasMovimentacoesCard .atlas-mov-tabela .atlas-mov-ator-nome{
+  flex:0 1 auto;max-width:100%;text-overflow:ellipsis;
+}
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(5),
+#atlasMovimentacoesCard .atlas-mov-tabela td:nth-child(5),
+#atlasMovimentacoesCard .atlas-mov-tabela th:nth-child(6),
+#atlasMovimentacoesCard .atlas-mov-tabela td:nth-child(6){padding-left:10px!important;padding-right:10px!important}
+
+/* 11/11/2026 — Tabela corrida, sem divisorias verticais internas.
+   As declaracoes com nth-child que desenhavam as barras foram removidas
+   na origem; permanecem o espacamento atual e separadores horizontais.
+   Apenas a primeira celula de cada linha conserva a faixa vermelha. */
+#atlasMovimentacoesCard .atlas-mov-tabela thead th,
+#atlasMovimentacoesCard .atlas-mov-tabela tbody td:not(:first-child) {
+  border-left:0!important;
+  border-right:0!important;
+}
+#atlasMovimentacoesCard .atlas-mov-tabela tbody tr td:first-child {
+  border-left:3px solid #b51621!important;
+  border-right:0!important;
+}

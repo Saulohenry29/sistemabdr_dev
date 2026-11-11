@@ -290,12 +290,55 @@
     if(document.getElementById("bdrRomaneioCss")) return;
     const s=document.createElement("style"); s.id="bdrRomaneioCss"; s.textContent=`
       .bdr-rom, .bdr-rom *{user-select:text;-webkit-user-select:text}.bdr-rom button,.bdr-rom input,.bdr-rom label{user-select:none;-webkit-user-select:none}
-      .bdr-rom-bg{position:fixed;inset:0;background:#eef3f8;z-index:2147483000;overflow:auto;padding:18px}.bdr-rom{max-width:1320px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 18px 50px #0f172a22;overflow:hidden;color:#102a4c}.bdr-rom-top{padding:24px 28px 16px;display:flex;gap:20px;align-items:center;justify-content:space-between;border-bottom:1px solid #dbe5ef}.bdr-rom-brand{font-size:34px;font-weight:1000;letter-spacing:.5px}.bdr-rom-title{text-align:center;flex:1}.bdr-rom-title h2{margin:0;font-size:25px}.bdr-rom-title small{color:#64748b;font-weight:800}.bdr-rom-status{background:#dcfce7;color:#15803d;padding:10px 14px;border-radius:10px;font-weight:900}.bdr-rom-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 24px}.bdr-rom-kpi,.bdr-rom-card{border:1px solid #dce6f0;border-radius:12px;padding:14px;background:#fbfdff}.bdr-rom-kpi b{display:block;font-size:18px;margin-top:5px}.bdr-rom-partes{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 16px}.bdr-rom-card h3{margin:0 0 10px}.bdr-rom-card p{margin:5px 0}.bdr-rom-table-wrap{padding:0 24px;overflow:auto}.bdr-rom-table{width:100%;border-collapse:collapse;min-width:1080px}.bdr-rom-table th{background:#123d70;color:#fff;padding:11px 8px;font-size:12px}.bdr-rom-table td{border:1px solid #dce6f0;padding:9px 8px;font-size:13px}.bdr-rom-table td.num{text-align:right}.bdr-rom-total{margin:14px 24px 0 auto;width:max-content;background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:13px 18px;font-weight:1000;font-size:21px}.bdr-rom-alert{margin:14px 24px;background:#fff8e7;border:1px solid #fde3a7;padding:12px 14px;border-radius:10px;color:#8a5a00}.bdr-rom-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #dbe5ef;padding:14px 24px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.bdr-rom-btn{border:0;border-radius:9px;padding:11px 16px;font-weight:900;cursor:pointer}.bdr-rom-btn.primary{background:#0b74de;color:#fff}.bdr-rom-btn.ok{background:#16a34a;color:#fff}.bdr-rom-btn.gray{background:#e8eef5;color:#17365d}.bdr-export{position:relative}.bdr-export-menu{display:none;position:absolute;bottom:48px;right:0;z-index:2147483647;background:#fff;border:1px solid #d7e1ec;border-radius:10px;box-shadow:0 12px 30px #0f172a25;overflow:hidden;min-width:190px}.bdr-export-menu.ativo{display:block}.bdr-export-menu button{display:block;width:100%;border:0;background:#fff!important;color:#17365d!important;padding:12px 14px;text-align:left;font-weight:800;cursor:pointer;opacity:1!important}.bdr-export-menu button:hover{background:#eef6ff!important;color:#0b4f93!important}.bdr-rom-valor{margin:14px 24px 0;padding:14px 16px;border:1px solid #dce6f0;border-radius:12px;background:#fbfdff;display:flex;align-items:center;gap:18px;flex-wrap:wrap}.bdr-rom-valor strong{margin-right:4px}.bdr-rom-opcao{display:flex;align-items:center;gap:7px;font-weight:800;cursor:pointer}.bdr-rom-opcao input{accent-color:#0b74de;width:17px;height:17px}@media(max-width:800px){.bdr-rom-bg{padding:0}.bdr-rom{border-radius:0;min-height:100vh}.bdr-rom-top{padding:16px;align-items:flex-start;flex-wrap:wrap}.bdr-rom-brand{font-size:27px}.bdr-rom-title{order:3;flex-basis:100%;text-align:left}.bdr-rom-grid{grid-template-columns:1fr 1fr;padding:12px}.bdr-rom-partes{grid-template-columns:1fr;padding:0 12px 12px}.bdr-rom-table-wrap{padding:0 12px}.bdr-rom-actions{padding:10px 12px;justify-content:stretch}.bdr-rom-btn{flex:1}.bdr-rom-total{margin-right:12px}.bdr-rom-alert{margin:12px}}@media print{body>*:not(.bdr-rom-bg){display:none!important}.bdr-rom-bg{position:static;padding:0;background:#fff}.bdr-rom{box-shadow:none}.bdr-rom-actions{display:none}.bdr-rom{max-width:none}.bdr-rom-table{min-width:0}.bdr-rom-alert{display:none}}
+      .bdr-rom-bg{position:fixed;inset:0;background:#eef3f8;z-index:2147483000;overflow:auto;padding:18px}.bdr-rom{max-width:860px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 18px 50px #0f172a22;overflow:hidden;color:#102a4c}.bdr-rom-top{padding:24px 28px 16px;display:flex;gap:20px;align-items:center;justify-content:space-between;border-bottom:1px solid #dbe5ef}.bdr-rom-brand{font-size:34px;font-weight:1000;letter-spacing:.5px}.bdr-rom-title{text-align:center;flex:1}.bdr-rom-title h2{margin:0;font-size:25px}.bdr-rom-title small{color:#64748b;font-weight:800}.bdr-rom-status{background:#dcfce7;color:#15803d;padding:10px 14px;border-radius:10px;font-weight:900}.bdr-rom-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 20px}.bdr-rom-kpi,.bdr-rom-card{border:1px solid #dce6f0;border-radius:12px;padding:14px;background:#fbfdff}.bdr-rom-kpi b{display:block;font-size:18px;margin-top:5px}.bdr-rom-partes{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 14px}.bdr-rom-card h3{margin:0 0 10px}.bdr-rom-card p{margin:5px 0}.bdr-rom-table-wrap{padding:0 20px;overflow:auto}.bdr-rom-table{width:100%;border-collapse:collapse;min-width:0}.bdr-rom-table th{background:#123d70;color:#fff;padding:9px 6px;font-size:10px}.bdr-rom-table td{border:1px solid #dce6f0;padding:7px 5px;font-size:10px}.bdr-rom-table td.num{text-align:right}.bdr-rom-table td small{display:block;font-size:9px;font-weight:600;line-height:1.35;color:#64748b;margin-top:3px;overflow-wrap:anywhere}.bdr-rom-table td{overflow-wrap:anywhere}.bdr-rom-table td:nth-child(3){width:31%}.bdr-rom-table td:nth-child(2){width:19%}.bdr-rom-total{margin:14px 24px 0 auto;width:max-content;background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:13px 18px;font-weight:1000;font-size:21px}.bdr-rom-alert{margin:14px 24px;background:#fff8e7;border:1px solid #fde3a7;padding:12px 14px;border-radius:10px;color:#8a5a00}.bdr-rom-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #dbe5ef;padding:14px 24px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.bdr-rom-btn{border:0;border-radius:9px;padding:11px 16px;font-weight:900;cursor:pointer}.bdr-rom-btn.primary{background:#0b74de;color:#fff}.bdr-rom-btn.ok{background:#16a34a;color:#fff}.bdr-rom-btn.gray{background:#e8eef5;color:#17365d}.bdr-export{position:relative}.bdr-export-menu{display:none;position:absolute;bottom:48px;right:0;z-index:2147483647;background:#fff;border:1px solid #d7e1ec;border-radius:10px;box-shadow:0 12px 30px #0f172a25;overflow:hidden;min-width:190px}.bdr-export-menu.ativo{display:block}.bdr-export-menu button{display:block;width:100%;border:0;background:#fff!important;color:#17365d!important;padding:12px 14px;text-align:left;font-weight:800;cursor:pointer;opacity:1!important}.bdr-export-menu button:hover{background:#eef6ff!important;color:#0b4f93!important}.bdr-rom-valor{margin:14px 24px 0;padding:14px 16px;border:1px solid #dce6f0;border-radius:12px;background:#fbfdff;display:flex;align-items:center;gap:18px;flex-wrap:wrap}.bdr-rom-valor strong{margin-right:4px}.bdr-rom-opcao{display:flex;align-items:center;gap:7px;font-weight:800;cursor:pointer}.bdr-rom-opcao input{accent-color:#0b74de;width:17px;height:17px}@media(max-width:800px){.bdr-rom-bg{padding:0}.bdr-rom{border-radius:0;min-height:100vh}.bdr-rom-top{padding:16px;align-items:flex-start;flex-wrap:wrap}.bdr-rom-brand{font-size:27px}.bdr-rom-title{order:3;flex-basis:100%;text-align:left}.bdr-rom-grid{grid-template-columns:1fr 1fr;padding:12px}.bdr-rom-partes{grid-template-columns:1fr;padding:0 12px 12px}.bdr-rom-table-wrap{padding:0 12px}.bdr-rom-actions{padding:10px 12px;justify-content:stretch}.bdr-rom-btn{flex:1}.bdr-rom-total{margin-right:12px}.bdr-rom-alert{margin:12px}}@media print{body>*:not(.bdr-rom-bg){display:none!important}.bdr-rom-bg{position:static;padding:0;background:#fff}.bdr-rom{box-shadow:none}.bdr-rom-actions{display:none}.bdr-rom{max-width:none}.bdr-rom-table{min-width:0}.bdr-rom-alert{display:none}}
+
+      /* Documento patrimonial A4 + painel de assinaturas, integrado à Expedição. */
+      .atlas-doc-backdrop{background:#f2f6fb;z-index:2147483000;padding:0!important;color:#102b50}
+      .atlas-doc-shell{font-family:Arial,Helvetica,sans-serif;max-width:1480px;min-height:100vh;margin:auto;background:#f8fbff;box-shadow:0 15px 70px #102b5016}
+      .atlas-doc-toolbar{padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border-bottom:1px solid #d9e4f0}
+      .atlas-doc-toolbar h1{font-size:23px;line-height:1.1;margin:0 0 5px;color:#102b50}.atlas-doc-toolbar small{display:block;font-size:13px;color:#60758f}
+      .atlas-doc-toolbar-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.atlas-doc-button{border:1px solid #cfdeef;background:#fff;color:#123d70;padding:10px 15px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer}.atlas-doc-button:hover{background:#ebf4ff}.atlas-doc-button:disabled{opacity:.45;cursor:not-allowed}.atlas-doc-button.main{color:#fff;background:#104c91;border-color:#104c91}.atlas-doc-close{font-size:24px;padding:5px 13px}
+      .atlas-doc-subtabs{display:flex;gap:10px;padding:15px 32px 0}.atlas-doc-subtabs button{border:1px solid #cbdff2;background:#eaf2fc;color:#284d7a;padding:11px 22px;font-weight:800;border-radius:10px 10px 0 0;cursor:pointer}.atlas-doc-subtabs button.active{background:#fff;border-bottom-color:#fff;color:#003f81}
+      /* Abas com a mesma altura e alinhamento, sem alterar o layout de impressão. */
+      .atlas-doc-subtabs{align-items:stretch;flex-wrap:nowrap;overflow-x:auto;row-gap:0;border-bottom:1px solid #cbdff2}
+      .atlas-doc-subtabs button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-height:46px;line-height:1.25;white-space:nowrap;margin-bottom:-1px;box-sizing:border-box}
+      .atlas-doc-subtabs button.active{position:relative;z-index:1}
+      .atlas-doc-content{padding:0 32px 36px}.atlas-doc-content section[hidden]{display:none!important}
+      .atlas-doc-printable{width:100%;max-width:1060px;margin:0 auto;background:#fff;padding:30px;border-radius:0 0 13px 13px;box-shadow:0 9px 30px #10376312;font-family:Arial,Helvetica,sans-serif;color:#14345e;box-sizing:border-box}
+      .atlas-doc-brandbar{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:3px solid #14549a;padding-bottom:16px;margin-bottom:20px}
+      .atlas-doc-mark{display:flex;align-items:center;gap:14px;color:#12447b}.atlas-doc-mark>strong{font-size:38px;letter-spacing:-1px}.atlas-doc-mark>span{font-size:23px;font-weight:800;border-left:2px solid #14549a;padding-left:14px}.atlas-doc-mark small{display:block;font-size:11px;font-weight:500}
+      .atlas-doc-name{text-align:right}.atlas-doc-name>b{font-size:25px;display:block}.atlas-doc-name>small{font-size:13px;color:#617995}
+      .atlas-doc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #cbdaed;border-radius:11px;margin-bottom:17px;overflow:hidden}
+      .atlas-doc-stats>div{padding:12px 16px;min-width:0}.atlas-doc-stats>div+div{border-left:1px solid #dbe5f1}.atlas-doc-stats small,.atlas-doc-transport small{display:block;font-size:11px;color:#586f89;margin-bottom:5px}.atlas-doc-stats b{display:block;font-size:14px;overflow-wrap:anywhere}
+      .atlas-doc-partes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 17px}.atlas-doc-partes section{border:1px solid #c6d9ee;border-radius:10px;overflow:hidden;min-width:0;padding-bottom:9px}.atlas-doc-partes h3{background:#e2effe;color:#0a4185;font-size:15px;margin:0 0 9px;padding:10px 13px}.atlas-doc-partes p{font-size:12px;margin:5px 13px;overflow-wrap:anywhere}
+      .atlas-doc-transport{display:grid;grid-template-columns:1fr 1.5fr .85fr;border:1px solid #c6d9ee;border-radius:10px;margin:0 0 18px;overflow:hidden}.atlas-doc-transport>div{padding:12px 13px;min-width:0}.atlas-doc-transport>div+div{border-left:1px solid #dce7f2}.atlas-doc-transport b{display:block;font-size:13px;overflow-wrap:anywhere}
+      .atlas-doc-table-wrap{overflow:auto}.atlas-doc-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:12px}.atlas-doc-table th{background:#103e76!important;color:#fff!important;font-size:11px;text-align:left;padding:9px 7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.atlas-doc-table td{border:1px solid #d6e0ed;padding:9px 7px;vertical-align:top;overflow-wrap:anywhere}.atlas-doc-table th:nth-child(1){width:6%}.atlas-doc-table th:nth-child(2){width:18%}.atlas-doc-table th:nth-child(3){width:32%}.atlas-doc-table th:nth-child(4){width:7%}.atlas-doc-table th:nth-child(5){width:6%}.atlas-doc-table th:nth-child(6){width:18%}.atlas-doc-table th:nth-child(7){width:13%}.atlas-doc-table td small{display:block;line-height:1.35;color:#60758c;margin-top:4px}.atlas-doc-code{font-weight:800}.atlas-doc-price{text-align:right;white-space:nowrap}.atlas-doc-td-num{text-align:center}
+      .atlas-doc-total{display:flex;justify-content:flex-end;margin:11px 0 19px;font-size:13px}.atlas-doc-total b{background:#eaf2fc;padding:9px 12px;border-radius:8px}
+      .atlas-doc-print-signatures{border-top:2px solid #1d5c9a;padding-top:13px;margin-top:18px;break-inside:avoid}.atlas-doc-print-signatures>h3{font-size:16px;margin:0 0 14px}.atlas-doc-print-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.atlas-doc-print-sign{border:1px solid #c6d9ee;border-radius:8px;padding:0 15px 12px;text-align:center;break-inside:avoid;min-height:150px}.atlas-doc-print-sign-title{background:#e6f2ff;color:#103f7a;font-size:13px;font-weight:800;padding:10px;margin:0 -15px 10px;text-align:left}.atlas-doc-print-sign-image{height:64px;display:flex;align-items:center;justify-content:center}.atlas-doc-print-sign-image img{max-width:100%;max-height:64px}.atlas-doc-print-sign-image span{color:#9aa8b9;font-size:11px;font-style:italic}.atlas-doc-print-sign-line{border-top:1px solid #8092ac;margin:0 24px 7px}.atlas-doc-print-sign b,.atlas-doc-print-sign small{display:block;margin:5px 0}.atlas-doc-print-sign small{font-size:11px;color:#5f7590}
+      .atlas-doc-print-footer{display:flex;justify-content:space-between;gap:18px;align-items:center;border-top:2px solid #1d5c9a;padding-top:13px;margin-top:22px;break-inside:avoid;font-size:11px}.atlas-doc-print-footer>div{flex:1}.atlas-doc-print-footer small{display:block;margin-top:4px;color:#5b7290}.atlas-doc-qr-place{display:flex;align-items:center;gap:12px}.atlas-doc-qr-place img{width:74px;height:74px}
+      .atlas-doc-sign-area{max-width:1060px;margin:0 auto;background:#fff;border:1px solid #d5e2f1;border-radius:0 0 13px 13px;padding:25px}.atlas-doc-sign-title{display:flex;align-items:center;justify-content:space-between;gap:10px}.atlas-doc-sign-title h2{font-size:21px;margin:0 0 15px}.atlas-doc-sign-title span{background:#e2f8f4;color:#166f62;border-radius:25px;padding:9px;font-weight:800;font-size:12px}.atlas-doc-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.atlas-doc-sign-card{border:1px solid #c4d8f0;border-radius:12px;overflow:hidden}.atlas-doc-sign-head{display:flex;justify-content:space-between;align-items:start;background:#eef6ff;padding:15px;gap:10px}.atlas-doc-assinado .atlas-doc-sign-head{background:#e7f8ee}.atlas-doc-sign-head strong,.atlas-doc-sign-head small{display:block}.atlas-doc-sign-head small{font-size:12px;color:#56728f;margin-top:4px}.atlas-doc-sign-state{flex-shrink:0;font-size:12px;font-weight:800;color:#936015;background:#fff3d9;padding:6px 11px;border-radius:20px}.atlas-doc-sign-state.ok{color:#167343;background:#d8f7e3}.atlas-doc-sign-content{padding:18px;text-align:center;min-height:155px}.atlas-doc-sign-img{width:auto;max-width:95%;height:68px;object-fit:contain}.atlas-doc-sign-content strong,.atlas-doc-sign-content small{display:block;margin-top:7px}.atlas-doc-sign-content small{color:#59718a;font-size:12px}.atlas-doc-sign-empty{height:80px;border:2px dashed #cddced;background:#f8fbff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#7c8da2;font-size:13px}
+      .atlas-doc-sign-buttons{display:flex;gap:10px;margin:18px 0 12px;flex-wrap:wrap}.atlas-doc-sign-note,.atlas-doc-warning{background:#edf5ff;padding:15px;border-radius:9px;color:#45627e;font-size:13px;line-height:1.5}.atlas-doc-warning{margin:13px 0;background:#fff7e5;color:#825510}.atlas-doc-driver-link{display:flex;align-items:center;flex-wrap:wrap;gap:15px;border:1px solid #b9d8f8;border-radius:10px;padding:16px;margin:16px 0}.atlas-doc-driver-link[hidden]{display:none}.atlas-doc-driver-link p{width:100%;margin:0}.atlas-doc-driver-link img{width:148px;height:148px}.atlas-doc-driver-link small{color:#64748b}
+      .atlas-doc-pad-overlay{position:fixed;inset:0;z-index:2147483600;background:#0c1a32ba;display:flex;align-items:center;justify-content:center;padding:20px}.atlas-doc-pad-box{width:min(780px,100%);padding:24px;border-radius:16px;background:white;color:#17385e}.atlas-doc-pad-box h2{margin:0 0 10px}.atlas-doc-pad-box p{font-size:13px;color:#506a87}.atlas-doc-pad-box canvas{touch-action:none;width:100%;height:180px;border:2px dashed #b9cee6;border-radius:10px;background:white}.atlas-doc-pad-buttons{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:16px}
+      @media(max-width:760px){.atlas-doc-toolbar{padding:14px;flex-wrap:wrap}.atlas-doc-toolbar h1{font-size:18px}.atlas-doc-toolbar-actions{width:100%}.atlas-doc-subtabs{padding:12px 12px 0}.atlas-doc-content{padding:0 6px 18px}.atlas-doc-printable{padding:12px}.atlas-doc-mark>strong{font-size:25px}.atlas-doc-mark>span{font-size:16px}.atlas-doc-name>b{font-size:17px}.atlas-doc-stats>div{padding:8px}.atlas-doc-stats b{font-size:11px}.atlas-doc-partes{gap:6px}.atlas-doc-partes p{font-size:10px}.atlas-doc-transport{grid-template-columns:1fr}.atlas-doc-transport>div+div{border-left:0;border-top:1px solid #dce7f2}.atlas-doc-table{min-width:720px}.atlas-doc-sign-area{padding:12px}.atlas-doc-sign-grid{grid-template-columns:1fr}.atlas-doc-print-sign-grid{gap:7px}.atlas-doc-print-sign{padding:0 6px 8px}.atlas-doc-print-sign-title{margin:0 -6px 10px}.atlas-doc-print-footer{gap:9px}}
     `; document.head.appendChild(s);
   }
 
   function tabelaHTML(r){
     return `<table class="bdr-rom-table"><thead><tr><th>ITEM</th><th>CÓDIGO</th><th>CUSTO DIRETO</th><th>DESCRIÇÃO</th><th>QTD</th><th>NCM</th><th>UN</th><th>VALOR BDR</th><th>VALOR ROMANEIO</th><th>VALOR TOTAL REVISADO</th><th>NF DE ENTRADA</th></tr></thead><tbody>${r.linhas.map((l,idx)=>`<tr><td>${idx+1}</td><td>${esc(l.codigo)||"—"}</td><td>${esc(l.custo_direto)}</td><td>${esc(l.descricao)}${l.patrimonios?.length?`<div style="font-size:11px;color:#64748b;margin-top:4px">${esc(l.patrimonios.join(", "))}</div>`:""}</td><td class="num">${l.qtd.toLocaleString("pt-BR")}</td><td>${esc(l.ncm)||'<b style="color:#b45309">PENDENTE</b>'}</td><td>${esc(l.un)}</td><td class="num">${dinheiro(l.valor_bdr)}</td><td class="num">${dinheiro(l.valor_romaneio)}</td><td class="num"><b>${dinheiro(l.total)}</b></td><td>${esc(l.nf_entrada)||"—"}</td></tr>`).join("")}</tbody></table>`;
+  }
+
+  // Versão de leitura/impressão em A4 retrato. Os campos fiscais continuam
+  // disponíveis na tabela original usada nas exportações Excel/Word.
+  function tabelaVertical(r){
+    return `<table class="bdr-rom-table bdr-rom-table-vertical"><thead><tr>
+      <th>Nº</th><th>Patrimônio / código</th><th>Descrição / dados fiscais</th>
+      <th>Qtd.</th><th>UN</th><th>Valores unitários</th><th>Total</th>
+    </tr></thead><tbody>${r.linhas.map((l,idx)=>`<tr>
+      <td>${idx+1}</td><td><b>${esc(l.codigo)||"—"}</b>${l.patrimonios?.length?`<small>Pat.: ${esc(l.patrimonios.join(', '))}</small>`:''}</td>
+      <td><b>${esc(l.descricao)}</b><small>NCM: ${esc(l.ncm)||'Pendente'} · NF entrada: ${esc(l.nf_entrada)||'—'}</small></td>
+      <td class="num">${l.qtd.toLocaleString('pt-BR')}</td><td>${esc(l.un)||'UN'}</td>
+      <td class="num"><b>${dinheiro(l.valor_bdr)}</b><small>Romaneio: ${dinheiro(l.valor_romaneio)}</small></td>
+      <td class="num"><b>${dinheiro(l.total)}</b></td></tr>`).join('')}</tbody></table>`;
   }
 
   async function abrir(pedidoId){
@@ -305,6 +348,10 @@
     fundo.innerHTML='<div class="bdr-rom" style="padding:30px;text-align:center"><b>Montando Romaneio Fiscal...</b></div>';
     document.body.appendChild(fundo);
     try{
+      const pAcesso=await pedido(pedidoId);
+      if(!await podeConsultarDocumentoObras(pAcesso.obra_origem_id,pAcesso.obra_destino_id||pAcesso.obra_id)){
+        throw new Error('O romaneio pertence a obras fora do seu escopo de consulta.');
+      }
       const r=await obterRomaneio(pedidoId);
       global.__bdrRomaneioAtual=r;
       const p=r.pedido;
@@ -316,19 +363,320 @@
         <div class="bdr-rom-top"><div class="bdr-rom-brand">BDR</div><div class="bdr-rom-title"><h2>ROMANEIO FISCAL DE SAÍDA</h2><small>COMPOSIÇÃO PARA EMISSÃO DE NF-e</small></div><div class="bdr-rom-status">${upper(p.status_fiscal)==="NFE_EMITIDA"?"✓ NF-e REGISTRADA":"● AGUARDANDO NF-e"}</div></div>
         <div class="bdr-rom-grid"><div class="bdr-rom-kpi">ROMANEIO<b>${esc(p.id)}</b></div><div class="bdr-rom-kpi">PEDIDO / TRANSFERÊNCIA<b>${esc(p.codigo||("PED-"+p.id))}</b></div><div class="bdr-rom-kpi">DATA<b>${dataHoraBR(p.data_finalizacao_separacao||p.data_criacao||p.criado_em)}</b></div><div class="bdr-rom-kpi">PLACA<b>${esc(p.veiculo_placa)||"—"}</b></div><div class="bdr-rom-kpi">MOTORISTA<b>${esc(p.motorista_nome)||"—"}</b></div></div>
         <div class="bdr-rom-partes"><div class="bdr-rom-card"><h3>↗ ORIGEM (SAÍDA)</h3><p><b>Empresa:</b> ${esc(r.empresaOrigem?.nome)||"—"}</p><p><b>Obra / Local:</b> ${esc(fmtObra(r.origem))}</p><p><b>CNPJ:</b> ${esc(r.empresaOrigem?.cnpj)||"—"}</p><p><b>Endereço:</b> ${esc(enderecoEmpresa(r.empresaOrigem))}</p></div><div class="bdr-rom-card"><h3>📍 DESTINO</h3><p><b>Empresa:</b> ${esc(r.empresaDestino?.nome)||"—"}</p><p><b>Obra / Local:</b> ${esc(fmtObra(r.destino))}</p><p><b>CNPJ:</b> ${esc(r.empresaDestino?.cnpj)||"—"}</p><p><b>Endereço:</b> ${esc(enderecoEmpresa(r.empresaDestino))}</p></div></div>
-        <div class="bdr-rom-grid" style="grid-template-columns:repeat(4,1fr)"><div class="bdr-rom-kpi">TRANSPORTADORA<b>${esc(p.transportadora)||"PENDENTE"}</b></div><div class="bdr-rom-kpi">NF-e SAÍDA<b>${esc(p.numero_nfe)||"PENDENTE"}</b></div><div class="bdr-rom-kpi">MOVIMENTAÇÃO<b>${mesmoMunicipio(r.empresaOrigem,r.empresaDestino)===true?"MESMO MUNICÍPIO":mesmoMunicipio(r.empresaOrigem,r.empresaDestino)===false?"INTERMUNICIPAL":"A CONFERIR"}</b></div><div class="bdr-rom-kpi">SOLICITANTE DO PEDIDO<b>${esc(p.solicitante||p.usuario_criacao)||"—"}</b></div></div>
-        <div class="bdr-rom-table-wrap">${tabelaHTML(r)}</div>
+        <div class="bdr-rom-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="bdr-rom-kpi">TRANSPORTADORA<b>${esc(p.transportadora)||"PENDENTE"}</b></div><div class="bdr-rom-kpi">NF-e SAÍDA<b>${esc(p.numero_nfe)||"PENDENTE"}</b></div><div class="bdr-rom-kpi">MOVIMENTAÇÃO<b>${mesmoMunicipio(r.empresaOrigem,r.empresaDestino)===true?"MESMO MUNICÍPIO":mesmoMunicipio(r.empresaOrigem,r.empresaDestino)===false?"INTERMUNICIPAL":"A CONFERIR"}</b></div><div class="bdr-rom-kpi">SOLICITANTE DO PEDIDO<b>${esc(p.solicitante||p.usuario_criacao)||"—"}</b></div></div>
+        <div class="bdr-rom-table-wrap">${tabelaVertical(r)}</div>
         <div class="bdr-rom-valor"><strong>Valor para emissão da NF-e:</strong><label class="bdr-rom-opcao"><input type="radio" name="bdrValorFiscal" value="70" ${r.percentual===70?"checked":""} onchange="AtlasRomaneio.selecionarValor(70)"> Romaneio 70% (${dinheiro(r.linhas.reduce((s,l)=>s+l.qtd*l.valor_romaneio,0))})</label><label class="bdr-rom-opcao"><input type="radio" name="bdrValorFiscal" value="100" ${r.percentual===100?"checked":""} onchange="AtlasRomaneio.selecionarValor(100)"> BDR 100% (${dinheiro(r.linhas.reduce((s,l)=>s+l.qtd*l.valor_bdr,0))})</label></div>
         <div class="bdr-rom-total">TOTAL GERAL DO ROMANEIO: ${dinheiro(r.total)}</div>
         ${pendencias.length?`<div class="bdr-rom-alert"><b>⚠ Pendências para conferência fiscal:</b> ${pendencias.map(esc).join(" • ")}</div>`:""}
-        <div class="bdr-rom-actions"><button class="bdr-rom-btn gray" onclick="AtlasRomaneio.abrirTransporte()">🚚 Dados do transporte</button><button class="bdr-rom-btn gray" onclick="AtlasRomaneio.imprimir()">🖨 Imprimir</button><div class="bdr-export"><button class="bdr-rom-btn primary" onclick="AtlasRomaneio.toggleExportar(event)">⇩ Exportar ▾</button><div class="bdr-export-menu" id="bdrExportMenu"><button onclick="AtlasRomaneio.exportarExcel()">Exportar para Excel</button><button onclick="AtlasRomaneio.exportarWord()">Exportar para Word</button></div></div>${p.exige_nfe===true && upper(p.status_fiscal)!=="NFE_EMITIDA"?`<button class="bdr-rom-btn ok" onclick="AtlasRomaneio.registrarNfe(${Number(p.id)})">✓ Registrar NF-e</button>`:""}<button class="bdr-rom-btn gray" onclick="AtlasRomaneio.fechar()">← Voltar</button></div>
+        <div class="bdr-rom-actions"><button class="bdr-rom-btn primary" onclick="AtlasRomaneio.abrirDocumentoPedido(${Number(p.id)})">▤ Documento de transporte</button><button class="bdr-rom-btn gray" onclick="AtlasRomaneio.abrirTransporte()">🚚 Dados do transporte</button><button class="bdr-rom-btn gray" onclick="AtlasRomaneio.imprimir()">🖨 Imprimir</button><div class="bdr-export"><button class="bdr-rom-btn primary" onclick="AtlasRomaneio.toggleExportar(event)">⇩ Exportar ▾</button><div class="bdr-export-menu" id="bdrExportMenu"><button onclick="AtlasRomaneio.exportarExcel()">Exportar para Excel</button><button onclick="AtlasRomaneio.exportarWord()">Exportar para Word</button></div></div>${p.exige_nfe===true && upper(p.status_fiscal)!=="NFE_EMITIDA"?`<button class="bdr-rom-btn ok" onclick="AtlasRomaneio.registrarNfe(${Number(p.id)})">✓ Registrar NF-e</button>`:""}<button class="bdr-rom-btn gray" onclick="AtlasRomaneio.fechar()">← Voltar</button></div>
       </div>`;
     }catch(e){ fundo.innerHTML=`<div class="bdr-rom" style="padding:30px"><h3>Não foi possível montar o Romaneio</h3><p>${esc(e?.message||e)}</p><button class="bdr-rom-btn gray" onclick="AtlasRomaneio.fechar()">Voltar</button></div>`; }
   }
 
+  // Consultar a vinculação efetiva, sem confiar em obras_liberadas no navegador.
+  // O vínculo é para CONSULTA/IMPRESSÃO, nunca autorização de recebimento ou fiscal.
+  async function podeConsultarDocumentoObras(origemId,destinoId){
+    const u=usuarioAtual();
+    const uid=Number(u?.id||u?.usuario_id||0);
+    if(!Number.isSafeInteger(uid)||uid<=0)return false;
+    if(uid===1 && u?.owner_sistema===true)return true;
+    const ids=[origemId,destinoId].map(Number).filter(n=>Number.isSafeInteger(n)&&n>0);
+    if(!ids.length)return false;
+    const {data,error}=await db().from('usuario_obras')
+      .select('obra_id').eq('usuario_id',uid).in('obra_id',ids);
+    if(error)throw new Error('Não foi possível validar as obras autorizadas para o romaneio.');
+    return (data||[]).some(v=>ids.includes(Number(v.obra_id)));
+  }
+
+  // DOCUMENTO DE TRANSPORTE: RP e PED utilizam a mesma apresentação.
+  // A análise fiscal existente continua na tela original de PED.
+  let documentoAtual=null;
+  let assinaturasAtivas=false;
+  let assinaturasDocumento=[];
+  let linkMotoristaGerado='';
+  let assinaturaPerfil='';
+  let pad=null;
+
+  function aviso(mensagem){
+    if(global.AtlasModal?.aviso){global.AtlasModal.aviso(mensagem);return;}
+    alert(mensagem);
+  }
+  function formatoStatus(v){
+    const t=upper(v);
+    return ({EM_TRANSITO:'Em trânsito',RECEBIDO:'Recebido',CANCELADO:'Cancelado',RECUSADO:'Recusado',AGUARDANDO_NFE:'Aguardando NF-e'}[t]||texto(v)||'Em preparação');
+  }
+  function documentoUrl(doc){
+    const u=new URL('./atlas.html',global.location.href);
+    u.searchParams.set('m','expedicao');
+    u.searchParams.set('acao',doc.tipo==='RP'?'romaneio-rp':'romaneio');
+    u.searchParams.set(doc.tipo==='RP'?'remessa':'pedido',String(doc.id));
+    return u.href;
+  }
+  function itemIdentificacao(p){
+    const pares=[['Marca',p.marca],['Modelo',p.modelo],['Série',p.numero_serie||p.serie],['Chassi',p.chassi],['Placa',p.placa],['RENAVAM',p.renavam],['Insumo',p.codigo_insumo]];
+    return pares.filter(([,v])=>texto(v)).map(([k,v])=>`${k}: ${texto(v)}`).join(' · ');
+  }
+  async function carregarDocumentoRP(id){
+    const banco=db();
+    if(!banco)throw new Error('Supabase indisponível.');
+    const {data:rp,error}=await banco.from('atlas_patrimonio_remessas').select('*').eq('id',id).maybeSingle();
+    if(error)throw error;
+    if(!rp)throw new Error('Remessa patrimonial não encontrada.');
+    if(!await podeConsultarDocumentoObras(rp.obra_origem_id,rp.obra_destino_id))
+      throw new Error('Esta remessa não pertence ao seu escopo autorizado.');
+    const {data:itens,error:erroItens}=await banco.from('atlas_patrimonio_remessa_itens').select('*').eq('remessa_id',id).order('id',{ascending:true});
+    if(erroItens)throw erroItens;
+    const [orig,dest]=await Promise.all([obra(rp.obra_origem_id),obra(rp.obra_destino_id)]);
+    const [empOrig,empDest]=await Promise.all([empresa(orig?.empresa_id||rp.empresa_id),empresa(dest?.empresa_id||rp.empresa_id)]);
+    const ids=[...new Set((itens||[]).map(i=>Number(i.patrimonio_id)).filter(n=>Number.isSafeInteger(n)&&n>0))];
+    const pats=[];
+    for(let n=0;n<ids.length;n+=100)pats.push(...await patrimonios(ids.slice(n,n+100)));
+    const porId=new Map(pats.map(x=>[Number(x.id),x]));
+    return {
+      tipo:'RP',id,numero:rp.codigo||'RP-'+id,
+      data:rp.enviado_em||rp.criado_em,status:rp.status||'EM_TRANSITO',
+      origem:rp.obra_origem_nome||fmtObra(orig),destino:rp.obra_destino_nome||fmtObra(dest),
+      empOrig,empDest,responsavel:rp.enviado_por_nome||'—',
+      motorista:rp.motorista||rp.motorista_nome||'',transportadora:rp.transportadora||rp.veiculo||'',placa:rp.placa||rp.veiculo_placa||'',
+      items:(itens||[]).map((i,index)=>{
+        const x=porId.get(Number(i.patrimonio_id))||{};
+        return {n:index+1,codigo:i.codigo_qr||x.codigo_qr||String(i.patrimonio_id),
+          descricao:i.nome_bem||x.nome_bem||x.descricao||'Patrimônio',detalhes:itemIdentificacao(x),
+          unidade:'UN',qtd:1,ncm:x.ncm||'',nf:x.numero_nfe||'',valor:x.valor_bem??x.valor_aquisicao??null};
+      })
+    };
+  }
+  async function carregarDocumentoPED(id){
+    const p=await pedido(id);
+    if(!await podeConsultarDocumentoObras(p.obra_origem_id,p.obra_destino_id||p.obra_id))
+      throw new Error('Este pedido não pertence ao seu escopo autorizado.');
+    const r=await obterRomaneio(id);
+    const itensDocumento=[];
+    for(const linha of r.linhas){
+      // Cada patrimônio precisa ser identificável, sem ocultar um PAT dentro de um agrupamento.
+      if(linha.patrimonios?.length){
+        for(const pat of linha.patrimonios){
+          itensDocumento.push({n:itensDocumento.length+1,codigo:pat,descricao:linha.descricao,detalhes:linha.codigo&&linha.codigo!==pat?'Referência: '+linha.codigo:'',qtd:1,unidade:'UN',ncm:linha.ncm,nf:linha.nf_entrada,valor:linha.valor_bdr});
+        }
+      }else{
+        itensDocumento.push({n:itensDocumento.length+1,codigo:linha.codigo,descricao:linha.descricao,detalhes:linha.custo_direto&&linha.custo_direto!=='—'?linha.custo_direto:'',qtd:linha.qtd,unidade:linha.un,ncm:linha.ncm,nf:linha.nf_entrada,valor:linha.valor_bdr});
+      }
+    }
+    return {
+      tipo:'PED',id,numero:p.codigo||'PED-'+id,data:p.data_saida_cd||p.data_envio||p.data_finalizacao_separacao||p.data_criacao,
+      status:p.status,origem:fmtObra(r.origem),destino:fmtObra(r.destino),empOrig:r.empresaOrigem,empDest:r.empresaDestino,
+      responsavel:p.usuario_saida_cd||p.usuario_finalizacao_separacao||p.solicitante||p.usuario_criacao||'—',
+      motorista:p.motorista_nome||'',transportadora:p.transportadora||'',placa:p.veiculo_placa||'',items:itensDocumento
+    };
+  }
+  async function obterAssinaturas(doc){
+    const {data,error}=await db().rpc('atlas_romaneio_assinaturas_listar',{p_tipo:doc.tipo,p_id:doc.id});
+    if(error){
+      assinaturasAtivas=false;
+      assinaturasDocumento=[];
+      console.info('Atlas Romaneio: assinaturas dependem da migração segura do Supabase:',error.message);
+      return;
+    }
+    assinaturasAtivas=true;
+    assinaturasDocumento=Array.isArray(data)?data:(data?.assinaturas||[]);
+    const {data:perfil,error:erroPerfil}=await db().rpc('atlas_romaneio_assinatura_pessoal');
+    assinaturaPerfil=erroPerfil?'':(typeof perfil==='string'?perfil:'');
+  }
+  function assinaturaDo(papel){ return assinaturasDocumento.find(x=>x.papel===papel&&x.valida===true)||null; }
+  function assinaturaCard(papel,titulo,descricao){
+    const a=assinaturaDo(papel);
+    return `<article class="atlas-doc-sign-card ${a?'atlas-doc-assinado':''}">
+      <div class="atlas-doc-sign-head"><div><strong>${esc(titulo)}</strong><small>${esc(descricao)}</small></div><span class="atlas-doc-sign-state ${a?'ok':''}">${a?'✓ Assinado':'◷ Pendente'}</span></div>
+      <div class="atlas-doc-sign-content">${a?`<img class="atlas-doc-sign-img" src="${esc(a.assinatura_png)}" alt="Assinatura registrada de ${esc(a.nome)}">
+      <strong>${esc(a.nome)}</strong><small>${dataHoraBR(a.assinado_em)} · Confirmação no Atlas</small>`:
+      `<div class="atlas-doc-sign-empty">Aguardando assinatura</div><small>${papel==='SAIDA'?'O responsável pela saída confirma os bens entregues.':'O motorista confere e confirma a retirada.'}</small>`}</div>
+      </article>`;
+  }
+  function assinaturaImpressao(papel,titulo){
+    const a=assinaturaDo(papel);
+    return `<div class="atlas-doc-print-sign"><div class="atlas-doc-print-sign-title">${esc(titulo)}</div>
+      <div class="atlas-doc-print-sign-image">${a?`<img src="${esc(a.assinatura_png)}" alt="Assinatura">`:'<span>Assinatura pendente</span>'}</div>
+      <div class="atlas-doc-print-sign-line"></div><b>${a?esc(a.nome):'—'}</b><small>${a?dataHoraBR(a.assinado_em):'Não assinado'}</small></div>`;
+  }
+  function docTabela(doc){
+    return `<div class="atlas-doc-table-wrap"><table class="atlas-doc-table"><thead><tr><th>Item</th><th>Patrimônio</th><th>Descrição / identificação</th><th>Qtd.</th><th>Un.</th><th>Referências</th><th>Valor patrimonial</th></tr></thead><tbody>
+    ${doc.items.map(l=>`<tr><td class="atlas-doc-td-num">${l.n}</td><td class="atlas-doc-code">${esc(l.codigo)}</td>
+    <td><b>${esc(l.descricao)}</b>${l.detalhes?`<small>${esc(l.detalhes)}</small>`:''}</td><td class="atlas-doc-td-num">${esc(l.qtd)}</td>
+    <td>${esc(l.unidade||'UN')}</td><td><small>NCM: ${esc(l.ncm)||'A conferir'}<br>NF de entrada: ${esc(l.nf)||'—'}</small></td>
+    <td class="atlas-doc-price">${l.valor==null||l.valor===''?'A conferir':dinheiro(l.valor)}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum patrimônio encontrado</td></tr>'}</tbody></table></div>`;
+  }
+  function cabecalhoDocumento(doc){
+    return `<header class="atlas-doc-brandbar"><div class="atlas-doc-mark"><strong>BDR</strong><span>Atlas<small>Gestão Patrimonial</small></span></div>
+       <div class="atlas-doc-name"><b>ROMANEIO PATRIMONIAL</b><small>Documento de transferência</small></div></header>
+       <div class="atlas-doc-stats"><div><small>Remessa</small><b>${esc(doc.numero)}</b></div><div><small>Data / Hora</small><b>${dataHoraBR(doc.data)}</b></div>
+       <div><small>Situação</small><b>${esc(formatoStatus(doc.status))}</b></div></div>
+       <div class="atlas-doc-partes"><section><h3>↗ Origem</h3><p><b>Empresa:</b> ${esc(doc.empOrig?.nome)||'—'}</p><p><b>Obra:</b> ${esc(doc.origem)}</p><p><b>CNPJ:</b> ${esc(doc.empOrig?.cnpj)||'—'}</p></section>
+       <section><h3>⌖ Destino</h3><p><b>Empresa:</b> ${esc(doc.empDest?.nome)||'—'}</p><p><b>Obra:</b> ${esc(doc.destino)}</p><p><b>CNPJ:</b> ${esc(doc.empDest?.cnpj)||'—'}</p></section></div>
+       <div class="atlas-doc-transport"><div><small>Responsável pela saída</small><b>${esc(doc.responsavel)}</b></div>
+       <div><small>Transporte</small><b>${esc(doc.motorista)||'Motorista não informado'}</b><small>${esc([doc.transportadora,doc.placa&&'Placa: '+doc.placa].filter(Boolean).join(' · '))||'—'}</small></div>
+       <div><small>Tipo de transferência</small><b>Patrimonial</b></div></div>`;
+  }
+  function numeroItens(doc){return doc.items.reduce((n,x)=>n+num(x.qtd),0);}
+  function docImpressao(doc){
+    return `<div class="atlas-doc-printable">${cabecalhoDocumento(doc)}${docTabela(doc)}
+      <div class="atlas-doc-total"><b>Total de patrimônios: ${numeroItens(doc).toLocaleString('pt-BR')}</b></div>
+      <div class="atlas-doc-print-signatures"><h3>Assinaturas da transferência</h3><div class="atlas-doc-print-sign-grid">${assinaturaImpressao('SAIDA','Responsável pela saída')}${assinaturaImpressao('MOTORISTA','Motorista / transportador')}</div></div>
+      <footer class="atlas-doc-print-footer"><div class="atlas-doc-qr-place"><img id="atlasDocQr" alt="QR Code para consultar o documento no Atlas" style="display:none"><div><b>Consulta do documento</b><small>Escaneie para abrir a remessa no Atlas. É necessário ter acesso à obra.</small></div></div>
+      <div><b>${esc(doc.numero)}</b><small>Atlas · Gestão Patrimonial</small><small>Documento operacional. Não substitui documento fiscal quando exigido.</small></div></footer>
+    </div>`;
+  }
+  function docAssinaturas(doc){
+    const a=assinaturaDo('SAIDA'),m=assinaturaDo('MOTORISTA');
+    return `<div class="atlas-doc-sign-area"><div class="atlas-doc-sign-title"><h2>✎ Assinaturas da transferência</h2><span>${Number(Boolean(a))+Number(Boolean(m))} de 2 assinaturas</span></div>
+    <div class="atlas-doc-sign-grid">${assinaturaCard('SAIDA','Responsável pela saída','Confirma os bens entregues ao transporte.')}
+      ${assinaturaCard('MOTORISTA','Motorista','Confirma a retirada dos patrimônios.')}</div>
+    <div class="atlas-doc-sign-buttons">
+      ${!a?`<button class="atlas-doc-button main" onclick="AtlasRomaneio.assinarSaida()" ${!assinaturasAtivas?'disabled title="Aguardando configuração segura no Supabase"':''}>✎ Assinar saída no Atlas</button>`:''}
+      ${!a&&assinaturaPerfil?`<button class="atlas-doc-button" onclick="AtlasRomaneio.usarAssinaturaPessoal()">✓ Usar minha assinatura salva</button>`:''}
+      ${!m?`<button class="atlas-doc-button main" onclick="AtlasRomaneio.criarLinkMotorista()" ${!assinaturasAtivas?'disabled title="Aguardando configuração segura no Supabase"':''}>▦ Gerar QR / link para o motorista</button>`:''}
+      <button class="atlas-doc-button" onclick="AtlasRomaneio.atualizarAssinaturas()">↻ Atualizar assinaturas</button>
+    </div>
+    ${!assinaturasAtivas?'<div class="atlas-doc-warning">Assinatura eletrônica indisponível: é necessário instalar e validar a migração segura do Supabase. O documento permanece imprimível, com assinaturas pendentes claramente identificadas.</div>':''}
+    <div id="atlasDocMotoristaLink" class="atlas-doc-driver-link" ${linkMotoristaGerado?'':'hidden'}>${linkMotoristaGerado?`<p>O motorista abre o link no próprio celular, confere os itens e assina:</p><a href="${esc(linkMotoristaGerado)}" rel="noopener noreferrer" target="_blank">Abrir página de assinatura</a><button class="atlas-doc-button" onclick="AtlasRomaneio.copiarLink()">Copiar link</button><img id="atlasDocQrMotorista" alt="QR Code para assinatura do motorista"><small>Link de uso único, com validade limitada.</small>`:''}</div>
+    <div class="atlas-doc-sign-note">O destino confirma o recebimento exclusivamente em <b>Expedição → A receber</b>, sem assinar o romaneio. A análise e os documentos fiscais permanecem no fluxo interno do Atlas.</div></div>`;
+  }
+  async function garantirQR(){
+    if(global.AtlasQRCode?.gerarDataURL)return;
+    for(const src of ['./JS/atlasQRCode/qrcode.min.js','./JS/atlasQRCode.js']){
+      if(src.endsWith('qrcode.min.js')&&global.AtlasQRCodeCore)continue;
+      if(src.endsWith('atlasQRCode.js')&&global.AtlasQRCode)continue;
+      await new Promise((resolve,reject)=>{
+        const script=document.createElement('script');script.src=src;
+        let concluido=false;
+        const timer=setTimeout(()=>{if(!concluido){concluido=true;script.remove();reject(new Error('Tempo esgotado ao carregar QR Code local.'));}},5000);
+        script.onload=()=>{if(!concluido){concluido=true;clearTimeout(timer);resolve();}};
+        script.onerror=()=>{if(!concluido){concluido=true;clearTimeout(timer);reject(new Error('Falha ao carregar QR Code local.'));}};
+        document.head.appendChild(script);
+      });
+    }
+  }
+  async function desenharQRCode(doc){
+    try{await garantirQR();const img=document.getElementById('atlasDocQr');if(img){img.src=global.AtlasQRCode.gerarDataURL(documentoUrl(doc),{tamanho:112});img.style.display='block';}}
+    catch(e){console.warn('Romaneio: QR Code indisponível',e);}
+    if(linkMotoristaGerado){
+      const img=document.getElementById('atlasDocQrMotorista');
+      if(img&&global.AtlasQRCode){img.src=global.AtlasQRCode.gerarDataURL(linkMotoristaGerado,{tamanho:148});}
+    }
+  }
+  function abaDocumento(nome){
+    const doc=document.getElementById('bdrRomaneioFiscal');if(!doc)return;
+    doc.querySelectorAll('[data-atlas-doc-tab]').forEach(b=>b.classList.toggle('active',b.dataset.atlasDocTab===nome));
+    doc.querySelectorAll('[data-atlas-doc-panel]').forEach(b=>b.hidden=b.dataset.atlasDocPanel!==nome);
+  }
+  async function atualizarAssinaturas(){
+    if(!documentoAtual)return;
+    await obterAssinaturas(documentoAtual);
+    const sec=document.querySelector('#bdrRomaneioFiscal [data-atlas-doc-panel="assinaturas"]');
+    if(sec)sec.innerHTML=docAssinaturas(documentoAtual);
+    const aba=document.querySelector('#bdrRomaneioFiscal [data-atlas-doc-tab="assinaturas"]');
+    if(aba)aba.textContent='Assinaturas ('+assinaturasDocumento.filter(x=>x.valida).length+'/2)';
+    const print=document.querySelector('#bdrRomaneioFiscal .atlas-doc-printable');
+    if(print)print.outerHTML=docImpressao(documentoAtual);
+    await desenharQRCode(documentoAtual);
+  }
+  async function abrirDocumento(tipo,id){
+    id=Number(id);if(!Number.isSafeInteger(id)||id<=0)throw new Error('Número de remessa inválido.');
+    const doc=tipo==='RP'?await carregarDocumentoRP(id):await carregarDocumentoPED(id);
+    documentoAtual=doc;linkMotoristaGerado='';
+    await obterAssinaturas(doc);
+    estilos();
+    document.getElementById('bdrRomaneioFiscal')?.remove();
+    const fundo=document.createElement('div');fundo.id='bdrRomaneioFiscal';fundo.className='bdr-rom-bg atlas-doc-backdrop';
+    fundo.innerHTML=`<div class="atlas-doc-shell"><header class="atlas-doc-toolbar"><div><h1>Romaneio Patrimonial</h1><small>Documento de transferência · ${esc(doc.numero)}</small></div>
+       <div class="atlas-doc-toolbar-actions"><button class="atlas-doc-button" onclick="AtlasRomaneio.imprimir()">▣ Imprimir / salvar PDF</button>
+       <button class="atlas-doc-button" onclick="AtlasRomaneio.copiarDocumento()">↗ Copiar link</button><button class="atlas-doc-button atlas-doc-close" onclick="AtlasRomaneio.fechar()" aria-label="Fechar">×</button></div></header>
+       <div class="atlas-doc-subtabs"><button class="active" data-atlas-doc-tab="documento" onclick="AtlasRomaneio.abaDocumento('documento')">Documento A4</button><button data-atlas-doc-tab="assinaturas" onclick="AtlasRomaneio.abaDocumento('assinaturas')">Assinaturas (${assinaturasDocumento.filter(x=>x.valida).length}/2)</button></div>
+       <main class="atlas-doc-content"><section data-atlas-doc-panel="documento">${docImpressao(doc)}</section>
+       <section data-atlas-doc-panel="assinaturas" hidden>${docAssinaturas(doc)}</section></main></div>`;
+    document.body.appendChild(fundo);
+    await desenharQRCode(doc);
+  }
+  async function abrirRemessa(id){return abrirDocumento('RP',id);}
+  async function abrirDocumentoPedido(id){return abrirDocumento('PED',id);}
+  function copiarDocumento(){
+    if(!documentoAtual)return;
+    const url=documentoUrl(documentoAtual);
+    navigator.clipboard?.writeText(url).then(()=>aviso('Link do documento copiado.')).catch(()=>global.prompt('Copie o link:',url));
+  }
+  async function copiarLink(){
+    if(!linkMotoristaGerado)return;
+    try{await navigator.clipboard.writeText(linkMotoristaGerado);aviso('Link seguro copiado.');}
+    catch(_){global.prompt('Copie o link:',linkMotoristaGerado);}
+  }
+  async function criarLinkMotorista(){
+    if(!documentoAtual||!assinaturasAtivas)return;
+    if(global.location.protocol!=='https:' || ['localhost','127.0.0.1'].includes(global.location.hostname)){
+      aviso('Para o motorista assinar pelo celular, publique primeiro a página no DEV HTTPS. Um link localhost não funciona em outro aparelho.');
+      return;
+    }
+    try{
+      const {data,error}=await db().rpc('atlas_romaneio_criar_link_motorista',{p_tipo:documentoAtual.tipo,p_id:documentoAtual.id});
+      if(error)throw error;
+      if(!data||typeof data!=='string')throw new Error('O servidor não retornou um token válido.');
+      const url=new URL('./assinatura-romaneio.html',global.location.href);
+      url.searchParams.set('token',data);
+      linkMotoristaGerado=url.href;
+      const sec=document.querySelector('[data-atlas-doc-panel="assinaturas"]');
+      if(sec)sec.innerHTML=docAssinaturas(documentoAtual);
+      await desenharQRCode(documentoAtual);
+    }catch(e){aviso('Não foi possível gerar o link seguro: '+(e.message||e));}
+  }
+  function assinaturaModal(nome,papel){
+    const existente=document.getElementById('atlasDocPadOverlay');if(existente)existente.remove();
+    const overlay=document.createElement('div');overlay.id='atlasDocPadOverlay';overlay.className='atlas-doc-pad-overlay';
+    overlay.innerHTML=`<div class="atlas-doc-pad-box"><h2>Assinatura do responsável pela saída</h2><p>${esc(nome)} — confira o romaneio antes de assinar.</p>
+      <canvas id="atlasDocPad" width="780" height="230" aria-label="Área para desenhar a assinatura"></canvas>
+      <div class="atlas-doc-pad-buttons"><button class="atlas-doc-button" onclick="AtlasRomaneio.limparAssinatura()">Limpar</button>
+      <button class="atlas-doc-button" onclick="AtlasRomaneio.fecharAssinatura()">Cancelar</button>
+      <button class="atlas-doc-button main" onclick="AtlasRomaneio.salvarAssinatura()">Confirmar e assinar esta remessa</button></div></div>`;
+    document.body.appendChild(overlay);
+    const c=overlay.querySelector('canvas'),ctx=c.getContext('2d');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#0b2854';ctx.lineWidth=3.4;ctx.lineCap='round';ctx.lineJoin='round';
+    pad={c,ctx,ativo:false,desenhou:false,papel};
+    const ponto=e=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};};
+    c.addEventListener('pointerdown',e=>{c.setPointerCapture(e.pointerId);pad.ativo=true;pad.desenhou=true;const pt=ponto(e);ctx.beginPath();ctx.moveTo(pt.x,pt.y);ctx.lineTo(pt.x+.2,pt.y+.2);ctx.stroke();});
+    c.addEventListener('pointermove',e=>{if(!pad?.ativo)return;const pt=ponto(e);ctx.lineTo(pt.x,pt.y);ctx.stroke();});
+    ['pointerup','pointercancel'].forEach(tipo=>c.addEventListener(tipo,()=>{if(pad)pad.ativo=false;}));
+  }
+  function limparAssinatura(){if(pad){pad.ctx.fillStyle='#fff';pad.ctx.fillRect(0,0,pad.c.width,pad.c.height);pad.desenhou=false;}}
+  function fecharAssinatura(){document.getElementById('atlasDocPadOverlay')?.remove();pad=null;}
+  function assinarSaida(){
+    if(!documentoAtual||!assinaturasAtivas)return;
+    assinaturaModal(usuarioAtual()?.nome||'Responsável pela saída','SAIDA');
+  }
+  async function usarAssinaturaPessoal(){
+    if(!assinaturaPerfil||!documentoAtual||!assinaturasAtivas)return;
+    if(!global.confirm('Confirma que conferiu os itens e autoriza sua assinatura cadastrada neste romaneio?'))return;
+    try{
+      const {error}=await db().rpc('atlas_romaneio_assinar_saida',{p_tipo:documentoAtual.tipo,p_id:documentoAtual.id,p_png:null});
+      if(error)throw error;
+      await atualizarAssinaturas();
+      aviso('Confirmação autenticada registrada para esta remessa.');
+    }catch(e){aviso('Não foi possível registrar a assinatura: '+(e.message||e));}
+  }
+  async function salvarAssinatura(){
+    if(!documentoAtual||!pad?.desenhou){aviso('Desenhe sua assinatura antes de confirmar.');return;}
+    const png=pad.c.toDataURL('image/png');
+    const botoes=document.querySelectorAll('#atlasDocPadOverlay button');
+    botoes.forEach(x=>x.disabled=true);
+    try{
+      const {error}=await db().rpc('atlas_romaneio_assinar_saida',{p_tipo:documentoAtual.tipo,p_id:documentoAtual.id,p_png:png});
+      if(error)throw error;
+      fecharAssinatura();
+      await atualizarAssinaturas();
+      aviso('Assinatura registrada para esta remessa.');
+    }catch(e){aviso('Assinatura não registrada: '+(e.message||e));}
+    finally{botoes.forEach(x=>x.disabled=false);}
+  }
+
   function fechar(){ document.getElementById("bdrRomaneioFiscal")?.remove(); }
   function imprimir(){
-    const origem=document.querySelector("#bdrRomaneioFiscal .bdr-rom");
+    const origem=document.querySelector("#bdrRomaneioFiscal .atlas-doc-printable") || document.querySelector("#bdrRomaneioFiscal .bdr-rom");
     if(!origem) return;
 
     const copia=origem.cloneNode(true);
@@ -354,16 +702,26 @@
     doc.open();
     doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>Romaneio Fiscal</title>
       <style>
-        @page{size:A4 landscape;margin:10mm}
+        @page{size:A4 portrait;margin:11mm}
         *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#102a4c;background:#fff}
         .bdr-rom{width:100%;max-width:none;background:#fff;color:#102a4c}
         .bdr-rom-top{padding:0 0 12px;display:flex;gap:18px;align-items:center;justify-content:space-between;border-bottom:1px solid #dbe5ef}
         .bdr-rom-brand{font-size:35px;font-weight:1000;margin-left:8px}.bdr-rom-title{text-align:center;flex:1}.bdr-rom-title h2{margin:0;font-size:22px}.bdr-rom-title small{font-size:11px;color:#64748b;font-weight:800}.bdr-rom-status{background:#dcfce7;color:#15803d;padding:8px 10px;border-radius:8px;font-weight:900;font-size:11px}
-        .bdr-rom-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 0}.bdr-rom-kpi,.bdr-rom-card{border:1px solid #dce6f0;border-radius:8px;padding:9px;background:#fff;font-size:10px}.bdr-rom-kpi b{display:block;font-size:13px;margin-top:3px}
-        .bdr-rom-partes{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 0 10px}.bdr-rom-card h3{margin:0 0 6px;font-size:12px}.bdr-rom-card p{margin:3px 0}
-        .bdr-rom-table-wrap{padding:0;overflow:visible}.bdr-rom-table{width:100%;border-collapse:collapse;table-layout:auto}.bdr-rom-table th{background:#123d70!important;color:#fff!important;padding:6px 4px;font-size:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bdr-rom-table td{border:1px solid #dce6f0;padding:5px 4px;font-size:8px}.bdr-rom-table td.num{text-align:right}
+        .bdr-rom-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px 0}.bdr-rom-kpi,.bdr-rom-card{border:1px solid #dce6f0;border-radius:8px;padding:9px;background:#fff;font-size:10px}.bdr-rom-kpi b{display:block;font-size:13px;margin-top:3px}
+        .bdr-rom-partes{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 0 8px}.bdr-rom-card h3{margin:0 0 6px;font-size:12px}.bdr-rom-card p{margin:3px 0}
+        .bdr-rom-table-wrap{padding:0;overflow:visible}.bdr-rom-table{width:100%;border-collapse:collapse;table-layout:auto}.bdr-rom-table th{background:#123d70!important;color:#fff!important;padding:6px 4px;font-size:9px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bdr-rom-table td{border:1px solid #dce6f0;padding:5px 4px;font-size:9px;overflow-wrap:anywhere}.bdr-rom-table td.num{text-align:right}.bdr-rom-table td small{display:block;font-size:7px;color:#64748b;margin-top:2px;overflow-wrap:anywhere}.bdr-rom-table td:nth-child(3){width:30%}.bdr-rom-table td:nth-child(2){width:19%}.bdr-rom-grid[style]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bdr-rom-kpi{break-inside:avoid}.bdr-rom-table tr{break-inside:avoid}.bdr-rom-table thead{display:table-header-group}.bdr-rom-table td small{display:block;font-size:9px;font-weight:600;line-height:1.35;color:#64748b;margin-top:3px;overflow-wrap:anywhere}.bdr-rom-table td{overflow-wrap:anywhere}.bdr-rom-table td:nth-child(3){width:31%}.bdr-rom-table td:nth-child(2){width:19%}
         .bdr-rom-total{margin:10px 0 0 auto;width:max-content;background:#eef6ff!important;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-weight:1000;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bdr-rom-alert{margin:10px 0;background:#fff8e7!important;border:1px solid #fde3a7;padding:8px 10px;border-radius:8px;color:#8a5a00;font-size:9px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
         .bdr-rom-actions,.bdr-export-menu{display:none!important}
+
+        .atlas-doc-printable{width:100%;padding:0;background:#fff;color:#14345e;font-family:Arial,Helvetica,sans-serif;font-size:10px}
+        .atlas-doc-brandbar{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #14549a;padding-bottom:10px;margin-bottom:11px}.atlas-doc-mark{display:flex;align-items:center;gap:8px}.atlas-doc-mark strong{font-size:28px}.atlas-doc-mark span{font-size:18px;font-weight:800;border-left:1px solid #14549a;padding-left:8px}.atlas-doc-mark span small{display:block;font-size:9px;font-weight:400}.atlas-doc-name{text-align:right}.atlas-doc-name b{display:block;font-size:18px}.atlas-doc-name small{color:#60758d;font-size:10px}
+        .atlas-doc-stats{border:1px solid #cfdded;border-radius:6px;display:grid;grid-template-columns:repeat(3,1fr);margin:9px 0}.atlas-doc-stats>div{padding:8px 10px}.atlas-doc-stats>div+div{border-left:1px solid #cbd8e6}.atlas-doc-stats small,.atlas-doc-transport small{display:block;color:#61748a;font-size:9px}.atlas-doc-stats b{display:block;font-size:11px;margin-top:4px;overflow-wrap:anywhere}
+        .atlas-doc-partes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}.atlas-doc-partes section{border:1px solid #c9d9ed;border-radius:6px;overflow:hidden}.atlas-doc-partes h3{background:#e8f2ff!important;color:#17497e;padding:7px 8px;margin:0;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.atlas-doc-partes p{margin:4px 8px;font-size:9px;overflow-wrap:anywhere}.atlas-doc-transport{display:grid;grid-template-columns:1fr 1.5fr .85fr;border:1px solid #c9d9ed;border-radius:6px;margin-bottom:13px}.atlas-doc-transport>div{padding:8px}.atlas-doc-transport>div+div{border-left:1px solid #d3e0ec}.atlas-doc-transport b{display:block;font-size:10px;overflow-wrap:anywhere}
+        .atlas-doc-table{width:100%;border-collapse:collapse;table-layout:fixed}.atlas-doc-table th{background:#123d70!important;color:white!important;font-size:8.5px;padding:6px 4px;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}.atlas-doc-table td{font-size:8.5px;padding:5px 4px;border:1px solid #d7e2ef;vertical-align:top;overflow-wrap:anywhere}.atlas-doc-table th:nth-child(1){width:6%}.atlas-doc-table th:nth-child(2){width:18%}.atlas-doc-table th:nth-child(3){width:32%}.atlas-doc-table th:nth-child(4){width:7%}.atlas-doc-table th:nth-child(5){width:6%}.atlas-doc-table th:nth-child(6){width:18%}.atlas-doc-table th:nth-child(7){width:13%}.atlas-doc-table td small{display:block;font-size:8px;color:#556d86;margin-top:3px}.atlas-doc-table thead{display:table-header-group}.atlas-doc-table tr{break-inside:avoid}.atlas-doc-td-num{text-align:center}.atlas-doc-code{font-weight:800}.atlas-doc-price{text-align:right}
+        .atlas-doc-total{text-align:right;margin:9px 0 14px;font-size:10px}.atlas-doc-total b{display:inline-block;padding:6px 8px;background:#ecf5ff!important;border-radius:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        .atlas-doc-print-signatures{border-top:1.5px solid #14549a;padding-top:10px;margin-top:12px;break-inside:avoid}.atlas-doc-print-signatures h3{font-size:12px;margin:0 0 10px}.atlas-doc-print-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.atlas-doc-print-sign{border:1px solid #c9d9ec;border-radius:6px;text-align:center;break-inside:avoid;padding:0 9px 10px}.atlas-doc-print-sign-title{background:#e8f2ff!important;text-align:left;font-weight:800;padding:7px 9px;margin:0 -9px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.atlas-doc-print-sign-image{height:54px;display:flex;align-items:center;justify-content:center}.atlas-doc-print-sign-image img{max-height:54px;max-width:100%}.atlas-doc-print-sign-image span{font-size:9px;color:#7d8da2;font-style:italic}.atlas-doc-print-sign-line{border-top:1px solid #7d94aa;margin:0 18px 4px}.atlas-doc-print-sign b,.atlas-doc-print-sign small{display:block;margin:4px 0}.atlas-doc-print-sign small{color:#64788f}
+        .atlas-doc-print-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1.5px solid #14549a;padding-top:10px;margin-top:13px;break-inside:avoid}.atlas-doc-print-footer>div{flex:1}.atlas-doc-qr-place{display:flex;align-items:center;gap:10px}.atlas-doc-qr-place img{width:60px;height:60px}.atlas-doc-print-footer small{display:block;color:#64788f;margin-top:4px;font-size:8px}
+        @page{size:A4 portrait;margin:10mm}
       </style></head><body>${copia.outerHTML}</body></html>`);
     doc.close();
 
@@ -533,5 +891,5 @@
   }
 
   global.addEventListener("click",()=>document.getElementById("bdrExportMenu")?.classList.remove("ativo"));
-  global.AtlasRomaneio={__loaded:true,montar,abrir,fechar,imprimir,selecionarValor,toggleExportar,exportarExcel,exportarWord,abrirTransporte,salvarTransporte,registrarNfe,fecharModalNfe,confirmarNfe,notificarFiscal,garantirSnapshot,buscarSnapshot,carregarDoSnapshot,obterRomaneio};
+  global.AtlasRomaneio={__loaded:true,montar,abrir,abrirRemessa,abrirDocumentoPedido,abaDocumento,atualizarAssinaturas,assinarSaida,usarAssinaturaPessoal,criarLinkMotorista,copiarLink,copiarDocumento,limparAssinatura,fecharAssinatura,salvarAssinatura,fechar,imprimir,selecionarValor,toggleExportar,exportarExcel,exportarWord,abrirTransporte,salvarTransporte,registrarNfe,fecharModalNfe,confirmarNfe,notificarFiscal,garantirSnapshot,buscarSnapshot,carregarDoSnapshot,obterRomaneio};
 })(window);

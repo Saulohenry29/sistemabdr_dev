@@ -4087,17 +4087,24 @@ async function trocarObra(){
    - quem executou a ação não recebe o próprio alerta azul;
    - a confirmação verde local continua aparecendo normalmente.
 ========================================================= */
-async function atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId){
+async function atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId, obraId){
   try{
     const banco = db();
     const autor = usuarioAtual();
     const autorId = autor?.id || autor?.usuario_id || null;
 
-    if(!banco) return [];
+    if(!banco || !Number.isSafeInteger(Number(obraId)) || Number(obraId)<=0) return [];
+
+    // Filtra vínculos da obra ANTES de criar notificações. A ausência de
+    // permissão para consultar vínculos não deve provocar envio global.
+    const {data:vinculos,error:erroVinculos}=await banco.from('usuario_obras')
+      .select('usuario_id').eq('obra_id',Number(obraId));
+    if(erroVinculos)throw erroVinculos;
+    const idsDaObra=new Set((vinculos||[]).map(v=>String(v.usuario_id)));
 
     let query = banco
       .from("usuarios_sistema")
-      .select("id,nome,usuario,email,empresa_id,ativo,permissoes");
+      .select("id,nome,usuario,email,empresa_id,ativo,permissoes,owner_sistema");
 
     if(empresaId){
       query = query.eq("empresa_id", empresaId);
@@ -4115,6 +4122,8 @@ async function atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId){
 
     return (data || []).filter(usuario => {
       if(!usuario || usuario.ativo === false) return false;
+      if(!(Number(usuario.id)===1 && usuario.owner_sistema===true) &&
+         !idsDaObra.has(String(usuario.id))) return false;
 
       if(
         autorId != null &&
@@ -4164,7 +4173,7 @@ async function atlasNotificarExclusaoPatrimonio({ patrimonio, motivo, usuarioNom
       null;
 
     const destinatarios =
-      await atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId);
+      await atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId, patrimonio?.obra_id);
 
     if(!destinatarios.length){
       console.info(
@@ -4308,7 +4317,7 @@ async function atlasNotificarReativacaoPatrimonio({ patrimonio, usuarioNome, obr
       null;
 
     const destinatarios =
-      await atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId);
+      await atlasBuscarDestinatariosNotificacaoPatrimonio(empresaId, patrimonio?.obra_id);
 
     if(!destinatarios.length){
       console.info(

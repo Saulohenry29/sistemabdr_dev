@@ -268,7 +268,8 @@ async function carregarTudo(){
 
 
 /* Remessas diretas do Patrimônio: consulta independente dos pedidos comuns.
-   Nenhuma ação de recebimento é criada nesta etapa. */
+   O recebimento de RP em trânsito é tratado separadamente dos pedidos PED,
+   com a mesma RPC transacional utilizada no módulo Patrimônio. */
 let atlasRemessasPatrimoniais = [];
 let atlasRemessasErro = "";
 
@@ -543,7 +544,13 @@ async function carregarPedidos(){
   if(ids.length){
     const it = await db().from("itens_retirada").select("*").in("pedido_id", ids);
     const itens = it.data || [];
-    pedidos = pedidos.map(p=>({...p, itens_retirada: itens.filter(i=>String(i.pedido_id)===String(p.id))}));
+    const itensPorPedido = new Map();
+    for(const item of itens){
+      const chave=String(item.pedido_id);
+      if(!itensPorPedido.has(chave)) itensPorPedido.set(chave,[]);
+      itensPorPedido.get(chave).push(item);
+    }
+    pedidos = pedidos.map(p=>({...p, itens_retirada: itensPorPedido.get(String(p.id)) || []}));
   }
 
   // Para remessas em trânsito, o papel ORIGEM/DESTINO e a etapa visual
@@ -3364,7 +3371,12 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
       el.innerHTML = `<div class="cart-empty">${typeof esc === "function" ? esc(vazio) : vazio}</div>`;
       return;
     }
-    el.innerHTML = arr.map(p => typeof pedidoHTML === "function" ? pedidoHTML(p) : "").join("");
+    el.innerHTML = arr.map(p => {
+      const html=typeof pedidoHTML === "function" ? pedidoHTML(p) : "";
+      if(id!=="listaHistorico" || !html)return html;
+      const tempo=Date.parse(p.data_recebimento_obra||p.data_recebimento||p.updated_at||p.data_criacao||p.criado_em||'')||0;
+      return html.replace('class="pedido-card',`data-atlas-ordem-historico="${tempo}" class="pedido-card`);
+    }).join("");
   }
 
   /* Mantém exatamente as classes e a grade compacta dos pedidos do Atlas.
@@ -3375,7 +3387,7 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
     const codigo = String(r.codigo || ("RP-" + r.id));
     const status = String(r.status || "").toUpperCase().replaceAll("_", " ");
     const quantidade = Number(r.total_itens || 0);
-    return `<div class="pedido-card atlas-pedido-compacto" data-remessa-patrimonial="${Number(r.id)}">
+    return `<div class="pedido-card atlas-pedido-compacto" data-atlas-ordem-historico="${Date.parse(r.recebido_em||r.enviado_em||'')||0}" data-remessa-patrimonial="${Number(r.id)}">
       <div class="atlas-pedido-row">
         <div>
           <div class="atlas-pedido-numero">RP-${Number(r.id)}</div>
@@ -3397,6 +3409,124 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
 
   /* RP utiliza a apresentação oficial do modal, mas nunca o identificador
      nem as operações de um PED. Não altera a proteção de pedidos existente. */
+  // RP e PED são fluxos distintos. O recebimento da RP utiliza a RPC
+  // patrimonial existente e exige a obra OPERACIONAL de destino, não só
+  // o acesso de consulta a obras liberadas ou o perfil MASTER/ADMIN.
+  const atlasRPRecebimentosEmAndamento = new Set();
+
+  function atlasPodeReceberRemessaPatrimonial(remessa){
+    if(atlasNorm(remessa?.status).replaceAll(" ","_") !== "EM_TRANSITO") return false;
+    const destinoId=Number(remessa?.obra_destino_id || 0);
+    if(!destinoId || destinoId !== Number(atlasObraOperacionalId || 0)) return false;
+    const usuario=atlasUsuario();
+    if(Number(usuario?.id || usuario?.usuario_id || 0) === 1) return true;
+    // Falhar fechado se o gestor de permissões não estiver carregado.
+    return window.BDRMenuPermissoes?.temPermissao?.("PATRIMONIO_MOVIMENTAR",usuario) === true;
+  }
+
+  async function atlasNotificarOrigemRP(remessa, usuario, divergencia){
+    const destinatario=Number(remessa?.solicitado_por_id || remessa?.enviado_por_id || 0);
+    if(!destinatario || destinatario === Number(usuario?.id || usuario?.usuario_id || 0)) return;
+    const gestor=window.AtlasGestorNotificacoes;
+    if(typeof gestor?.criarNotificacao !== "function"){
+      console.warn("Atlas RP: serviço de notificações indisponível. Recebimento já registrado.");
+      return;
+    }
+    const tipo=divergencia?"PATRIMONIO_TRANSFERENCIA_DIVERGENCIA":"PATRIMONIO_TRANSFERENCIA_RECEBIDA";
+    await gestor.criarNotificacao({
+      usuario_destino_id:destinatario,
+      empresa_id:Number(remessa.empresa_id || usuario?.empresa_id || 17),
+      tipo,
+      titulo:divergencia?"⚠ Divergência no recebimento de patrimônio":"✓ Transferência patrimonial recebida",
+      mensagem:`Remessa ${remessa.codigo || "RP-"+remessa.id}: ${divergencia?"divergência registrada":"recebimento confirmado"} por ${usuario.nome || usuario.usuario || "responsável"} em ${remessa.obra_destino_nome || "obra de destino"}.`,
+      link:"atlas.html?m=patrimonio&remessas=historico",
+      obra_origem_id:remessa.obra_origem_id,
+      obra_destino_id:remessa.obra_destino_id
+    });
+  }
+
+  window.atlasConfirmarRecebimentoRemessaPatrimonial=async function(id){
+    const remessaId=Number(id);
+    if(!Number.isSafeInteger(remessaId) || remessaId < 1 || atlasRPRecebimentosEmAndamento.has(remessaId)) return;
+    const remessa=atlasRemessasPatrimoniais.find(r=>Number(r.id)===remessaId);
+    if(!remessa || !atlasPodeReceberRemessaPatrimonial(remessa)){
+      return atlasToast("⚠ Somente a obra operacional de destino, com permissão de movimentação, pode receber esta remessa.");
+    }
+    atlasRPRecebimentosEmAndamento.add(remessaId);
+    const botao=document.getElementById("atlasRPBtnReceber");
+    if(botao) botao.disabled=true;
+    try{
+      if(typeof window.AtlasModal?.recebimento !== "function") throw new Error("Modal de recebimento não carregado.");
+      const decisao=await window.AtlasModal.recebimento({
+        id:remessaId,
+        _atlas_codigo_curto:`RP-${remessaId}`,
+        obra_origem_id:remessa.obra_origem_id,
+        obra_destino_id:remessa.obra_destino_id,
+        solicitante:remessa.enviado_por_nome || "-",
+        motorista_nome:remessa.motorista || remessa.motorista_nome || "-",
+        transportadora:remessa.veiculo || remessa.transportadora || "-",
+        veiculo_placa:remessa.placa || remessa.veiculo_placa || "-"
+      });
+      if(!decisao) return;
+
+      // Não confiar no estado de uma tela que pode estar aberta há minutos.
+      // A RPC é a autoridade final sobre a transação, mas revalidamos também aqui.
+      await carregarContextoOperacionalExpedicao();
+      const {data:atual,error:erroLeitura}=await db().from("atlas_patrimonio_remessas")
+        .select("*").eq("id",remessaId).maybeSingle();
+      if(erroLeitura) throw erroLeitura;
+      if(!atual || atlasNorm(atual.status).replaceAll(" ","_") !== "EM_TRANSITO"){
+        throw new Error("A remessa mudou de situação. Atualize a Expedição antes de tentar novamente.");
+      }
+      if(!atlasPodeReceberRemessaPatrimonial(atual)){
+        throw new Error("Recebimento não autorizado para sua obra operacional de destino.");
+      }
+      const usuario=atlasUsuario();
+      const localizacao=String(document.getElementById("atlasRPLocalRecebimento")?.value || "").trim();
+      const {data,error}=await db().rpc("atlas_receber_transferencia_patrimonial",{
+        p_remessa_id:remessaId,
+        p_recebido_por_id:Number(usuario?.id || usuario?.usuario_id || 0) || null,
+        p_recebido_por_nome:usuario?.nome || usuario?.usuario || "Usuário não identificado",
+        p_condicao:decisao.divergencia?"DIVERGENCIA":"BOA",
+        p_observacao_recebimento:decisao.observacao || null,
+        p_localizacao_destino:localizacao || null,
+        p_status_destino:decisao.status_final || null
+      });
+      if(error) throw error;
+      fecharModalDetalhe();
+      const confirmacaoRP=decisao.divergencia
+        ?'⚠ Divergência registrada. Patrimônio não transferido até regularização.'
+        :`✓ Remessa recebida com sucesso. ${Number(data || 0)} patrimônio(s) processado(s).`;
+      if(window.bdrAvisoAtlas)window.bdrAvisoAtlas(confirmacaoRP,'Recebimento patrimonial',decisao.divergencia?'warning':'success',7500);
+      else window.AtlasModal?.sucesso?.(confirmacaoRP);
+      try{ await carregarTudo(); }
+      catch(erroAtualizacao){ console.warn("Atlas RP: recebimento concluído; atualize a lista:",erroAtualizacao); }
+      try{ await atlasNotificarOrigemRP(atual,usuario,!!decisao.divergencia); }
+      catch(erroAviso){ console.warn("Atlas RP: recebimento concluído, falha ao notificar origem:",erroAviso); }
+
+    }catch(erro){
+      console.error("Atlas RP: falha ao receber remessa",erro);
+      window.AtlasModal?.erro?.("Não foi possível concluir o recebimento patrimonial: " + (erro?.message || erro));
+    }finally{
+      atlasRPRecebimentosEmAndamento.delete(remessaId);
+      if(botao?.isConnected) botao.disabled=false;
+    }
+  };
+
+  window.atlasAbrirRomaneioPatrimonial=async function(remessaId){
+    try{
+      const id=Number(remessaId);
+      if(!Number.isSafeInteger(id)||id<1)throw new Error('Código de remessa inválido.');
+      if(!window.AtlasExpedicaoLoader?.modulo)throw new Error('Módulo fiscal da Expedição indisponível.');
+      await window.AtlasExpedicaoLoader.modulo('fiscal');
+      if(!window.AtlasRomaneio?.abrirRemessa)throw new Error('O romaneio patrimonial ainda não foi carregado.');
+      await window.AtlasRomaneio.abrirRemessa(id);
+    }catch(erro){
+      console.error('Atlas RP: falha ao abrir romaneio',erro);
+      window.AtlasModal?.erro?.('Não foi possível abrir o romaneio patrimonial: '+(erro?.message||erro));
+    }
+  };
+
   window.atlasAbrirRemessaPatrimonial = async function(id){
     const remessa = atlasRemessasPatrimoniais.find(r=>Number(r.id)===Number(id));
     if(!remessa) return atlasToast("⚠ Transferência não encontrada. Atualize a tela.");
@@ -3420,11 +3550,11 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
       if(!modal || !box) throw new Error("Modal oficial da Expedição indisponível.");
       // Usa as classes CSS oficiais carregadas pelo módulo de recebimento.
       // O CSS é instalado pela função original ao abrir um PED em trânsito.
-      if(!document.getElementById("atlasRecebimentoDetalheCss")){
+      if(!document.getElementById("atlasRecebimentoRPDetalheCss")){
         // O CSS oficial é local ao módulo; reproduz apenas as classes existentes
         // para RP sem modificar o fluxo de pedidos.
         const css = document.createElement("style");
-        css.id = "atlasRecebimentoDetalheCss";
+        css.id = "atlasRecebimentoRPDetalheCss";
         css.textContent = `
           #modalDetalhe.atlas-recebimento .modal{width:min(1160px,calc(100vw - 32px));max-height:calc(100dvh - 28px);overflow:hidden}
           #modalDetalhe.atlas-recebimento .modal-head{padding:12px 16px}
@@ -3457,6 +3587,13 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
           .atlas-rec-dobra{border:1px solid #e2e8f0;border-radius:11px}
           .atlas-rec-dobra summary{cursor:pointer;padding:9px 12px;font-size:11px;font-weight:900}
           .atlas-rec-dobra-conteudo{padding:0 12px 10px;font-size:10px;line-height:1.55}
+          .atlas-rp-footer{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 18px;border-top:1px solid #dbe4ef;background:#f8fafc}
+          .atlas-rp-local{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;color:#475569;font-size:11px;font-weight:800}
+          .atlas-rp-local input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:9px;font:inherit;background:#fff;color:#0f172a}
+          .atlas-rp-confirmar{background:#15803d;border:0;border-radius:10px;color:white;font-size:12px;font-weight:900;padding:12px 16px;cursor:pointer;white-space:nowrap}
+          .atlas-rp-confirmar:disabled{opacity:.55;cursor:wait}
+          .atlas-rp-aviso{padding:11px 18px;margin:0;color:#92400e;background:#fffbeb;font-size:11px;font-weight:800;border-top:1px solid #fde68a}
+          @media(max-width:800px){.atlas-rp-footer{flex-direction:column;align-items:stretch}}
           @media(max-width:800px){.atlas-rec-top{grid-template-columns:1fr}.atlas-rec-resumo{grid-template-columns:1fr 1fr}.atlas-rec-transporte{grid-template-columns:1fr 1fr}.atlas-rec-item{grid-template-columns:30px 1fr 70px}.atlas-rec-item-desc{grid-column:2}.atlas-rec-item-un{display:none}.atlas-rec-compactos{grid-template-columns:1fr}}
         `;
         document.head.appendChild(css);
@@ -3464,10 +3601,19 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
       const e = v=>esc(v ?? "-");
       const origem=remessa.obra_origem_nome || nomeObra(remessa.obra_origem_id);
       const destino=remessa.obra_destino_nome || nomeObra(remessa.obra_destino_id);
-      const finalizado=["RECEBIDA","RECEBIDO","RECEBIDO_COM_DIVERGENCIA"].includes(String(remessa.status).toUpperCase());
+      const finalizado=["RECEBIDA","RECEBIDO","RECEBIDA_DIVERGENCIA","RECEBIDO_COM_DIVERGENCIA"].includes(String(remessa.status).toUpperCase());
+      const aReceber=atlasNorm(remessa.status).replaceAll(" ","_")==="EM_TRANSITO";
+      const podeReceber=atlasPodeReceberRemessaPatrimonial(remessa);
+      const avisoRecebimento=Number(atlasObraOperacionalId || 0)!==Number(remessa.obra_destino_id || 0)
+        ? `Recebimento exclusivo da obra de destino. Sua obra operacional é ${nomeObra(atlasObraOperacionalId) || "não identificada"}.`
+        : "Seu usuário não possui a permissão PATRIMONIO_MOVIMENTAR para confirmar o recebimento.";
+      const comDivergencia=["RECEBIDA_DIVERGENCIA","RECEBIDO_COM_DIVERGENCIA"].includes(atlasNorm(remessa.status));
       const etapas = [
-        ["Transferido",true],["Em trânsito",true],["A receber",false],["Recebido",finalizado]
-      ].map(([label,ok],idx)=>`<div class="atlas-rec-etapa ${ok?"ok":idx===2?"atual":""}"><i>${ok?"✓":idx+1}</i>${label}</div>`).join("");
+        ["Transferido",true],["Em trânsito",aReceber || finalizado],["A receber",finalizado && !comDivergencia],["Recebido",finalizado && !comDivergencia]
+      ].map(([label,ok],idx)=>{
+        const emDestaque=!finalizado && ((aReceber && idx===(podeReceber?2:1)) || (!aReceber && idx===0));
+        return `<div class="atlas-rec-etapa ${ok?"ok":emDestaque?"atual":""}"><i>${ok?"✓":idx+1}</i>${label}</div>`;
+      }).join("");
       modal.classList.add("atlas-recebimento");
       titulo.textContent="🚚 Detalhes da remessa";
       box.innerHTML=`
@@ -3483,9 +3629,13 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
           <div class="atlas-rec-secao"><div class="atlas-rec-secao-head">📦 Patrimônios da transferência (${itens.length})</div><div class="atlas-rec-itens">${itens.map((i,idx)=>`<div class="atlas-rec-item"><div class="atlas-rec-item-num">${idx+1}</div><div class="atlas-rec-item-cod">${e(i.codigo_qr)}</div><div class="atlas-rec-item-desc">${e(i.nome_bem)}</div><div class="atlas-rec-qtd">Qtd. 1</div><div class="atlas-rec-item-un">UN</div></div>`).join("") || '<div class="cart-empty">Nenhum patrimônio encontrado.</div>'}</div></div>
           <div class="atlas-rec-compactos">
             <details class="atlas-rec-dobra" id="atlasRecHistorico"><summary>📄 Histórico da remessa ⌄</summary><div class="atlas-rec-dobra-conteudo">Saída: ${e(dataBR(remessa.enviado_em))}<br>${e(origem)} → ${e(destino)}<br>Responsável: ${e(remessa.enviado_por_nome)}</div></details>
-            <details class="atlas-rec-dobra"><summary>🧾 Documentos relacionados ⌄</summary><div class="atlas-rec-dobra-conteudo">Nenhum documento vinculado nesta visualização.</div></details>
+            <details class="atlas-rec-dobra"><summary>🧾 Documentos relacionados ⌄</summary><div class="atlas-rec-dobra-conteudo">
+              <button type="button" class="atlas-rec-link" onclick="atlasAbrirRomaneioPatrimonial(${Number(remessa.id)})">📄 Abrir romaneio</button>
+              <small>Documento de conferência da remessa. NF-e e dispensa fiscal dependem de análise do responsável autorizado.</small>
+            </div></details>
           </div>
-        </div>`;
+        </div>
+        ${podeReceber?`<div class="atlas-rp-footer"><label class="atlas-rp-local">Localização final no destino (opcional)<input id="atlasRPLocalRecebimento" maxlength="180" placeholder="Ex.: Almoxarifado / Alojamento / Sala 2"></label><button id="atlasRPBtnReceber" class="atlas-rp-confirmar" type="button" onclick="atlasConfirmarRecebimentoRemessaPatrimonial(${Number(remessa.id)})">✓ Confirmar recebimento</button></div>`:aReceber?`<div class="atlas-rp-aviso">⚠ ${e(avisoRecebimento)}</div>`:!finalizado?`<div class="atlas-rp-aviso">⚠ Remessa em ${e(String(remessa.status).replaceAll("_"," "))}. É necessário concluir a expedição na origem antes de permitir o recebimento no destino.</div>`:""}`;
       modal.classList.add("ativo");
     }catch(erro){
       console.error("Atlas: não foi possível abrir remessa patrimonial",erro);
@@ -3530,6 +3680,17 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
       if(remessas.length){
         el.querySelector(".cart-empty")?.remove();
         el.insertAdjacentHTML("beforeend", remessas.map(atlasCardRemessaPatrimonial).join(""));
+      }
+    }
+
+    // PED e RP compartilham uma única linha do tempo, mais recentes no topo.
+    const painelHistorico=document.getElementById('listaHistorico');
+    if(painelHistorico){
+      const cards=[...painelHistorico.children].filter(el=>el.classList.contains('pedido-card'));
+      if(cards.length){
+        painelHistorico.querySelector('.cart-empty')?.remove();
+        cards.sort((a,b)=>Number(b.dataset.atlasOrdemHistorico||0)-Number(a.dataset.atlasOrdemHistorico||0));
+        cards.forEach(card=>painelHistorico.appendChild(card));
       }
     }
 

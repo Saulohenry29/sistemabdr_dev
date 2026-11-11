@@ -1027,3 +1027,145 @@ solução correta sem remendos.
 - Respeita colunas, níveis, espelhamento e posições inativas. Clique em posição azul consulta código de planejamento. Posição inativa é cinza e não clicável.
 - Posicionamento espacial inicial por texto `direita`/`esquerda` e centro; não é levantamento dimensional real do CD. Não persiste nem integra endereços/saldos ao Supabase.
 - Modo legado do Endereçamento 3D preservado no botão Ativar 3D.
+
+
+### Diagnóstico e integração de recebimento de RP na Expedição — 10/11/2026
+- Confirmado no ZIP completo de 10/11: cartões RP originados em `atlas_patrimonio_remessas` eram exibidos na aba A receber, mas `atlasAbrirRemessaPatrimonial` não construía ação de recebimento; pedidos comuns PED já possuíam fluxo próprio.
+- Correção local, **não publicada**: o modal RP oferece confirmação apenas para a obra operacional destinatária com permissão `PATRIMONIO_MOVIMENTAR`, reutilizando o modal de conferência e a RPC existente `atlas_receber_transferencia_patrimonial`. RP e PED continuam separados. Há revalidação do status antes da RPC, trava contra cliques simultâneos e tentativa de notificar a origem após sucesso. Fora desse escopo, o modal explica por que não há botão.
+- CSS da RP usa identificador próprio para não impedir o carregamento do CSS completo do recebimento PED. Incluídas versões dos scripts para evitar cache antigo.
+- Otimização pontual: associação dos `itens_retirada` aos `pedidos_retirada` por `Map` em uma passagem, sem mudar consultas nem regras.
+- **Pendente:** remessas RP criadas como `AGUARDANDO_EXPEDICAO` ainda precisam da operação de despacho na origem; não há ação correspondente identificada no JS enviado. O modal passa a explicar a pendência, sem atualizar status diretamente no navegador.
+- Validações locais: `node --check` sem erro; cenários simulados de autorização, recebimento normal, divergência e cancelamento passaram; visualização em Chromium confirmou botão para destinatário autorizado e aviso para outro operador. Não substituem teste com Supabase real.
+- **Pendente:** teste funcional no DEV com usuário operacional da obra de destino; checar RPC/RLS servidor e transição da remessa para Histórico, inclusive divergência, antes de promover ao OFICIAL. A causa maior de lentidão pode incluir a RPC `atlas_contexto_expedicao` chamada individualmente por pedido em trânsito; otimização de rede deve ser planejada separadamente.
+
+
+## 2026-11-10 — Relatório (remetente) + Romaneio RP vertical — versão piloto DEV
+- A consulta de eventos patrimoniais passou a separar **Enviado por** de **Recebido / realizado por**, sem inferir o remetente a partir do recebedor. O remetente da RP vem de `atlas_patrimonio_remessas.enviado_por_nome`; outros eventos usam `enviado_por`, ou o ENVIO registrado para a mesma combinação patrimônio + referência de remessa/pedido. Ausência de prova mostra `—`. Consulta de patrimônios troca o título da nova coluna para **Cadastrado por**.
+- Colunas no histórico redistribuídas para 10 posições, com ellipsis e nome completo por `title`, sem alterar o cabeçalho fixo e a paginação. Exportação, impressão de eventos e detalhe aproveitam o remetente auditado quando ele foi encontrado; o Excel mantém campos separados para enviado e recebido. Colunas da impressão de eventos foram reequilibradas para incluir Enviado por.
+- `JS/AtlasRomaneio.js`: impressão PED em **A4 retrato**, tabela compactada com todos os dados fiscais preservados em sublinhas; nova visualização de romaneio RP obtida **somente por leitura** de cabeçalho, itens e patrimônio. RP nunca escreve na tabela `romaneios` (atualmente vinculada a PED).
+- `JS/patrimonio/patrimonio-remessas.js`: após a RPC criar RP, tentar notificar funcionários com `EXPEDICAO_FISCAL` da empresa para análise de NF-e. Aviso inclui deep link da RP e deduplicação por `tipo + link + destinatário`. RP 22/33 somente pode notificar OWNER. Falha de notificação não desfaz nem duplica remessa; interface apresenta aviso. Não há decisão automática sobre obrigatoriedade fiscal.
+- Expedição: link do romaneio no detalhe da RP; deep link `acao=romaneio-rp&remessa=...`; histórico PED/RP em uma ordem por data de recebimento (com fallback para envio/cadastro); confirmação RP apresenta feedback de sucesso antes do recarregamento pesado.
+- **Sem SQL nesta entrega**. **Pendências críticas** antes de produção: verificar RLS de `atlas_patrimonio_remessas` e `atlas_patrimonio_remessa_itens` (snapshot de sentinela as mostrava sem RLS), conferir `EXPEDICAO_FISCAL` e acesso por empresa, validar que notificações são gravadas em sessão autenticada; criar fluxo fiscal persistente e transacional para NF-e obrigatória/dispensada, bloqueio de saída e comprovantes. A notificação é uma tarefa informativa, não uma liberação fiscal. Permissões fiscais podem ser lista de tokens ou texto separado por vírgulas/ponto e vírgula; a leitura do cadastro deve respeitar RLS e permissões de obras, que ainda exigem testes reais.
+- **Testes locais:** `node --check` para JS, mock Chromium de 30 patrimônios em RP (somente leitura), verificação visual da nova tabela com 10 colunas em 1280/1820 px e nomes longos. Não foram feitos testes com Supabase de produção.
+
+
+## 10/11/2026 — Correção da autoria de transferência no Relatório (preparação DEV)
+- Caso auditado por leitura no Supabase: patrimônio `PAT-7280429` (`patrimonio_movimentacoes.id=37`, `pedido_id=71`) apresenta `solicitado_por=JOAO PAULO SOUZA DE BRITO`, `enviado_por=Saulo Henrique`, `recebido_por=CLAUDENILSON`. A primeira pessoa iniciou a transferência pelo Patrimônio; Saulo realizou etapa de despacho posterior; Claudenilson confirmou o recebimento. Não confundir as três atuações.
+- Na coluna **Enviado por** do Histórico, priorizar `solicitado_por` (primeira etapa) quando estiver registrado; para `RP` direta sem esse campo, usar `atlas_patrimonio_remessas.enviado_por_nome`; não deduzir autores apenas a partir da obra. Recebimento mantém `recebido_por`.
+- O detalhe e a impressão detalhada mostram também a pessoa do despacho intermediário, quando for diferente da pessoa que iniciou. Exportação Excel preserva ambos separadamente.
+- Filtro de funcionário harmoniza maiúsculas, diacríticos e nomes com sobrenomes complementares: `João Paulo Souza` pode corresponder a `JOAO PAULO SOUZA DE BRITO`; abreviações de menos de três palavras não são equiparadas por prefixo por risco de homônimos. Filtro continua subordinado às obras autorizadas e às fontes de eventos selecionadas.
+- Mudança somente em `JS/relatorios/relatorios.js`, versão do script em `relatorios.html` e este contexto; sem SQL, sem atualização retroativa de autoria no Supabase, sem mexer no fluxo de remessas ou no romaneio fiscal. Pendência: validar com dados reais no DEV antes de promover ao BDR Gestão OFICIAL.
+
+
+## 10/11/2026 — Consulta consolidada de atividade de funcionário e ficha de movimentação (DEV)
+- Fonte: versão do Relatório corrigido de autoria da transferência, sem alterar Supabase. Arquivos originais atualizados: `JS/relatorios/relatorios.js`, `relatorios.html`, `CSS/relatorios/relatorios.css` e `CONTEXTO_ATLAS.md`.
+- **Consulta por pessoa:** quando o campo Funcionário tem seleção e o Tipo de registro está vazio (padrão), as fontes consultadas passam a incluir cadastro de bens e eventos reais de patrimônio/remessa. Busca rápida por nome participante também ativa a pesquisa consolidada. Se a pessoa remover a seleção/pesquisa, volta ao padrão de consultar apenas os patrimônios. Um tipo explicitamente escolhido (ex.: Cadastro ou Histórico) continua sendo respeitado. Busca textual ignora diferenças de acento e caixa. A participação ainda considera `solicitado_por`, `enviado_por`, `recebido_por`, `usuario`, entre outros campos existentes, sem identificar pessoas pelo nome da obra.
+- **Resumo contextual:** exibe cadastros efetivamente feitos pelo funcionário, eventos de movimentação com participação, transferências cujo início está atribuído ao funcionário e recebimentos confirmados. Não confundir `responsavel` atual por patrimônio com autor de cadastro. O contador geral de funcionários agora considera todos os participantes auditáveis dos registros filtrados, não apenas o executor final.
+- **Detalhes:** ficha organizada com cabeçalho, primeiro e último participantes, trajeto, etapas datadas e campos complementares; dados de aprovação, despacho, motorista/placa, patrimônio, baixa, observação e auditoria continuam disponíveis quando presentes no registro. Os valores exibidos são escapados para HTML; papéis vazios são identificados como não registrados, sem inventar autoria.
+- **Layout:** tabela de 10 colunas com `colgroup` sincronizado entre cabeçalho fixo e corpo, descrição menor, origem/destino maiores, separação sutil entre grupos; nomes continuam com ellipsis/tooltip. CSS restrito ao módulo, incluindo responsividade do diálogo. Versões de CSS/JS atualizadas no HTML para evitar cache legado.
+- **Testes locais:** `node --check` OK; Chromium com DOM e dados simulados de `PAT-7280429`: consulta padrão, funcionário `JOAO PAULO SOUZA` → `JOAO PAULO SOUZA DE BRITO`, recebedor Claudenilson, diálogo com Saulo como despachante, busca rápida por nome, tipo Cadastro explícito, busca comum por descrição e ausência de exceções JavaScript.
+- **Pendências:** conferir em DEV com conexão Supabase e demais tipos de registros, nomes homônimos e autorização por obra; publicar OFICIAL somente após aprovação. Não houve SQL nem alteração dos dados no banco.
+
+
+### Relatórios — filtros neutros e nomes compactos (10/11/2026)
+- A seleção vazia em **Tipo de registro** deve significar **Todos os registros**, combinando cadastro patrimonial (um registro por bem) e histórico real (uma linha por evento), sempre respeitando as obras autorizadas.
+- Filtros de funcionário, obra, período, tipo, status e categoria sem seleção não restringem o universo. Uma escolha explícita aplica só o recorte selecionado; usar “Limpar filtros” volta a Todos.
+- Busca por João Paulo em qualquer papel registrado (cadastro, solicitação/envio inicial, despacho, recebimento) sem atribuir ao executor intermediário uma solicitação de outro usuário.
+- **Somente na tabela**, nomes com mais de duas palavras mostram as duas primeiras + `...`; tooltip e aria-label preservam o nome integral e os documentos exportados permanecem completos. Homônimos que compartilham dois nomes recebem sobrenomes adicionais até distinguir os nomes conhecidos.
+- Colgroup espelhado no cabeçalho/corpo: percentuais 8/10/14/9/15/15/10/10/6/3, priorizando Origem/Destino, mantendo tabela com rolagem horizontal em telas estreitas.
+- `PATRIMONIO_BAIXADO` é linha sintética de situação atual, não evento histórico: não deve aparecer como movimentação extra no padrão Todos; somente em filtro explícito de BAIXA.
+- Não altera schema/RLS, autenticação, permissões, movimentações gravadas ou exportação existente. Validar no VS Code e DEV antes de publicar no oficial.
+- Validação executada: `node --check` aprovado; cenário Chromium com dados fictícios validou seleção Todos (cadastros + eventos), João Paulo (envio + recebimento), exclusividade de cadastro, busca rápida, filtro de obra, reset e abreviação com homônimos. Validação com dados reais do Supabase permanece pendente no ambiente DEV.
+
+## 10/11/2026 — Permissões por obra, romaneios e notificações: diagnóstico e correção local
+
+### Decisão de arquitetura (sem nomes de usuários de teste)
+
+- **Owner absoluto:** usuário `usuarios_sistema.id=1` com `owner_sistema=true`, acesso global. `ADMIN`/`MASTER` não adquirem alcance global pelo perfil. Permissões para ações operacionais são separadas da permissão de **consulta**.
+- **Obras autorizadas para consulta:** vínculos em `public.usuario_obras` (`usuario_id`, `obra_id`), consultados para o usuário autenticado. `usuarios_sistema.obras_liberadas` pode existir como configuração/cache legado, mas não concede acesso quando divergir da associação confirmada. `atlas_usuario_obras` representa a **obra operacional** na Expedição (papel de origem/destino), não a relação completa de obras consultáveis. O cadastro legado `usuarios_sistema.obra_id` pode ser nulo.
+- **Transferências entre obras:** um usuário com acesso efetivo à origem **ou** destino pode consultar/imprimir o romaneio de uma RP/PED. Isso não concede autorização para **receber**, **despachar**, **autorizar** ou **decidir NF-e**, que continuam sujeitos ao papel operacional e permissões próprias. Nunca conceder acesso só por perfil ou empresa.
+- **Notificações:** mensagens vinculadas a obras devem ser gravadas e exibidas apenas para destinatários com vínculo à obra de origem/destino pertinente, ou Owner. Avisos gerais sem obra não são confundidos com eventos patrimoniais sem escopo. Quem executa a ação não recebe a própria notificação informativa.
+- **Relatórios:** obras disponíveis, patrimônios cadastrados, remessas diretas e movimentações têm de respeitar os vínculos efetivos do usuário. Não embutir exceções por IDs de obras de teste nem por nomes de funcionários; usar contas e obras de teste somente como casos de validação.
+
+### Evidência do Supabase (consultas SELECT, sem SQL de alteração)
+
+- Foi confirmada divergência em um usuário de teste: `usuarios_sistema.obras_liberadas` apresentava **22 e 33**, `usuario_obras` apresentava **22 e 33**, porém `atlas_usuario_obras` continha somente **22**. `usuarios_sistema.obra_id` estava nulo. Essa divergência foi um indício para falha do filtro de Relatórios; as três fontes têm finalidades distintas, não podem ser intercambiadas para conceder acesso.
+- Remessa `atlas_patrimonio_remessas.id=2` possui origem **33**, destino **22**, status `EM_TRANSITO`. A Expedição permitia visualizar a RP e o romaneio negava com mensagem de escopo, porque o frontend bloqueava hardcoded ambas as obras para não-Owner.
+- Em `notificacoes`, as linhas **934** e **922** foram realmente gravadas com `usuario_destino_id=4`, `obra_origem_id=14`, `obra_destino_id=14`, para patrimônio da obra **14**, embora o destinatário consultado tivesse vínculos **22/33**. Não era apenas a apresentação no sininho.
+- `JS/patrimonio/patrimonio.js` selecionava destinatários de exclusão/reativação por `empresa_id` e `RECEBER_NOTIFICACOES`, **sem verificar obra**. `JS/bdrNotificacoes.js` listava as notificações pelo ID do usuário sem filtro posterior de obra. `JS/patrimonio/patrimonio-remessas.js` também tinha caminhos de INSERT direto que ignoravam a decisão central.
+- Policies identificadas: `patrimonio` possui policies permissivas `true` inclusive `anon`; `patrimonio_movimentacoes` permite `SELECT/INSERT/UPDATE` amplo para `anon,authenticated`; `notificacoes` e `bdr_notificacoes` têm operações amplas com condições `true`. Policies permissivas combinam-se por **OR**; uma policy restritiva adicional não garante isolamento enquanto outras estiverem abertas. `usuario_obras` tem SELECT autenticado para `(usuario_id=atlas_usuario_id() OR atlas_e_owner())`, e SELECT amplo para `anon`. As políticas exatas e os GRANTs/RPCs precisam ser auditados em conjunto antes de intervenção.
+
+### Alterações locais preparadas a partir do ZIP completo de 10/11/2026 (NÃO publicadas)
+
+- `JS/relatorios/relatorios.js`: consulta `usuario_obras` antes do carregamento patrimonial; sem vínculo, nenhum bem/obra é incluído; ao consultar obras/histórico aplica filtro para os IDs vinculados. Retirados filtros fixos de obras 22/33 e fallback ADMIN/MASTER que transformava acesso em privilégio global. Owner preservado. `relatorios.html` recebeu versão de script para evitar cache antigo.
+- `JS/AtlasRomaneio.js`: RP e PED consultam `usuario_obras` do usuário antes de abrir documento. A RP não escreve em `romaneios`; PED verifica escopo antes de iniciar `obterRomaneio` (que pode atualizar snapshot). Não se remove permissão operacional de recebimento. `JS/expedicao/expedicaoBoot.js` atualiza query de versão.
+- `JS/patrimonio/patrimonio.js`: destinatários de exclusão/reativação precisam ter vínculo à obra do patrimônio. Se a consulta falha, não tenta notificar toda a empresa.
+- `JS/atlasGestorNotificacoes.js`: valida vínculo do destinatário com origem/destino antes de INSERT de notificação com obra; a permissão global por `MASTER` foi retirada. Se RLS impedir consultar o destinatário/vínculo, falha **fechada** e registra aviso no console.
+- `JS/patrimonio/patrimonio-remessas.js`: removidos INSERTs diretos de fallback para notificações operacionais, que contornavam as regras do Gestor. Reorganizado aviso de Expedição via Gestor e vínculos. Romaneio fiscal de RP deixa de ter exclusão fixa por obra de teste, mas destinatário só recebe com permissão fiscal **e** vínculo confirmado.
+- `JS/atlasWorkflowManutencao.js`: notificações de manutenção passam a levar a obra da OS/patrimônio; sem obra identificável, não são enviadas indiscriminadamente por empresa. `manutencao.html` recebeu versão atualizada do script.
+- `JS/bdrNotificacoes.js`: lista do sininho filtra pelo vínculo `usuario_obras` com consulta periódica; notificações antigas indevidas deixam de aparecer ao usuário não-Owner. Realtime deixa de reproduzir um aviso antes da validação de obra. Notificações gerais sem obra ainda são permitidas se não tiverem referência operacional ambígua. Arquivos HTML relacionados atualizados somente nos parâmetros de cache das dependências.
+- Nenhuma SQL de alteração executada; nenhuma exclusão/reclassificação retroativa de notificação; nenhuma mudança de usuário/perfil/grants/RLS em produção. Pacote local para teste, **não aprovado para OFICIAL**.
+
+### Limitações importantes e pendências de segurança
+
+1. **Crítica — proteção real da API:** a filtragem JavaScript **não é controle de segurança suficiente** com policies RLS amplas. Preparar numa etapa separada, sob autorização explícita e após inventário conjunto de GRANTs, Auth, políticas, triggers e RPCs, a mudança no PostgreSQL que valide destinatário, obra e identidade no servidor. **NÃO executar DROP POLICY/REVOKE às cegas**, pois o legado ainda usa `anon`.
+2. A rotina central de envio consulta usuários/vínculos com as políticas atuais. Um usuário não-Owner pode não conseguir ler a associação de outro usuário, mesmo legítimo; nesse caso a notificação **não é enviada** em vez de gerar vazamento. Requer função/RPC segura no servidor para geração/recuperação de destinatários com RLS apropriada, e testes de contas distintas.
+3. `bdr_notificacoes` e fluxos legados que gravam fora do Gestor ainda precisam de auditoria antes da liberação em produção. Corrigir apenas a tabela `notificacoes` não elimina as policies permissivas das demais tabelas.
+4. Relatórios e outros módulos ainda possuem operações de consulta legadas e filtros de interface. Até RLS correta, um cliente que invoque Supabase diretamente pode contornar o filtro visual. Avaliar consultas escopadas no servidor para todo o histórico, inclusive `patrimonio_movimentacoes`, remessas e itens.
+5. Fazer testes reais em DEV com pelo menos três perfis: Owner; funcionário com acesso à origem/destino; funcionário sem acesso. Verificar listagem de obras, cadastros e histórico, abertura/impressão de RP/PED, recebimento restrito ao destino, notificações antigas e novas, Realtime/áudio, trocas de obra/empresa e casos de falha de consulta.
+6. Não afirmar que a versão local corrigiu a segurança do Supabase; a revisão da RLS é etapa obrigatória ainda pendente.
+
+------------------------------------------------------------------------
+
+## Romaneio patrimonial — implementação do layout e assinaturas (10/11/2026)
+
+### Decisão funcional aprovada
+
+- Modelo A4 vertical, seguindo a referência visual BDR | Atlas: cabeçalho compacto, remessa/data/status, origem/destino, transporte, tabela detalhada e rodapé de consulta.
+- **Não** imprimir blocos separados de “Observações” ou “Situação fiscal”; as informações fiscais e eventuais NF-e permanecem na operação administrativa do Atlas.
+- Relação de patrimônios com PAT, descrição, marca/modelo/série/chassi/placa/RENAVAM/código de insumo quando presentes, quantidade/unidade, NCM, nota de entrada e valor patrimonial existente; nunca inventar dados fiscais faltantes.
+- Total de patrimônios discreto. Para muitos bens, a tabela continua nas páginas seguintes, com as assinaturas no final do documento.
+- Assinaturas exigidas pelo processo operacional: **responsável pela saída** e **motorista**. O recebimento no destino continua em **Expedição → A receber → Confirmar recebimento**, sem assinatura no romaneio. A remessa só passa a RECEBIDO pelo fluxo normal de recepção; assinatura não muda automaticamente o status.
+- O romaneio é **documento operacional, não fiscal**. A tela fiscal de PED continua existente e separada. Estar no mesmo município **não determina, por si só**, dispensa de NF-e.
+- Consulta/impressão permitidas por vínculo autorizado à obra de origem **ou** destino. Assinar saída e gerar link para motorista exigem vínculo à **obra de origem** ou Owner. Somente o Owner possui acesso global.
+
+### Alterações técnicas nesta entrega — arquivos do projeto
+
+- `JS/AtlasRomaneio.js`: interface A4 dos romaneios RP, acesso ao documento de transporte PED sem substituir as rotinas fiscais existentes, painel de assinaturas, QR de **consulta autenticada** do documento, captura por canvas, uso opcional de assinatura pessoal salva, impressão e atualização de assinaturas reais.
+- `JS/expedicao/expedicaoBoot.js` e `expedicao.html`: versões de scripts atualizadas para evitar o cache antigo.
+- `assinatura-romaneio.html` (**nova funcionalidade**): página independente para o motorista com link de uso único, lista dos itens, aceite explícito e assinatura desenhada no celular. O token é removido da URL visível após a abertura.
+- `sql/atlas_romaneio_assinaturas.sql` (**migração proposta, NÃO EXECUTADA**): tabelas privadas com RLS e RPCs de autorização, leitura, assinaturas e links de motorista. A migração **não** é parte das mudanças já aplicadas no Supabase.
+
+### Garantias e limites
+
+- Apenas assinaturas lidas de RPC segura, correspondentes à versão corrente do documento, são mostradas como válidas e impressas. Assinaturas ausentes/inválidas aparecem como **pendentes**. Sem migração validada, a impressão A4 funciona, mas as opções de assinar ficam indisponíveis.
+- A assinatura fica vinculada à versão dos bens/rotas e aos campos relevantes do documento; versões anteriores são preservadas por registros separados. Alterações de bens invalidam a assinatura para a nova versão, exigindo nova confirmação.
+- Assinatura do motorista por link comprova ação com token e traço capturado, mas **não verifica identidade civil do motorista**; não constitui, por si só, assinatura eletrônica qualificada.
+- O QR no documento impresso abre a rota autenticada do Atlas. Não é um serviço público de validação criptográfica e não deve ser descrito como prova de autenticidade independente.
+- A migração SQL proposta utiliza somente `auth.uid()` para assinar a saída; usuários exclusivamente legados precisam ser migrados para o Supabase Auth. A migração exige revisão técnica de schema, RLS/GRANTs, testes em DEV e aprovação explícita antes da execução.
+- A revisão RLS geral de Patrimônio/Notificações identificada em 10/11 continua pendente. Este trabalho não a corrige e não deve ser promovido ao oficial sem avaliação de segurança.
+
+### Evidências dos testes isolados
+
+- Sintaxe JavaScript validada com Node.
+- Teste de interface no Chromium com dados **simulados** da remessa RP-2: 2 patrimônios, transportador, status EM_TRANSITO, duas áreas de assinatura, link e QR de motorista, atualização de assinatura assinada.
+- PDF de validação A4 vertical de 1 página gerado em Chromium e renderizado para conferência visual. Nenhum dado real de produção foi alterado.
+- **Pendentes antes de implantação:** executar/validar a migração em DEV após aprovação, testar com Auth real, tokens expirados/reutilizados, permissão origin/dest, múltiplas páginas, recebimento e assinatura no celular. Nada da assinatura foi testado com o Supabase real.
+
+
+### Revisão local 11/11/2026 — Relatórios e abas do romaneio (não publicada)
+- CSS dos Relatórios: removidas somente as divisórias **verticais** da tabela de movimentações; mantidos os espaçamentos, linhas horizontais e indicador lateral da linha.
+- `JS/AtlasRomaneio.js`: abas Documento A4 / Assinaturas com alinhamento e altura uniformes. Não altera impressão nem fluxo de recebimento.
+- O Atlas local e o oficial utilizam **o mesmo projeto Supabase**: não há banco DEV isolado. **Não executar** `sql/atlas_romaneio_assinaturas.sql` nesse banco até haver homologação isolada, backup, revisão das funções e autorização expressa.
+- Consulta de esquema confirmou `atlas_patrimonio_remessa_itens.codigo_qr`, `.nome_bem` e `patrimonio.valor_aquisicao`. A migração proposta ainda usa `patrimonio.valor_bem` (incompatível com o esquema informado), além de referências não confirmadas como `patrimonio.ncm`, `patrimonio.numero_nfe` e colunas de `pedidos_retirada`.
+- Pendências: confirmar o esquema de `pedidos_retirada`, revisar autorização de quem pode assinar a saída, testar bloqueios de acesso direto/RLS, token do motorista e imutabilidade antes de executar SQL. Nenhuma migração foi aplicada nesta revisão.
+- A publicação isolada do CSS de Relatórios é independente da ativação de assinaturas. Não promover scripts/SQL de assinaturas como funcionalidade habilitada.
+
+### Segunda revisão — 11/11/2026, antes da publicação Git (ainda não publicada)
+
+- Fonte: ZIP completo `atlas_shell_reinicio_limpo (3)(8).zip`, comparado ao pacote visual `Atlas_Ajustes_Relatorios_Abas_20261111.zip`.
+- `CSS/relatorios/relatorios.css`: corrigida a regressão da primeira revisão, que alterava para azul a faixa lateral da tabela. Mantido **3px vermelho #b51621** no primeiro campo de cada linha; somente divisórias verticais internas removidas. Larguras, espaçamento e bordas horizontais preservados.
+- `JS/AtlasRomaneio.js`: abas `Documento A4` e `Assinaturas` alinhadas e com altura mínima 46px, ambas na mesma linha inclusive em viewport estreito, com rolagem horizontal quando necessário. Não afeta PDF nem recebimento da Expedição.
+- Evidências: `node --check` em `JS/AtlasRomaneio.js` e scripts dos Relatórios; Chromium em 1440px e 375px verificou computed styles da borda vermelha e ausência de divisórias, e igualdade de altura/posição das abas. **Não houve teste de autenticação Supabase com usuários reais**, nem execução de SQL.
+- Publicação: esse pacote revisado contém somente 3 arquivos editados (CSS, Romaneio JS e este contexto). A correção de consulta para não-Owner está no `JS/relatorios/relatorios.js` do projeto completo, **não é implementada pelo CSS**. Ao comparar com Git DEV/OFICIAL, publicar também os arquivos atuais do módulo Relatórios que diferirem do ramo-alvo, depois de revisar o diff, sem incluir a migração de assinaturas.
+- Pendências críticas: Supabase compartilhado entre local e produção; RLS permissivas e `sql/atlas_romaneio_assinaturas.sql` ainda incompatível com parte do esquema confirmado. **Não executar a migração nem afirmar segurança de acesso só com filtro client-side.**

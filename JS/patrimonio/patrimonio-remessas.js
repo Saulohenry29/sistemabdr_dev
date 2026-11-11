@@ -413,39 +413,9 @@
 
       let total=await gestor.notificarLista(destinos,payload);
 
-      /*
-       * Remessa em trânsito é aviso operacional de recebimento.
-       * Se a configuração antiga do usuário não tiver RECEBER_NOTIFICACOES,
-       * o Gestor pode devolver zero. Nesse caso registramos o aviso somente
-       * para pessoas da própria obra de destino que podem ver/movimentar
-       * Patrimônio. Não vira aviso global e não notifica o remetente.
-       */
-      if(!total){
-        const elegiveis=destinos.filter(u=>{
-          const p=permissoesDoUsuarioRemessa(u);
-          return Number(u.id)===1 || p.includes('PATRIMONIO_MOVIMENTAR') || p.includes('PATRIMONIO_VER');
-        });
-        if(elegiveis.length){
-          const agora=new Date().toISOString();
-          const rows=elegiveis.map(u=>({
-            empresa_id:u.empresa_id||payload.empresa_id,
-            usuario_destino_id:u.id,
-            tipo:payload.tipo,
-            titulo:payload.titulo,
-            mensagem:payload.mensagem,
-            link:payload.link,
-            lida:false,status:'NAO_LIDA',
-            pedido_id:null,
-            obra_origem_id:payload.obra_origem_id||null,
-            obra_destino_id:payload.obra_destino_id||null,
-            patrimonio_id:null,produto_id:null,created_at:agora
-          }));
-          const {error}=await db().from('notificacoes').insert(rows);
-          if(error) throw error;
-          total=rows.length;
-          document.dispatchEvent(new CustomEvent('atlas:notificacoes:atualizar'));
-        }
-      }
+      // Não contornar a validação do Gestor com INSERT direto na tabela.
+      // Se faltar vínculo/preferência, registrar no console; não enviar globalmente.
+      if(!total)console.warn('Atlas Remessas: aviso não enviado; nenhum destinatário elegível validado.');
 
       console.info(`Atlas Remessas: ${total||0} destinatário(s) avisado(s) na obra de destino.`);
       return total||0;
@@ -463,29 +433,41 @@
     const mensagem=`A remessa ${remessa.codigo} em ${remessa.obra_destino_nome||obraNome(remessa.obra_destino_id)} foi processada por ${remessa.recebido_por_nome||'responsável'} em ${fmtData(remessa.recebido_em)}. ${resultado}${remessa.observacao_recebimento?' Motivo/observação: '+remessa.observacao_recebimento:''}`;
     try{
       if(gestor?.criarNotificacao){ await gestor.criarNotificacao({usuario_destino_id:uid,empresa_id:remessa.empresa_id||empresaId(),tipo:recusada?'PATRIMONIO_TRANSFERENCIA_RECUSADA':divergencia?'PATRIMONIO_TRANSFERENCIA_DIVERGENCIA':'PATRIMONIO_TRANSFERENCIA_RECEBIDA',titulo,mensagem,link:'atlas.html?m=patrimonio&remessas=historico',obra_origem_id:remessa.obra_origem_id,obra_destino_id:remessa.obra_destino_id}); return; }
-      await db().from('notificacoes').insert({usuario_destino_id:uid,empresa_id:remessa.empresa_id||empresaId(),tipo:recusada?'PATRIMONIO_TRANSFERENCIA_RECUSADA':divergencia?'PATRIMONIO_TRANSFERENCIA_DIVERGENCIA':'PATRIMONIO_TRANSFERENCIA_RECEBIDA',titulo,mensagem,link:'atlas.html?m=patrimonio&remessas=historico',lida:false});
-      document.dispatchEvent(new CustomEvent('atlas:notificacoes:atualizar'));
+      console.warn('Atlas Remessas: Gestor indisponível. Aviso não enviado para evitar INSERT sem escopo.');
     }catch(e){ console.warn('Atlas Remessas: notificação de origem não enviada',e.message||e); }
   }
 
   async function notificarExpedicao(remessa){
+    // Aviso operacional de origem: somente usuários efetivamente vinculados.
+    // O Gestor aplica preferência, autoria e vínculo antes de inserir.
     try{
-      const cli=db(); if(!cli)return 0;
-      const {data:usuarios,error}=await cli.from('usuarios').select('id,nome,obra_id,obras_liberadas,permissoes,ativo,empresa_id').eq('ativo',true);
-      if(error) throw error;
-      const origem=String(remessa.obra_origem_id||'');
-      const destinos=(usuarios||[]).filter(x=>{
-        if(Number(x.id)===Number(remessa.enviado_por_id)) return false;
-        const obras=[x.obra_id,...String(x.obras_liberadas||'').split(',')].map(v=>String(v||'').trim()).filter(Boolean);
-        const perms=Array.isArray(x.permissoes)?x.permissoes:String(x.permissoes||'').split(',').map(v=>v.trim());
-        return obras.includes(origem) && (perms.includes('EXPEDICAO_VER')||perms.includes('EXPEDICAO_ENTREGAR')||perms.includes('MASTER'));
+      const gestor=window.AtlasGestorNotificacoes;
+      if(!gestor?.notificarLista)return 0;
+      const origem=Number(remessa.obra_origem_id);
+      if(!origem)return 0;
+      const {data:vinculos,error:erroVinculos}=await db().from('usuario_obras')
+        .select('usuario_id').eq('obra_id',origem);
+      if(erroVinculos)throw erroVinculos;
+      const ids=[...new Set((vinculos||[]).map(v=>Number(v.usuario_id)).filter(Boolean))];
+      if(!ids.length)return 0;
+      const {data:usuarios,error}=await db().from('usuarios_sistema')
+        .select('id,nome,usuario,email,empresa_id,ativo,permissoes,owner_sistema')
+        .eq('ativo',true).in('id',ids);
+      if(error)throw error;
+      const elegiveis=(usuarios||[]).filter(x=>Number(x.id)!==Number(remessa.enviado_por_id))
+        .filter(x=>{
+          const ps=permissoesDoUsuarioRemessa(x);
+          return ps.includes('EXPEDICAO_VER')||ps.includes('EXPEDICAO_ENTREGAR');
+        });
+      return await gestor.notificarLista(elegiveis,{
+        empresa_id:remessa.empresa_id||empresaId(),
+        tipo:'TRANSFERENCIA_AGUARDANDO_EXPEDICAO',
+        titulo:'↔ Transferência aguardando expedição',
+        mensagem:`${remessa.codigo}: ${remessa.total_itens||0} patrimônio(s) de ${remessa.obra_origem_nome||'origem'} para ${remessa.obra_destino_nome||'destino'}.`,
+        link:'atlas.html?m=expedicao&aba=transferencias',
+        obra_origem_id:remessa.obra_origem_id,obra_destino_id:remessa.obra_destino_id
       });
-      if(!destinos.length)return 0;
-      const rows=destinos.map(x=>({usuario_destino_id:x.id,empresa_id:remessa.empresa_id||empresaId(),tipo:'TRANSFERENCIA_AGUARDANDO_EXPEDICAO',titulo:'↔ Transferência aguardando expedição',mensagem:`${remessa.codigo}: ${remessa.total_itens||0} patrimônio(s) de ${remessa.obra_origem_nome||'origem'} para ${remessa.obra_destino_nome||'destino'}.`,link:'atlas.html?m=expedicao&aba=transferencias',lida:false}));
-      const {error:err}=await cli.from('notificacoes').insert(rows); if(err)throw err;
-      document.dispatchEvent(new CustomEvent('atlas:notificacoes:atualizar'));
-      return rows.length;
-    }catch(e){console.warn('Atlas Transferência: notificação da Expedição não enviada',e?.message||e);return 0;}
+    }catch(e){console.warn('Atlas Transferência: aviso da Expedição não enviado',e?.message||e);return 0;}
   }
 
   function prepararTransporte(){
@@ -515,6 +497,40 @@
     await enviar();
   }
 
+  // O responsável Fiscal/Romaneio recebe uma fila por notificação vinculada
+  // à RP. A notificação não presume que NF-e é obrigatória.
+  async function notificarFiscalRemessa(remessa){
+    const gestor=window.AtlasGestorNotificacoes;
+    if(!gestor?.notificarLista){
+      console.warn('Atlas RP: gestor de notificações fiscais indisponível.');
+      return {enviadas:0,motivo:'Notificações indisponíveis'};
+    }
+    const {data:usuarios,error}=await db().from('usuarios_sistema')
+      .select('id,nome,usuario,empresa_id,ativo,permissoes').eq('ativo',true);
+    if(error)throw error;
+    const fiscais=(usuarios||[]).filter(u=>{
+      const tokens=(Array.isArray(u.permissoes)?u.permissoes:String(u.permissoes||'').replace(/[\[\]"']/g,'').split(/[;,|]/)).map(v=>String(v).toUpperCase().trim());
+      return tokens.includes('EXPEDICAO_FISCAL') || tokens.includes('REGISTRAR_NFE') || tokens.includes('EXPEDICAO_NFE');
+    }).filter(u=>String(u.empresa_id||'')===String(remessa.empresa_id||''));
+    if(!fiscais.length)return {enviadas:0,motivo:'Nenhum funcionário com permissão EXPEDICAO_FISCAL na empresa'};
+    const link=`atlas.html?m=expedicao&acao=romaneio-rp&remessa=${Number(remessa.id)}`;
+    const ids=fiscais.map(u=>Number(u.id)).filter(Number.isSafeInteger);
+    const {data:anteriores,error:erroAnteriores}=await db().from('notificacoes')
+      .select('usuario_destino_id').eq('tipo','ROMANEIO_PATRIMONIAL_ANALISE_FISCAL')
+      .eq('link',link).in('usuario_destino_id',ids);
+    if(erroAnteriores)throw erroAnteriores;
+    const enviados=new Set((anteriores||[]).map(n=>Number(n.usuario_destino_id)));
+    const pendentes=fiscais.filter(u=>!enviados.has(Number(u.id)));
+    const count=pendentes.length?await gestor.notificarLista(pendentes,{
+      empresa_id:remessa.empresa_id,
+      tipo:'ROMANEIO_PATRIMONIAL_ANALISE_FISCAL',
+      titulo:'🧾 Romaneio patrimonial para análise fiscal',
+      mensagem:`Transferência ${remessa.codigo} • ${remessa.total_itens} patrimônio(s) • ${remessa.obra_origem_nome} → ${remessa.obra_destino_nome}. Verificar exigência de NF-e antes da liberação para transporte.`,
+      link,obra_origem_id:remessa.obra_origem_id,obra_destino_id:remessa.obra_destino_id
+    }):0;
+    return {enviadas:count,anteriores:enviados.size};
+  }
+
   async function enviar(){
     if(!podeMovimentar()) return alert('Você não tem permissão para movimentar patrimônios.');
     const origem=texto(document.getElementById('atlasRemessaOrigem').value);
@@ -542,6 +558,18 @@
       if(error)throw error;
       const remessa={id:data,codigo,empresa_id:payload.p_empresa_id,obra_origem_id:Number(origem),obra_destino_id:Number(destino),obra_origem_nome:payload.p_obra_origem_nome,obra_destino_nome:payload.p_obra_destino_nome,enviado_por_id:payload.p_enviado_por_id,enviado_por_nome:payload.p_enviado_por_nome,total_itens:itens.length,status:'AGUARDANDO_EXPEDICAO'};
       await notificarExpedicao(remessa);
+      // Não fazer o usuário repetir a transferência para solicitar análise.
+      // A remessa já foi criada pela RPC; falha de aviso não reverte nem duplica a RP.
+      try{
+        const fiscal=await notificarFiscalRemessa(remessa);
+        if(!fiscal.enviadas&&!fiscal.anteriores){
+          console.warn('Atlas RP: romaneio criado, mas sem encaminhamento fiscal:',fiscal.motivo||'nenhum destinatário notificado');
+          window.bdrAvisoAtlas?.('Remessa criada, porém nenhum responsável fiscal recebeu a tarefa. Verifique EXPEDICAO_FISCAL e as notificações.','Atlas Patrimônio','warning',6500);
+        }
+      }catch(erroFiscal){
+        console.warn('Atlas RP: remessa criada; falha ao encaminhar romaneio fiscal:',erroFiscal);
+        window.bdrAvisoAtlas?.('Remessa criada, mas houve falha no aviso ao setor fiscal.','Atlas Patrimônio','warning',6500);
+      }
       modal('atlasNovaRemessaModal',false);
       await api().recarregar?.();
       await carregarRemessas();

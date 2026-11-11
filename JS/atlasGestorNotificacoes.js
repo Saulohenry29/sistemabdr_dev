@@ -168,6 +168,7 @@
 
   function usuarioTemAcessoObra(u, obraId){
     if(!obraId) return false;
+    if(Number(u?.id)===1 && u?.owner_sistema===true)return true;
     const obraTxt = String(obraId);
     if(String(u?.obra_id || "") === obraTxt) return true;
     if(listaObrasLiberadas(u).includes(obraTxt)) return true;
@@ -177,7 +178,7 @@
   function usuarioGlobal(u){
     const perfil = upper(u?.perfil);
     const perms = permissoesUsuario(u);
-    return perfil === "MASTER" || perms.includes("VER_TODAS_OBRAS") || perms.includes("NOTIFICACOES_GLOBAIS");
+    return Number(u?.id)===1 && u?.owner_sistema===true;
   }
 
   function usuarioPodeAtenderQualquerOrigem(u){
@@ -208,7 +209,7 @@
     const banco = db();
     if(!banco) throw new Error("Supabase não carregado.");
 
-    const campos = "id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas";
+    const campos = "id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas,owner_sistema";
 
     async function buscar(comFiltroEmpresa){
       let query = banco
@@ -322,7 +323,7 @@
      */
     const { data: usuarioDestino, error: erroUsuarioDestino } = await banco
       .from("usuarios_sistema")
-      .select("id,ativo,permissoes")
+      .select("id,ativo,permissoes,owner_sistema")
       .eq("id", usuario_destino_id)
       .maybeSingle();
 
@@ -335,13 +336,27 @@
     }
 
     if(!usuarioAceitaTipoNotificacao(usuarioDestino, tipo)){
-      void 0;
       return false;
+    }
+
+    const obrasAviso=[obra_origem_id,obra_destino_id]
+      .map(Number).filter(n=>Number.isSafeInteger(n)&&n>0);
+    if(obrasAviso.length && !(Number(usuario_destino_id)===1 && usuarioDestino?.owner_sistema===true)){
+      // Não atribuir evento de outra obra a um destinatário por empresa/perfil.
+      // Caso a RLS não permita conferir o vínculo, NÃO gerar o aviso.
+      const {data:vinculos,error:erroVinculos}=await banco.from('usuario_obras')
+        .select('obra_id').eq('usuario_id',usuario_destino_id).in('obra_id',obrasAviso);
+      if(erroVinculos){
+        console.warn('AtlasGestorNotificacoes: vínculo de obra indisponível para destinatário',usuario_destino_id,erroVinculos.message);
+        return false;
+      }
+      if(!(vinculos||[]).some(v=>obrasAviso.includes(Number(v.obra_id))))return false;
     }
 
     const payload = {
       empresa_id: empresa_id || empresaAtualId(),
       usuario_destino_id,
+      obra_id: obrasAviso.length===1 || (obrasAviso.length===2 && obrasAviso[0]===obrasAviso[1]) ? obrasAviso[0] : null,
       tipo: tipo || "FLUXO",
       titulo: titulo || "Notificação",
       mensagem: mensagem || "",
@@ -434,7 +449,7 @@
       return { ok:false, motivo:"Nenhum usuário vinculado à obra de origem.", origemId, destinoId };
     }
 
-    const campos = "id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas";
+    const campos = "id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas,owner_sistema";
     const { data: usuariosOrigem, error: erroUsuarios } = await banco
       .from("usuarios_sistema")
       .select(campos)
@@ -587,7 +602,7 @@
     if(idsDestino.length){
       const { data:usuariosDestino, error:erroUsuarios } = await banco
         .from("usuarios_sistema")
-        .select("id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas")
+        .select("id,nome,usuario,email,empresa_id,obra_id,perfil,cargo,ativo,permissoes,obras_liberadas,owner_sistema")
         .in("id", idsDestino)
         .eq("ativo", true);
       if(erroUsuarios) throw erroUsuarios;

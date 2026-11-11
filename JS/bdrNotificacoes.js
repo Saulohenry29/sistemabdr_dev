@@ -100,6 +100,32 @@
     }
   }
 
+  // Camada visual defensiva: as RLS permissivas continuam pendentes de correção.
+  // Falhas na leitura das obras resultam em bloqueio de avisos vinculados a obras.
+  let escopoAvisosCache={usuarioId:null,ate:0,ids:new Set()};
+  async function escopoObrasAvisos(usuario){
+    const uid=Number(usuario?.id||usuario?.usuario_id||0);
+    if(!uid)return new Set();
+    if(escopoAvisosCache.usuarioId===uid && Date.now()<escopoAvisosCache.ate){
+      return escopoAvisosCache.ids;
+    }
+    const {data,error}=await window.client.from('usuario_obras').select('obra_id').eq('usuario_id',uid);
+    if(error)throw error;
+    const ids=new Set((data||[]).map(v=>String(v.obra_id)).filter(v=>/^\d+$/.test(v)));
+    escopoAvisosCache={usuarioId:uid,ids,ate:Date.now()+30000};
+    return ids;
+  }
+  function avisoPertenceAoEscopo(n,ids,owner){
+    if(owner)return true;
+    const obras=[n.obra_id,n.obra_origem_id,n.obra_destino_id]
+      .filter(v=>v!==null && v!==undefined && String(v)!=='')
+      .map(String).filter(v=>/^\d+$/.test(v));
+    if(obras.length)return obras.some(id=>ids.has(id));
+    // Avisos operacionais sem obra identificável exigem auditoria (fail closed).
+    if(n.patrimonio_id||n.pedido_id||n.produto_id)return false;
+    return true; // Avisos gerais direcionados ao próprio usuário, sem obra.
+  }
+
   function badgeEl(){
     return document.getElementById('notifBadge') ||
       document.getElementById('badgeNotificacoes') ||
@@ -817,14 +843,17 @@
         .eq('usuario_destino_id', usuarioId)
         .eq('lida', false)
         .order('created_at', { ascending:false })
-        .limit(50);
+        .limit(200);
 
       if(empresaId) query = query.eq('empresa_id', empresaId);
 
       const { data, error } = await query;
       if(error) throw error;
 
-      const rows = Array.isArray(data) ? data : [];
+      const bruto = Array.isArray(data) ? data : [];
+      const owner = Number(usuarioId)===1 && usuario?.owner_sistema===true;
+      const idsObras = owner ? new Set() : await escopoObrasAvisos(usuario);
+      const rows = bruto.filter(n=>avisoPertenceAoEscopo(n,idsObras,owner)).slice(0,50);
       const naoLidas = rows.filter(notificacaoNaoLida).length;
       const primeiraCarga = !BDR_NOTIF.primeiraCargaConcluida;
 
@@ -975,9 +1004,8 @@
            * carregarNotificacoes() pode reencontrar o mesmo registro, mas a
            * proteção por ID impede som duplicado.
            */
-          if(nova?.id){
-            avisarNovaNotificacao(nova);
-          }
+          // Nunca exibir/tocar aviso Realtime sem conferir escopo por obra.
+          // carregarNotificacoes filtra e anuncia somente o que é autorizado.
           await carregarNotificacoes();
         })
         .subscribe();

@@ -168,7 +168,7 @@
     return id ? "Obra " + id : "-";
   }
 
-  function pedidoCurto(p){ return "PED-" + (p?.id || "-"); }
+  function pedidoCurto(p){ return p?._atlas_codigo_curto || ("PED-" + (p?.id || "-")); }
 
   AtlasModal.recebimento = function(pedido){
     return new Promise(resolve => {

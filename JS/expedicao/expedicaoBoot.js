@@ -24,7 +24,7 @@
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js',
       './JS/AtlasFiscal.js',
-      './JS/AtlasRomaneio.js'
+      './JS/AtlasRomaneio.js?v=20261110-romaneio-sign01'
     ],
     scanner:[
       'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
@@ -33,7 +33,7 @@
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js',
       './JS/AtlasFiscal.js',
-      './JS/AtlasRomaneio.js',
+      './JS/AtlasRomaneio.js?v=20261110-romaneio-sign01',
       './JS/AtlasSeparacaoQR.js'
     ],
     visual:[
@@ -169,7 +169,7 @@
       if(typeof global.verificarLogin==='function') global.verificarLogin();
 
       await carregarScript('./JS/expedicao/expedicaoImagens.js');
-      await carregarScript('./JS/expedicao/expedicaoCore.js');
+      await carregarScript('./JS/expedicao/expedicaoCore.js?v=20261110-romaneio-sign01');
 
       instalarAbaLazy();
       instalarAcoesLazy();
@@ -182,6 +182,20 @@
           .find(b=>(b.getAttribute('onclick')||'').includes("'"+aba+"'"));
 
         await global.abrirAba?.(aba,btn||null);
+      }
+
+      // Tarefa fiscal da RP: abrir o romaneio da própria remessa,
+      // sem confundir o id patrimonial com o id de pedido PED.
+      const paramsRP=new URLSearchParams(location.search);
+      const remessaDireta=Number(paramsRP.get('remessa'));
+      if(paramsRP.get('acao')==='romaneio-rp' && Number.isSafeInteger(remessaDireta) && remessaDireta>0){
+        try{
+          await modulo('fiscal');
+          await global.AtlasRomaneio?.abrirRemessa?.(remessaDireta);
+        }catch(e){
+          console.error('Atlas: não foi possível abrir romaneio RP da notificação',e);
+          global.AtlasModal?.erro?.(e?.message||String(e));
+        }
       }
 
       /* Deep-link: abre diretamente o pedido indicado, em qualquer etapa da Expedição. */
