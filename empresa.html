@@ -27,6 +27,9 @@
   gap:8px;
 }
 
+.empresa-selecao-existente{display:flex;flex-direction:column;gap:5px;margin:2px 0 14px}
+.empresa-selecao-existente>select{max-width:650px}
+.empresa-selecao-existente small{font-size:12px;color:#556a82}
 .empresa-filtro-grid{
   display:grid;
   grid-template-columns:2fr 1fr 1fr;
@@ -35,7 +38,7 @@
 
 .empresa-header{
   display:grid;
-  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 350px;
+  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 420px;
   gap:10px;
   padding:10px 14px;
   margin-bottom:8px;
@@ -55,7 +58,7 @@
 
 .empresa-linha{
   display:grid;
-  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 350px;
+  grid-template-columns:minmax(180px,1.5fr) 90px minmax(240px,1.6fr) minmax(190px,1.15fr) 80px 420px;
   gap:10px;
   align-items:center;
   background:white;
@@ -187,6 +190,9 @@
     color:#fff;
 }
 
+.painel-oculto{display:none!important}
+.btn-mini.btn-excluir{background:#ae2020;color:#fff}
+.btn-mini.btn-excluir:hover{background:#8f1010}
 .edicao-card{
   display:none;
   border-left-color:#2563eb;
@@ -283,12 +289,19 @@
 
 <main class="empresa-conteudo">
 
-    <section class="card" data-acao-permissao="EMPRESAS_CRIAR">
+    <section class="card" id="cardCadastroEmpresa" data-acao-permissao="EMPRESAS_CRIAR">
       <h3>➕ Cadastro de Empresa / Obra / Setor</h3>
 
+      <div class="empresa-selecao-existente">
+        <label for="empresa_existente"><b>Empresa já cadastrada</b> — selecione para adicionar somente uma nova obra</label>
+        <select id="empresa_existente" onchange="selecionarEmpresaExistente()">
+          <option value="">Nova empresa (ou obra da BDR reconhecida pelo nome)</option>
+        </select>
+        <small id="avisoEmpresaExistente">Se selecionar uma empresa, seus dados cadastrais não serão alterados neste formulário.</small>
+      </div>
       <div class="empresa-form-grid">
         <div>
-          <label>Código da Empresa</label>
+          <label>Código da Empresa (não é o código da obra)</label>
           <input id="codigo_empresa" placeholder="Ex: 10013">
         </div>
 
@@ -300,6 +313,11 @@
         <div>
           <label>Setor / Obra</label>
           <input id="setor_obra" placeholder="Ex: CD CENTRO DE DISTRIBUIÇÃO">
+        </div>
+
+        <div>
+          <label>Código da obra</label>
+          <input id="codigo_obra" placeholder="Ex: 728 (não é o código da empresa)" maxlength="40">
         </div>
 
         <div>
@@ -339,6 +357,10 @@
           <label>CEP</label>
           <input id="cep" placeholder="00000-000">
         </div>
+        <div>
+          <label>Telefone (opcional)</label>
+          <input id="telefone" placeholder="(00) 00000-0000">
+        </div>
       </div>
 
       <br>
@@ -367,6 +389,29 @@
       <div class="form-actions">
         <button class="btn-salvar" type="button" data-acao-permissao="EMPRESAS_EDITAR" onclick="salvarEdicaoObra()">💾 Salvar obra</button>
         <button class="btn-limpar" type="button" onclick="cancelarEdicaoEmpresa()">Cancelar</button>
+      </div>
+    </section>
+
+    <section class="card edicao-card" id="cardEdicaoCadastroEmpresa" data-acao-permissao="EMPRESAS_EDITAR">
+      <h3>✏️ Editar cadastro da empresa</h3>
+      <div class="edicao-aviso">Alterar o cadastro da empresa modifica os dados exibidos em todas as obras vinculadas a ela.
+      As obras, patrimônios, valores e assinaturas não serão alterados.</div>
+      <input type="hidden" id="edit_empresa_id">
+      <div class="empresa-form-grid">
+        <div><label>Código da empresa</label><input id="edit_empresa_codigo"></div>
+        <div><label>Nome da empresa</label><input id="edit_empresa_nome"></div>
+        <div><label>CNPJ</label><input id="edit_empresa_cnpj"></div>
+        <div><label>Setor/descrição no cadastro da empresa</label><input id="edit_empresa_setor"></div>
+        <div><label>Endereço</label><input id="edit_empresa_endereco"></div>
+        <div><label>Cidade</label><input id="edit_empresa_cidade"></div>
+        <div><label>Estado / UF</label><input id="edit_empresa_estado"></div>
+        <div><label>CEP</label><input id="edit_empresa_cep"></div>
+        <div><label>Telefone</label><input id="edit_empresa_telefone"></div>
+        <div style="grid-column:span 3"><label>Observação</label><input id="edit_empresa_observacao"></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-salvar" onclick="salvarEdicaoCadastroEmpresa()">💾 Salvar cadastro da empresa</button>
+        <button type="button" class="btn-limpar" onclick="cancelarEdicaoCadastroEmpresa()">Cancelar</button>
       </div>
     </section>
 
@@ -480,6 +525,7 @@ function preencherDadosBDR(prefixo=""){
 }
 
 function aplicarPadraoBDR(){
+  if(campo("empresa_existente"))return;
   const nome = document.getElementById("nome");
   if(!nome) return;
 
@@ -511,63 +557,54 @@ async function buscarEmpresaPadraoBDR(){
 // A empresa padrão BDR não é atualizada durante o cadastro de obras.
 // Isso evita gravações desnecessárias e respostas 406 do PostgREST.
 
-async function salvarOuAtualizarObraDaEmpresa(empresaId, dados){
-  const nomeObra = String(dados.setor_obra || "").trim().toUpperCase();
-  const codigoObra = String(dados.codigo_sienge_obra || dados.codigo_empresa || "").trim();
-
-  if(!empresaId){
-    throw new Error("Empresa não identificada para vincular a obra.");
+async function operacaoSeguraEmpresaObra(acao, dados){
+  const banco=db();
+  if(!banco) throw new Error("Conexão Supabase indisponível.");
+  const {data,error}=await banco.rpc("atlas_empresa_obra_operacao",{p_acao:acao,p_dados:dados});
+  if(error){
+    if(/function .* does not exist|could not find the function|PGRST202/i.test(error.message||"")){
+      throw new Error("A correção de cadastro ainda não foi instalada no Supabase. Instale o arquivo sql/atlas_empresas_obras_rpc.sql uma única vez.");
+    }
+    throw error;
   }
+  if(!data || !data.id) throw new Error("O Supabase não confirmou a gravação. Consulte o cadastro antes de tentar de novo.");
+  return data;
+}
 
-  if(!nomeObra){
-    throw new Error("Informe o nome da obra/setor.");
+function preencherFormularioEmpresa(e){
+  for(const [campoId,chave] of Object.entries({
+    nome:"nome",codigo_empresa:"codigo_empresa",cnpj:"cnpj",cidade:"cidade",estado:"estado",
+    endereco:"endereco",cep:"cep",telefone:"telefone",observacao:"observacao"
+  })){
+    const el=document.getElementById(campoId);
+    if(el) el.value=String(e?.[chave]??"");
   }
-
-  if(!codigoObra){
-    throw new Error("Informe o código Sienge da obra.");
+}
+function selecionarEmpresaExistente(){
+  const id=Number(campo("empresa_existente"));
+  const e=empresas.find(x=>Number(x.id)===id);
+  const campos=["nome","codigo_empresa","cnpj","cidade","estado","endereco","cep","telefone","observacao"];
+  if(e) preencherFormularioEmpresa(e);
+  campos.forEach(idCampo=>{
+    const el=document.getElementById(idCampo);
+    if(el) el.readOnly=!!e;
+  });
+  document.getElementById("avisoEmpresaExistente").textContent=e
+    ? `Vinculando nova obra a ${e.nome} (ID ${e.id}). Para corrigir CNPJ/endereço use "Editar cadastro da empresa" nos Detalhes.`
+    : "Nova empresa: preencha os dados cadastrais e a primeira obra. Se a empresa já existir, selecione-a acima.";
+  if(!e){
+    campos.forEach(idCampo=>{const el=document.getElementById(idCampo);if(el)el.value="";});
   }
-
-  // Cadastro deve ser previsível: nunca sobrescrever uma obra existente.
-  const { data: obrasEncontradas, error: erroBusca } = await db()
-    .from("obras")
-    .select("id,codigo_obra,nome,empresa_id")
-    .eq("empresa_id", Number(empresaId))
-    .eq("codigo_obra", codigoObra)
-    .limit(2);
-
-  if(erroBusca) throw erroBusca;
-
-  if(Array.isArray(obrasEncontradas) && obrasEncontradas.length > 0){
-    const existente = obrasEncontradas[0];
-    throw new Error(
-      `Já existe uma obra com o código ${codigoObra} nesta empresa: ${existente.nome || "-"}. Nada foi alterado.`
-    );
-  }
-
-  const payloadObra = {
-    empresa_id: Number(empresaId),
-    nome: nomeObra,
-    codigo_obra: codigoObra,
-    codigo_sienge: codigoObra,
-    tabela_insumo: Number(dados.tabela_insumo || EMPRESA_PADRAO_BDR.tabela_insumo || 2),
-    ativa: true,
-    ativo: true
-  };
-
-  const { data: obraNova, error } = await db()
-    .from("obras")
-    .insert([payloadObra])
-    .select("id,codigo_obra,nome,empresa_id")
-    .limit(1);
-
-  if(error) throw error;
-
-  const novaObra = Array.isArray(obraNova) ? obraNova[0] : null;
-  if(!novaObra?.id){
-    throw new Error("A obra não retornou confirmação após o cadastro. Confira o banco antes de tentar novamente.");
-  }
-
-  return novaObra;
+}
+function renderizarSeletorEmpresas(){
+  const seletor=document.getElementById("empresa_existente");
+  if(!seletor) return;
+  const anterior=seletor.value;
+  seletor.replaceChildren(new Option("Nova empresa / cadastrar a primeira obra",""));
+  empresas.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR')).forEach(e=>{
+    seletor.add(new Option(`${e.nome} · ID ${e.id} · ${e.codigo_empresa||"sem código"}`,String(e.id)));
+  });
+  if([...seletor.options].some(op=>op.value===anterior)) seletor.value=anterior;
 }
 
 function ir(pagina){
@@ -636,104 +673,35 @@ function usuarioAtual(){
 }
 
 async function salvarEmpresa(){
-
   if(!exigirPermissaoEmpresaBDR("EMPRESAS_CRIAR", "Você não tem permissão para cadastrar empresa/obra.")) return;
-
-  aplicarPadraoBDR();
-
-  const empresa = {
-    nome: campo("nome"),
-    codigo_empresa: campo("codigo_empresa"),
-    setor_obra: campo("setor_obra"),
-    codigo_sienge_obra: campo("codigo_sienge_obra"),
-    tabela_insumo: campo("tabela_insumo") || "2",
-    cnpj: campo("cnpj"),
-    cidade: campo("cidade"),
-    estado: campo("estado"),
-    endereco: campo("endereco"),
-    cep: campo("cep"),
-    observacao: campo("observacao"),
-    ativa: true
+  let empresaId=Number(campo("empresa_existente"))||null;
+  if(!empresaId && ehEmpresaBDR(campo("nome"))) empresaId=EMPRESA_PADRAO_BDR.id;
+  // O código da obra é independente do código da empresa e do código Sienge.
+  const codigoObra=campo("codigo_obra");
+  const codigoSienge=campo("codigo_sienge_obra") || codigoObra;
+  const nomeObra=campo("setor_obra");
+  const tabela=Number(campo("tabela_insumo"));
+  if(!nomeObra || !codigoObra || ![2,3].includes(tabela)){
+    alert("Informe nome da obra, código próprio da obra e tabela de insumo válida.");return;
+  }
+  if(!empresaId && (!campo("nome") || !campo("codigo_empresa"))){
+    alert("Para uma empresa nova informe o nome e o código da empresa.");return;
+  }
+  const payload={
+    empresa_id:empresaId,codigo_obra:codigoObra,nome_obra:nomeObra,codigo_sienge:codigoSienge,
+    tabela_insumo:tabela,nome_empresa:campo("nome"),codigo_empresa:campo("codigo_empresa"),
+    cnpj:campo("cnpj"),cidade:campo("cidade"),estado:campo("estado"),
+    endereco:campo("endereco"),cep:campo("cep"),telefone:campo("telefone"),observacao:campo("observacao")
   };
-
-  if(!empresa.nome){
-    alert("Informe o nome da empresa.");
-    return;
-  }
-
-  if(!empresa.codigo_empresa){
-    alert("Informe o código da empresa.");
-    return;
-  }
-
-  if(!empresa.setor_obra){
-    alert("Informe o setor / obra.");
-    return;
-  }
-
+  const botao=document.querySelector('button[onclick="salvarEmpresa()"]');
+  if(botao)botao.disabled=true;
   try{
-    if(ehEmpresaBDR(empresa.nome)){
-      const existeBDR = await buscarEmpresaPadraoBDR();
-
-      if(!existeBDR){
-        alert("Empresa padrão BDR CONSTRUART ID 17 não encontrada. Verifique no banco.");
-        return;
-      }
-
-      // Ao cadastrar uma obra da BDR, não atualizar a empresa 17.
-      // A empresa já existe e seus dados não devem ser regravados a cada nova obra.
-      const obraCriada = await salvarOuAtualizarObraDaEmpresa(EMPRESA_PADRAO_BDR.id, empresa);
-
-      await registrarMovimentacaoEmpresa(
-        "CADASTRO_OBRA_SETOR",
-        existeBDR,
-        `Obra/setor vinculado à BDR oficial ID ${EMPRESA_PADRAO_BDR.id}: ${obraCriada.nome || "-"} | Código da obra: ${obraCriada.codigo_obra || "-"} | Tabela: ${empresa.tabela_insumo || "2"}`
-      );
-
-      alert(`Obra cadastrada com sucesso: ${obraCriada.codigo_obra} - ${obraCriada.nome}`);
-    }else{
-      const { data: empresaCriada, error } = await db()
-        .from("empresas")
-        .insert([{
-          nome: empresa.nome,
-          codigo_empresa: empresa.codigo_empresa,
-          setor_obra: empresa.setor_obra,
-          cnpj: empresa.cnpj,
-          cidade: empresa.cidade,
-          estado: empresa.estado,
-          endereco: empresa.endereco,
-          cep: empresa.cep,
-          observacao: empresa.observacao,
-          ativa: true
-        }])
-        .select("id,nome,codigo_empresa,setor_obra")
-        .limit(1);
-
-      if(error) throw error;
-
-      const novaEmpresa = Array.isArray(empresaCriada) ? empresaCriada[0] : null;
-      if(!novaEmpresa?.id){
-        throw new Error("A empresa não retornou confirmação após o cadastro. Confira o banco antes de tentar novamente.");
-      }
-
-      await salvarOuAtualizarObraDaEmpresa(novaEmpresa.id, empresa);
-
-      await registrarMovimentacaoEmpresa(
-        "CADASTRO_EMPRESA",
-        novaEmpresa,
-        `Empresa cadastrada: ${empresa.nome || "-"} | Código: ${empresa.codigo_empresa || "-"} | Setor/Obra: ${empresa.setor_obra || "-"}`
-      );
-
-      alert("Empresa e obra/setor cadastrados com sucesso!");
-    }
-
+    const retorno=await operacaoSeguraEmpresaObra("CRIAR",payload);
     limparFormulario();
     await carregarEmpresas();
-
-  }catch(e){
-    console.error(e);
-    alert(e.message || "Erro ao salvar empresa/obra.");
-  }
+    alert(`Cadastro confirmado! Obra ${retorno.codigo_obra} - ${retorno.nome} (ID ${retorno.id}), empresa ID ${retorno.empresa_id}.`);
+  }catch(e){console.error("Erro ao cadastrar empresa/obra:",e);alert("Erro ao cadastrar empresa/obra: "+(e.message||String(e)));}
+  finally{if(botao)botao.disabled=false;}
 }
 // Consultas paginadas no servidor: não carrega toda a tabela de obras.
 let paginaEmpresas = 1;
@@ -774,6 +742,7 @@ async function carregarEmpresas(){
   const { data, error } = await db().from("empresas").select("*").order("nome");
   if(error){ alert("Erro ao carregar empresas: " + error.message); return; }
   empresas = data || [];
+  renderizarSeletorEmpresas();
   carregarFiltroEstados();
   await Promise.all([consultarPaginaEmpresas(), carregarMovimentacoesEmpresas()]);
   aplicarAcoesEmpresaPorPermissao();
@@ -863,6 +832,7 @@ function renderizarEmpresas(){
         <button class="btn-mini" type="button" data-detalhes>📂 Detalhes</button>
         ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_EDITAR") ? `<button class="btn-mini btn-editar" type="button" data-editar>✏️ Editar obra</button>` : ''}
         ${usuarioTemPermissaoEmpresaBDR("EMPRESAS_INATIVAR") ? `<button class="btn-mini ${status === 'ATIVA' ? 'btn-status-warning' : 'btn-status-success'}" type="button" data-status>${status === 'ATIVA' ? '🚫 Inativar obra' : '✅ Reativar obra'}</button>` : ''}
+        ${usuarioOwnerEmpresaBDR() ? '<button class="btn-mini btn-excluir" type="button" data-excluir-obra title="Somente OWNER; bloqueado se houver vínculos">🗑️ Excluir</button>' : ''}
       </div>
       <div class="empresa-detalhes">
         <b>ID da obra:</b> ${esc(o.id)}<br>
@@ -870,26 +840,34 @@ function renderizarEmpresas(){
         <b>CNPJ da empresa:</b> ${esc(e?.cnpj || '-')}<br>
         <b>Endereço da empresa:</b> ${esc(e?.endereco || '-')}<br>
         <b>Código Sienge:</b> ${esc(o.codigo_sienge || '-')}<br>
-        <b>Tabela de insumo:</b> ${esc(o.tabela_insumo ?? '-')}
+        <b>Tabela de insumo:</b> ${esc(o.tabela_insumo ?? '-')}<br>
+        <b>CEP da empresa:</b> ${esc(e?.cep || '-')}<br>
+        <b>Telefone:</b> ${esc(e?.telefone || '-')}<br>
+        ${usuarioOwnerEmpresaBDR()?'<button type="button" class="btn-mini btn-editar" data-editar-empresa>✏️ Editar cadastro da empresa</button>':''}
       </div>`;
-    linha.querySelector('[data-detalhes]').addEventListener('click', () => linha.classList.toggle('aberta'));
+    linha.querySelector('[data-detalhes]').addEventListener('click', () => {
+      const abrir=!linha.classList.contains('aberta');
+      lista.querySelectorAll('.empresa-linha.aberta').forEach(item=>item.classList.remove('aberta'));
+      if(abrir) linha.classList.add('aberta');
+    });
     linha.querySelector('[data-editar]')?.addEventListener('click', () => editarObra(o.id));
+    linha.querySelector('[data-editar-empresa]')?.addEventListener('click', () => editarCadastroEmpresa(e?.id));
     linha.querySelector('[data-status]')?.addEventListener('click', () => alterarStatusObra(o.id, status === "INATIVA"));
+    linha.querySelector('[data-excluir-obra]')?.addEventListener('click', () => excluirObraOwner(o.id));
     lista.appendChild(linha);
   });
 }
 
 async function alterarStatusObra(id, ativar){
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR", "Sem permissão para alterar status de obras.")) return;
-  const obra = obrasEmpresas.find(o => Number(o.id) === Number(id));
-  if(!obra) return alert("Obra não encontrada na página atual.");
-  const acao = ativar ? "REATIVAR" : "INATIVAR";
-  if(!confirm(`${acao} somente a obra ${obra.codigo_obra} - ${obra.nome} (ID ${obra.id})?\n\nA empresa e as demais obras não serão alteradas.`)) return;
-  const {data,error} = await db().from("obras").update({ativa:ativar,ativo:ativar}).eq("id",obra.id).eq("empresa_id",obra.empresa_id).select("id,ativa,ativo");
-  if(error || !data?.length){ alert("Não foi possível alterar a obra: " + (error?.message || "Nenhum registro alterado.")); return; }
-  try{ await registrarMovimentacaoEmpresa("ALTERACAO_STATUS_OBRA", null, `Obra ID ${obra.id} | ${obra.codigo_obra} - ${obra.nome} | ${acao}`); }
-  catch(e){ console.warn("Falha ao registrar movimentação da obra:",e); }
-  await consultarPaginaEmpresas();
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_INATIVAR","Sem permissão para alterar o status da obra.")) return;
+  const obra=obrasEmpresas.find(o=>Number(o.id)===Number(id));
+  if(!obra) return alert("Obra não encontrada nesta página.");
+  if(!confirm(`${ativar?'REATIVAR':'INATIVAR'} somente a obra ${obra.codigo_obra} - ${obra.nome} (ID ${obra.id})?`))return;
+  try{
+    await operacaoSeguraEmpresaObra("STATUS_OBRA",{obra_id:obra.id,ativo:ativar});
+    await consultarPaginaEmpresas();
+    alert("Situação da obra atualizada.");
+  }catch(e){console.error(e);alert("Não foi possível alterar a situação: "+(e.message||String(e)));}
 }
 
 function toggleDetalhes(id){
@@ -955,6 +933,20 @@ function formatarData(data){
   return d.toLocaleString("pt-BR");
 }
 
+// Sempre há no máximo UM formulário (cadastro OU edição) aberto.
+// Os formulários de obra e empresa preservam o mesmo padrão visual.
+function exibirFormularioEmpresa(tipo=null){
+  const cadastro=document.getElementById("cardCadastroEmpresa");
+  const obra=document.getElementById("cardEdicaoEmpresa");
+  const empresa=document.getElementById("cardEdicaoCadastroEmpresa");
+  if(cadastro) cadastro.classList.toggle("painel-oculto", tipo === "obra" || tipo === "empresa");
+  if(obra) obra.classList.toggle("ativo", tipo === "obra");
+  if(empresa) empresa.classList.toggle("ativo", tipo === "empresa");
+  // Descarta o identificador de edição anterior quando o usuário troca de formulário.
+  if(tipo !== "obra") document.getElementById("edit_id").value="";
+  if(tipo !== "empresa") document.getElementById("edit_empresa_id").value="";
+}
+
 // Edição individual: nenhuma gravação é feita na tabela empresas.
 function editarObra(id){
   if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Sem permissão para editar obras.")) return;
@@ -965,121 +957,118 @@ function editarObra(id){
   document.getElementById("edit_nome_obra").value = obra.nome || "";
   document.getElementById("edit_codigo_sienge_obra").value = obra.codigo_sienge || "";
   document.getElementById("edit_tabela_insumo").value = String(obra.tabela_insumo ?? 2);
-  document.getElementById("editandoEmpresaTitulo").textContent = `${obra.codigo_obra || '-'} - ${obra.nome || '-'} (ID ${obra.id})`;
-  document.getElementById("cardEdicaoEmpresa").classList.add("ativo");
+  const empresaVinculada=empresas.find(e=>Number(e.id)===Number(obra.empresa_id));
+  document.getElementById("editandoEmpresaTitulo").textContent = `${obra.codigo_obra || '-'} - ${obra.nome || '-'} (ID ${obra.id}) · Empresa: ${empresaVinculada?.nome || 'Não localizada'} (ID ${obra.empresa_id || '-'})`;
+  exibirFormularioEmpresa("obra");
   document.getElementById("cardEdicaoEmpresa").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function cancelarEdicaoEmpresa(){
-  document.getElementById("cardEdicaoEmpresa").classList.remove("ativo");
-  document.getElementById("edit_id").value = "";
+  exibirFormularioEmpresa();
 }
 async function salvarEdicaoObra(){
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR", "Sem permissão para editar obras.")) return;
-  const id = Number(campo("edit_id"));
-  const obra = obrasEmpresas.find(o => Number(o.id) === id);
-  if(!obra) return alert("Obra não localizada. Atualize a lista antes de editar.");
-  const codigo_obra = campo("edit_codigo_obra");
-  const nome = campo("edit_nome_obra");
-  const codigo_sienge = campo("edit_codigo_sienge_obra");
-  const tabela_insumo = Number(campo("edit_tabela_insumo"));
-  if(!codigo_obra || !nome) return alert("Informe o código e o nome da obra.");
-  if(![2,3].includes(tabela_insumo)) return alert("Tabela de insumo inválida.");
-  const alteracoes = [];
+  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EDITAR","Sem permissão para editar obras.")) return;
+  const id=Number(campo("edit_id"));
+  const obra=obrasEmpresas.find(o=>Number(o.id)===id);
+  if(!obra)return alert("Obra não localizada. Atualize a lista antes de editar.");
+  const codigo_obra=campo("edit_codigo_obra"), nome_obra=campo("edit_nome_obra"),
+    codigo_sienge=campo("edit_codigo_sienge_obra"), tabela_insumo=Number(campo("edit_tabela_insumo"));
+  if(!codigo_obra||!nome_obra||![2,3].includes(tabela_insumo))return alert("Informe código, nome e tabela de insumo válida.");
+  const modificacoes=[];
   for(const [rotulo,antigo,novo] of [
-    ["Código",obra.codigo_obra,codigo_obra],
-    ["Nome",obra.nome,nome],
-    ["Código Sienge",obra.codigo_sienge,codigo_sienge],
-    ["Tabela de insumo",obra.tabela_insumo,tabela_insumo]
-  ]) if(String(antigo ?? "") !== String(novo ?? "")) alteracoes.push(`${rotulo}: ${antigo ?? '-'} → ${novo || '-'}`);
-  if(!alteracoes.length) return alert("Nenhuma alteração realizada.");
-  // Impede duplicação de código dentro da mesma empresa, sem modificar outros cadastros.
-  if(String(obra.codigo_obra ?? "") !== codigo_obra){
-    const {data:iguais,error:erroBusca} = await db().from("obras").select("id")
-      .eq("empresa_id",obra.empresa_id).eq("codigo_obra",codigo_obra).neq("id",obra.id).limit(1);
-    if(erroBusca) return alert("Não foi possível verificar o código: " + erroBusca.message);
-    if(iguais?.length) return alert("Já existe outra obra com este código na mesma empresa.");
+    ["Código",obra.codigo_obra,codigo_obra],["Nome",obra.nome,nome_obra],
+    ["Código Sienge",obra.codigo_sienge,codigo_sienge],["Tabela de insumo",obra.tabela_insumo,tabela_insumo]
+  ]) if(String(antigo??"")!==String(novo??""))modificacoes.push(`${rotulo}: ${antigo??'-'} → ${novo||'-'}`);
+  // Também corrige silenciosamente a divergência legada entre tabela_insumo e tabela_insumo_sienge.
+  if(!modificacoes.length && String(obra.tabela_insumo_sienge??'')===String(tabela_insumo)){
+    return alert("Nenhuma alteração realizada.");
   }
-  if(!confirm(`Salvar alterações SOMENTE na obra ID ${obra.id}?\n\n${alteracoes.join("\n")}\n\nA empresa e as demais obras permanecerão inalteradas.`)) return;
-  const botao = document.querySelector('#cardEdicaoEmpresa .btn-salvar');
-  botao.disabled = true;
+  if(!confirm(`Salvar alterações SOMENTE na obra ${obra.codigo_obra} (ID ${obra.id})?\n\n${modificacoes.join('\n')||'Sincronizar tabela Sienge'}\n\nA empresa e as demais obras não serão alteradas.`))return;
+  const botao=document.querySelector('#cardEdicaoEmpresa .btn-salvar');
+  if(botao)botao.disabled=true;
   try{
-    const {data,error} = await db().from("obras")
-      .update({codigo_obra,nome,codigo_sienge,tabela_insumo})
-      .eq("id",obra.id).eq("empresa_id",obra.empresa_id)
-      .select("id,codigo_obra,nome,codigo_sienge,tabela_insumo");
-    if(error || data?.length !== 1) throw new Error(error?.message || "Nenhuma obra foi atualizada.");
-    try{
-      await registrarMovimentacaoEmpresa("EDICAO_OBRA", null, `Obra ID ${obra.id} | ${alteracoes.join(" | ")}`);
-    }catch(erroLog){console.warn("Obra atualizada, mas falhou registro da movimentação:",erroLog);}
+    await operacaoSeguraEmpresaObra("EDITAR_OBRA",{obra_id:id,codigo_obra,nome_obra,codigo_sienge,tabela_insumo});
     cancelarEdicaoEmpresa();
     await consultarPaginaEmpresas();
-    alert("Obra atualizada com sucesso. Nenhuma outra obra foi alterada.");
-  }catch(e){console.error(e);alert("Erro ao editar obra: " + e.message);}
-  finally{botao.disabled = false;}
+    alert("Obra atualizada com sucesso, incluindo a tabela de insumo Sienge.");
+  }catch(e){console.error(e);alert("Erro ao editar obra: "+(e.message||String(e)));}
+  finally{if(botao)botao.disabled=false;}
 }
 
-async function excluirEmpresa(id){
+function editarCadastroEmpresa(id){
+  if(!usuarioOwnerEmpresaBDR())return alert("Somente o proprietário pode editar os dados da empresa.");
+  const empresa=empresas.find(e=>Number(e.id)===Number(id));
+  if(!empresa)return alert("Empresa não localizada no cadastro atual.");
+  const mapa={
+    edit_empresa_codigo:"codigo_empresa",edit_empresa_nome:"nome",edit_empresa_cnpj:"cnpj",
+    edit_empresa_setor:"setor_obra",edit_empresa_endereco:"endereco",edit_empresa_cidade:"cidade",
+    edit_empresa_estado:"estado",edit_empresa_cep:"cep",edit_empresa_telefone:"telefone",
+    edit_empresa_observacao:"observacao"
+  };
+  document.getElementById("edit_empresa_id").value=empresa.id;
+  for(const [elId,campo] of Object.entries(mapa))document.getElementById(elId).value=String(empresa[campo]??"");
+  exibirFormularioEmpresa("empresa");
+  const painel=document.getElementById("cardEdicaoCadastroEmpresa");
+  painel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function cancelarEdicaoCadastroEmpresa(){
+  exibirFormularioEmpresa();
+}
+async function salvarEdicaoCadastroEmpresa(){
+  if(!usuarioOwnerEmpresaBDR())return alert("Somente o proprietário pode alterar os dados da empresa.");
+  const empresa_id=Number(campo("edit_empresa_id"));
+  const empresa=empresas.find(e=>Number(e.id)===empresa_id);
+  if(!empresa)return alert("Cadastro da empresa não encontrado. Atualize a página.");
+  const dados={empresa_id,
+    codigo_empresa:campo("edit_empresa_codigo"),nome_empresa:campo("edit_empresa_nome"),
+    cnpj:campo("edit_empresa_cnpj"),setor_obra:campo("edit_empresa_setor"),
+    endereco:campo("edit_empresa_endereco"),cidade:campo("edit_empresa_cidade"),
+    estado:campo("edit_empresa_estado"),cep:campo("edit_empresa_cep"),
+    telefone:campo("edit_empresa_telefone"),observacao:campo("edit_empresa_observacao")};
+  if(!dados.codigo_empresa||!dados.nome_empresa)return alert("Nome e código da empresa são obrigatórios.");
+  if(!confirm(`Atualizar os dados da empresa ${empresa.nome} (ID ${empresa.id})?\n\nOs dados serão refletidos em TODAS as obras vinculadas a essa empresa.`))return;
+  const botao=document.querySelector('#cardEdicaoCadastroEmpresa .btn-salvar');
+  if(botao)botao.disabled=true;
+  try{
+    await operacaoSeguraEmpresaObra("EDITAR_EMPRESA",dados);
+    cancelarEdicaoCadastroEmpresa();
+    await carregarEmpresas();
+    alert("Dados da empresa atualizados com sucesso.");
+  }catch(e){console.error(e);alert("Erro ao editar empresa: "+(e.message||String(e)));}
+  finally{if(botao)botao.disabled=false;}
+}
 
-  if(!exigirPermissaoEmpresaBDR("EMPRESAS_EXCLUIR", "Você não tem permissão para excluir empresas.")) return;
+// A exclusão direta de empresa por REST foi desativada: não é autorizada por RPC.
+// Excluir empresas exige análise própria de dependências e nunca usa senha do localStorage.
+function excluirEmpresa(){
+  alert("Exclusão definitiva de empresa indisponível. Gerencie cada obra individualmente.");
+}
 
-  const empresa = empresas.find(e => String(e.id) === String(id));
-
-  if(!empresa){
-    alert("Empresa não encontrada.");
-    return;
+// Apenas o proprietário absoluto consegue excluir; o RPC confirma o OWNER via auth.uid().
+async function excluirObraOwner(id){
+  if(!usuarioOwnerEmpresaBDR()) return alert("Somente o proprietário do Atlas pode excluir uma obra.");
+  const obra=obrasEmpresas.find(o=>Number(o.id)===Number(id));
+  if(!obra) return alert("Obra não localizada. Atualize a listagem.");
+  try{
+    const analise=await operacaoSeguraEmpresaObra('VERIFICAR_EXCLUSAO_OBRA',{obra_id:obra.id});
+    if(!analise.pode_excluir){
+      const ref=(analise.vinculos||[]).slice(0,8).map(x=>`• ${x}`).join('\n');
+      alert(`Exclusão BLOQUEADA para obra ${obra.codigo_obra} (ID ${obra.id}).\n\nEla possui vínculos que precisam ser preservados:\n${ref||'Consulte os vínculos cadastrados.'}\n\nNão exclua dados de patrimônio, remessa ou histórico para forçar a exclusão. Use Inativar quando apropriado.`);
+      return;
+    }
+    if(!confirm(`EXCLUSÃO DEFINITIVA da obra ${obra.codigo_obra} - ${obra.nome} (ID ${obra.id})?\n\nÉ uma operação irreversível sem backup. Somente a obra será removida, nunca a empresa.`)) return;
+    const confirmacao=prompt(`Para excluir somente a obra ID ${obra.id}, digite exatamente: EXCLUIR ${obra.id}`);
+    if(confirmacao!==`EXCLUIR ${obra.id}`) return alert("Exclusão cancelada. Nenhum registro alterado.");
+    const resp=await operacaoSeguraEmpresaObra('EXCLUIR_OBRA',{obra_id:obra.id});
+    if(Number(resp.id)!==Number(obra.id)||resp.excluida!==true) throw new Error('O banco não confirmou a exclusão.');
+    exibirFormularioEmpresa();
+    await consultarPaginaEmpresas();
+    await carregarMovimentacoesEmpresas();
+    renderizarMovimentacoesEmpresas();
+    alert(`A obra ${obra.codigo_obra} (ID ${obra.id}) foi excluída. Empresa e demais obras preservadas.`);
+  }catch(e){
+    console.error('Excluir obra:',e);
+    alert('Não foi possível excluir a obra: '+(e.message||String(e)));
   }
-
-  const confirma = confirm(
-    `APAGAR DEFINITIVAMENTE a empresa "${empresa.nome || "-"}"?\n\n` +
-    "Use esta opção somente para cadastro fake/teste. Empresa real é melhor INATIVAR."
-  );
-
-  if(!confirma) return;
-
-  const senha = prompt("Digite sua senha para confirmar a exclusão:");
-  if(!senha){
-    alert("Exclusão cancelada.");
-    return;
-  }
-
-  const usuario = usuarioAtual();
-  const senhaLocal = String(usuario?.senha || usuario?.senha_master || "");
-
-  if(senhaLocal && senha !== senhaLocal){
-    alert("Senha incorreta. Nada foi apagado.");
-    return;
-  }
-
-  const resp = await db()
-    .from("empresas")
-    .delete()
-    .eq("id", id)
-    .select("id,nome");
-
-  if(resp.error){
-    alert(
-      "Erro ao excluir: " + resp.error.message +
-      "\n\nProvável vínculo com obras, localizações, patrimônios ou movimentações. Nesse caso use INATIVAR."
-    );
-    return;
-  }
-
-  if(!resp.data || resp.data.length === 0){
-    alert(
-      "O Supabase não apagou nenhuma linha.\n\n" +
-      "Pode ser bloqueio de RLS/policy ou vínculo no banco. Nada foi apagado."
-    );
-    return;
-  }
-
-  await registrarMovimentacaoEmpresa(
-    "EXCLUSAO_EMPRESA",
-    empresa,
-    `Empresa excluída definitivamente: ${empresa.nome || "-"} | ID: ${empresa.id}`
-  );
-
-  alert("Empresa excluída definitivamente.");
-  await carregarEmpresas();
 }
 
 function limparFormulario(){
@@ -1092,14 +1081,21 @@ function limparFormulario(){
   document.getElementById("endereco").value = "";
   document.getElementById("cep").value = "";
   document.getElementById("codigo_sienge_obra").value = "";
+  document.getElementById("codigo_obra").value = "";
   document.getElementById("tabela_insumo").value = "2";
   document.getElementById("observacao").value = "";
+  document.getElementById("telefone").value = "";
+  document.getElementById("empresa_existente").value = "";
+  selecionarEmpresaExistente();
 }
 
 
 window.addEventListener("load", () => {
   if(!bloquearTelaEmpresaSemPermissao()) return;
   aplicarAcoesEmpresaPorPermissao();
+  if(!usuarioOwnerEmpresaBDR()){
+    document.getElementById("cardEdicaoCadastroEmpresa").remove();
+  }
   carregarEmpresas();
 });
 </script>

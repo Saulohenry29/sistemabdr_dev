@@ -3107,19 +3107,34 @@ window.quantidadeItemAtlas = window.quantidadeItemAtlas || quantidadeItemAtlasGl
   };
 
 
+  // Abre o documento de PED diretamente, sem passar pelo modal de detalhes.
+  // A autorização por obra continua sendo validada pela própria RPC do romaneio.
+  window.atlasAbrirRomaneioPedidoDireto = async function(pedidoId){
+    try{
+      const id=Number(pedidoId);
+      if(!Number.isSafeInteger(id)||id<1) throw new Error('Pedido inválido.');
+      if(!window.AtlasExpedicaoLoader?.modulo) throw new Error('Módulo fiscal indisponível.');
+      await window.AtlasExpedicaoLoader.modulo('fiscal');
+      if(!window.AtlasRomaneio?.abrirDocumentoPedido) throw new Error('Romaneio não carregado.');
+      await window.AtlasRomaneio.abrirDocumentoPedido(id);
+    }catch(erro){
+      console.error('Atlas PED: falha ao abrir romaneio',erro);
+      window.AtlasModal?.erro?.('Não foi possível abrir o romaneio: '+(erro?.message||erro));
+    }
+  };
+
   /* Ação única do card: NF-e pendente abre o registro; demais status abrem o pedido. */
   window.acoesPedido = function(p){
     const st = String(p?.status || "").toUpperCase();
     if(st === "AGUARDANDO_NFE"){
       return `
-        <button class="btn-mini btn-blue" onclick="AtlasExpedicaoLoader.modulo('fiscal').then(()=>AtlasRomaneio.abrir(${Number(p.id)}))">
-          🧾 Ver Romaneio
-        </button>
+        <button class="atlas-btn-abrir" type="button" onclick="abrirDetalhePedidoAtlas(${Number(p.id)})">Abrir</button>
         <button class="btn-mini btn-blue" onclick="abrirRegistroNfeAtlas(${Number(p.id)})">
           📄 Registrar NF-e
         </button>`;
     }
-    return `<button class="atlas-btn-abrir" onclick="abrirDetalhePedidoAtlas(${Number(p.id)})">Abrir</button>`;
+    // O romaneio está em Abrir → Documentos relacionados, não nas ações do cartão.
+    return `<button class="atlas-btn-abrir" type="button" onclick="abrirDetalhePedidoAtlas(${Number(p.id)})">Abrir</button>`;
   };
 
 })();

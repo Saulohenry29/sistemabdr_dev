@@ -10,30 +10,27 @@
 
   const base = {
     modal:['./JS/AtlasModal.js'],
-    workflow:['./JS/atlasGestorNotificacoes.js','./JS/atlasWorkflow.js'],
+    workflow:['./JS/atlasWorkflow.js'],
     reservas:['./JS/AtlasGestorReservas.js'],
     logistica:[
       './JS/AtlasModal.js',
-      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js'
     ],
     fiscal:[
       './JS/AtlasModal.js',
-      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js',
       './JS/AtlasFiscal.js',
-      './JS/AtlasRomaneio.js?v=20261110-romaneio-sign01'
+      './JS/AtlasRomaneio.js?v=20261113-romaneio-cadastro-03'
     ],
     scanner:[
       'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
       './JS/AtlasModal.js',
-      './JS/atlasGestorNotificacoes.js',
       './JS/atlasWorkflow.js',
       './JS/AtlasLogistica.js',
       './JS/AtlasFiscal.js',
-      './JS/AtlasRomaneio.js?v=20261110-romaneio-sign01',
+      './JS/AtlasRomaneio.js?v=20261113-romaneio-cadastro-03',
       './JS/AtlasSeparacaoQR.js'
     ],
     visual:[
@@ -164,15 +161,63 @@
     });
   }
 
+  // Avisa sobre NF-e antes de o operador preencher o transporte.
+  // Não modifica a exigência fiscal nem substitui a validação do AtlasLogistica.
+  function instalarAvisoFiscalAntesDoEnvio(){
+    const original=global.abrirRetirada;
+    if(typeof original!=='function'||original.__atlasFiscalEnvioAviso)return;
+    const consultarBanco=()=>global.client||global.supabaseClient||global.clientSupabase||globalThis.client;
+    const wrapper=async function(pedidoId,...args){
+      const resultado=await original.apply(this,[pedidoId,...args]);
+      const id=Number(pedidoId);
+      if(!Number.isSafeInteger(id)||id<=0)return resultado;
+      const modal=document.getElementById('modalRetirada');
+      if(!modal?.classList.contains('ativo'))return resultado;
+      const btn=modal.querySelector('button[onclick*="confirmarRetiradaModal"]');
+      const resumo=document.getElementById('retResumoTransporte');
+      try{
+        const {data,error}=await consultarBanco().from('pedidos_retirada')
+          .select('id,exige_nfe,status_fiscal').eq('id',id).single();
+        if(error)throw error;
+        if(!modal.classList.contains('ativo')||Number(global.pedidoRetiradaAtual)!==id)return resultado;
+        const bloqueado=data.exige_nfe===true&&String(data.status_fiscal||'').toUpperCase()!=='NFE_EMITIDA';
+        if(btn){btn.disabled=bloqueado;btn.title=bloqueado?'Aguardando registro fiscal da NF-e':'';}
+        if(bloqueado && resumo){
+          resumo.style.display='block';
+          resumo.style.background='#fff7ed';resumo.style.borderColor='#fdba74';resumo.style.color='#9a3412';
+          resumo.innerHTML='<b>🧾 Falta registrar a NF-e</b><p style="margin:6px 0 10px">A emissão foi marcada como obrigatória. Regularize com o responsável Fiscal antes de confirmar a saída.</p>'+
+            '<button type="button" id="atlasIrFiscalDoEnvio" style="cursor:pointer;background:#fff;color:#9a3412;border:1px solid #fdba74;border-radius:8px;padding:8px 11px;font-weight:900">Abrir registro de NF-e</button>';
+          resumo.querySelector('#atlasIrFiscalDoEnvio')?.addEventListener('click',async()=>{
+            try{
+              await modulo('fiscal');
+              if(typeof global.abrirRegistroNfeAtlas!=='function')throw new Error('Registro fiscal indisponível.');
+              // Somente a função Fiscal existente decide se o usuário está autorizado.
+              modal.classList.remove('ativo');
+              global.abrirRegistroNfeAtlas(id);
+            }catch(e){global.AtlasModal?.erro?.(e.message||String(e))||global.alert(e.message||String(e));}
+          });
+        }
+      }catch(e){
+        if(resumo){resumo.style.display='block';resumo.textContent='Não foi possível verificar o status fiscal agora. Confirme a liberação no setor Fiscal antes de enviar.';}
+        // Falha de consulta NÃO libera nada: o envio permanece sujeito à validação no backend.
+        console.warn('Atlas: pré-validação fiscal indisponível',e);
+      }
+      return resultado;
+    };
+    wrapper.__atlasFiscalEnvioAviso=true;
+    global.abrirRetirada=wrapper;
+  }
+
   async function iniciar(){
     try{
       if(typeof global.verificarLogin==='function') global.verificarLogin();
 
       await carregarScript('./JS/expedicao/expedicaoImagens.js');
-      await carregarScript('./JS/expedicao/expedicaoCore.js?v=20261110-romaneio-sign01');
+      await carregarScript('./JS/expedicao/expedicaoCore.js?v=20261112-romaneio-botao-estavel-01');
 
       instalarAbaLazy();
       instalarAcoesLazy();
+      instalarAvisoFiscalAntesDoEnvio();
       esconderLoading();
 
       const aba=new URLSearchParams(location.search).get('aba');

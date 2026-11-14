@@ -1157,7 +1157,7 @@ solução correta sem remendos.
 - CSS dos Relatórios: removidas somente as divisórias **verticais** da tabela de movimentações; mantidos os espaçamentos, linhas horizontais e indicador lateral da linha.
 - `JS/AtlasRomaneio.js`: abas Documento A4 / Assinaturas com alinhamento e altura uniformes. Não altera impressão nem fluxo de recebimento.
 - O Atlas local e o oficial utilizam **o mesmo projeto Supabase**: não há banco DEV isolado. **Não executar** `sql/atlas_romaneio_assinaturas.sql` nesse banco até haver homologação isolada, backup, revisão das funções e autorização expressa.
-- Consulta de esquema confirmou `atlas_patrimonio_remessa_itens.codigo_qr`, `.nome_bem` e `patrimonio.valor_aquisicao`. A migração proposta ainda usa `patrimonio.valor_bem` (incompatível com o esquema informado), além de referências não confirmadas como `patrimonio.ncm`, `patrimonio.numero_nfe` e colunas de `pedidos_retirada`.
+- Consulta inicial confirmou `atlas_patrimonio_remessa_itens.codigo_qr`, `.nome_bem` e `patrimonio.valor_aquisicao`. **Correção baseada na consulta completa de 11/11:** também EXISTEM `patrimonio.valor_bem`, `patrimonio.ncm`, `patrimonio.numero_nfe`, `pedidos_retirada.codigo`, `.motorista_nome`, `.veiculo_placa`, `.transportadora`, `.status_fiscal`, `.exige_nfe`, e demais campos listados na revisão abaixo. A hipótese anterior de incompatibilidade de `valor_bem` foi descartada.
 - Pendências: confirmar o esquema de `pedidos_retirada`, revisar autorização de quem pode assinar a saída, testar bloqueios de acesso direto/RLS, token do motorista e imutabilidade antes de executar SQL. Nenhuma migração foi aplicada nesta revisão.
 - A publicação isolada do CSS de Relatórios é independente da ativação de assinaturas. Não promover scripts/SQL de assinaturas como funcionalidade habilitada.
 
@@ -1169,3 +1169,159 @@ solução correta sem remendos.
 - Evidências: `node --check` em `JS/AtlasRomaneio.js` e scripts dos Relatórios; Chromium em 1440px e 375px verificou computed styles da borda vermelha e ausência de divisórias, e igualdade de altura/posição das abas. **Não houve teste de autenticação Supabase com usuários reais**, nem execução de SQL.
 - Publicação: esse pacote revisado contém somente 3 arquivos editados (CSS, Romaneio JS e este contexto). A correção de consulta para não-Owner está no `JS/relatorios/relatorios.js` do projeto completo, **não é implementada pelo CSS**. Ao comparar com Git DEV/OFICIAL, publicar também os arquivos atuais do módulo Relatórios que diferirem do ramo-alvo, depois de revisar o diff, sem incluir a migração de assinaturas.
 - Pendências críticas: Supabase compartilhado entre local e produção; RLS permissivas e `sql/atlas_romaneio_assinaturas.sql` ainda incompatível com parte do esquema confirmado. **Não executar a migração nem afirmar segurança de acesso só com filtro client-side.**
+
+
+### 11/11/2026 — Revisão da migração de assinaturas com esquema real (arquivo preparado, sem execução)
+
+- Consultas de metadados realizadas pelo usuário: existem `romaneios`, `romaneio_itens` e `conferencias_patrimoniais.assinatura_base64`; **não** aparecem tabelas `atlas_romaneio_assinaturas*` nem funções `atlas_romaneio_*` no schema `public` consultado. Nenhuma estrutura nova foi criada nesta revisão.
+- FKs existentes: `romaneios.pedido_id → pedidos_retirada.id`; `romaneio_itens.romaneio_id → romaneios.id`; `atlas_patrimonio_remessa_itens.remessa_id → atlas_patrimonio_remessas.id`. Romaneio PED e remessa RP permanecem estruturas diferentes; a nova assinatura usa tipo (`RP`/`PED`) e ID.
+- Campos confirmados na consulta: `patrimonio.valor_bem`, `valor_aquisicao`, `ncm`, `numero_nfe`, `numero_serie`, `codigo_qr`, `nome_bem`, `placa`; em PED: `codigo`, `motorista_nome`, `veiculo_placa`, `transportadora`, `status_fiscal`, `exige_nfe`, `numero_nfe`, `serie_nfe`, `chave_nfe`; em RP: `codigo`, `motorista`, `veiculo`, `placa`, `obra_origem_id`, `obra_destino_id`, `status`, e os itens `remessa_id`, `patrimonio_id`, `codigo_qr`, `nome_bem`.
+- **ALERTA CRÍTICO CONFIRMADO:** as tabelas `atlas_patrimonio_remessas` e `atlas_patrimonio_remessa_itens` têm RLS desabilitada e GRANTs amplos de SELECT/INSERT/UPDATE/DELETE/TRUNCATE a `anon` e `authenticated`. Filtragem na interface não protege a API. As tabelas PED `romaneios` e `romaneio_itens` têm RLS habilitada, mas políticas permitem alterações por origem OU destino. Não modificar essas regras às cegas, pois o frontend legado consulta RP diretamente e a Expedição depende delas.
+- Revisão local de `sql/atlas_romaneio_assinaturas.sql` (arquivo de migração original): preservadas interfaces RPC chamadas pelo frontend; hash de documento com SHA-256 e campos confirmados, PED baseado em `romaneios`/`romaneio_itens`; consulta pública escopada por token com itens reais; autorização na origem por Auth + `atlas_e_owner()`/`atlas_tem_acesso_obra()`; proibição de assinar PED com NF-e obrigatória não registrada; RP somente `EM_TRANSITO`; motorista assina após responsável; link de 2 horas e uso único; tabelas novas com RLS e sem GRANT direto `anon`/`authenticated`. Não executado no Supabase; sem homologação real. Funções existentes de autorização devem ser inspecionadas antes de execução para confirmar semântica e tipos.
+- `JS/AtlasRomaneio.js`: QR do motorista fica indisponível na interface até assinatura da saída, acompanhando validação no servidor. `JS/expedicao/expedicaoBoot.js`: versão do script do romaneio alterada para bust de cache da alteração. Sem publicação.
+- **PENDÊNCIAS**: validar compilação SQL e tipos de função em PostgreSQL isolado; verificar compatibilidade de `atlas_tem_acesso_obra(bigint)` com os `obra_id` reais e `usuarios_sistema.auth_user_id`; testes de autenticação de origem/destino/Owner e motorista `anon`, mudanças no documento, expiração/reuso de token, status PED/RP e hash após RECEBIDA; revisar RLS legada das RP antes de produção. Em PROD compartilhado, não executar a migração nem simular assinatura com dados reais sem aprovação.
+- NF-e PED-54: o bloqueio origina-se de `JS/AtlasFiscal.js` e `JS/AtlasLogistica.js`: `exige_nfe=true` exige `status_fiscal=NFE_EMITIDA`. Mantido, não contornado. Revisar cadastro/decisão fiscal do pedido separadamente.
+
+
+### 11/11/2026 — Assinatura real validada e melhoria presencial (código preparado, não implantado)
+- Supabase compartilhado por local/DEV/produção: usuário executou a criação das três tabelas `atlas_romaneio_assinaturas`, `atlas_romaneio_links_motorista`, `atlas_romaneio_assinaturas_perfil`. RLS ativa nas três, zero políticas e SELECT/INSERT/UPDATE/DELETE revogados a `anon` e `authenticated`, confirmados por metadados.
+- Executada instalação controlada de 10 RPCs: todas `SECURITY DEFINER`, nenhuma executável por `anon`, 4 liberadas para `authenticated` (assinatura pessoal, listar, assinar saída e criar link). As RPCs públicas de consultar/assinar via token permanecem bloqueadas.
+- Teste real em `127.0.0.1:5501`: responsável assinou a saída da remessa de teste `RP-2`; assinatura persistiu ao fechar/reabrir; painel exibiu 1/2, motorista pendente. O teste não comprova ainda integridade jurídica ou acesso por outros usuários.
+- Pedido de UX: não exigir aba adicional para assinar; motorista poder assinar presencialmente no aparelho do funcionário, sem precisar de link externo.
+- Preparada revisão **não publicada** de `JS/AtlasRomaneio.js`: quadro compacto com botões diretamente acima do Documento A4, estados 0/2–2/2, detalhes expansíveis sem mudar de aba. Canvas de motorista com nome completo, declaração de conferência/aceite e assinatura desenhada pela pessoa; o responsável autenticado que cede o aparelho será identificado separadamente. Documento impresso mantém as duas assinaturas e indica coletor presencial quando houver.
+- Preparado **SQL incremental, não executado**, no caminho original `sql/atlas_romaneio_assinaturas.sql`: adiciona `registrado_por_id` (funcionário autenticado que cedeu aparelho), mantém `usuario_id=NULL` para motorista; aprimora a RPC de listagem para exibir coletor; cria `atlas_romaneio_assinar_motorista_presencial` executável somente para `authenticated`, com validação de Auth/autorização da obra de origem, status/NF-e, assinatura válida da saída, hash atual do documento, conflito de duplicatas e invalidação de tokens anteriores. `metodo='AUTH_ATLAS'` designa autenticação do operador da coleta, **não** a identidade digital do motorista. Não concede nada ao `anon`. Não cria tabelas e não reaplica funções originais.
+- `JS/expedicao/expedicaoBoot.js`: somente atualização da versão da URL `AtlasRomaneio.js` para forçar cache bust, mantendo os demais carregadores. O QR do motorista fica indisponível em localhost/HTTP e enquanto `ATLAS_ROMANEIO_LINK_PUBLICO_ATIVO !== true`; mesmo com a flag, RPC pública continua bloqueada até GRANT explícito após revisão.
+- QA local: `node --check` passou; Chromium headless **com Supabase simulado** passou em 1440×900 e 390×844 (quadro 1/2, modal motorista, aceite, desenho, única chamada RPC de assinatura presencial, quadro 2/2, detalhes e auditoria exibidos, zero erros de página). Nenhum SQL foi executado no Supabase real nesta revisão.
+- **Risco crítico não corrigido:** RP e itens ainda possuem RLS desativada e permissões amplas a `anon/authenticated` inclusive DELETE/TRUNCATE. Corrigir separadamente sem quebrar Expedição; NÃO liberar QR/link público antes da auditoria de segurança. Assinatura presencial por login não prova criptograficamente que o motorista é quem desenhou; requer presença e procedimento operacional.
+- **Antes de implantar:** comparar o ZIP com os arquivos atuais no VS Code, fazer backup do Supabase, executar somente o SQL incremental após revisão, testar com RP de laboratório usando login legítimo e testar negativa de usuários sem acesso à obra de origem, recebida, sem saída, ou repetição. Não reexecutar a migração de criação de tabelas.
+
+
+### 2026-11-12 — RP assinatura antes de trânsito, PED NF-e (prévia controlada)
+- Diagnóstico baseado em testes do usuário: RP criada como `AGUARDANDO_EXPEDICAO` pelo fluxo Patrimônio, porém `atlas_romaneio_validar_operacao` permitia somente `EM_TRANSITO`. A assinatura do responsável falhava após desenhar. O SQL incremental foi preparado para autorizar coleta em `AGUARDANDO_EXPEDICAO` ou `EM_TRANSITO`, sem alterar o status da remessa. **A operação efetiva de despacho RP segue pendente; não criar UPDATE direto para EM_TRANSITO sem auditar a RPC responsável pelo fluxo patrimonial e análise fiscal.**
+- PED-54 está fiscalmente bloqueado por `exige_nfe=true` sem `status_fiscal=NFE_EMITIDA`. Não ignorar a NF-e nem marcar emitida sem o registro fiscal válido. O JS do documento passou a mostrar a pendência antes de abrir a assinatura e um atalho para `abrirRegistroNfeAtlas` (permissões do Fiscal preservadas). O formulário de Preparar envio continua dependendo do fluxo atual e deve ser ajustado de forma coordenada quando houver versão atual de `expedicaoCore.js`.
+- Mudanças preparadas: `JS/AtlasRomaneio.js` (status preventivo, link fiscal, impedimento de desenho inútil, status RP sem fallback enganoso), `JS/expedicao/expedicaoBoot.js` (alerta fiscal e bloqueio visual antes de enviar PED com NF-e pendente) e `sql/atlas_romaneio_assinaturas.sql` incremental (função presencial e ajuste de autorização por status RP). Sem execução de SQL ou teste real de permissão nesta etapa.
+- Segurança pendente: RLS inativa e acesso amplo à tabela `atlas_patrimonio_remessas` e itens; assinatura não muda essa situação. QR externo segue revogado.
+- Homologação obrigatória: RP aguardando expedição deve assinar sem virar trânsito; RP recebida/cancelada não deve aceitar novas assinaturas; PED com NF-e pendente deve exibir atalho sem gravar assinatura; após NF-e registrada, reabrir e conferir; assinatura presencial requer RPC específica e usuário Auth.
+
+
+### 2026-11-12 — Acesso ao romaneio pelos detalhes + assinatura dentro do A4 (interface local)
+- **Decisão aprovada:** os cartões RP e PED mostram apenas **Abrir** como caminho para os detalhes (na situação `AGUARDANDO_NFE`, o atalho fiscal pode permanecer). Remover o segundo botão **Romaneio** colado ao botão Abrir na listagem. **Não remover** o link **Abrir romaneio** de *Documentos relacionados* dentro do modal de detalhes da remessa/pedido.
+- Na visualização do **Romaneio Patrimonial A4**, o botão **Assinar eletronicamente** aparece **dentro do espaço da assinatura pendente**, separadamente para o responsável pela saída e para o motorista. O botão do motorista só é habilitado após uma assinatura de saída válida e disponibilidade da coleta presencial; status e exigências fiscais continuam sendo verificados.
+- Botões de assinatura ficam fora do PDF/da impressão (removidos ao clonar o A4 para o iframe), que segue exibindo somente assinatura existente ou campo pendente. No topo do romaneio permanecem **Imprimir/salvar PDF**, **Copiar link** e **Fechar**. Quadro superior mostra estado 0/2–2/2, detalhes e atualização; preserva **Usar minha assinatura salva** quando existir perfil cadastrado, sem duplicar os botões de assinatura desenhada.
+- Arquivos locais alterados: `JS/AtlasRomaneio.js`, `JS/expedicao/expedicaoCore.js`, `JS/expedicao/expedicaoBoot.js`, `expedicao.html`, `CSS/expedicao-nova.css` e este documento mestre `CONTEXTO_ATLAS.md`. URLs versionadas para evitar JavaScript antigo em cache; nenhuma permissão, SQL, estoque ou movimentação foi alterada.
+- **Validação pendente:** testar no servidor local RP/PED antes e depois de cada assinatura, visualização mobile e PDF gerado, especialmente a exibição do botão enquanto a saída ainda está pendente. As RPCs reais continuam sendo a autoridade de acesso.
+- **Lembrete de ata/contexto:** registrar toda decisão e correção consolidada neste arquivo mestre; nunca criar um segundo arquivo de contexto paralelo.
+
+
+### 2026-11-12 — Correção visual: botão de assinatura não deve tremer
+- **Diagnóstico em vídeo do usuário:** ao entrar/sair do hover, o botão **Assinar eletronicamente** saltava cerca de metade da sua própria largura (~131 px) e altura (~23 px), repetindo quando o cursor o cruzava. Conflito da centralização absoluta com `transform:translate(-50%,-50%)` e estilos de hover que substituíam `transform`.
+- **Correção local:** botão centralizado pelo `display:flex` já existente no contêiner `.atlas-doc-print-sign-image`, sem `position:absolute` nem `translate`. `transform:none!important` aplicado ao controle nos estados normal, hover, foco e clique para resistir a CSS global. Texto 'Assinatura pendente' fica fora do layout do botão na tela e reaparece na impressão; botão nunca é impresso.
+- **Arquivos alterados:** `JS/AtlasRomaneio.js`, `JS/expedicao/expedicaoBoot.js` e `expedicao.html` (versões das URLs atualizadas para contornar cache); contexto mestre atualizado aqui. **Sem SQL, banco, permissões nem alterações na assinatura persistida.**
+- **Validação:** sintaxe JS e integridade de ZIP verificadas; reproduzir hover no navegador local e confirmar que posição do botão não muda, inclusive após recarregar o shell/PWA. Verificar que PDF mantém a linha de assinatura sem o botão.
+
+
+### 2026-11-13 — Correção limitada ao alinhamento visual da assinatura na impressão
+- Em `JS/AtlasRomaneio.js`, apenas o CSS interno do iframe de impressão do documento A4 foi ajustado. A linha agora é renderizada em camada atrás da imagem de assinatura; `mix-blend-mode:multiply` impede que um fundo PNG branco masque a linha no PDF. A linha anteriormente renderizada como elemento irmão não aparece duplicada na impressão.
+- Preservados: o fluxo de assinatura, as duas assinaturas existentes, confirmação do motorista, QR, avisos e impressão do documento; o ajuste anterior do toast verde (topo em 16px) também foi preservado. Sem mudanças em SQL, políticas, tabelas, perfis, valores ou dados.
+- Consulta ao arquivo `ROMANEIO CD BDR ATUALIZADO 2026.xlsm` (aba ROMANEIO): colunas O=Valor BDR, P=Valor Romaneio, Q=Valor Total Revisado; a maioria dos registros com ambos os valores tem P/O = 70%, mas Q frequentemente calcula pelo valor BDR, mesmo quando P é menor. Antes de criar desconto por item, confirmar regra fiscal, modelo persistido para RP e PED e limites de alteração após assinatura.
+- Nova funcionalidade proposta, **ainda não implementada**: desconto individual (sugerido 30%) e “selecionar todos”, prévia com soma automática por item e total, opção de edição somente antes da finalização/assinatura, persistência auditável e sem modificar o valor patrimonial original.
+
+---
+
+## Registro de 13/11/2026 — Valorização fiscal por item no Romaneio RP/PED
+
+**Situação:** implementação frontend entregue em ZIP, implantação SQL pendente de aprovação/backup; **NÃO executado no banco**.
+
+### Pedido / regra de negócio
+
+- Claudenilson é o fiscal que decide quais materiais de cada Romaneio recebem **30% de desconto** (valor para NF-e = 70% do valor original). Os demais preservam 100%.
+- Controle de checkbox por item, checkbox de aplicar/remover de todos e subtotal/total com atualização imediata no navegador.
+- O usuário deve clicar em **Salvar conferência fiscal** para persistir. A impressão mostra somente **decisões gravadas**, nunca seleções locais não salvas.
+- Os campos patrimoniais `valor_bem` e `valor_aquisicao` não são alterados; a valoração fiscal é um complemento auditável, não uma modificação da transferência assinada.
+- O documento impresso inclui valor original, desconto, valor fiscal final, nome/data do fiscal e uma observação de que as assinaturas atestam a entrega dos bens, não o cálculo tributário posterior.
+- Regra fiscal da aplicação deve ser validada por responsável competente; o software não determina a obrigatoriedade tributária do desconto.
+
+### Diagnóstico e verificação de segurança
+
+- Verificação **somente leitura** no Supabase `ytalegphxrntlomkltbc` em 13/11/2026: usuário Claudenilson `usuarios_sistema.id=5`, ativo, tem `auth_user_id` vinculado e permissão explícita `EXPEDICAO_FISCAL`; não depende do perfil ADMIN.
+- Conferidas assinaturas das funções existentes `atlas_romaneio_autorizar_funcionario(text,bigint)` e `atlas_romaneio_documento_hash(text,bigint)`; o hash RP contém itens/valores patrimoniais, o PED contém o snapshot `romaneios`/`romaneio_itens`. Não alterar essas tabelas nem seus hashes para registrar decisão fiscal.
+- Nova migração **não executada**: `sql/atlas_romaneio_valorizacao_fiscal.sql`. Cria `atlas_romaneio_valores_fiscais` e auditoria, ambas com RLS habilitado e **sem acesso direto `anon`/`authenticated`**. RPC de leitura reutiliza `atlas_romaneio_autorizar_funcionario`. RPC de gravação requer Supabase Auth, função de autorização do documento e `EXPEDICAO_FISCAL` ou OWNER verdadeiro no banco. Cada chamada valida IDs/valores reais dos itens; grava o conjunto em transação atômica e registra histórico. PED com NF-e já registrada não aceita edição.
+- A correção visual da linha de assinatura de impressão e a mensagem verde no topo foram preservadas sem mudar coleta de assinaturas.
+
+### Arquivos modificados para a entrega
+
+- `JS/AtlasRomaneio.js`: painel e tabelas por item para RP/PED A4, totais, impressão, nova RPC, proteção de salvamento e reconhecimento da conferência no Romaneio Fiscal legado. Se a migração não existir, o A4 continua funcionando sem descontos.
+- `JS/expedicao/expedicaoBoot.js`: versão cache bust do script novo.
+- `expedicao.html`: versão cache bust do boot.
+- `sql/atlas_romaneio_valorizacao_fiscal.sql`: migração incremental, requer aprovação e backup antes da execução.
+- `CONTEXTO_ATLAS.md`: registro único de contexto, sem arquivos paralelos.
+
+### Homologação executada / pendente
+
+- Teste local isolado com Chromium + dados simulados: selecionou apenas um material de R$ 500,00 com 30%, manteve outro em R$ 1.000,00; desconto R$ 150,00, total fiscal R$ 1.350,00; após salvar o mock, renderização do resumo e dos preços unitários para impressão; **nenhum erro JavaScript**.
+- `node --check` dos JS passou; **sem implantação e sem alterações em produção**.
+- Pendente homologação do SQL em ambiente controlado, validação da leitura/gravação com Claudenilson, OWNER e usuário sem permissão, teste com PED e RP reais, comparação com o Sienge/NF-e, e conferência visual de impressão A4 com muitos itens.
+- Cuidado: a opção histórica de 70%/100% para PED é legado; quando a nova RPC está instalada, o Romaneio Fiscal utiliza os valores salvos por item e redireciona edição ao documento A4. Não alterar assinaturas já coletadas ou reescrever retroativamente o snapshot patrimonial.
+
+
+### 13/11/2026 — Valorização fiscal integrada à tabela do Romaneio (alteração local)
+
+- A conferência do fiscal deixou de aparecer em um quadro duplicado. A opção
+  de aplicar 30% a cada item, o seletor geral e o botão **Salvar valores
+  fiscais** aparecem junto da tabela de patrimônios no próprio Romaneio.
+- Valor original, NCM e NF de entrada continuam vindo do cadastro, com aviso
+  **A conferir** para NCM não informado. A valorização fiscal é demonstrada
+  por item, e total original/desconto/total do Romaneio no rodapé da tabela.
+- As seleções só têm efeito persistido após a RPC
+  `atlas_romaneio_valores_fiscais_salvar`; alterações locais não salvas não
+  podem ser impressas. A folha A4 não inclui checkboxes e mostra a auditoria.
+- Não foram modificados assinatura cadastrada, hash/fluxo de assinatura, QR
+  Code, valores do patrimônio ou tabelas no banco nesta entrega. O Fiscal
+  (permissão `EXPEDICAO_FISCAL`) é autorizado pelo servidor, não pelo UI.
+- Conferido via consulta somente leitura: estruturas e funções fiscais já
+  existem no projeto Supabase, RLS ativo nas duas tabelas.
+- Pendente: homologação com usuário Fiscal autenticado e impressão Chrome em
+  remessa de teste; o valor do Romaneio serve de referência para NF-e, sem
+  prometer igualdade tributária automática.
+
+
+### 13/11/2026 — Copiar dados do Romaneio para a NF-e (alteração local)
+
+- Corrigida a seleção de texto no **Romaneio Patrimonial A4** (classe `.atlas-doc-printable`), antes não coberta pela regra antiga `.bdr-rom`. A seleção funciona para descrição, NCM, quantidades e valores, sem liberar seleção nos botões e checkboxes.
+- Incluído no cabeçalho do Romaneio o botão **Copiar itens para NF-e**. Copia as linhas exibidas, em texto com tabulações, para colagem em Excel/planilhas e sistemas que aceitem colunas: patrimônio, descrição, NCM, quantidade, unidade, desconto percentual, preço unitário fiscal, total fiscal e NF de entrada. Não se trata de importação automática de NF-e.
+- O botão exige conferência fiscal salva quando a estrutura fiscal está ativa e bloqueia valores alterados localmente sem salvar, para evitar divergência com o documento. Campo sem NCM é copiado em branco e avisado ao operador, nunca preenchido com código inventado. Texto é saneado contra fórmulas de planilhas.
+- Nenhuma mudança em SQL, Supabase, cálculo de desconto, assinatura, QR Code, impressão ou valor patrimonial; somente `JS/AtlasRomaneio.js` e este documento mestre. Teste `node --check` e testes isolados de cópia TSV, dados fiscais salvos, bloqueio sem conferência, alterações pendentes e NCM ausente passaram. Teste visual de seleção no Chrome real ainda pendente (navegador automatizado não pôde carregar o ambiente local).
+
+### 2026-11-13 — Correção local do cadastro de Empresas/Obras e informações cadastrais do Romaneio (NÃO PUBLICADA)
+
+**Diagnóstico confirmado no Supabase**
+- Obra **20** (código/Sienge **728**, empresa **18** SPE FS USINA DE ETANOL CNP) possuía `tabela_insumo=3` e `tabela_insumo_sienge='3'`; o ajuste para `2` em ambos os campos foi efetuado anteriormente e confirmado pelo retorno do banco. Empresa **18** já possui CNPJ `09338459000174`, endereço `ESTRADA MUNICIPAL LINHA SANTA MARIA`, cidade `CAMPO NOVO DOS PARECIS`, estado `MATO GROSSO` e CEP `78360-000`.
+- A tabela `public.obras` tem GRANT de SELECT para `authenticated`, mas não de INSERT/UPDATE. Há política SELECT auth, porém não políticas de gravação auth: o cadastro e a edição diretos do `empresa.html` falhavam com erro 403. O legado `anon` ainda possui GRANTs amplos (pendência crítica de segurança, **não alterar cegamente**).
+- `obras.codigo_obra` possui UNIQUE **global**, não apenas por empresa. `empresas.id` possui identidade GENERATED ALWAYS.
+- O Romaneio RP anterior consultava diretamente `obras`/`empresas`; o empregado com acesso somente ao **destino** via RLS não conseguia ler a empresa de origem, ficando com campos em branco.
+
+**Alterações locais produzidas**
+- `empresa.html`: cadastro de obra em empresa existente ou empresa nova com a primeira obra; formulário de edição **isolada de obra**; formulário separado para **edição de dados da empresa** (apenas OWNER absoluto); ativar/inativar obra. Todas as operações usam RPC `atlas_empresa_obra_operacao`, sem INSERT/UPDATE direto no navegador. Empresa selecionada não é sobrescrita ao adicionar obra. Os dois campos da tabela Sienge passam a ser sincronizados no servidor. Mensagens de erro orientam sobre a instalação da migração. As alterações ficam registradas em `movimentacoes` na transação da RPC.
+- `JS/AtlasRomaneio.js`: busca nome e dados da empresa/obra de origem e destino por `atlas_romaneio_partes` (somente para RP/PED autorizado). Exibe CNPJ, endereço, cidade, UF, CEP, telefone quando presente, códigos da empresa/obra, código Sienge e tabela de insumos, dentro do A4. Não muda assinaturas, valores fiscais, itens, QR ou operações de remessa. Para cliente legado sem login Auth, mantém leitura direta quando possível, sem prometer dados protegidos.
+- `JS/expedicao/expedicaoBoot.js`: versão do carregamento de `AtlasRomaneio.js` aumentada para evitar cache anterior.
+- `sql/atlas_empresas_obras_rpc.sql`: migração SQL **NOVA E AINDA NÃO EXECUTADA**. Define duas RPCs SECURITY DEFINER com `auth.uid()` e autorização no servidor: `atlas_empresa_obra_operacao` (cadastrar/editar obra, editar empresa e alterar status) e `atlas_romaneio_partes` (metadados do documento específico com reutilização de `atlas_romaneio_autorizar_funcionario`). EXECUTE somente `authenticated`, nunca `anon`, e não abre GRANTs de escrita nas tabelas. Para criação de empresa e alteração dos dados corporativos exige owner `id=1` com `owner_sistema=true`; criação/edição/status de obra por não-owner exigem `EMPRESAS_*` pertinente e obra vinculada. Transação de criação empresa + obra impede empresas órfãs em caso de falha.
+
+**Validação e pendências**
+- Sintaxe dos arquivos JavaScript analisada com `node --check` e passou.
+- Teste isolado de interface (`node` VM) confirmou payloads para `CRIAR`, `EDITAR_OBRA`, `EDITAR_EMPRESA` e `STATUS_OBRA` com RPC simulada, sem alterar banco.
+- Teste isolado do HTML do Romaneio confirmou CNPJ formatado e campos de endereço/cidade/UF/CEP/Sienge/tabela 2.
+- Não foi possível validar no navegador Playwright nesta sessão: acesso a páginas locais bloqueado pelo ambiente. **Não afirmar homologação visual ou testes reais de login**.
+- **Migração SQL não executada no banco compartilhado**. Antes de executar, requer backup e revisão. Depois, testar login Auth do owner e do Fiscal, cadastro de obra de teste com código global livre, edição da obra, alteração dos dados da empresa com consentimento, tentativa negada de funcionário sem acesso e impressão de uma RP com origem inacessível diretamente ao usuário, mas autorizada pela remessa.
+- Não existem no cadastro da tabela `empresas` campos independentes de inscrição estadual, bairro e número; o endereço atual fica em uma única coluna. **Não inventar informação tributária ausente**.
+
+
+## 2026-11-13 — Cadastro Empresas/Obras: editor único e exclusão segura do OWNER (preparado, não implantado)
+- `empresa.html`: código da empresa, código da obra e código Sienge são agora três campos separados no cadastro; não reaproveitar código da empresa como código da obra.
+- Apenas um painel fica aberto por vez (cadastro, edição de obra ou edição de empresa). Detalhes de linha também são exclusivos; editor de obra identifica a empresa vinculada por nome e ID.
+- Botão `Excluir` aparece apenas ao OWNER id=1. Confirmação exige texto `EXCLUIR <id>`. Não usa senha salva no navegador.
+- `atlas_empresa_obra_operacao` acrescenta `VERIFICAR_EXCLUSAO_OBRA` e `EXCLUIR_OBRA`, ambas OWNER-only validado com `auth.uid()` e `owner_sistema`. Bloqueia se houver vínculo numérico de obra em tabelas públicas ou listas legadas de usuários. Não remove/remapeia dependências; registrar evento sem FK de obra.
+- Instalação da função revoga DELETE direto em `public.obras` para `anon`, `authenticated` e `PUBLIC` e remove policy insegura `permitir_delete_obras`; revisar impacto antes de executar porque ambiente de produção é compartilhado.
+- PDF `romaneio com endereço.pdf` mostrou origem sem empresa/CNPJ/endereço: `atlas_romaneio_partes` do SQL anterior ainda não estava instalada (conferido no banco nesta data). Instalar a mesma migração corrigida para disponibilizar dados cadastrais a usuários autorizados do documento sem liberar visibilidade de todas as obras.
+- Consulta do banco: 22 obras empresa 17; uma empresa 18 (obra 20), uma empresa 19 e uma empresa 20 (SATH 33). Não reatribuir automaticamente: há patrimônios/remessas vinculados. Laboratório 22 está na empresa 17.
+- Segurança pendente: SELECT anon sobre obras e empresas e políticas legadas amplas podem expor obras-teste. Botão de exclusão não corrige visibilidade; exige auditoria de RLS/autorização por obra sem quebrar usuários legados.
+- **PENDENTE:** rodar/validar SQL após autorização; testes autenticados owner e não-owner; teste de vínculo real antes de excluir; verificação de leitura do Romaneio pelo Fiscal. Nenhuma exclusão ou mudança de vínculo foi executada nesta etapa.
