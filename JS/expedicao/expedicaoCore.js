@@ -508,7 +508,7 @@ async function carregarCatalogo(){
     const tokens = String(cadastro.data.permissoes || "")
       .toUpperCase().split(/[;,|]/).map(v => v.trim());
     tokens.forEach(token => {
-      const match = /^EXPEDICAO_OBRA_([1-9]\\d*)$/.exec(token);
+      const match = /^EXPEDICAO_OBRA_([1-9]\d*)$/.exec(token);
       if(match) ids.add(match[1]);
     });
     obrasPermitidas = [...ids];
