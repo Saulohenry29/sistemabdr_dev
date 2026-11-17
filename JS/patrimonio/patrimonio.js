@@ -2918,11 +2918,30 @@ function renderizarPatrimonios(){
       (!busca || bdrRelevanciaBuscaPatrimonio(p, buscaOriginal) !== null);
   });
 
-  // Ordenar antes de paginar: resultados pelo nome vêm antes dos encontrados pela obra.
+  // Sem busca, agrupar por obra mais recentemente movimentada na listagem
+  // e ordenar cada obra pela sequencia PAT (em vez do ID de criacao).
+  // Assim uma renumeracao feita no banco aparece na posicao correta.
   const correspondencias = new Map();
   if(busca){
     filtrados.forEach(p=>correspondencias.set(p,bdrRelevanciaBuscaPatrimonio(p,buscaOriginal)));
     filtrados.sort((a,b)=>(correspondencias.get(b)?.pontos||0)-(correspondencias.get(a)?.pontos||0));
+  }else{
+    const ultimoIdPorObra = new Map();
+    for(const p of filtrados){
+      const obra = String(p.obra_id ?? "");
+      const id = Number(p.id) || 0;
+      if(id > (ultimoIdPorObra.get(obra) || 0)) ultimoIdPorObra.set(obra,id);
+    }
+    filtrados.sort((a,b)=>{
+      const obraA = String(a.obra_id ?? "");
+      const obraB = String(b.obra_id ?? "");
+      if(obraA !== obraB){
+        return (ultimoIdPorObra.get(obraB) || 0) - (ultimoIdPorObra.get(obraA) || 0) ||
+          obraB.localeCompare(obraA);
+      }
+      return (Number(b.sequencial)||0) - (Number(a.sequencial)||0) ||
+        (Number(b.id)||0) - (Number(a.id)||0);
+    });
   }
 
   const total = filtrados.length;
