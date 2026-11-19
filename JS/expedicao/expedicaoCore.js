@@ -53,12 +53,19 @@ function bdrExpErroInternet(err){
          msg.includes("err_name_not_resolved");
 }
 
-const BDR_EXP_CACHE_KEY = "bdr_expedicao_cache_v1";
+// Cache por identidade: evita reaproveitar dados de outro login no mesmo navegador.
+function chaveCacheExpedicao(){
+  const u = usuarioAtual();
+  const id = Number(u?.id || u?.usuario_id || 0);
+  return Number.isSafeInteger(id) && id > 0 ? "bdr_expedicao_cache_v2_usuario_" + id : null;
+}
 const BDR_EXP_STATUS_KEY = "bdr_expedicao_status_offline_v1";
 
 function salvarCacheExpedicao(){
   try{
-    localStorage.setItem(BDR_EXP_CACHE_KEY, JSON.stringify({
+    const chave = chaveCacheExpedicao();
+    if(!chave) return;
+    localStorage.setItem(chave, JSON.stringify({
       itensCatalogo, pedidos, obras, salvo_em:new Date().toISOString()
     }));
   }catch(e){}
@@ -66,7 +73,9 @@ function salvarCacheExpedicao(){
 
 function carregarCacheExpedicao(){
   try{
-    const raw = localStorage.getItem(BDR_EXP_CACHE_KEY);
+    const chave = chaveCacheExpedicao();
+    if(!chave) return null;
+    const raw = localStorage.getItem(chave);
     return raw ? JSON.parse(raw) : null;
   }catch(e){ return null; }
 }
@@ -245,7 +254,10 @@ async function carregarTudo(){
     const ob = await db().rpc("atlas_obras_destino_expedicao");
     if(ob.error) throw ob.error;
     obras = ob.data || [];
-    await Promise.all([carregarCatalogo(), carregarPedidos(), atlasCarregarRemessasPatrimoniais()]);
+    // O catálogo não precisa esperar a consulta de pedidos e remessas.
+    // A disponibilidade/reserva já é validada por carregarCatalogo().
+    const catalogoPronto = carregarCatalogo().then(() => renderizarCatalogo());
+    await Promise.all([catalogoPronto, carregarPedidos(), atlasCarregarRemessasPatrimoniais()]);
     salvarCacheExpedicao();
     window.itensCatalogo = itensCatalogo;
     window.pedidos = pedidos;
@@ -449,19 +461,20 @@ async function aplicarReservasNoCatalogoAtlas(lista){
   }
 }
 
-async function atlasBuscarCatalogoCompleto(tabela, statuses){
+async function atlasBuscarCatalogoCompleto(tabela, statuses, obrasPermitidas=null){
+  if(Array.isArray(obrasPermitidas) && !obrasPermitidas.length)
+    return {data:[], error:null};
+
   const pagina = 1000;
   const todos = [];
   let inicio = 0;
 
   while(true){
     const fim = inicio + pagina - 1;
-    const r = await db()
-      .from(tabela)
-      .select("*")
-      .in("status", statuses)
-      .order("id", {ascending:false})
-      .range(inicio, fim);
+    let consulta = db().from(tabela).select("*").in("status", statuses);
+    if(Array.isArray(obrasPermitidas))
+      consulta = consulta.in("obra_id", obrasPermitidas);
+    const r = await consulta.order("id", {ascending:false}).range(inicio, fim);
 
     if(r.error) return {data: todos, error: r.error};
 
@@ -477,36 +490,15 @@ async function atlasBuscarCatalogoCompleto(tabela, statuses){
 
 async function carregarCatalogo(){
   const u = usuarioAtual();
-  let lista = [];
+  if(!u?.id) throw new Error("Sessão da Expedição sem usuário identificado.");
 
-  // Supabase/PostgREST entrega no máximo 1000 linhas por requisição.
-  // Busca paginada para a Expedição enxergar todo o patrimônio disponível.
-  const pat = await atlasBuscarCatalogoCompleto("patrimonio", ["ESTOQUE","NO ESTOQUE","DISPONIVEL","EM_USO","MANUTENCAO","RESERVADO"]);
-  if(!pat.error){
-    lista.push(...(pat.data || []).map(p=>({
-      origem_tabela:"patrimonio", id:p.id, codigo:p.codigo_qr, nome:p.nome_bem || "Patrimônio", descricao:p.nome_bem || "Patrimônio", tipo:"PATRIMONIO",
-      status:normalStatus(p.status), qtd:1, obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:nomeObra(p.obra_id),
-      localizacao:p.localizacao_fisica || p.endereco_codigo || p.localizacao || "-", marca:p.marca, modelo:p.modelo, valor:p.valor_bem, foto_url:p.foto_url,
-      estado:p.estado_conservacao || "-", patrimonio_id:p.id, raw:p
-    })));
-  }
-
-  const est = await atlasBuscarCatalogoCompleto("estoque_produtos", ["DISPONIVEL","ESTOQUE","NO ESTOQUE","EM_USO","MANUTENCAO","RESERVADO"]);
-  if(!est.error){
-    lista.push(...(est.data || []).map(p=>({
-      origem_tabela:"estoque_produtos", id:p.id, codigo:p.codigo, nome:p.descricao || p.produto || "Produto", descricao:p.descricao || p.produto || "Produto", tipo:p.tipo_controle || "CONSUMO",
-      status:normalStatus(p.status), qtd:Number(p.quantidade || p.qtd || 0), obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:nomeObra(p.obra_id),
-      localizacao:p.localizacao_fisica || [p.rua,p.prateleira,p.coluna,p.nivel].filter(Boolean).join("-") || "-", marca:p.marca, modelo:p.modelo, valor:p.valor_unitario, foto_url:p.foto_url,
-      estado:p.estado_material || p.condicao || "-", produto_id:p.id, patrimonio_id:p.patrimonio_id, raw:p
-    })));
-  }
-
-  // A consulta do catálogo respeita as obras de atuação e as obras de Expedição
-  // autorizadas no cadastro. Nome/localização nunca concede acesso a outra obra.
-  if(Number(u?.id) !== 1){
+  // Consulta o escopo ANTES de baixar o catálogo, para evitar trazer milhares
+  // de registros que o usuário não pode visualizar.
+  let obrasPermitidas = null;
+  if(Number(u.id) !== 1){
     const [vinculos, cadastro] = await Promise.all([
-      db().from("usuario_obras").select("obra_id").eq("usuario_id",u.id),
-      db().from("usuarios_sistema").select("permissoes").eq("id",u.id).maybeSingle()
+      db().from("usuario_obras").select("obra_id").eq("usuario_id", u.id),
+      db().from("usuarios_sistema").select("permissoes").eq("id", u.id).maybeSingle()
     ]);
     if(vinculos.error) throw vinculos.error;
     if(cadastro.error) throw cadastro.error;
@@ -519,13 +511,43 @@ async function carregarCatalogo(){
       const match = /^EXPEDICAO_OBRA_([1-9]\d*)$/.exec(token);
       if(match) ids.add(match[1]);
     });
-    lista = lista.filter(item => ids.has(String(item.obra_id || "")));
+    obrasPermitidas = [...ids];
   }
 
-  // Atlas 2.8.1: antes de renderizar, recalcula disponibilidade real.
+  // Preserva a paginação e o mesmo escopo de obras do código anterior.
+  const [pat, est] = await Promise.all([
+    atlasBuscarCatalogoCompleto("patrimonio",
+      ["ESTOQUE","NO ESTOQUE","DISPONIVEL","EM_USO","MANUTENCAO","RESERVADO"], obrasPermitidas),
+    atlasBuscarCatalogoCompleto("estoque_produtos",
+      ["DISPONIVEL","ESTOQUE","NO ESTOQUE","EM_USO","MANUTENCAO","RESERVADO"], obrasPermitidas)
+  ]);
+  let lista = [];
+  if(!pat.error){
+    lista.push(...(pat.data || []).map(p=>({
+      origem_tabela:"patrimonio", id:p.id, codigo:p.codigo_qr, nome:p.nome_bem || "Patrimônio", descricao:p.nome_bem || "Patrimônio", tipo:"PATRIMONIO",
+      status:normalStatus(p.status), qtd:1, obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:nomeObra(p.obra_id),
+      localizacao:p.localizacao_fisica || p.endereco_codigo || p.localizacao || "-", marca:p.marca, modelo:p.modelo, valor:p.valor_bem, foto_url:p.foto_url,
+      estado:p.estado_conservacao || "-", patrimonio_id:p.id, raw:p
+    })));
+  }
+  if(!est.error){
+    lista.push(...(est.data || []).map(p=>({
+      origem_tabela:"estoque_produtos", id:p.id, codigo:p.codigo, nome:p.descricao || p.produto || "Produto", descricao:p.descricao || p.produto || "Produto", tipo:p.tipo_controle || "CONSUMO",
+      status:normalStatus(p.status), qtd:Number(p.quantidade || p.qtd || 0), obra_id:p.obra_id, empresa_id:p.empresa_id, obra_nome:nomeObra(p.obra_id),
+      localizacao:p.localizacao_fisica || [p.rua,p.prateleira,p.coluna,p.nivel].filter(Boolean).join("-") || "-", marca:p.marca, modelo:p.modelo, valor:p.valor_unitario, foto_url:p.foto_url,
+      estado:p.estado_material || p.condicao || "-", produto_id:p.id, patrimonio_id:p.patrimonio_id, raw:p
+    })));
+  }
+
+  // Defesa adicional: não aceita item fora do escopo obtido para o usuário.
+  if(Array.isArray(obrasPermitidas)){
+    const permitidas = new Set(obrasPermitidas);
+    lista = lista.filter(item => permitidas.has(String(item.obra_id || "")));
+  }
+
+  // A reserva real é aplicada antes de qualquer cartão ser mostrado.
   lista = await aplicarReservasNoCatalogoAtlas(lista);
 
-  // Imagem de referência: uma foto compartilhada por marca + modelo.
   if(window.AtlasExpedicaoImagens){
     await window.AtlasExpedicaoImagens.carregar();
     lista = window.AtlasExpedicaoImagens.aplicar(lista);
