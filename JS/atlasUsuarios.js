@@ -2,7 +2,7 @@
   "use strict";
   if(global.AtlasUsuarios?.loaded) return;
 
-  const STATE={users:[],works:[],companies:[],profiles:[],selected:null,draft:null,page:1,pageSize:8,table:"usuarios_sistema",dirty:false,worksDraft:new Set(),expeditionWorksDraft:new Set(),formWorksDraft:new Set(),formWorksTemp:new Set()};
+  const STATE={users:[],works:[],companies:[],companiesLegacy:[],profiles:[],selected:null,draft:null,page:1,pageSize:8,table:"usuarios_sistema",dirty:false,worksDraft:new Set(),expeditionWorksDraft:new Set(),formWorksDraft:new Set(),formWorksTemp:new Set()};
   const OWNER_ID=1;
   function atlasSenhaValida(valor){
     if(typeof valor!=="string" || valor.length<8 || valor.length>128 || /[\u0000-\u001f\u007f]/.test(valor))return false;
@@ -476,11 +476,10 @@
     const auxData=Array.isArray(aux.data)?(aux.data[0]||{}):(aux.data||{});
     const empresasAux=Array.isArray(auxData.empresas)?auxData.empresas:[];
     const perfisAux=Array.isArray(auxData.perfis_rapidos)?auxData.perfis_rapidos:[];
-    const empresasPermitidas=new Set(STATE.works.map(w=>String(w.empresa_id||"")).filter(Boolean));
-    if(current()?.empresa_id)empresasPermitidas.add(String(current().empresa_id));
-    STATE.companies=currentIsOwner()
-      ? empresasAux
-      : empresasAux.filter(e=>empresasPermitidas.has(String(e.id)));
+    // As obras já foram carregadas conforme o escopo autorizado.
+    // Empresas sem obras não são opções para novos vínculos.
+    STATE.companiesLegacy=empresasAux;
+    STATE.companies=empresasComObras(empresasAux,STATE.works);
     STATE.table="usuarios_sistema";
     STATE.users=usuarios;
     STATE.profiles=perfisAux;
@@ -494,13 +493,31 @@
 
   function visibleUsers(){return STATE.users.filter(u=>usuarioDentroDoEscopo(u) && podeGerenciarPerfil(u.perfil))}
   function filteredUsers(){const term=norm($("#filtroBusca").value);const pf=norm($("#filtroPerfil").value);const work=$("#filtroObraUsuario").value;const st=$("#filtroStatusUsuario").value;return visibleUsers().filter(u=>(!term||norm(`${u.nome} ${u.usuario} ${u.email}`).includes(term))&&(!pf||norm(u.perfil)===pf)&&(!work||obrasDoUsuario(u).has(String(work)))&&(!st||(st==="ATIVO")===(u.ativo!==false)))}
+  function empresasComObras(empresas,obras){
+  const ids=new Set(obras.map(w=>String(w.empresa_id??"")).filter(Boolean));
+  return empresas.filter(e=>ids.has(String(e.id))&&e.ativo!==false&&e.ativa!==false);
+}
+  function preencherEmpresasFormulario(user=null){
+    const seletor=$("#formEmpresa");
+    if(!seletor)return;
+    const id=String(user?.empresa_id??"");
+    const label=e=>String(e.nome||e.razao_social||e.id)+(e.codigo_empresa?" — "+e.codigo_empresa:"");
+    seletor.replaceChildren(new Option("Selecione",""));
+    STATE.companies.forEach(e=>seletor.add(new Option(label(e),String(e.id))));
+    // Somente o vínculo já existente pode ser mantido na edição de um legado.
+    if(id&&!STATE.companies.some(e=>String(e.id)===id)){
+      const antiga=STATE.companiesLegacy.find(e=>String(e.id)===id);
+      seletor.add(new Option((antiga?label(antiga):"Empresa ID "+id)+" (vínculo antigo — regularizar)",id));
+    }
+    seletor.value=id;
+  }
   function fillFilters(){
     const perf=[...new Set([...visibleUsers().map(u=>String(u.perfil||"").trim()),...perfisCriaveis()].filter(Boolean))].sort();
     $("#filtroPerfil").innerHTML='<option value="">Todos os perfis</option>'+perf.map(p=>`<option>${esc(p)}</option>`).join("");
     $("#formPerfil").innerHTML=perfisCriaveis().map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("");
     const opts=STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");
     $("#filtroObraUsuario").innerHTML='<option value="">Todas as obras</option>'+opts;
-    $("#formEmpresa").innerHTML='<option value="">Selecione</option>'+STATE.companies.map(e=>`<option value="${e.id}">${esc(e.nome||e.razao_social||e.id)}</option>`).join("");
+    preencherEmpresasFormulario();
     const base=$("#formObraOperacional");
     if(base)base.innerHTML='<option value="">Sem base operacional</option>'+STATE.works.map(w=>`<option value="${w.id}">${esc(workText(w.id))}</option>`).join("");
   }
@@ -1762,7 +1779,7 @@
     fotoArquivoPendente=null; removerFotoPendente=false;
     // Menor privilégio por padrão. MASTER/GESTOR continuam disponíveis somente
     // mediante escolha explícita de administrador autorizado.
-    $("#formId").value=user?.id||"";$("#formNome").value=user?.nome||"";$("#formUsuario").value=user?.usuario||"";$("#formEmail").value=user?.email||"";$("#formPerfil").value=user?.perfil||"ALMOXARIFE";$("#formEmpresa").value=user?.empresa_id||"";$("#formAtivo").value=String(user?.ativo!==false);$("#formSenha").value="";
+    $("#formId").value=user?.id||"";$("#formNome").value=user?.nome||"";$("#formUsuario").value=user?.usuario||"";$("#formEmail").value=user?.email||"";$("#formPerfil").value=user?.perfil||"ALMOXARIFE";preencherEmpresasFormulario(user);$("#formAtivo").value=String(user?.ativo!==false);$("#formSenha").value="";
     // Qualquer administrador autorizado edita perfis até seu nível; o backend confirma.
     $("#formPerfil").disabled=!!user && !canManageSelectedAccess();
     atualizarResumoPerfilCadastro();
@@ -2029,6 +2046,10 @@
     }
     if(!payload.nome||!payload.usuario){toast("Informe nome e usuário.","erro");return}
     if(!payload.empresa_id){toast("Selecione a empresa do funcionário.","erro");return}
+    const empresaOriginal=id&&String(STATE.selected?.id)===String(id)?String(STATE.selected?.empresa_id??""):"";
+    if(!STATE.companies.some(e=>String(e.id)===String(payload.empresa_id)) && String(payload.empresa_id)!==empresaOriginal){
+      toast("Selecione uma empresa com obras autorizadas. Cadastros antigos não podem receber novos vínculos.","erro");return;
+    }
     const obrasSelecionadas=[...STATE.formWorksDraft].map(id=>STATE.works.find(w=>String(w.id)===String(id)));
     // O OWNER pode autorizar obras de outras empresas sem mudar a empresa principal.
     if(obrasSelecionadas.some(w=>!w)){
