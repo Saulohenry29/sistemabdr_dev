@@ -2046,10 +2046,6 @@
     }
     if(!payload.nome||!payload.usuario){toast("Informe nome e usuário.","erro");return}
     if(!payload.empresa_id){toast("Selecione a empresa do funcionário.","erro");return}
-    const empresaOriginal=id&&String(STATE.selected?.id)===String(id)?String(STATE.selected?.empresa_id??""):"";
-    if(!STATE.companies.some(e=>String(e.id)===String(payload.empresa_id)) && String(payload.empresa_id)!==empresaOriginal){
-      toast("Selecione uma empresa com obras autorizadas. Cadastros antigos não podem receber novos vínculos.","erro");return;
-    }
     const obrasSelecionadas=[...STATE.formWorksDraft].map(id=>STATE.works.find(w=>String(w.id)===String(id)));
     // O OWNER pode autorizar obras de outras empresas sem mudar a empresa principal.
     if(obrasSelecionadas.some(w=>!w)){
