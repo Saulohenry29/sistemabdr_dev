@@ -154,6 +154,12 @@
   */
   const canEditUsers=()=>currentIsOwner()||hasCurrentPerm("USUARIOS_EDITAR");
   const canManagePermissions=()=>currentIsOwner()||hasCurrentPerm("USUARIOS_PERMISSOES");
+  // Espelha a autorização da Edge Function atlas-admin-usuarios.
+  // Não concede permissão: o servidor valida perfil, alvo e todas as obras.
+  const podeRedefinirSenhaAuth=()=>currentIsOwner()||(
+    ["MASTER","GESTOR"].includes(norm(current()?.perfil)) &&
+    hasCurrentPerm("USUARIOS_EDITAR") && hasCurrentPerm("USUARIOS_PERMISSOES")
+  );
   const isOwnSelected=()=>Number(STATE.selected?.id||0)===currentId();
   const selectedIsOwner=()=>Number(STATE.selected?.id||0)===OWNER_ID;
   const HIERARQUIA_PERFIS=["ALMOXARIFE","ADMIN","GESTOR","MASTER"];
@@ -1862,7 +1868,7 @@
       const info=authStatusInfo(user);
       botao.textContent=info.status==='ATIVO'?"Definir senha provisória (Supabase Auth)":info.status==='LEGADO'?"Definir senha provisória (legado)":"Ativação pendente — redefinição indisponível";
       // A Edge Function atlas-senhas autoriza redefinicao de legado somente ao OWNER.
-      const podeRedefinir=info.status==='LEGADO'?currentIsOwner():(currentIsOwner()||hasCurrentPerm("ADMINISTRACAO_DELEGADA"));
+      const podeRedefinir=info.status==='LEGADO'?currentIsOwner():podeRedefinirSenhaAuth();
       botao.disabled=!user || info.status==='AGUARDANDO' || !podeRedefinir;
       botao.hidden=!user; // Cadastro novo usa somente senha Supabase Auth ao salvar.
       botao.title="A redefinição é autorizada no servidor conforme o perfil e as obras.";
@@ -1889,7 +1895,7 @@
   async function redefinirSenhaSeparada(){
     const id=Number($("#formId")?.value);
     const senha=$("#formSenha")?.value||"";
-    if((!currentIsOwner()&&!hasCurrentPerm("ADMINISTRACAO_DELEGADA"))||!Number.isSafeInteger(id)||id<=0){alert("Você não possui autorização para redefinir senhas.");return;}
+    if(!podeRedefinirSenhaAuth()||!Number.isSafeInteger(id)||id<=0){alert("Você não possui autorização para redefinir senhas.");return;}
     if(!atlasSenhaValida(senha)){alert("Use 8 a 128 caracteres e combine pelo menos 2 tipos: maiúsculas, minúsculas, números ou símbolos.");return;}
     if(!confirm("Redefinir SOMENTE a senha deste funcionário? Outras alterações do formulário não serão salvas."))return;
     const botao=$("#btnRedefinirSenhaSeparada");
